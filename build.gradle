@@ -37,6 +37,7 @@ allprojects {
     testCompile 'com.obsidiandynamics.indigo:indigo-assurance:1.1.0'
     testCompile 'com.obsidiandynamics.fulcrum:fulcrum-assert:0.4.0'
     //testCompile 'com.obsidiandynamics.fulcrum:fulcrum-await:0.4.0'
+    testCompile 'com.obsidiandynamics.socketx:socketx-core:0.2.0' //TODO remove after fulcrum-await is in.
     testCompile 'com.obsidiandynamics.fulcrum:fulcrum-junit:0.4.0'
     testCompile 'org.mockito:mockito-core:2.9.0'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
