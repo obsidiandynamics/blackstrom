@@ -2,6 +2,8 @@ package com.obsidiandynamics.blackstrom.model;
 
 import java.util.*;
 
+import com.obsidiandynamics.blackstrom.util.*;
+
 public final class Nomination extends Message {
   private final String[] cohorts;
   private final Object proposal;
@@ -18,8 +20,8 @@ public final class Nomination extends Message {
     return cohorts;
   }
 
-  public Object getProposal() {
-    return proposal;
+  public <T> T getProposal() {
+    return Cast.from(proposal);
   }
   
   public int getTtl() {

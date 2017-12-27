@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.model;
 
+import com.obsidiandynamics.blackstrom.util.*;
+
 public final class Response {
   private final String cohort;
   private final Plea plea;
@@ -19,12 +21,12 @@ public final class Response {
     return plea;
   }
 
-  public Object getMetadata() {
-    return metadata;
+  public <T> T getMetadata() {
+    return Cast.from(metadata);
   }
 
   @Override
   public String toString() {
-    return "Answer [cohort=" + cohort + ", plea=" + plea + ", metadata=" + metadata + "]";
+    return "Respose [cohort=" + cohort + ", plea=" + plea + ", metadata=" + metadata + "]";
   }
 }

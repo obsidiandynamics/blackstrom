@@ -22,7 +22,4 @@ public final class DirectLedger implements Ledger {
       handlers.get(i).onMessage(context, message);
     }
   }
-
-  @Override
-  public void dispose() {}
 }

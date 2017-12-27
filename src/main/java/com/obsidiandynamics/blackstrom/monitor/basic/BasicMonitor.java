@@ -64,8 +64,4 @@ public final class BasicMonitor implements Monitor {
       LOG.warn("Error appending to ledger {}", e);
     }
   }
-
-  @Override
-  public void dispose() {
-  }
 }
