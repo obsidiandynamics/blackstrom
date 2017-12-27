@@ -20,6 +20,8 @@ public final class MultiQueueLedger implements Ledger {
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   private final Object lock = new Object();
   
+  private final VotingContext context = new DefaultVotingContext(this);
+  
   private final int capacity;
   
   public MultiQueueLedger(@YInject(name="capacity") int capacity) {
@@ -44,7 +46,7 @@ public final class MultiQueueLedger implements Ledger {
   
   private void consumeAndDispatch(BlockingQueue<Message> queue, WorkerThread thread, MessageHandler handler) throws InterruptedException {
     final Message m = queue.take();
-    handler.onMessage(new VotingContext() {}, m);
+    handler.onMessage(context, m);
   }
   
   @Override

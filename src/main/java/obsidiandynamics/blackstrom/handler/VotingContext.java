@@ -1,5 +1,7 @@
 package obsidiandynamics.blackstrom.handler;
 
-public interface VotingContext {
+import obsidiandynamics.blackstrom.ledger.*;
 
+public interface VotingContext {
+  Ledger getLedger();
 }
