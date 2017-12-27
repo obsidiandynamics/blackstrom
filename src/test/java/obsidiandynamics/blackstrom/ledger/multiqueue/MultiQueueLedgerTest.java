@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 
-import com.obsidiandynamics.socketx.util.*;
+import com.obsidiandynamics.await.*;
 
 import obsidiandynamics.blackstrom.handler.*;
 import obsidiandynamics.blackstrom.model.*;
