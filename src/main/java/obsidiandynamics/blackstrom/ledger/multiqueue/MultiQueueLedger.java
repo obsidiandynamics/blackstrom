@@ -1,4 +1,4 @@
-package obsidiandynamics.blackstrom.ledger;
+package obsidiandynamics.blackstrom.ledger.multiqueue;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import com.obsidiandynamics.yconf.*;
 
 import obsidiandynamics.blackstrom.handler.*;
+import obsidiandynamics.blackstrom.ledger.*;
 import obsidiandynamics.blackstrom.model.*;
 import obsidiandynamics.blackstrom.worker.*;
 
