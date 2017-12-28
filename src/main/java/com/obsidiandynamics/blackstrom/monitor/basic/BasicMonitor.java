@@ -7,7 +7,6 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
-import com.obsidiandynamics.indigo.util.*;
 
 public final class BasicMonitor implements Monitor {
   static final boolean DEBUG = false;
@@ -95,9 +94,8 @@ public final class BasicMonitor implements Monitor {
         decided.remove(decision.getBallotId());
       }
       
-      if (DEBUG) LOG.trace("Reaped {} decisions", deathRow.size());
-      TestSupport.LOG_STREAM.format("Reaped %,d decisions (%,d so far), pending: %,d, decided, %,d\n", 
-                                    deathRow.size(), decisions - decided.size(), pending.size(), decided.size());
+      LOG.debug("Reaped {} decisions ({} so far), pending: {}, decided: {}", 
+                deathRow.size(), decisions - decided.size(), pending.size(), decided.size());
     }
   }
 }
