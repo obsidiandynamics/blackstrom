@@ -32,10 +32,10 @@ public final class Branch implements Cohort {
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
     
-    nominations.put(nomination.getBallotId(), nomination);
     final Plea plea;
     final long newBalance = balance + xfer.getAmount();
     if (newBalance > 0) {
+      nominations.put(nomination.getBallotId(), nomination);
       plea = Plea.ACCEPT;
       balance = newBalance;
     } else {

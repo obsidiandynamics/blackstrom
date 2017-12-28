@@ -3,9 +3,9 @@ package com.obsidiandynamics.blackstrom.bank;
 public final class BalanceTransfer {
   private final String branchId;
   
-  private final int amount;
+  private final long amount;
 
-  public BalanceTransfer(String branchId, int amount) {
+  public BalanceTransfer(String branchId, long amount) {
     this.branchId = branchId;
     this.amount = amount;
   }
@@ -14,12 +14,12 @@ public final class BalanceTransfer {
     return branchId;
   }
 
-  public int getAmount() {
+  public long getAmount() {
     return amount;
   }
 
   @Override
   public String toString() {
-    return "BalanceChange [branchId=" + branchId + ", amount=" + amount + "]";
+    return "BalanceTransfer [branchId=" + branchId + ", amount=" + amount + "]";
   }
 }
