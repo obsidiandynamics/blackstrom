@@ -45,7 +45,7 @@ public final class AsyncInitiatorTest {
       }
     });
     
-    final CompletableFuture<Decision> f = initiator.initiate(new String[0], null, 0);
+    final CompletableFuture<Decision> f = initiator.initiate(0, new String[0], null, 0);
     final Decision decision = f.get();
     assertNotNull(decision);
     assertEquals(Outcome.ACCEPT, decision.getOutcome());

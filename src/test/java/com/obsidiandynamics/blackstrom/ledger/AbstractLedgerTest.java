@@ -11,23 +11,24 @@ import org.junit.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractLedgerTest {
-  private static final int MAX_WAIT = 1_000;
+  private static final int MAX_WAIT = 10_000;
   
   private static class TestHandler implements MessageHandler {
     private final List<Message> received = new CopyOnWriteArrayList<>();
     
-    private volatile int lastMessageId = -1;
+    private volatile long lastMessageId = -1;
     private volatile AssertionError error;
 
     @Override
     public void onMessage(VotingContext context, Message message) {
-      final int messageId = (Integer) message.getMessageId();
+      final long messageId = (Long) message.getMessageId();
       if (lastMessageId == -1) {
         lastMessageId = messageId;
       } else {
-        final int expectedMessageId = lastMessageId + 1;
+        final long expectedMessageId = lastMessageId + 1;
         if (messageId != expectedMessageId) {
           error = new AssertionError("Expected message " + expectedMessageId + ", got " + messageId);
           throw error;
@@ -40,8 +41,8 @@ public abstract class AbstractLedgerTest {
   }
   
   private static class TestMessage extends Message {
-    protected TestMessage(Object messageId) {
-      super(messageId, "TestBallot", "TestSource");
+    protected TestMessage(Object messageId, String source) {
+      super(messageId, "TestBallot", source);
     }
 
     @Override
@@ -52,12 +53,7 @@ public abstract class AbstractLedgerTest {
   
   private Ledger ledger;
   
-  private final AtomicInteger messageId = new AtomicInteger();
-  
-  @Before
-  public void before() {
-    messageId.set(0);
-  }
+  private long messageId;
   
   @After
   public void after() {
@@ -80,14 +76,14 @@ public abstract class AbstractLedgerTest {
     }
     
     for (int i = 0; i < numMessages; i++) {
-      appendMessage();
+      appendMessage("test");
     }
     
     Timesert.wait(MAX_WAIT).until(() -> {
       for (TestHandler handler : handlers) {
         assertNull(handler.error);
         assertEquals(numMessages, handler.received.size());
-        int index = 0;
+        long index = 0;
         for (Message m  : handler.received) {
           assertEquals(index, m.getMessageId());
           index++;
@@ -98,9 +94,58 @@ public abstract class AbstractLedgerTest {
     ledger.dispose();
   }
   
-  private void appendMessage() {
+  @Test
+  public void testOneWayBenchmark() {
+    ledger = createLedger();
+    final int numMessages = 100_000;
+    
+    final AtomicLong received = new AtomicLong();
+    ledger.attach((c, m) -> received.incrementAndGet());
+    
+    final long took = TestSupport.took(() -> {
+      for (int i = 0; i < numMessages; i++) {
+        appendMessage("test");
+      }
+      Timesert.wait(MAX_WAIT).untilTrue(() -> received.get() == numMessages);
+    });
+                                     
+    System.out.format("One-way: %,d took %,d ms, %,d msgs/sec\n", numMessages, took, numMessages / took * 1000);
+  }
+  
+  @Test
+  public void testTwoWayBenchmark() {
+    ledger = createLedger();
+    final int numMessages = 100_000;
+    
+    final AtomicLong received = new AtomicLong();
+    ledger.attach((c, m) -> {
+      if (m.getSource() == "source") {
+        try {
+          c.getLedger().append(new TestMessage(m.getMessageId(), "echo"));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    ledger.attach((c, m) -> {
+      if (m.getSource() == "echo") {
+        received.incrementAndGet();
+      }
+    });
+    
+    final long took = TestSupport.took(() -> {
+      for (int i = 0; i < numMessages; i++) {
+        appendMessage("source");
+      }
+      Timesert.wait(MAX_WAIT).untilTrue(() -> received.get() == numMessages);
+    });
+                                     
+    System.out.format("Two-way: %,d took %,d ms, %,d msgs/sec\n", numMessages, took, numMessages / took * 1000);
+  }
+  
+  private void appendMessage(String source) {
     try {
-      ledger.append(new TestMessage(messageId.getAndIncrement()));
+      ledger.append(new TestMessage(messageId++, source));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

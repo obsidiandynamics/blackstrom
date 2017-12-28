@@ -36,7 +36,7 @@ final class PendingBallot {
     final Response response = vote.getResponse();
     final Response existing = responses.put(response.getCohort(), response);
     if (existing != null) {
-      log.trace("Skipping redundant {} (already cast in current ballot)", vote);
+      if (BasicMonitor.DEBUG) log.trace("Skipping redundant {} (already cast in current ballot)", vote);
       responses.put(existing.getCohort(), existing);
       return false;
     }
@@ -52,8 +52,4 @@ final class PendingBallot {
   private boolean allResponsesPresent() {
     return responses.size() == nomination.getCohorts().length;
   }
-  
-//  boolean isDecided() {
-//    return outcome == Outcome.REJECT || allResponsesPresent();
-//  }
 }
