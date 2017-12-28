@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.ledger.multiqueue;
+package com.obsidiandynamics.blackstrom.ledger;
 
 import static junit.framework.TestCase.*;
 
@@ -12,7 +12,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-public final class MultiQueueLedgerTest {
+public abstract class AbstractLedgerTest {
   private static final int MAX_WAIT = 1_000;
   
   private static class TestHandler implements MessageHandler {
@@ -50,7 +50,7 @@ public final class MultiQueueLedgerTest {
     }
   }
   
-  private MultiQueueLedger ledger;
+  private Ledger ledger;
   
   private final AtomicInteger messageId = new AtomicInteger();
   
@@ -68,7 +68,7 @@ public final class MultiQueueLedgerTest {
   
   @Test
   public void testPubSub() {
-    ledger = new MultiQueueLedger(10);
+    ledger = createLedger();
     final int numHandlers = 3;
     final int numMessages = 5;
     final List<TestHandler> handlers = new ArrayList<>(numHandlers);
@@ -101,8 +101,10 @@ public final class MultiQueueLedgerTest {
   private void appendMessage() {
     try {
       ledger.append(new TestMessage(messageId.getAndIncrement()));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
+  
+  protected abstract Ledger createLedger();
 }

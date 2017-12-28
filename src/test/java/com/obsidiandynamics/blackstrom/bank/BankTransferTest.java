@@ -3,7 +3,8 @@ package com.obsidiandynamics.blackstrom.bank;
 import static org.junit.Assert.*;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 import org.junit.*;
@@ -12,16 +13,16 @@ import org.junit.Test;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.ledger.multiqueue.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.monitor.basic.*;
+import com.obsidiandynamics.indigo.util.*;
 
 import junit.framework.*;
 
 public final class BankTransferTest {
-  private final Ledger ledger = new MultiQueueLedger(Integer.MAX_VALUE);
+  private final Ledger ledger = new SingleQueueLedger();
   
   private final List<Branch> branches = new ArrayList<>();
   
@@ -36,12 +37,12 @@ public final class BankTransferTest {
 
   @Test
   public void testRandomTransfers() throws Exception {
-    final int numBranches = 3;
+    final int numBranches = 2;
     final long initialBalance = 1000;
-    final int runs = 1000;
+    final int runs = 100_000;
     final int maxWait = 10_000;
     
-    final AsyncInitiator initiator = new AsyncInitiator("settler");
+    final AsyncInitiator initiator = new AsyncInitiator("settler", new AtomicLong()::getAndIncrement);
     machine = VotingMachine.builder()
         .withLedger(ledger)
         .withInitiator(initiator)
@@ -49,16 +50,17 @@ public final class BankTransferTest {
         .withMonitor(monitor)
         .build();
     
-    final List<Decision> decisions = new CopyOnWriteArrayList<>();
-    
+    final AtomicInteger decisions = new AtomicInteger();
+
+    final Consumer<Decision> decisionCounter = d -> decisions.incrementAndGet();
     for (int run = 0; run < runs; run++) {
-      final String[] branchIds = generateRandomBranches(numBranches);
+      final String[] branchIds = generateRandomBranches(2 + (int) (Math.random() * (numBranches - 1)));
       final BankSettlement settlement = generateRandomSettlement(branchIds, initialBalance / 2);
-      initiator.initiate(branchIds, settlement, 0, decisions::add);
+      initiator.initiate(branchIds, settlement, 0, decisionCounter);
     }
     
     Timesert.wait(maxWait).until(() -> {
-      TestCase.assertEquals(runs, decisions.size());
+      TestCase.assertEquals(runs, decisions.get());
       final long expectedBalance = numBranches * initialBalance;
       assertEquals(expectedBalance, getTotalBalance());
     });
@@ -79,6 +81,7 @@ public final class BankTransferTest {
     }
     final String lastBranchId = branchIds[branchIds.length - 1];
     transfers.put(lastBranchId, new BalanceTransfer(lastBranchId, -sum));
+    if (TestSupport.LOG) TestSupport.LOG_STREAM.format("xfers %s\n", transfers);
     return new BankSettlement(transfers);
   }
   

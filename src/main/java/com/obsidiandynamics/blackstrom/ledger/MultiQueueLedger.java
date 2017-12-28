@@ -1,19 +1,16 @@
-package com.obsidiandynamics.blackstrom.ledger.multiqueue;
+package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.yconf.*;
 
 /**
  *  Simple, in-memory ledger implementation comprising multiple discrete blocking queues - one for each
  *  subscriber.
  */
-@Y
 public final class MultiQueueLedger implements Ledger {
   private final List<BlockingQueue<Message>> queues = new ArrayList<>();
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
@@ -21,15 +18,9 @@ public final class MultiQueueLedger implements Ledger {
   
   private final VotingContext context = new DefaultVotingContext(this);
   
-  private final int capacity;
-  
-  public MultiQueueLedger(@YInject(name="capacity") int capacity) {
-    this.capacity = capacity;
-  }
-
   @Override
   public void attach(MessageHandler handler) {
-    final BlockingQueue<Message> queue = new LinkedBlockingQueue<>(capacity);
+    final BlockingQueue<Message> queue = new LinkedBlockingQueue<>();
     final WorkerThread thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withName("MessageWorker-" + Long.toHexString(System.identityHashCode(handler)))

@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.*;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.ledger.multiqueue.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
@@ -24,7 +23,7 @@ public final class AsyncInitiatorTest {
   
   @Test
   public void testFuture() throws Exception {
-    final Ledger ledger = new MultiQueueLedger(10);
+    final Ledger ledger = new SingleQueueLedger();
     final AsyncInitiator initiator = new AsyncInitiator("async");
     machine = VotingMachine.builder()
         .withLedger(ledger)

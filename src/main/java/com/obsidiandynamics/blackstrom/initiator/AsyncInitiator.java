@@ -11,12 +11,19 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class AsyncInitiator implements Initiator {
   private final String source;
   
+  private final Supplier<Object> idGenerator;
+  
   private final Map<Object, Consumer<Decision>> pending = new ConcurrentHashMap<>();
   
   private VotingMachine machine;
-
+  
   public AsyncInitiator(String source) {
+    this(source, UUID::randomUUID);
+  }
+
+  public AsyncInitiator(String source, Supplier<Object> idGenerator) {
     this.source = source;
+    this.idGenerator = idGenerator;
   }
   
   @Override
@@ -31,7 +38,7 @@ public final class AsyncInitiator implements Initiator {
   }
   
   public void initiate(String[] cohorts, Object proposal, int ttl, Consumer<Decision> callback) throws Exception {
-    final UUID ballotId = UUID.randomUUID();
+    final Object ballotId = idGenerator.get();
     pending.put(ballotId, callback);
     machine.getLedger().append(new Nomination(ballotId, ballotId, source, cohorts, proposal, ttl));
   }

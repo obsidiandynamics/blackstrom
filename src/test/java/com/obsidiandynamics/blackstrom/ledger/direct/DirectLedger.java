@@ -11,15 +11,21 @@ public final class DirectLedger implements Ledger {
   
   private final VotingContext context = new DefaultVotingContext(this);
   
+  private final Object lock = new Object();
+  
   @Override
   public void attach(MessageHandler handler) {
-    handlers.add(handler);
+    synchronized (lock) {
+      handlers.add(handler);
+    }
   }
 
   @Override
   public void append(Message message) throws Exception {
-    for (int i = handlers.size(); --i >= 0; ) {
-      handlers.get(i).onMessage(context, message);
+    synchronized (lock) {
+      for (int i = handlers.size(); --i >= 0; ) {
+        handlers.get(i).onMessage(context, message);
+      }
     }
   }
 }
