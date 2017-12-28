@@ -7,12 +7,15 @@ import java.util.*;
 import org.junit.*;
 import org.mockito.*;
 
+import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.ledger.direct.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.indigo.util.*;
 
 public final class BasicMonitorTest {
+  private static final int MAX_WAIT = 1000;
+  
   private BasicMonitor monitor;
   
   private VotingContext context;
@@ -26,7 +29,7 @@ public final class BasicMonitorTest {
   @Before
   public void before() {
     monitor = new BasicMonitor();
-    ledger = new DirectLedger();
+    ledger = new SingleQueueLedger();
     decisions = new ArrayList<>();
     ledger.attach((c, m) -> decisions.add((Decision) m));
     context = new DefaultVotingContext(ledger);
@@ -45,6 +48,8 @@ public final class BasicMonitorTest {
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.ACCEPT);
+    
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     assertEquals(ballotId, decisions.get(0).getBallotId());
     assertEquals(Outcome.ACCEPT, decisions.get(0).getOutcome());
@@ -56,6 +61,8 @@ public final class BasicMonitorTest {
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.REJECT);
+
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     assertEquals(ballotId, decisions.get(0).getBallotId());
     assertEquals(Outcome.REJECT, decisions.get(0).getOutcome());
@@ -74,6 +81,8 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
     assertEquals(0, decisions.size());
     vote(ballotId, "b", Plea.ACCEPT);
+    
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     assertEquals(ballotId, decisions.get(0).getBallotId());
     assertEquals(Outcome.ACCEPT, decisions.get(0).getOutcome());
@@ -87,6 +96,8 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
     assertEquals(0, decisions.size());
     vote(ballotId, "b", Plea.REJECT);
+
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     assertEquals(ballotId, decisions.get(0).getBallotId());
     assertEquals(Outcome.REJECT, decisions.get(0).getOutcome());
@@ -98,6 +109,8 @@ public final class BasicMonitorTest {
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.REJECT);
+
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     vote(ballotId, "b", Plea.ACCEPT);
     assertEquals(ballotId, decisions.get(0).getBallotId());
@@ -109,6 +122,8 @@ public final class BasicMonitorTest {
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.REJECT);
+
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     vote(ballotId, "b", Plea.REJECT);
     assertEquals(ballotId, decisions.get(0).getBallotId());
@@ -124,10 +139,16 @@ public final class BasicMonitorTest {
     nominate(ballotId, "a", "b");
     nominate(ballotId, "a", "b", "c");
     vote(ballotId, "a", Plea.ACCEPT);
+
+    TestSupport.sleep(10);
     assertEquals(0, decisions.size());
     nominate(ballotId, "a", "b", "c");
+
+    TestSupport.sleep(10);
     assertEquals(0, decisions.size());
     vote(ballotId, "b", Plea.ACCEPT);
+
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     assertEquals(ballotId, decisions.get(0).getBallotId());
     assertEquals(Outcome.ACCEPT, decisions.get(0).getOutcome());
@@ -145,9 +166,13 @@ public final class BasicMonitorTest {
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.ACCEPT);
     vote(ballotId, "a", Plea.REJECT);
+
+    TestSupport.sleep(10);
     assertEquals(0, decisions.size());
     vote(ballotId, "b", Plea.ACCEPT);
     vote(ballotId, "b", Plea.TIMEOUT);
+
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
     assertEquals(1, decisions.size());
     assertEquals(ballotId, decisions.get(0).getBallotId());
     assertEquals(Outcome.ACCEPT, decisions.get(0).getOutcome());
@@ -163,6 +188,8 @@ public final class BasicMonitorTest {
   public void testVoteWithoutBallot() {
     final UUID ballotId = UUID.randomUUID();
     vote(ballotId, "a", Plea.ACCEPT);
+    
+    TestSupport.sleep(10);
     assertEquals(0, decisions.size());
   }
   
@@ -181,6 +208,8 @@ public final class BasicMonitorTest {
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.ACCEPT);
+
+    TestSupport.sleep(10);
     assertEquals(0, decisions.size());
   }
   
