@@ -8,8 +8,8 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
- *  Simple, in-memory ledger implementation comprising a single blocking queue with a tail-end dispatcher for
- *  all subscribers.
+ *  In-memory ledger implementation comprising a single blocking queue with a single-threaded
+ *  dispatcher for all subscribers hanging off that queue.
  */
 public final class SingleQueueLedger implements Ledger {
   private final List<MessageHandler> handlers = new CopyOnWriteArrayList<>();

@@ -40,11 +40,12 @@ public final class BankTransferTest {
 
   @Test
   public void testRandomTransfers() throws Exception {
-    final int numBranches = 2;
-    final long initialBalance = 10_000;
-    final long transferAmount = 1000;
+    final int numBranches = 10;
+    final long initialBalance = 1_000_000;
+    final long transferAmount = 1_000;
     final int runs = 100_000;
     final int maxWait = 60_000;
+    final int backlogTarget = 100_000;
     
     final AsyncInitiator initiator = new AsyncInitiator("settler");
     
@@ -55,13 +56,13 @@ public final class BankTransferTest {
         .withMonitor(monitor)
         .build();
 
-    final AtomicInteger accepts = new AtomicInteger();
-    final AtomicInteger rejections = new AtomicInteger();
+    final AtomicInteger commits = new AtomicInteger();
+    final AtomicInteger aborts = new AtomicInteger();
     final Consumer<Decision> decisionCounter = d -> {
-      if (d.getOutcome() == Outcome.ACCEPT) {
-        accepts.incrementAndGet();
+      if (d.getOutcome() == Outcome.COMMIT) {
+        commits.incrementAndGet();
       } else {
-        rejections.incrementAndGet();
+        aborts.incrementAndGet();
       }
     };
 
@@ -70,16 +71,32 @@ public final class BankTransferTest {
         final String[] branchIds = numBranches != TWO_BRANCHES ? generateRandomBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
         final BankSettlement settlement = generateRandomSettlement(branchIds, transferAmount);
         initiator.initiate(run, branchIds, settlement, 0, decisionCounter);
+        
+        if (run % backlogTarget == 0) {
+          boolean logged = false;
+          for (;;) {
+            final int backlog = run - commits.get() - aborts.get();
+            if (backlog  > backlogTarget) {
+              TestSupport.sleep(10);
+              if (! logged) {
+                TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d runs)\n", backlog, run);
+                logged = true;
+              }
+            } else {
+              break;
+            }
+          }
+        }
       }
       
       Timesert.wait(maxWait).until(() -> {
-        TestCase.assertEquals(runs, accepts.get() + rejections.get());
+        TestCase.assertEquals(runs, commits.get() + aborts.get());
         final long expectedBalance = numBranches * initialBalance;
         assertEquals(expectedBalance, getTotalBalance());
       });
     });
-    System.out.format("%,d took %,d ms, %,d txns/sec (%,d accepts | %,d rejections)\n", 
-                      runs, took, runs / took * 1000, accepts.get(), rejections.get());
+    System.out.format("%,d took %,d ms, %,d txns/sec (%,d commits | %,d aborts)\n", 
+                      runs, took, runs / took * 1000, commits.get(), aborts.get());
   }
   
   private long getTotalBalance() {

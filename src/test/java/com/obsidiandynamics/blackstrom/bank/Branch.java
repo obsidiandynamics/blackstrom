@@ -29,14 +29,6 @@ public final class Branch implements Cohort {
 
   @Override
   public void onNomination(VotingContext context, Nomination nomination) {
-//    try {
-//      context.vote(nomination.getBallotId(), branchId, branchId, Plea.ACCEPT, null);
-//    } catch (Exception e1) {
-//      // TODO Auto-generated catch block
-//      e1.printStackTrace();
-//    }
-//    if (true) return; //TODO
-    
     final BankSettlement settlement = nomination.getProposal();
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
@@ -62,12 +54,10 @@ public final class Branch implements Cohort {
 
   @Override
   public void onDecision(VotingContext context, Decision decision) {
-//    if (true) return;//TODO
-    
     final Nomination nomination = nominations.remove(decision.getBallotId());
     if (nomination == null) return; // decision doesn't apply to this branch
     
-    if (decision.getOutcome() == Outcome.REJECT) {
+    if (decision.getOutcome() == Outcome.ABORT) {
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s", branchId, decision);
       final BankSettlement settlement = nomination.getProposal();
       final BalanceTransfer xfer = settlement.getTransfers().get(branchId);

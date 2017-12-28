@@ -7,6 +7,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
+import com.obsidiandynamics.indigo.util.*;
 
 public final class BasicMonitor implements Monitor {
   static final boolean DEBUG = false;
@@ -18,6 +19,14 @@ public final class BasicMonitor implements Monitor {
   private final Map<Object, Decision> decided = new HashMap<>();
   
   private final String nodeId = getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
+  
+  private final int gcInterval = 1000;
+  
+  private final int maxDecisionLifetimeMillis = 10_000;
+  
+  private long decisions = 1000;
+  
+  public BasicMonitor() {}
   
   @Override
   public void onNomination(VotingContext context, Nomination nomination) {
@@ -62,6 +71,33 @@ public final class BasicMonitor implements Monitor {
       context.getLedger().append(decision);
     } catch (Exception e) {
       LOG.warn("Error appending to ledger {}", e);
+    }
+    decisions++;
+    
+    if (decisions % gcInterval == 0) {
+      reapLapsedDecisions();
+    }
+  }
+  
+  private void reapLapsedDecisions() {
+    final long collectThreshold = System.currentTimeMillis() - maxDecisionLifetimeMillis;
+    List<Decision> deathRow = null;
+    
+    for (Decision decision : decided.values()) {
+      if (decision.getTimestamp() < collectThreshold) {
+        if (deathRow == null) deathRow = new ArrayList<>();
+        deathRow.add(decision);
+      }
+    }
+    
+    if (deathRow != null) {
+      for (Decision decision : deathRow) {
+        decided.remove(decision.getBallotId());
+      }
+      
+      if (DEBUG) LOG.trace("Reaped {} decisions", deathRow.size());
+      TestSupport.LOG_STREAM.format("Reaped %,d decisions (%,d so far), pending: %,d, decided, %,d\n", 
+                                    deathRow.size(), decisions - decided.size(), pending.size(), decided.size());
     }
   }
 }

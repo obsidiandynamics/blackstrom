@@ -35,10 +35,10 @@ public final class AsyncInitiatorTest {
       if (m.getMessageType() == MessageType.NOMINATION) {
         called.incrementAndGet();
         try {
-          c.getLedger().append(new Decision(m.getMessageId(), m.getBallotId(), "decider", Outcome.ACCEPT, new Response[0]));
+          c.getLedger().append(new Decision(m.getMessageId(), m.getBallotId(), "decider", Outcome.COMMIT, new Response[0]));
           
           // second append should do nothing
-          c.getLedger().append(new Decision(m.getMessageId(), m.getBallotId(), "decider", Outcome.REJECT, new Response[0]));
+          c.getLedger().append(new Decision(m.getMessageId(), m.getBallotId(), "decider", Outcome.ABORT, new Response[0]));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -48,7 +48,7 @@ public final class AsyncInitiatorTest {
     final CompletableFuture<Decision> f = initiator.initiate(0, new String[0], null, 0);
     final Decision decision = f.get();
     assertNotNull(decision);
-    assertEquals(Outcome.ACCEPT, decision.getOutcome());
+    assertEquals(Outcome.COMMIT, decision.getOutcome());
     assertEquals(1, called.get());
   }
 }

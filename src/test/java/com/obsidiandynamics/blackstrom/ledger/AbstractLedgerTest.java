@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractLedgerTest {
-  private static final int MAX_WAIT = 10_000;
+  private static final int MAX_WAIT = 60_000;
   
   private static class TestHandler implements MessageHandler {
     private final List<Message> received = new CopyOnWriteArrayList<>();
