@@ -49,6 +49,11 @@ public abstract class AbstractLedgerTest {
     public MessageType getMessageType() {
       return null;
     }
+    
+    @Override
+    public String toString() {
+      return getMessageId() + "";
+    }
   }
   
   private Ledger ledger;

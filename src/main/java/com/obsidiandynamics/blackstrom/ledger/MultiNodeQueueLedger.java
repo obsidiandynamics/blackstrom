@@ -14,23 +14,11 @@ import com.obsidiandynamics.blackstrom.worker.*;
  *  
  *  @see <a href="https://github.com/obsidiandynamics/indigo/blob/4b13815d1aefb0e5a5a45ad89444ced9f6584e20/src/main/java/com/obsidiandynamics/indigo/NodeQueueActivation.java">NodeQueueActivation</a>
  */
-public final class NodeQueueLedger implements Ledger {
+public final class MultiNodeQueueLedger implements Ledger {
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   
-  private final MessageContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultMessageContext(this);
   
-  private static final class Node extends AtomicReference<Node> {
-    private static final long serialVersionUID = 1L;
-
-    private final Message m;
-
-    Node(Message m) { this.m = m; }
-    
-    static Node anchor() {
-      return new Node(null);
-    }
-  }
-
   private final AtomicReference<Node> tail = new AtomicReference<>(Node.anchor());
   
   private class NodeWorker implements Worker {
@@ -68,9 +56,7 @@ public final class NodeQueueLedger implements Ledger {
   
   @Override
   public void append(Message message) throws InterruptedException {
-    final Node t = new Node(message);
-    final Node t1 = tail.getAndSet(t);
-    t1.lazySet(t);
+    new Node(message).appendTo(tail);
   }
   
   @Override

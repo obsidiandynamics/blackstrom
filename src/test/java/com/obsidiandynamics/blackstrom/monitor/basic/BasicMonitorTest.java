@@ -49,7 +49,7 @@ public final class BasicMonitorTest {
   @Before
   public void before() {
     setMonitorAndInit(new BasicMonitor());
-    setLedger(new SingleQueueLedger());
+    setLedger(new SingleLinkedQueueLedger());
     ledger.attach((c, m) -> { 
       if (m.getMessageType() == MessageType.DECISION) {
         decisions.add((Decision) m);
@@ -58,7 +58,7 @@ public final class BasicMonitorTest {
       }
     });
     ledger.init(initContext);
-    context = new DefaultVotingContext(ledger);
+    context = new DefaultMessageContext(ledger);
   }
   
   @After
@@ -267,7 +267,7 @@ public final class BasicMonitorTest {
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     ledger.attach((c, m) -> decisions.add((Decision) m));
     ledger.init(null);
-    context = new DefaultVotingContext(ledger);
+    context = new DefaultMessageContext(ledger);
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");

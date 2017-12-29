@@ -4,14 +4,12 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import java.util.function.*;
 import java.util.stream.*;
 
 import org.junit.*;
 import org.junit.Test;
 
 import com.obsidiandynamics.await.*;
-import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -25,7 +23,7 @@ public final class BankTransferTest {
   private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
   
-  private final Ledger ledger = new NodeQueueLedger();
+  private final Ledger ledger = new MultiNodeQueueLedger();
   
   private final List<Branch> branches = new ArrayList<>();
   
@@ -43,34 +41,30 @@ public final class BankTransferTest {
     final int numBranches = 10;
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
-    final int runs = 100_000;
+    final int runs = 10_000;
     final int maxWait = 60_000;
-    final int backlogTarget = 2_000;
+    final int backlogTarget = 20_000;
     
-    final AsyncInitiator initiator = new AsyncInitiator("settler");
-    
+    final AtomicInteger commits = new AtomicInteger();
+    final AtomicInteger aborts = new AtomicInteger();
     machine = VotingMachine.builder()
         .withLedger(ledger)
-        .withInitiator(initiator)
+        .withInitiator((c ,d) -> {
+          if (d.getOutcome() == Outcome.COMMIT) {
+            commits.incrementAndGet();
+          } else {
+            aborts.incrementAndGet();
+          }
+        })
         .withCohorts(createBranches(numBranches, initialBalance))
         .withMonitor(monitor)
         .build();
-
-    final AtomicInteger commits = new AtomicInteger();
-    final AtomicInteger aborts = new AtomicInteger();
-    final Consumer<Decision> decisionCounter = d -> {
-      if (d.getOutcome() == Outcome.COMMIT) {
-        commits.incrementAndGet();
-      } else {
-        aborts.incrementAndGet();
-      }
-    };
 
     final long took = TestSupport.tookThrowing(() -> {
       for (int run = 0; run < runs; run++) {
         final String[] branchIds = numBranches != TWO_BRANCHES ? generateRandomBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
         final BankSettlement settlement = generateRandomSettlement(branchIds, transferAmount);
-        initiator.initiate(run, branchIds, settlement, Integer.MAX_VALUE, decisionCounter);
+        ledger.append(new Nomination(run, run, "settler", branchIds, settlement, Integer.MAX_VALUE));
         
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;

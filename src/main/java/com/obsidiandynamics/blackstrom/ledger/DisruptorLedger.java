@@ -12,7 +12,7 @@ import com.obsidiandynamics.blackstrom.model.*;
  *  
  */
 public final class DisruptorLedger implements Ledger {
-  private final MessageContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultMessageContext(this);
   
   private static class MessageEvent {
     private Message message;

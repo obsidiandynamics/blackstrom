@@ -11,21 +11,21 @@ import com.obsidiandynamics.blackstrom.worker.*;
  *  In-memory ledger implementation comprising a single blocking queue with a single-threaded
  *  dispatcher for all subscribers hanging off that queue.
  */
-public final class SingleQueueLedger implements Ledger {
-  private final List<MessageHandler> handlers = new CopyOnWriteArrayList<>();
+public final class SingleLinkedQueueLedger implements Ledger {
+  private volatile MessageHandler[] handlers = new MessageHandler[0];
   
-  private final MessageContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultMessageContext(this);
   
   private final BlockingQueue<Message> queue;
   
   private final WorkerThread thread;
   
-  public SingleQueueLedger() {
+  public SingleLinkedQueueLedger() {
     queue = new LinkedBlockingQueue<>();
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
-                     .withName("MessageWorker-" + Long.toHexString(System.identityHashCode(this))))
+                     .withName("LinkedQueueWorker-" + Long.toHexString(System.identityHashCode(this))))
         .withWorker(this::cycle)
         .build();
     thread.start();
@@ -33,14 +33,16 @@ public final class SingleQueueLedger implements Ledger {
   
   private void cycle(WorkerThread thread) throws InterruptedException {
     final Message message = queue.take();
-    for (int i = handlers.size(); --i >= 0; ) {
-      handlers.get(i).onMessage(context, message);
+    for (MessageHandler handler : handlers) {
+      handler.onMessage(context, message);
     }
   }
   
   @Override
   public void attach(MessageHandler handler) {
-    handlers.add(handler);
+    final List<MessageHandler> handlersList = new ArrayList<>(Arrays.asList(handlers));
+    handlersList.add(handler);
+    handlers = handlersList.toArray(new MessageHandler[handlersList.size()]);
   }
 
   @Override

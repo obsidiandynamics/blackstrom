@@ -23,7 +23,7 @@ public final class AsyncInitiatorTest {
   
   @Test
   public void testFuture() throws Exception {
-    final Ledger ledger = new SingleQueueLedger();
+    final Ledger ledger = new SingleLinkedQueueLedger();
     final AsyncInitiator initiator = new AsyncInitiator("async");
     machine = VotingMachine.builder()
         .withLedger(ledger)

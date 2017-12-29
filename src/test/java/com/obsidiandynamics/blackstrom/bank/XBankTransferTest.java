@@ -22,7 +22,7 @@ import com.obsidiandynamics.indigo.util.*;
 import junit.framework.*;
 
 public final class XBankTransferTest {
-  private final Ledger ledger = new SingleQueueLedger();
+  private final Ledger ledger = new SingleLinkedQueueLedger();
   
   private final List<Branch> branches = new ArrayList<>();
   

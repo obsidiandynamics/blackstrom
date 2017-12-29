@@ -2,10 +2,10 @@ package com.obsidiandynamics.blackstrom.handler;
 
 import com.obsidiandynamics.blackstrom.ledger.*;
 
-public final class DefaultVotingContext implements MessageContext {
+public final class DefaultMessageContext implements MessageContext {
   private final Ledger ledger;
   
-  public DefaultVotingContext(Ledger ledger) {
+  public DefaultMessageContext(Ledger ledger) {
     this.ledger = ledger;
   }
 

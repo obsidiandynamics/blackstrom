@@ -11,19 +11,19 @@ import com.obsidiandynamics.blackstrom.worker.*;
  *  Simple, in-memory ledger implementation comprising multiple discrete blocking queues - one for each
  *  subscriber.
  */
-public final class MultiQueueLedger implements Ledger {
+public final class MultiLinkedQueueLedger implements Ledger {
   private final List<BlockingQueue<Message>> queues = new ArrayList<>();
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   private final Object lock = new Object();
   
-  private final MessageContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultMessageContext(this);
   
   @Override
   public void attach(MessageHandler handler) {
     final BlockingQueue<Message> queue = new LinkedBlockingQueue<>();
     final WorkerThread thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName("MessageWorker-" + Long.toHexString(System.identityHashCode(handler)))
+                     .withName("LinkedQueueWorker-" + Long.toHexString(System.identityHashCode(handler)))
                      .withDaemon(true))
         .withWorker(t -> consumeAndDispatch(queue, t, handler))
         .build();
