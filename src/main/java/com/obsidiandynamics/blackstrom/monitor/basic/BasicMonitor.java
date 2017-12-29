@@ -7,6 +7,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
+import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class BasicMonitor implements Monitor {
   static final boolean DEBUG = false;
@@ -19,26 +20,69 @@ public final class BasicMonitor implements Monitor {
   
   private final String nodeId = getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
   
-  private final int gcInterval = 1000;
+  private final int gcIntervalMillis = 1_000;
   
-  private final int maxDecisionLifetimeMillis = 10_000;
+  private final int decisionLifetimeMillis = 1_000;
   
-  private long decisions = 1000;
+  private final WorkerThread gc;
   
-  public BasicMonitor() {}
+  private final Object lock = new Object();
+  
+  private long reapedSoFar;
+  
+  public BasicMonitor() {
+    gc = WorkerThread.builder()
+        .withOptions(new WorkerOptions().withName("gc-" + nodeId).withDaemon(true))
+        .withWorker(this::gc)
+        .build();
+    gc.start();
+  }
+  
+  private void gc(WorkerThread thread) throws InterruptedException {
+    Thread.sleep(gcIntervalMillis);
+    
+    final long collectThreshold = System.currentTimeMillis() - decisionLifetimeMillis;
+    List<Decision> deathRow = null;
+    
+    final List<Decision> decidedCopy;
+    synchronized (lock) {
+      decidedCopy = new ArrayList<>(decided.values());
+    }
+    
+    for (Decision decision : decidedCopy) {
+      if (decision.getTimestamp() < collectThreshold) {
+        if (deathRow == null) deathRow = new ArrayList<>();
+        deathRow.add(decision);
+      }
+    }
+    
+    if (deathRow != null) {
+      for (Decision decision : deathRow) {
+        synchronized (lock) {
+          decided.remove(decision.getBallotId());
+        }
+      }
+      reapedSoFar += deathRow.size();
+      
+      LOG.debug("Reaped {} decisions ({} so far), pending: {}, decided: {}", 
+                deathRow.size(), reapedSoFar, pending.size(), decided.size());
+    }
+  }
   
   @Override
   public void onNomination(VotingContext context, Nomination nomination) {
-    if (decided.containsKey(nomination.getBallotId())) {
-      if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", nomination);
-      return;
-    }
-    
-    final PendingBallot existing = pending.put(nomination.getBallotId(), new PendingBallot(nomination));
-    if (existing != null) {
-      if (DEBUG) LOG.trace("Skipping redundant {} (ballot already pending)", nomination);
-      pending.put(nomination.getBallotId(), existing);
-      return;
+    synchronized (lock) {
+      if (decided.containsKey(nomination.getBallotId())) {
+        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", nomination);
+        return;
+      }
+      
+      final PendingBallot existing = pending.put(nomination.getBallotId(), new PendingBallot(nomination));
+      if (existing != null) {
+        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already pending)", nomination);
+        pending.put(nomination.getBallotId(), existing);
+        return;
+      }
     }
     
     if (DEBUG) LOG.trace("Initiating ballot for {}", nomination);
@@ -46,17 +90,19 @@ public final class BasicMonitor implements Monitor {
 
   @Override
   public void onVote(VotingContext context, Vote vote) {
-    final PendingBallot ballot = pending.get(vote.getBallotId());
-    if (ballot != null) {
-      if (DEBUG) LOG.trace("Received {}", vote);
-      final boolean decided = ballot.castVote(LOG, vote);
-      if (decided) {
-        decideBallot(context, ballot);
+    synchronized (lock) {
+      final PendingBallot ballot = pending.get(vote.getBallotId());
+      if (ballot != null) {
+        if (DEBUG) LOG.trace("Received {}", vote);
+        final boolean decided = ballot.castVote(LOG, vote);
+        if (decided) {
+          decideBallot(context, ballot);
+        }
+      } else if (decided.containsKey(vote.getBallotId())) {
+        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", vote);
+      } else {
+        LOG.warn("Missing pending ballot for vote {}", vote);
       }
-    } else if (decided.containsKey(vote.getBallotId())) {
-      if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", vote);
-    } else {
-      LOG.warn("Missing pending ballot for vote {}", vote);
     }
   }
   
@@ -71,31 +117,11 @@ public final class BasicMonitor implements Monitor {
     } catch (Exception e) {
       LOG.warn("Error appending to ledger {}", e);
     }
-    decisions++;
-    
-    if (decisions % gcInterval == 0) {
-      reapLapsedDecisions();
-    }
   }
   
-  private void reapLapsedDecisions() {
-    final long collectThreshold = System.currentTimeMillis() - maxDecisionLifetimeMillis;
-    List<Decision> deathRow = null;
-    
-    for (Decision decision : decided.values()) {
-      if (decision.getTimestamp() < collectThreshold) {
-        if (deathRow == null) deathRow = new ArrayList<>();
-        deathRow.add(decision);
-      }
-    }
-    
-    if (deathRow != null) {
-      for (Decision decision : deathRow) {
-        decided.remove(decision.getBallotId());
-      }
-      
-      LOG.debug("Reaped {} decisions ({} so far), pending: {}, decided: {}", 
-                deathRow.size(), decisions - decided.size(), pending.size(), decided.size());
-    }
+  @Override
+  public void dispose() {
+    gc.terminate();
+    gc.joinQuietly();
   }
 }

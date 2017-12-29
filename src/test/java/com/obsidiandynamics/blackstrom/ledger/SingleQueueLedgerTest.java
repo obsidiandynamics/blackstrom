@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 public final class SingleQueueLedgerTest extends AbstractLedgerTest {
   @Override
-  protected Ledger createLedger() {
+  protected Ledger createLedgerImpl() {
     return new SingleQueueLedger();
   }
 }

@@ -63,7 +63,7 @@ public abstract class AbstractLedgerTest {
   }
   
   @Test
-  public void testPubSub() {
+  public final void testPubSub() {
     ledger = createLedger();
     final int numHandlers = 3;
     final int numMessages = 5;
@@ -74,6 +74,7 @@ public abstract class AbstractLedgerTest {
       handlers.add(handler);
       ledger.attach(handler);
     }
+    ledger.init(null);
     
     for (int i = 0; i < numMessages; i++) {
       appendMessage("test");
@@ -95,12 +96,13 @@ public abstract class AbstractLedgerTest {
   }
   
   @Test
-  public void testOneWayBenchmark() {
+  public final void testOneWayBenchmark() {
     ledger = createLedger();
     final int numMessages = 100_000;
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((c, m) -> received.incrementAndGet());
+    ledger.init(null);
     
     final long took = TestSupport.took(() -> {
       for (int i = 0; i < numMessages; i++) {
@@ -113,7 +115,7 @@ public abstract class AbstractLedgerTest {
   }
   
   @Test
-  public void testTwoWayBenchmark() {
+  public final void testTwoWayBenchmark() {
     ledger = createLedger();
     final int numMessages = 100_000;
     
@@ -132,6 +134,7 @@ public abstract class AbstractLedgerTest {
         received.incrementAndGet();
       }
     });
+    ledger.init(null);
     
     final long took = TestSupport.took(() -> {
       for (int i = 0; i < numMessages; i++) {
@@ -151,5 +154,9 @@ public abstract class AbstractLedgerTest {
     }
   }
   
-  protected abstract Ledger createLedger();
+  private Ledger createLedger() {
+    return createLedgerImpl();
+  }
+  
+  protected abstract Ledger createLedgerImpl();
 }

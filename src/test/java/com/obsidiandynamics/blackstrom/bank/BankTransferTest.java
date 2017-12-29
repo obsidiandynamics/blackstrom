@@ -40,7 +40,7 @@ public final class BankTransferTest {
 
   @Test
   public void testRandomTransfers() throws Exception {
-    final int numBranches = 10;
+    final int numBranches = 2;
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
     final int runs = 100_000;
@@ -73,14 +73,14 @@ public final class BankTransferTest {
         initiator.initiate(run, branchIds, settlement, 0, decisionCounter);
         
         if (run % backlogTarget == 0) {
-          boolean logged = false;
+          long lastLogTime = 0;
           for (;;) {
             final int backlog = run - commits.get() - aborts.get();
             if (backlog  > backlogTarget) {
               TestSupport.sleep(10);
-              if (! logged) {
+              if (System.currentTimeMillis() - lastLogTime > 5_000) {
                 TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d runs)\n", backlog, run);
-                logged = true;
+                lastLogTime = System.currentTimeMillis();
               }
             } else {
               break;

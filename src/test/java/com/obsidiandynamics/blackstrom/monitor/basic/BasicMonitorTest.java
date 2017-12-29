@@ -32,6 +32,7 @@ public final class BasicMonitorTest {
     ledger = new SingleQueueLedger();
     decisions = new ArrayList<>();
     ledger.attach((c, m) -> decisions.add((Decision) m));
+    ledger.init(null);
     context = new DefaultVotingContext(ledger);
   }
   
@@ -199,10 +200,13 @@ public final class BasicMonitorTest {
   
   @Test
   public void testAppendError() throws Exception {
+    ledger.dispose();
+    
     ledger = Mockito.mock(Ledger.class);
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     decisions = new ArrayList<>();
     ledger.attach((c, m) -> decisions.add((Decision) m));
+    ledger.init(null);
     context = new DefaultVotingContext(ledger);
     
     final UUID ballotId = UUID.randomUUID();

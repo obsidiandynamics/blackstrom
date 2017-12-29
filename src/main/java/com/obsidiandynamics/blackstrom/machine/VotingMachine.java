@@ -25,14 +25,15 @@ public final class VotingMachine implements Disposable {
     this.cohorts.addAll(cohorts);
     this.monitors.addAll(monitors);
     
-    ledger.init(this);
     initiators.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
     cohorts.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
-    monitors.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));    
+    monitors.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
     
     initiators.forEach(i -> i.init(this));
     cohorts.forEach(i -> i.init(this));
-    monitors.forEach(i -> i.init(this));
+    monitors.forEach(i -> i.init(this));    
+    
+    ledger.init(this);
   }
   
   public Ledger getLedger() {

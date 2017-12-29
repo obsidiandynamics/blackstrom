@@ -25,10 +25,10 @@ public final class VotingMachineTest {
         .withMonitor(monitor)
         .build();
     
-    verify(ledger).init(notNull());
     verify(initiator).init(notNull());
     verify(cohort).init(notNull());
     verify(monitor).init(notNull());
+    verify(ledger).init(notNull());
     
     assertEquals(ledger, machine.getLedger());
     assertEquals(1, machine.getInitiators().size());
