@@ -50,9 +50,7 @@ public final class MultiQueueLedger implements Ledger {
   
   @Override
   public void dispose() {
-    for (WorkerThread thread : threads) {
-      thread.terminate();
-      thread.joinQuietly();
-    }
+    threads.forEach(t -> t.terminate());
+    threads.forEach(t -> t.joinQuietly());
   }
 }

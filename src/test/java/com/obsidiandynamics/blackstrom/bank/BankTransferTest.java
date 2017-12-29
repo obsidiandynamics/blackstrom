@@ -25,7 +25,7 @@ public final class BankTransferTest {
   private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
   
-  private final Ledger ledger = new SingleQueueLedger();
+  private final Ledger ledger = new NodeQueueLedger();
   
   private final List<Branch> branches = new ArrayList<>();
   
@@ -40,12 +40,12 @@ public final class BankTransferTest {
 
   @Test
   public void testRandomTransfers() throws Exception {
-    final int numBranches = 2;
+    final int numBranches = 10;
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
     final int runs = 100_000;
     final int maxWait = 60_000;
-    final int backlogTarget = 100_000;
+    final int backlogTarget = 2_000;
     
     final AsyncInitiator initiator = new AsyncInitiator("settler");
     
@@ -79,7 +79,7 @@ public final class BankTransferTest {
             if (backlog  > backlogTarget) {
               TestSupport.sleep(10);
               if (System.currentTimeMillis() - lastLogTime > 5_000) {
-                TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d runs)\n", backlog, run);
+                TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d txns)\n", backlog, run);
                 lastLogTime = System.currentTimeMillis();
               }
             } else {
@@ -95,8 +95,8 @@ public final class BankTransferTest {
         assertEquals(expectedBalance, getTotalBalance());
       });
     });
-    System.out.format("%,d took %,d ms, %,d txns/sec (%,d commits | %,d aborts)\n", 
-                      runs, took, runs / took * 1000, commits.get(), aborts.get());
+    System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts)\n", 
+                      runs, took, (double) runs / took * 1000, commits.get(), aborts.get());
   }
   
   private long getTotalBalance() {
