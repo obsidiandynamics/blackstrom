@@ -5,7 +5,7 @@ import java.util.concurrent.*;
 import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.machine.*;
+import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class AsyncInitiator implements Initiator {
@@ -13,15 +13,15 @@ public final class AsyncInitiator implements Initiator {
   
   private final Map<Object, Consumer<Decision>> pending = new ConcurrentHashMap<>();
   
-  private VotingMachine machine;
+  private Ledger ledger;
   
   public AsyncInitiator(String source) {
     this.source = source;
   }
   
   @Override
-  public void init(VotingMachine machine) {
-    this.machine = machine;
+  public void init(InitContext context) {
+    this.ledger = context.getLedger();
   }
   
   public CompletableFuture<Decision> initiate(Object ballotId, String[] cohorts, Object proposal, int ttl) throws Exception {
@@ -32,11 +32,11 @@ public final class AsyncInitiator implements Initiator {
   
   public void initiate(Object ballotId, String[] cohorts, Object proposal, int ttl, Consumer<Decision> callback) throws Exception {
     pending.put(ballotId, callback);
-    machine.getLedger().append(new Nomination(ballotId, ballotId, source, cohorts, proposal, ttl));
+    ledger.append(new Nomination(ballotId, ballotId, source, cohorts, proposal, ttl));
   }
 
   @Override
-  public void onDecision(VotingContext context, Decision decision) {
+  public void onDecision(MessageContext context, Decision decision) {
     final Consumer<Decision> callback = pending.remove(decision.getBallotId());
     if (callback != null) {
       callback.accept(decision);

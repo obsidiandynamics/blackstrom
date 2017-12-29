@@ -6,14 +6,13 @@ import java.util.concurrent.*;
 import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 /**
  *  
  */
 public final class DisruptorLedger implements Ledger {
-  private final VotingContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultVotingContext(this);
   
   private static class MessageEvent {
     private Message message;
@@ -62,7 +61,7 @@ public final class DisruptorLedger implements Ledger {
   
   @SuppressWarnings("unchecked")
   @Override
-  public void init(VotingMachine machine) {
+  public void init(InitContext context) {
     final EventHandler<MessageEvent> collector = (e, seq, endOfBatch) -> e.clear();
     
     disruptor

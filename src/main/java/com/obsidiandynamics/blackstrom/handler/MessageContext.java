@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.handler;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-public interface VotingContext {
+public interface MessageContext {
   Ledger getLedger();
   
   default void vote(Object ballotId, String source, String cohort, Plea plea, Object metadata) throws Exception {

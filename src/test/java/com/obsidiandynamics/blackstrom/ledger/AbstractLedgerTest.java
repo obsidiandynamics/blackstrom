@@ -23,7 +23,7 @@ public abstract class AbstractLedgerTest {
     private volatile AssertionError error;
 
     @Override
-    public void onMessage(VotingContext context, Message message) {
+    public void onMessage(MessageContext context, Message message) {
       final long messageId = (Long) message.getMessageId();
       if (lastMessageId == -1) {
         lastMessageId = messageId;

@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom;
+package com.obsidiandynamics.blackstrom.handler;
 
 public interface Disposable {
   void dispose();

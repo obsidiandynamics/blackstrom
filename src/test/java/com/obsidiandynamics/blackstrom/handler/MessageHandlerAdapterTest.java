@@ -41,7 +41,7 @@ public final class MessageHandlerAdapterTest {
     final AtomicInteger invocations = new AtomicInteger();
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NominationHandler() {
       @Override
-      public void onNomination(VotingContext context, Nomination nomination) {
+      public void onNomination(MessageContext context, Nomination nomination) {
         invocations.incrementAndGet();
       }
     });
@@ -54,7 +54,7 @@ public final class MessageHandlerAdapterTest {
     final AtomicInteger invocations = new AtomicInteger();
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new VoteHandler() {
       @Override
-      public void onVote(VotingContext context, Vote vote) {
+      public void onVote(MessageContext context, Vote vote) {
         invocations.incrementAndGet();
       }
     });
@@ -67,7 +67,7 @@ public final class MessageHandlerAdapterTest {
     final AtomicInteger invocations = new AtomicInteger();
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new DecisionHandler() {
       @Override
-      public void onDecision(VotingContext context, Decision decision) {
+      public void onDecision(MessageContext context, Decision decision) {
         invocations.incrementAndGet();
       }
     });

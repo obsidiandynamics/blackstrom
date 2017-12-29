@@ -17,7 +17,7 @@ public final class MessageHandlerAdapter implements MessageHandler {
   }
 
   @Override
-  public void onMessage(VotingContext context, Message message) {
+  public void onMessage(MessageContext context, Message message) {
     switch (message.getMessageType()) {
       case NOMINATION:
         if (nominationCapable) {

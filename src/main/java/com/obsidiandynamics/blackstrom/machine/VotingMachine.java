@@ -3,7 +3,6 @@ package com.obsidiandynamics.blackstrom.machine;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
@@ -29,11 +28,12 @@ public final class VotingMachine implements Disposable {
     cohorts.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
     monitors.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
     
-    initiators.forEach(i -> i.init(this));
-    cohorts.forEach(i -> i.init(this));
-    monitors.forEach(i -> i.init(this));    
+    final InitContext context = new DefaultInitContext(ledger);
+    initiators.forEach(i -> i.init(context));
+    cohorts.forEach(i -> i.init(context));
+    monitors.forEach(i -> i.init(context));    
     
-    ledger.init(this);
+    ledger.init(context);
   }
   
   public Ledger getLedger() {

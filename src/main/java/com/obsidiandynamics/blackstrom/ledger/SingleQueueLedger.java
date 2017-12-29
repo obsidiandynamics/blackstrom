@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class SingleQueueLedger implements Ledger {
   private final List<MessageHandler> handlers = new CopyOnWriteArrayList<>();
   
-  private final VotingContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultVotingContext(this);
   
   private final BlockingQueue<Message> queue;
   

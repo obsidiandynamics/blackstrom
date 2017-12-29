@@ -70,7 +70,7 @@ public final class BankTransferTest {
       for (int run = 0; run < runs; run++) {
         final String[] branchIds = numBranches != TWO_BRANCHES ? generateRandomBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
         final BankSettlement settlement = generateRandomSettlement(branchIds, transferAmount);
-        initiator.initiate(run, branchIds, settlement, 0, decisionCounter);
+        initiator.initiate(run, branchIds, settlement, Integer.MAX_VALUE, decisionCounter);
         
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;

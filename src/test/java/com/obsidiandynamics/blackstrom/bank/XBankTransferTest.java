@@ -47,7 +47,7 @@ public final class XBankTransferTest {
     final AtomicInteger decisions = new AtomicInteger();
     final Initiator initiator = new Initiator() {
       @Override
-      public void onDecision(VotingContext context, Decision decision) {
+      public void onDecision(MessageContext context, Decision decision) {
         decisions.incrementAndGet();
       }
     };

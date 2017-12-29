@@ -16,7 +16,7 @@ public final class MultiQueueLedger implements Ledger {
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   private final Object lock = new Object();
   
-  private final VotingContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultVotingContext(this);
   
   @Override
   public void attach(MessageHandler handler) {

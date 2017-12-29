@@ -49,6 +49,10 @@ final class PendingBallot {
     return allResponsesPresent();
   }
   
+  boolean hasResponded(String cohort) {
+    return responses.containsKey(cohort);
+  }
+  
   private boolean allResponsesPresent() {
     return responses.size() == nomination.getCohorts().length;
   }

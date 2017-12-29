@@ -28,7 +28,7 @@ public final class Branch implements Cohort {
   }
 
   @Override
-  public void onNomination(VotingContext context, Nomination nomination) {
+  public void onNomination(MessageContext context, Nomination nomination) {
     final BankSettlement settlement = nomination.getProposal();
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
@@ -53,7 +53,7 @@ public final class Branch implements Cohort {
   }
 
   @Override
-  public void onDecision(VotingContext context, Decision decision) {
+  public void onDecision(MessageContext context, Decision decision) {
     final Nomination nomination = nominations.remove(decision.getBallotId());
     if (nomination == null) return; // decision doesn't apply to this branch
     

@@ -15,7 +15,7 @@ public final class IndigoLedger implements Ledger {
   private final ActorRef dispatchRef = ActorRef.of(DISPATCH_ROLE);
   
   private final ActorSystem system;
-  private final VotingContext context = new DefaultVotingContext(this);
+  private final MessageContext context = new DefaultVotingContext(this);
   
   public IndigoLedger() {
     system = new ActorSystemConfig(){{
