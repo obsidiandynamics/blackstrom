@@ -20,9 +20,9 @@ public final class BasicMonitor implements Monitor {
   
   private final String nodeId = getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
   
-  private final int gcIntervalMillis = 1_000;
+  private final int gcIntervalMillis;
   
-  private final int decisionLifetimeMillis = 1_000;
+  private final int decisionLifetimeMillis;
   
   private final WorkerThread gc;
   
@@ -31,6 +31,12 @@ public final class BasicMonitor implements Monitor {
   private long reapedSoFar;
   
   public BasicMonitor() {
+    this(new BasicMonitorOptions());
+  }
+  
+  public BasicMonitor(BasicMonitorOptions options) {
+    this.gcIntervalMillis = options.getGCIntervalMillis();
+    this.decisionLifetimeMillis = options.getDecisionLifetimeMillis();
     gc = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName("gc-" + nodeId).withDaemon(true))
         .withWorker(this::gc)
@@ -42,7 +48,7 @@ public final class BasicMonitor implements Monitor {
     Thread.sleep(gcIntervalMillis);
     
     final long collectThreshold = System.currentTimeMillis() - decisionLifetimeMillis;
-    List<Decision> deathRow = null;
+    final List<Decision> deathRow = new ArrayList<>();
     
     final List<Decision> decidedCopy;
     synchronized (lock) {
@@ -51,12 +57,11 @@ public final class BasicMonitor implements Monitor {
     
     for (Decision decision : decidedCopy) {
       if (decision.getTimestamp() < collectThreshold) {
-        if (deathRow == null) deathRow = new ArrayList<>();
         deathRow.add(decision);
       }
     }
     
-    if (deathRow != null) {
+    if (! deathRow.isEmpty()) {
       for (Decision decision : deathRow) {
         synchronized (lock) {
           decided.remove(decision.getBallotId());
@@ -67,6 +72,14 @@ public final class BasicMonitor implements Monitor {
       LOG.debug("Reaped {} decisions ({} so far), pending: {}, decided: {}", 
                 deathRow.size(), reapedSoFar, pending.size(), decided.size());
     }
+  }
+  
+  Map<Object, Decision> getDecisions() {
+    final Map<Object, Decision> decidedCopy;
+    synchronized (lock) {
+      decidedCopy = new HashMap<>(decided);
+    }
+    return Collections.unmodifiableMap(decidedCopy);
   }
   
   @Override

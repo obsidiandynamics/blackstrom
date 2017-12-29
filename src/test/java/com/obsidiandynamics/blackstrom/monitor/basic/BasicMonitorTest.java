@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class BasicMonitorTest {
-  private static final int MAX_WAIT = 1000;
+  private static final int MAX_WAIT = 60_000;
   
   private BasicMonitor monitor;
   
@@ -28,8 +28,8 @@ public final class BasicMonitorTest {
   
   @Before
   public void before() {
-    monitor = new BasicMonitor();
-    ledger = new SingleQueueLedger();
+    setMonitor(new BasicMonitor());
+    setLedger(new SingleQueueLedger());
     decisions = new ArrayList<>();
     ledger.attach((c, m) -> decisions.add((Decision) m));
     ledger.init(null);
@@ -40,6 +40,16 @@ public final class BasicMonitorTest {
   public void after() {
     monitor.dispose();
     ledger.dispose();
+  }
+  
+  private void setMonitor(BasicMonitor monitor) {
+    if (this.monitor != null) this.monitor.dispose();
+    this.monitor = monitor;
+  }
+  
+  private void setLedger(Ledger ledger) {
+    if (this.ledger != null) this.ledger.dispose();
+    this.ledger = ledger;
   }
   
   @Test
@@ -194,15 +204,40 @@ public final class BasicMonitorTest {
     assertEquals(0, decisions.size());
   }
   
+  @Test
+  public void testGCNoReap() {
+    setMonitor(new BasicMonitor(new BasicMonitorOptions().withDecisionLifetimeMillis(60_000).withGCIntervalMillis(1)));
+    final UUID ballotId = UUID.randomUUID();
+    nominate(ballotId, "a");
+    vote(ballotId, "a", Plea.ACCEPT);
+    
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
+    assertEquals(1, decisions.size());
+    
+    TestSupport.sleep(10);
+    assertEquals(1, monitor.getDecisions().size());
+  }
+  
+  @Test
+  public void testGCReap() {
+    setMonitor(new BasicMonitor(new BasicMonitorOptions().withDecisionLifetimeMillis(1).withGCIntervalMillis(1)));
+    final UUID ballotId = UUID.randomUUID();
+    nominate(ballotId, "a");
+    vote(ballotId, "a", Plea.ACCEPT);
+    
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
+    assertEquals(1, decisions.size());
+    
+    Timesert.wait(MAX_WAIT).untilTrue(() -> monitor.getDecisions().isEmpty());
+  }
+  
   private static class TestLedgerException extends Exception {
     private static final long serialVersionUID = 1L;
   }
   
   @Test
   public void testAppendError() throws Exception {
-    ledger.dispose();
-    
-    ledger = Mockito.mock(Ledger.class);
+    setLedger(Mockito.mock(Ledger.class));
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     decisions = new ArrayList<>();
     ledger.attach((c, m) -> decisions.add((Decision) m));
