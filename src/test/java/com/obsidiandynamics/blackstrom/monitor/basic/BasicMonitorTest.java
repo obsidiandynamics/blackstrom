@@ -44,8 +44,6 @@ public final class BasicMonitorTest {
   
   private final List<Outcome> outcomes = new ArrayList<>();
   
-  private long messageId;
-  
   @Before
   public void before() {
     setMonitorAndInit(new BasicMonitor());
@@ -84,27 +82,27 @@ public final class BasicMonitorTest {
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
     assertEquals(1, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals("ACCEPT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
     outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
-    vote(ballotId, "a", Plea.REJECT);
+    vote(ballotId, "a", Pledge.REJECT);
 
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
     assertEquals(1, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals("REJECT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
     outcomes.clear();
   }
@@ -115,58 +113,58 @@ public final class BasicMonitorTest {
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Plea.ACCEPT);
+    vote(ballotId, "b", Pledge.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
     outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Plea.REJECT);
+    vote(ballotId, "b", Pledge.REJECT);
 
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
-    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
+    assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "b").getPledge());
     outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
-    vote(ballotId, "a", Plea.REJECT);
+    vote(ballotId, "a", Pledge.REJECT);
 
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
-    vote(ballotId, "b", Plea.ACCEPT);
+    vote(ballotId, "b", Pledge.ACCEPT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
     assertEquals(1, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
-    vote(ballotId, "a", Plea.REJECT);
+    vote(ballotId, "a", Pledge.REJECT);
 
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
-    vote(ballotId, "b", Plea.REJECT);
+    vote(ballotId, "b", Pledge.REJECT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
     assertEquals(1, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     outcomes.clear();
   }
   
@@ -175,7 +173,7 @@ public final class BasicMonitorTest {
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     nominate(ballotId, "a", "b", "c");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
 
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
@@ -183,15 +181,15 @@ public final class BasicMonitorTest {
 
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Plea.ACCEPT);
+    vote(ballotId, "b", Pledge.ACCEPT);
 
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
     outcomes.clear();
     nominate(ballotId, "a", "b", "c");
     assertEquals(0, outcomes.size());
@@ -201,30 +199,30 @@ public final class BasicMonitorTest {
   public void testDuplicateVote_twoCohorts() {
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
-    vote(ballotId, "a", Plea.ACCEPT);
-    vote(ballotId, "a", Plea.REJECT);
+    vote(ballotId, "a", Pledge.ACCEPT);
+    vote(ballotId, "a", Pledge.REJECT);
 
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Plea.ACCEPT);
-    vote(ballotId, "b", Plea.TIMEOUT);
+    vote(ballotId, "b", Pledge.ACCEPT);
+    vote(ballotId, "b", Pledge.TIMEOUT);
 
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
     outcomes.clear();
-    vote(ballotId, "b", Plea.REJECT);
+    vote(ballotId, "b", Pledge.REJECT);
     assertEquals(0, outcomes.size());
   }
   
   @Test
   public void testVoteWithoutBallot() {
     final UUID ballotId = UUID.randomUUID();
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
@@ -235,7 +233,7 @@ public final class BasicMonitorTest {
     setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetimeMillis(60_000).withGCIntervalMillis(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
@@ -249,7 +247,7 @@ public final class BasicMonitorTest {
     setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetimeMillis(1).withGCIntervalMillis(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
@@ -271,7 +269,7 @@ public final class BasicMonitorTest {
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
 
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
@@ -283,26 +281,26 @@ public final class BasicMonitorTest {
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, 1, "a", "b");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> votes.size() == 1);
     assertEquals(0, outcomes.size());
     assertEquals(1, votes.size());
     assertEquals(ballotId, votes.get(0).getBallotId());
-    assertEquals(Plea.TIMEOUT, votes.get(0).getResponse().getPlea());
+    assertEquals(Pledge.TIMEOUT, votes.get(0).getResponse().getPledge());
     
     // feed the timeout back into the monitor - should produce a rejection
-    vote(ballotId, "b", Plea.TIMEOUT);
+    vote(ballotId, "b", Pledge.TIMEOUT);
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
-    assertEquals(Plea.TIMEOUT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
+    assertEquals(Pledge.TIMEOUT, getResponseForCohort(outcomes.get(0), "b").getPledge());
     
     // subsequent votes should have no effect
-    vote(ballotId, "b", Plea.ACCEPT);
+    vote(ballotId, "b", Pledge.ACCEPT);
     
     TestSupport.sleep(10);
     assertEquals(1, outcomes.size());
@@ -314,21 +312,21 @@ public final class BasicMonitorTest {
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, 10_000, "a", "b");
-    vote(ballotId, "a", Plea.ACCEPT);
+    vote(ballotId, "a", Pledge.ACCEPT);
     
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
     assertEquals(0, votes.size());
     
-    vote(ballotId, "b", Plea.ACCEPT);
+    vote(ballotId, "b", Pledge.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
+    assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
   }
   
   private Response getResponseForCohort(Outcome outcome, String cohort) {
@@ -345,10 +343,10 @@ public final class BasicMonitorTest {
   }
 
   private void nominate(UUID ballotId, int timeout, String... cohorts) {
-    monitor.onNomination(context, new Nomination(messageId++, ballotId, "Test", cohorts, null, timeout));
+    monitor.onNomination(context, new Nomination(ballotId, cohorts, null, timeout));
   }
 
-  private void vote(UUID ballotId, String cohort, Plea plea) {
-    monitor.onVote(context, new Vote(messageId++, ballotId, "Test", new Response(cohort, plea, plea.name())));
+  private void vote(UUID ballotId, String cohort, Pledge pledge) {
+    monitor.onVote(context, new Vote(ballotId, new Response(cohort, pledge, pledge.name())));
   }
 }

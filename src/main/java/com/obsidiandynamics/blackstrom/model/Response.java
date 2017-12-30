@@ -4,12 +4,12 @@ import com.obsidiandynamics.blackstrom.util.*;
 
 public final class Response {
   private final String cohort;
-  private final Plea plea;
+  private final Pledge pledge;
   private final Object metadata;
   
-  public Response(String cohort, Plea plea, Object metadata) {
+  public Response(String cohort, Pledge pledge, Object metadata) {
     this.cohort = cohort;
-    this.plea = plea;
+    this.pledge = pledge;
     this.metadata = metadata;
   }
 
@@ -17,8 +17,8 @@ public final class Response {
     return cohort;
   }
 
-  public Plea getPlea() {
-    return plea;
+  public Pledge getPledge() {
+    return pledge;
   }
 
   public <T> T getMetadata() {
@@ -27,6 +27,6 @@ public final class Response {
 
   @Override
   public String toString() {
-    return "Respose [cohort=" + cohort + ", plea=" + plea + ", metadata=" + metadata + "]";
+    return "Respose [cohort=" + cohort + ", pledge=" + pledge + ", metadata=" + metadata + "]";
   }
 }

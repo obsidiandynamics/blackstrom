@@ -9,15 +9,9 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class AsyncInitiator implements Initiator {
-  private final String source;
-  
   private final Map<Object, Consumer<Outcome>> pending = new ConcurrentHashMap<>();
   
   private Ledger ledger;
-  
-  public AsyncInitiator(String source) {
-    this.source = source;
-  }
   
   @Override
   public void init(InitContext context) {
@@ -32,7 +26,7 @@ public final class AsyncInitiator implements Initiator {
   
   public void initiate(Object ballotId, String[] cohorts, Object proposal, int ttl, Consumer<Outcome> callback) throws Exception {
     pending.put(ballotId, callback);
-    ledger.append(new Nomination(ballotId, ballotId, source, cohorts, proposal, ttl));
+    ledger.append(new Nomination(ballotId, cohorts, proposal, ttl));
   }
 
   @Override

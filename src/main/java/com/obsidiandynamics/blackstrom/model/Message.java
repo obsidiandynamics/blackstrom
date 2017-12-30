@@ -1,31 +1,37 @@
 package com.obsidiandynamics.blackstrom.model;
 
 public abstract class Message {
-  private final Object messageId;
-  
   private final Object ballotId;
-  
-  private final String source;
   
   private final long timestamp;
   
-  protected Message(Object messageId, Object ballotId, String source) {
-    this.messageId = messageId;
+  private Object messageId;
+  
+  private String source;
+  
+  protected Message(Object ballotId) {
     this.ballotId = ballotId;
-    this.source = source;
     timestamp = System.currentTimeMillis();
-  }
-
-  public final Object getMessageId() {
-    return messageId;
   }
 
   public final Object getBallotId() {
     return ballotId;
   }
 
+  public final Object getMessageId() {
+    return messageId;
+  }
+  
+  public final void setMessageId(Object messageId) {
+    this.messageId = messageId;
+  }
+
   public final String getSource() {
     return source;
+  }
+  
+  public final void setSource(String source) {
+    this.source = source;
   }
 
   public final long getTimestamp() {
@@ -35,7 +41,7 @@ public abstract class Message {
   public abstract MessageType getMessageType();
   
   protected final String baseToString() {
-    return "messageId=" + messageId + ", ballotId=" + ballotId + ", source=" + source + ", timestamp="
+    return "ballotId=" + ballotId + ", messageId=" + messageId + ", source=" + source + ", timestamp="
         + timestamp;
   }
 }

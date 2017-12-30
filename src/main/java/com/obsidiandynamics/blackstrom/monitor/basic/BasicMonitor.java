@@ -116,7 +116,7 @@ public final class BasicMonitor implements Monitor {
   
   private void timeoutCohort(Nomination nomination, String cohort) {
     LOG.debug("Timed out {} for cohort {}", nomination, cohort);
-    append(new Vote(nomination.getBallotId(), nomination.getBallotId(), nodeId, new Response(cohort, Plea.TIMEOUT, null)));
+    append(new Vote(nomination.getBallotId(), new Response(cohort, Pledge.TIMEOUT, null)));
   }
   
   private void append(Message message) {
@@ -175,7 +175,7 @@ public final class BasicMonitor implements Monitor {
   private void decideBallot(PendingBallot ballot) {
     if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getNomination(), ballot.getVerdict());
     final Object ballotId = ballot.getNomination().getBallotId();
-    final Outcome outcome = new Outcome(ballotId, ballotId, nodeId, ballot.getVerdict(), ballot.getResponses());
+    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getResponses());
     pending.remove(ballotId);
     decided.put(ballotId, outcome);
     append(outcome);

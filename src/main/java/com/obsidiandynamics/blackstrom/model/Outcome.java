@@ -6,8 +6,8 @@ public final class Outcome extends Message {
   private final Verdict verdict;
   private final Response[] responses;
 
-  public Outcome(Object messageId, Object ballotId, String source, Verdict verdict, Response[] responses) {
-    super(messageId, ballotId, source);
+  public Outcome(Object ballotId, Verdict verdict, Response[] responses) {
+    super(ballotId);
     this.verdict = verdict;
     this.responses = responses;
   }

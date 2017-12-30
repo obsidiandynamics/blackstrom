@@ -40,8 +40,7 @@ public final class MessageHandlerAdapterTest {
   public void testNomination() {
     final AtomicInteger invocations = new AtomicInteger();
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NominationHandler() {
-      @Override
-      public void onNomination(MessageContext context, Nomination nomination) {
+      @Override public void onNomination(MessageContext context, Nomination nomination) {
         invocations.incrementAndGet();
       }
     });
@@ -53,8 +52,7 @@ public final class MessageHandlerAdapterTest {
   public void testVote() {
     final AtomicInteger invocations = new AtomicInteger();
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new VoteHandler() {
-      @Override
-      public void onVote(MessageContext context, Vote vote) {
+      @Override public void onVote(MessageContext context, Vote vote) {
         invocations.incrementAndGet();
       }
     });
@@ -66,8 +64,7 @@ public final class MessageHandlerAdapterTest {
   public void testOutcome() {
     final AtomicInteger invocations = new AtomicInteger();
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new OutcomeHandler() {
-      @Override
-      public void onOutcome(MessageContext context, Outcome outcome) {
+      @Override public void onOutcome(MessageContext context, Outcome outcome) {
         invocations.incrementAndGet();
       }
     });
@@ -78,9 +75,8 @@ public final class MessageHandlerAdapterTest {
   @Test(expected=UnsupportedOperationException.class)
   public void testUnsupported() {
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new Object());
-    adapter.onMessage(null, new Message(null, null, null) {
-      @Override
-      public MessageType getMessageType() {
+    adapter.onMessage(null, new Message(null) {
+      @Override public MessageType getMessageType() {
         return UNKNOWN;
       }
     });
@@ -93,14 +89,14 @@ public final class MessageHandlerAdapterTest {
   }
   
   private static Nomination newNomination() {
-    return new Nomination(null, null, null, null, null, 0);
+    return new Nomination(null, null, null, 0);
   }
   
   private static Vote newVote() {
-    return new Vote(null, null, null, null);
+    return new Vote(null, null);
   }
   
   private static Outcome newOutcome() {
-    return new Outcome(null, null, null, null, null);
+    return new Outcome(null, null, null);
   }
 }

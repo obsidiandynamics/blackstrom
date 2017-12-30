@@ -50,7 +50,7 @@ public final class BankTransferTest {
     final int initialBalance = 1_000;
     final int transferAmount = initialBalance;
 
-    final AsyncInitiator initiator = new AsyncInitiator("settler");
+    final AsyncInitiator initiator = new AsyncInitiator();
     final List<Branch> branches = createBranches(2, initialBalance);
     buildStandardMachine(initiator, branches);
 
@@ -63,8 +63,8 @@ public final class BankTransferTest {
                                           Integer.MAX_VALUE).get();
     assertEquals(Verdict.COMMIT, o.getVerdict());
     assertEquals(2, o.getResponses().length);
-    assertEquals(Plea.ACCEPT, o.getResponse(getBranchId(0)).getPlea());
-    assertEquals(Plea.ACCEPT, o.getResponse(getBranchId(1)).getPlea());
+    assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(0)).getPledge());
+    assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(1)).getPledge());
     Timesert.wait(MAX_WAIT).until(() -> {
       assertEquals(initialBalance - transferAmount, branches.get(0).getBalance());
       assertEquals(initialBalance + transferAmount, branches.get(1).getBalance());
@@ -76,7 +76,7 @@ public final class BankTransferTest {
     final int initialBalance = 1_000;
     final int transferAmount = initialBalance + 1;
 
-    final AsyncInitiator initiator = new AsyncInitiator("settler");
+    final AsyncInitiator initiator = new AsyncInitiator();
     final List<Branch> branches = createBranches(2, initialBalance);
     buildStandardMachine(initiator, branches);
 
@@ -88,11 +88,11 @@ public final class BankTransferTest {
                                           .build(),
                                           Integer.MAX_VALUE).get();
     assertEquals(Verdict.ABORT, d.getVerdict());
-    assertTrue(d.getResponses().length >= 1); // the accept plea doesn't need to have been considered
-    assertEquals(Plea.REJECT, d.getResponse(getBranchId(0)).getPlea());
+    assertTrue(d.getResponses().length >= 1); // the accept status doesn't need to have been considered
+    assertEquals(Pledge.REJECT, d.getResponse(getBranchId(0)).getPledge());
     final Response acceptResponse = d.getResponse(getBranchId(1));
     if (acceptResponse != null) {
-      assertEquals(Plea.ACCEPT, acceptResponse.getPlea());  
+      assertEquals(Pledge.ACCEPT, acceptResponse.getPledge());  
     }
     Timesert.wait(MAX_WAIT).until(() -> {
       assertEquals(initialBalance, branches.get(0).getBalance());
@@ -124,7 +124,7 @@ public final class BankTransferTest {
       for (int run = 0; run < runs; run++) {
         final String[] branchIds = numBranches != TWO_BRANCHES ? generateRandomBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
         final BankSettlement settlement = generateRandomSettlement(branchIds, transferAmount);
-        ledger.append(new Nomination(run, run, "settler", branchIds, settlement, Integer.MAX_VALUE));
+        ledger.append(new Nomination(run, branchIds, settlement, Integer.MAX_VALUE));
 
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;

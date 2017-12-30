@@ -41,7 +41,7 @@ final class PendingBallot {
       return false;
     }
     
-    if (response.getPlea() != Plea.ACCEPT) {
+    if (response.getPledge() != Pledge.ACCEPT) {
       verdict = Verdict.ABORT;
       return true;
     }

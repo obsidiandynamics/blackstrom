@@ -9,8 +9,8 @@ public final class Nomination extends Message {
   private final Object proposal;
   private final int ttl;
 
-  public Nomination(Object messageId, Object ballotId, String source, String[] cohorts, Object proposal, int ttl) {
-    super(messageId, ballotId, source);
+  public Nomination(Object ballotId, String[] cohorts, Object proposal, int ttl) {
+    super(ballotId);
     this.cohorts = cohorts;
     this.proposal = proposal;
     this.ttl = ttl;

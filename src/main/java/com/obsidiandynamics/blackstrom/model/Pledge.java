@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.model;
 
-public enum Plea {
+public enum Pledge {
   ACCEPT,
   REJECT,
   TIMEOUT

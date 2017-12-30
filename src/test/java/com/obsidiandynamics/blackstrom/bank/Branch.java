@@ -34,19 +34,19 @@ public final class Branch implements Cohort {
     if (xfer == null) return; // settlement doesn't apply to this branch
     
     if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
-    final Plea plea;
+    final Pledge pledge;
     final long newBalance = balance + xfer.getAmount();
     if (newBalance >= 0) {
       nominations.put(nomination.getBallotId(), nomination);
-      plea = Plea.ACCEPT;
+      pledge = Pledge.ACCEPT;
       balance = newBalance;
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting\n", branchId);
     } else {
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting, balance: %,d\n", branchId, balance);
-      plea = Plea.REJECT;
+      pledge = Pledge.REJECT;
     }
     try {
-      context.vote(nomination.getBallotId(), branchId, branchId, plea, null);
+      context.vote(nomination.getBallotId(), branchId, pledge, null);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -55,7 +55,7 @@ public final class Branch implements Cohort {
   @Override
   public void onOutcome(MessageContext context, Outcome outcome) {
     final Nomination nomination = nominations.remove(outcome.getBallotId());
-    if (nomination == null) return; // decision doesn't apply to this branch
+    if (nomination == null) return; // outcome doesn't apply to this branch
     
     if (outcome.getVerdict() == Verdict.ABORT) {
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s", branchId, outcome);

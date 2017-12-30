@@ -24,7 +24,7 @@ public final class AsyncInitiatorTest {
   @Test
   public void testFuture() throws Exception {
     final Ledger ledger = new SingleLinkedQueueLedger();
-    final AsyncInitiator initiator = new AsyncInitiator("async");
+    final AsyncInitiator initiator = new AsyncInitiator();
     machine = VotingMachine.builder()
         .withLedger(ledger)
         .withInitiator(initiator)
@@ -35,10 +35,10 @@ public final class AsyncInitiatorTest {
       if (m.getMessageType() == MessageType.NOMINATION) {
         called.incrementAndGet();
         try {
-          c.getLedger().append(new Outcome(m.getMessageId(), m.getBallotId(), "decider", Verdict.COMMIT, new Response[0]));
+          c.getLedger().append(new Outcome(m.getBallotId(), Verdict.COMMIT, new Response[0]));
           
           // second append should do nothing
-          c.getLedger().append(new Outcome(m.getMessageId(), m.getBallotId(), "decider", Verdict.ABORT, new Response[0]));
+          c.getLedger().append(new Outcome(m.getBallotId(), Verdict.ABORT, new Response[0]));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }

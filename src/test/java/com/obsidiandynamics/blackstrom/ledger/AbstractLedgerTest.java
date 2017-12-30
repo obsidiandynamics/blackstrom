@@ -19,21 +19,21 @@ public abstract class AbstractLedgerTest {
   private static class TestHandler implements MessageHandler {
     private final List<Message> received = new CopyOnWriteArrayList<>();
     
-    private volatile long lastMessageId = -1;
+    private volatile long lastBallotId = -1;
     private volatile AssertionError error;
 
     @Override
     public void onMessage(MessageContext context, Message message) {
-      final long messageId = (Long) message.getMessageId();
-      if (lastMessageId == -1) {
-        lastMessageId = messageId;
+      final long ballotId = (Long) message.getBallotId();
+      if (lastBallotId == -1) {
+        lastBallotId = ballotId;
       } else {
-        final long expectedMessageId = lastMessageId + 1;
-        if (messageId != expectedMessageId) {
-          error = new AssertionError("Expected message " + expectedMessageId + ", got " + messageId);
+        final long expectedBallotId = lastBallotId + 1;
+        if (ballotId != expectedBallotId) {
+          error = new AssertionError("Expected ballot " + expectedBallotId + ", got " + ballotId);
           throw error;
         } else {
-          lastMessageId = messageId;
+          lastBallotId = ballotId;
         }
       }
       received.add(message);
@@ -41,8 +41,9 @@ public abstract class AbstractLedgerTest {
   }
   
   private static class TestMessage extends Message {
-    protected TestMessage(Object messageId, String source) {
-      super(messageId, "TestBallot", source);
+    protected TestMessage(Object ballotId, String source) {
+      super(ballotId);
+      setSource(source);
     }
 
     @Override
@@ -91,7 +92,7 @@ public abstract class AbstractLedgerTest {
         assertEquals(numMessages, handler.received.size());
         long index = 0;
         for (Message m  : handler.received) {
-          assertEquals(index, m.getMessageId());
+          assertEquals(index, m.getBallotId());
           index++;
         }
       }
