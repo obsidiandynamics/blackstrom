@@ -12,7 +12,7 @@ import com.obsidiandynamics.blackstrom.monitor.*;
 
 public final class VotingMachineTest {
   @Test
-  public void test() {
+  public void testBuilder() {
     final Ledger ledger = mock(Ledger.class);
     final Initiator initiator = mock(Initiator.class);
     final Cohort cohort = mock(Cohort.class);
@@ -31,12 +31,9 @@ public final class VotingMachineTest {
     verify(ledger).init();
     
     assertEquals(ledger, machine.getLedger());
-    assertEquals(1, machine.getInitiators().size());
-    assertEquals(initiator, machine.getInitiators().iterator().next());
-    assertEquals(1, machine.getCohorts().size());
-    assertEquals(cohort, machine.getCohorts().iterator().next());
-    assertEquals(1, machine.getMonitors().size());
-    assertEquals(monitor, machine.getMonitors().iterator().next());
+    assertTrue(machine.getHandlers().contains(initiator));
+    assertTrue(machine.getHandlers().contains(cohort));
+    assertTrue(machine.getHandlers().contains(monitor));
     
     machine.dispose();
     

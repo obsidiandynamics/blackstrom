@@ -3,6 +3,7 @@ package com.obsidiandynamics.blackstrom.machine;
 import java.util.*;
 
 import com.obsidiandynamics.blackstrom.cohort.*;
+import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
@@ -63,6 +64,10 @@ public final class VotingMachineBuilder {
   }
   
   public VotingMachine build() {
-    return new VotingMachine(ledger, initiators, cohorts, monitors);
+    final Set<TypedMessageHandler> handlers = new HashSet<>();    
+    handlers.addAll(initiators);
+    handlers.addAll(cohorts);
+    handlers.addAll(monitors);
+    return new VotingMachine(ledger, handlers);
   }
 }
