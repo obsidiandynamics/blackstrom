@@ -16,11 +16,10 @@ public final class VotingMachine implements Disposable {
     this.handlers = handlers;
     
     handlers.forEach(h -> ledger.attach(h.toUntypedHandler()));
+    ledger.init();
     
     final InitContext context = new DefaultInitContext(ledger);
     handlers.forEach(h -> h.init(context));
-    
-    ledger.init();
   }
   
   public Ledger getLedger() {
