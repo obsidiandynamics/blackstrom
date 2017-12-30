@@ -36,7 +36,7 @@ public final class Branch implements Cohort {
     if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
     final Plea plea;
     final long newBalance = balance + xfer.getAmount();
-    if (newBalance > 0) {
+    if (newBalance >= 0) {
       nominations.put(nomination.getBallotId(), nomination);
       plea = Plea.ACCEPT;
       balance = newBalance;

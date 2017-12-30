@@ -19,6 +19,15 @@ public final class Decision extends Message {
   public Response[] getResponses() {
     return responses;
   }
+  
+  public Response getResponse(String cohort) {
+    for (Response response : responses) {
+      if (response.getCohort().equals(cohort)) {
+        return response;
+      }
+    }
+    return null;
+  }
 
   @Override
   public MessageType getMessageType() {
