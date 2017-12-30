@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.handler;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
-public interface DecisionHandler {
+@FunctionalInterface
+public interface DecisionHandler extends TypedMessageHandler {
   void onDecision(MessageContext context, Decision decision);
 }

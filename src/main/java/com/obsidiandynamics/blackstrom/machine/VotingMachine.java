@@ -1,8 +1,8 @@
 package com.obsidiandynamics.blackstrom.machine;
 
 import java.util.*;
-import java.util.concurrent.*;
 
+import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
@@ -12,11 +12,13 @@ import com.obsidiandynamics.blackstrom.monitor.*;
 public final class VotingMachine implements Disposable {
   private final Ledger ledger;
   
-  private final Set<Initiator> initiators = new CopyOnWriteArraySet<>();
+  private final Set<Initiator> initiators = new HashSet<>();
   
-  private final Set<Cohort> cohorts = new CopyOnWriteArraySet<>();
+  private final Set<Cohort> cohorts = new HashSet<>();
   
-  private final Set<Monitor> monitors = new CopyOnWriteArraySet<>();
+  private final Set<Monitor> monitors = new HashSet<>();
+  
+  private final Set<TypedMessageHandler> allHandlers = new HashSet<>();
   
   VotingMachine(Ledger ledger, Collection<Initiator> initiators, Collection<Cohort> cohorts, Collection<Monitor> monitors) {
     this.ledger = ledger;
@@ -24,16 +26,16 @@ public final class VotingMachine implements Disposable {
     this.cohorts.addAll(cohorts);
     this.monitors.addAll(monitors);
     
-    initiators.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
-    cohorts.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
-    monitors.forEach(i -> ledger.attach(new MessageHandlerAdapter(i)));
+    allHandlers.addAll(initiators);
+    allHandlers.addAll(cohorts);
+    allHandlers.addAll(monitors);
+    
+    allHandlers.forEach(h -> ledger.attach(h.toUntypedHandler()));
     
     final InitContext context = new DefaultInitContext(ledger);
-    initiators.forEach(i -> i.init(context));
-    cohorts.forEach(i -> i.init(context));
-    monitors.forEach(i -> i.init(context));    
+    allHandlers.forEach(h -> h.init(context));
     
-    ledger.init(context);
+    ledger.init();
   }
   
   public Ledger getLedger() {
@@ -55,9 +57,7 @@ public final class VotingMachine implements Disposable {
   @Override
   public void dispose() {
     ledger.dispose();
-    initiators.forEach(i -> i.dispose());
-    cohorts.forEach(i -> i.dispose());
-    monitors.forEach(i -> i.dispose());
+    allHandlers.forEach(h -> h.dispose());
   }
   
   public static VotingMachineBuilder builder() {

@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.handler;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
-public interface VoteHandler {
+@FunctionalInterface
+public interface VoteHandler extends TypedMessageHandler {
   void onVote(MessageContext context, Vote vote);
 }

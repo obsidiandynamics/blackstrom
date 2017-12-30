@@ -79,7 +79,7 @@ public abstract class AbstractLedgerTest {
       handlers.add(handler);
       ledger.attach(handler);
     }
-    ledger.init(null);
+    ledger.init();
     
     for (int i = 0; i < numMessages; i++) {
       appendMessage("test");
@@ -107,7 +107,7 @@ public abstract class AbstractLedgerTest {
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((c, m) -> received.incrementAndGet());
-    ledger.init(null);
+    ledger.init();
     
     final long took = TestSupport.took(() -> {
       for (int i = 0; i < numMessages; i++) {
@@ -139,7 +139,7 @@ public abstract class AbstractLedgerTest {
         received.incrementAndGet();
       }
     });
-    ledger.init(null);
+    ledger.init();
     
     final long took = TestSupport.took(() -> {
       for (int i = 0; i < numMessages; i++) {

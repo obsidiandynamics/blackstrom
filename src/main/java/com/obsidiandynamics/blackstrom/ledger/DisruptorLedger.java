@@ -61,7 +61,7 @@ public final class DisruptorLedger implements Ledger {
   
   @SuppressWarnings("unchecked")
   @Override
-  public void init(InitContext context) {
+  public void init() {
     final EventHandler<MessageEvent> collector = (e, seq, endOfBatch) -> e.clear();
     
     disruptor

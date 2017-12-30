@@ -25,8 +25,8 @@ public final class BasicMonitorTest {
       ledger.append(message);
     }
     
-    @Override public void init(InitContext context) {
-      ledger.init(context);
+    @Override public void init() {
+      ledger.init();
     }
     
     @Override public void dispose() {
@@ -57,7 +57,7 @@ public final class BasicMonitorTest {
         votes.add((Vote) m);
       }
     });
-    ledger.init(initContext);
+    ledger.init();
     context = new DefaultMessageContext(ledger);
   }
   
@@ -266,7 +266,7 @@ public final class BasicMonitorTest {
     setLedger(Mockito.mock(Ledger.class));
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     ledger.attach((c, m) -> decisions.add((Decision) m));
-    ledger.init(null);
+    ledger.init();
     context = new DefaultMessageContext(ledger);
     
     final UUID ballotId = UUID.randomUUID();
@@ -306,6 +306,29 @@ public final class BasicMonitorTest {
     
     TestSupport.sleep(10);
     assertEquals(1, decisions.size());
+  }
+  
+  @Test
+  public void testNoTimeout_twoCohorts() {
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutIntervalMillis(1)));
+    
+    final UUID ballotId = UUID.randomUUID();
+    nominate(ballotId, 10_000, "a", "b");
+    vote(ballotId, "a", Plea.ACCEPT);
+    
+    TestSupport.sleep(10);
+    assertEquals(0, decisions.size());
+    assertEquals(0, votes.size());
+    
+    vote(ballotId, "b", Plea.ACCEPT);
+    
+    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
+    assertEquals(1, decisions.size());
+    assertEquals(ballotId, decisions.get(0).getBallotId());
+    assertEquals(Outcome.COMMIT, decisions.get(0).getOutcome());
+    assertEquals(2, decisions.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
+    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "b").getPlea());
   }
   
   private Response getResponseForCohort(Decision decision, String cohort) {

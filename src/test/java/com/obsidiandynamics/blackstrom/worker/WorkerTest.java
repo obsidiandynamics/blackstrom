@@ -63,12 +63,15 @@ public final class WorkerTest {
   @Test
   public void testJoinInterrupted() {
     final WorkerThread thread = new WorkerThread(new WorkerOptions(), t -> {
-      t.terminate();
+      TestSupport.sleep(10);
     });
     thread.start();
     Thread.currentThread().interrupt();
     thread.joinQuietly();
     assertTrue(Thread.interrupted());
+    
+    thread.terminate();
+    thread.joinQuietly();
   }
   
   @Test
