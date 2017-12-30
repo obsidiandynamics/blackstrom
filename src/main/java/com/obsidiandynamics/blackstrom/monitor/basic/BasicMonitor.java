@@ -173,9 +173,9 @@ public final class BasicMonitor implements Monitor {
   }
   
   private void decideBallot(PendingBallot ballot) {
-    if (DEBUG) LOG.trace("Decided ballot for {}: outcome: {}", ballot.getNomination(), ballot.getOutcome());
+    if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getNomination(), ballot.getVerdict());
     final Object ballotId = ballot.getNomination().getBallotId();
-    final Decision decision = new Decision(ballotId, ballotId, nodeId, ballot.getOutcome(), ballot.getResponses());
+    final Decision decision = new Decision(ballotId, ballotId, nodeId, ballot.getVerdict(), ballot.getResponses());
     pending.remove(ballotId);
     decided.put(ballotId, decision);
     append(decision);

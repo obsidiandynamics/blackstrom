@@ -11,7 +11,7 @@ final class PendingBallot {
   
   private final Map<String, Response> responses;
   
-  private Outcome outcome = Outcome.COMMIT;
+  private Verdict verdict = Verdict.COMMIT;
   
   PendingBallot(Nomination nomination) {
     this.nomination = nomination;
@@ -22,8 +22,8 @@ final class PendingBallot {
     return nomination;
   }
   
-  Outcome getOutcome() {
-    return outcome;
+  Verdict getVerdict() {
+    return verdict;
   }
   
   Response[] getResponses() {
@@ -42,7 +42,7 @@ final class PendingBallot {
     }
     
     if (response.getPlea() != Plea.ACCEPT) {
-      outcome = Outcome.ABORT;
+      verdict = Verdict.ABORT;
       return true;
     }
     

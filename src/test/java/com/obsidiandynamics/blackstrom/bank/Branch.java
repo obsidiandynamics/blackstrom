@@ -57,7 +57,7 @@ public final class Branch implements Cohort {
     final Nomination nomination = nominations.remove(decision.getBallotId());
     if (nomination == null) return; // decision doesn't apply to this branch
     
-    if (decision.getOutcome() == Outcome.ABORT) {
+    if (decision.getVerdict() == Verdict.ABORT) {
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s", branchId, decision);
       final BankSettlement settlement = nomination.getProposal();
       final BalanceTransfer xfer = settlement.getTransfers().get(branchId);

@@ -61,7 +61,7 @@ public final class BankTransferTest {
                                                          new BalanceTransfer(getBranchId(1), transferAmount))
                                           .build(),
                                           Integer.MAX_VALUE).get();
-    assertEquals(Outcome.COMMIT, d.getOutcome());
+    assertEquals(Verdict.COMMIT, d.getVerdict());
     assertEquals(2, d.getResponses().length);
     assertEquals(Plea.ACCEPT, d.getResponse(getBranchId(0)).getPlea());
     assertEquals(Plea.ACCEPT, d.getResponse(getBranchId(1)).getPlea());
@@ -87,7 +87,7 @@ public final class BankTransferTest {
                                                          new BalanceTransfer(getBranchId(1), transferAmount))
                                           .build(),
                                           Integer.MAX_VALUE).get();
-    assertEquals(Outcome.ABORT, d.getOutcome());
+    assertEquals(Verdict.ABORT, d.getVerdict());
     assertTrue(d.getResponses().length >= 1); // the accept plea doesn't need to have been considered
     assertEquals(Plea.REJECT, d.getResponse(getBranchId(0)).getPlea());
     final Response acceptResponse = d.getResponse(getBranchId(1));
@@ -111,7 +111,7 @@ public final class BankTransferTest {
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
     final Initiator initiator = (c ,d) -> {
-      if (d.getOutcome() == Outcome.COMMIT) {
+      if (d.getVerdict() == Verdict.COMMIT) {
         commits.incrementAndGet();
       } else {
         aborts.incrementAndGet();

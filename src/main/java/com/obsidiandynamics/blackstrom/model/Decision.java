@@ -3,17 +3,17 @@ package com.obsidiandynamics.blackstrom.model;
 import java.util.*;
 
 public final class Decision extends Message {
-  private final Outcome outcome;
+  private final Verdict verdict;
   private final Response[] responses;
 
-  public Decision(Object messageId, Object ballotId, String source, Outcome outcome, Response[] responses) {
+  public Decision(Object messageId, Object ballotId, String source, Verdict verdict, Response[] responses) {
     super(messageId, ballotId, source);
-    this.outcome = outcome;
+    this.verdict = verdict;
     this.responses = responses;
   }
   
-  public Outcome getOutcome() {
-    return outcome;
+  public Verdict getVerdict() {
+    return verdict;
   }
   
   public Response[] getResponses() {
@@ -36,6 +36,6 @@ public final class Decision extends Message {
 
   @Override
   public String toString() {
-    return "Decision [outcome=" + outcome + ", responses=" + Arrays.toString(responses) + ", " + baseToString() + "]";
+    return "Decision [verdict=" + verdict + ", responses=" + Arrays.toString(responses) + ", " + baseToString() + "]";
   }
 }

@@ -9,7 +9,7 @@ public final class DecisionTest {
   public void test() {
     final Response ra = new Response("a", Plea.ACCEPT, "a-meta");
     final Response rb = new Response("b", Plea.REJECT, "b-meta");
-    final Decision d = new Decision(0, 1, "source", Outcome.COMMIT, 
+    final Decision d = new Decision(0, 1, "source", Verdict.COMMIT, 
                                     new Response[] {ra, rb});
     assertEquals(2, d.getResponses().length);
     assertSame(ra, d.getResponse("a"));
