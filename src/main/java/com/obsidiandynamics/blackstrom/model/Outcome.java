@@ -2,11 +2,11 @@ package com.obsidiandynamics.blackstrom.model;
 
 import java.util.*;
 
-public final class Decision extends Message {
+public final class Outcome extends Message {
   private final Verdict verdict;
   private final Response[] responses;
 
-  public Decision(Object messageId, Object ballotId, String source, Verdict verdict, Response[] responses) {
+  public Outcome(Object messageId, Object ballotId, String source, Verdict verdict, Response[] responses) {
     super(messageId, ballotId, source);
     this.verdict = verdict;
     this.responses = responses;
@@ -31,11 +31,11 @@ public final class Decision extends Message {
 
   @Override
   public MessageType getMessageType() {
-    return MessageType.DECISION;
+    return MessageType.OUTCOME;
   }
 
   @Override
   public String toString() {
-    return "Decision [verdict=" + verdict + ", responses=" + Arrays.toString(responses) + ", " + baseToString() + "]";
+    return "Outcome [verdict=" + verdict + ", responses=" + Arrays.toString(responses) + ", " + baseToString() + "]";
   }
 }

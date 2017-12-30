@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.monitor.basic;
 public final class BasicMonitorOptions {
   private int gcIntervalMillis = 1_000;
   
-  private int decisionLifetimeMillis = 1_000;
+  private int outcomeLifetimeMillis = 1_000;
   
   private int timeoutIntervalMillis = 1_000;
 
@@ -16,12 +16,12 @@ public final class BasicMonitorOptions {
     return this;
   }
 
-  public int getDecisionLifetimeMillis() {
-    return decisionLifetimeMillis;
+  public int getOutcomeLifetimeMillis() {
+    return outcomeLifetimeMillis;
   }
 
-  public BasicMonitorOptions withDecisionLifetimeMillis(int decisionLifetimeMillis) {
-    this.decisionLifetimeMillis = decisionLifetimeMillis;
+  public BasicMonitorOptions withOutcomeLifetimeMillis(int outcomeLifetimeMillis) {
+    this.outcomeLifetimeMillis = outcomeLifetimeMillis;
     return this;
   }
   

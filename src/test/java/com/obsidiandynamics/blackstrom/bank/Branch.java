@@ -53,12 +53,12 @@ public final class Branch implements Cohort {
   }
 
   @Override
-  public void onDecision(MessageContext context, Decision decision) {
-    final Nomination nomination = nominations.remove(decision.getBallotId());
+  public void onOutcome(MessageContext context, Outcome outcome) {
+    final Nomination nomination = nominations.remove(outcome.getBallotId());
     if (nomination == null) return; // decision doesn't apply to this branch
     
-    if (decision.getVerdict() == Verdict.ABORT) {
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s", branchId, decision);
+    if (outcome.getVerdict() == Verdict.ABORT) {
+      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s", branchId, outcome);
       final BankSettlement settlement = nomination.getProposal();
       final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
       balance -= xfer.getAmount();

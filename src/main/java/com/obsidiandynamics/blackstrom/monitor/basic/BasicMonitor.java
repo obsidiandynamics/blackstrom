@@ -19,7 +19,7 @@ public final class BasicMonitor implements Monitor {
   
   private final Map<Object, PendingBallot> pending = new HashMap<>();
   
-  private final Map<Object, Decision> decided = new HashMap<>();
+  private final Map<Object, Outcome> decided = new HashMap<>();
   
   private final String nodeId = getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
   
@@ -27,7 +27,7 @@ public final class BasicMonitor implements Monitor {
   
   private final int gcIntervalMillis;
   
-  private final int decisionLifetimeMillis;
+  private final int outcomeLifetimeMillis;
   
   private long reapedSoFar;
   
@@ -43,7 +43,7 @@ public final class BasicMonitor implements Monitor {
   
   public BasicMonitor(BasicMonitorOptions options) {
     this.gcIntervalMillis = options.getGCIntervalMillis();
-    this.decisionLifetimeMillis = options.getDecisionLifetimeMillis();
+    this.outcomeLifetimeMillis = options.getOutcomeLifetimeMillis();
     this.timeoutIntervalMillis = options.getTimeoutIntervalMillis();
     
     gcThread = WorkerThread.builder()
@@ -62,29 +62,29 @@ public final class BasicMonitor implements Monitor {
   private void gcCycle(WorkerThread thread) throws InterruptedException {
     Thread.sleep(gcIntervalMillis);
     
-    final long collectThreshold = System.currentTimeMillis() - decisionLifetimeMillis;
-    final List<Decision> deathRow = new ArrayList<>();
+    final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+    final List<Outcome> deathRow = new ArrayList<>();
     
-    final List<Decision> decidedCopy;
+    final List<Outcome> decidedCopy;
     synchronized (lock) {
       decidedCopy = new ArrayList<>(decided.values());
     }
     
-    for (Decision decision : decidedCopy) {
-      if (decision.getTimestamp() < collectThreshold) {
-        deathRow.add(decision);
+    for (Outcome oucome : decidedCopy) {
+      if (oucome.getTimestamp() < collectThreshold) {
+        deathRow.add(oucome);
       }
     }
     
     if (! deathRow.isEmpty()) {
-      for (Decision decision : deathRow) {
+      for (Outcome outcome : deathRow) {
         synchronized (lock) {
-          decided.remove(decision.getBallotId());
+          decided.remove(outcome.getBallotId());
         }
       }
       reapedSoFar += deathRow.size();
       
-      LOG.debug("Reaped {} decisions ({} so far), pending: {}, decided: {}", 
+      LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
                 deathRow.size(), reapedSoFar, pending.size(), decided.size());
     }
   }
@@ -127,8 +127,8 @@ public final class BasicMonitor implements Monitor {
     } 
   }
   
-  Map<Object, Decision> getDecisions() {
-    final Map<Object, Decision> decidedCopy;
+  Map<Object, Outcome> getOutcomes() {
+    final Map<Object, Outcome> decidedCopy;
     synchronized (lock) {
       decidedCopy = new HashMap<>(decided);
     }
@@ -175,10 +175,10 @@ public final class BasicMonitor implements Monitor {
   private void decideBallot(PendingBallot ballot) {
     if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getNomination(), ballot.getVerdict());
     final Object ballotId = ballot.getNomination().getBallotId();
-    final Decision decision = new Decision(ballotId, ballotId, nodeId, ballot.getVerdict(), ballot.getResponses());
+    final Outcome outcome = new Outcome(ballotId, ballotId, nodeId, ballot.getVerdict(), ballot.getResponses());
     pending.remove(ballotId);
-    decided.put(ballotId, decision);
-    append(decision);
+    decided.put(ballotId, outcome);
+    append(outcome);
   }
   
   @Override

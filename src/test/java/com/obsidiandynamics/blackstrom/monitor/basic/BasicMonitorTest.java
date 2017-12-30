@@ -42,7 +42,7 @@ public final class BasicMonitorTest {
   
   private final List<Vote> votes = new ArrayList<>();
   
-  private final List<Decision> decisions = new ArrayList<>();
+  private final List<Outcome> outcomes = new ArrayList<>();
   
   private long messageId;
   
@@ -51,8 +51,8 @@ public final class BasicMonitorTest {
     setMonitorAndInit(new BasicMonitor());
     setLedger(new SingleLinkedQueueLedger());
     ledger.attach((c, m) -> { 
-      if (m.getMessageType() == MessageType.DECISION) {
-        decisions.add((Decision) m);
+      if (m.getMessageType() == MessageType.OUTCOME) {
+        outcomes.add((Outcome) m);
       } else {
         votes.add((Vote) m);
       }
@@ -79,95 +79,95 @@ public final class BasicMonitorTest {
   }
   
   @Test
-  public void testNominationDecision_oneCohort() {
+  public void testNominationOutcome_oneCohort() {
     UUID ballotId;
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, decisions.get(0).getVerdict());
-    assertEquals(1, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals("ACCEPT", getResponseForCohort(decisions.get(0), "a").getMetadata());
-    decisions.clear();
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(1, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals("ACCEPT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
+    outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, decisions.get(0).getVerdict());
-    assertEquals(1, decisions.get(0).getResponses().length);
-    assertEquals(Plea.REJECT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals("REJECT", getResponseForCohort(decisions.get(0), "a").getMetadata());
-    decisions.clear();
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(1, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals("REJECT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
+    outcomes.clear();
   }
   
   @Test
-  public void testNominationDecision_twoCohorts() {
+  public void testNominationOutcome_twoCohorts() {
     UUID ballotId;
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.ACCEPT);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     vote(ballotId, "b", Plea.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, decisions.get(0).getVerdict());
-    assertEquals(2, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "b").getPlea());
-    decisions.clear();
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(2, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.ACCEPT);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     vote(ballotId, "b", Plea.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, decisions.get(0).getVerdict());
-    assertEquals(2, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals(Plea.REJECT, getResponseForCohort(decisions.get(0), "b").getPlea());
-    decisions.clear();
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(2, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
     vote(ballotId, "b", Plea.ACCEPT);
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, decisions.get(0).getVerdict());
-    assertEquals(1, decisions.get(0).getResponses().length);
-    assertEquals(Plea.REJECT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    decisions.clear();
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(1, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    outcomes.clear();
     
     ballotId = UUID.randomUUID();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Plea.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
     vote(ballotId, "b", Plea.REJECT);
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, decisions.get(0).getVerdict());
-    assertEquals(1, decisions.get(0).getResponses().length);
-    assertEquals(Plea.REJECT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    decisions.clear();
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(1, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.REJECT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    outcomes.clear();
   }
   
   @Test
@@ -178,23 +178,23 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
 
     TestSupport.sleep(10);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     nominate(ballotId, "a", "b", "c");
 
     TestSupport.sleep(10);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     vote(ballotId, "b", Plea.ACCEPT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, decisions.get(0).getVerdict());
-    assertEquals(2, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "b").getPlea());
-    decisions.clear();
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(2, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    outcomes.clear();
     nominate(ballotId, "a", "b", "c");
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
   }
   
   @Test
@@ -205,20 +205,20 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.REJECT);
 
     TestSupport.sleep(10);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     vote(ballotId, "b", Plea.ACCEPT);
     vote(ballotId, "b", Plea.TIMEOUT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, decisions.get(0).getVerdict());
-    assertEquals(2, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "b").getPlea());
-    decisions.clear();
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(2, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
+    outcomes.clear();
     vote(ballotId, "b", Plea.REJECT);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
   }
   
   @Test
@@ -227,34 +227,34 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
     
     TestSupport.sleep(10);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
   }
   
   @Test
   public void testGCNoReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withDecisionLifetimeMillis(60_000).withGCIntervalMillis(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetimeMillis(60_000).withGCIntervalMillis(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
     
     TestSupport.sleep(10);
-    assertEquals(1, monitor.getDecisions().size());
+    assertEquals(1, monitor.getOutcomes().size());
   }
   
   @Test
   public void testGCReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withDecisionLifetimeMillis(1).withGCIntervalMillis(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetimeMillis(1).withGCIntervalMillis(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Plea.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> monitor.getDecisions().isEmpty());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> monitor.getOutcomes().isEmpty());
   }
   
   private static class TestLedgerException extends Exception {
@@ -265,7 +265,7 @@ public final class BasicMonitorTest {
   public void testAppendError() throws Exception {
     setLedger(Mockito.mock(Ledger.class));
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
-    ledger.attach((c, m) -> decisions.add((Decision) m));
+    ledger.attach((c, m) -> outcomes.add((Outcome) m));
     ledger.init();
     context = new DefaultMessageContext(ledger);
     
@@ -274,7 +274,7 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
 
     TestSupport.sleep(10);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
   }
   
   @Test
@@ -286,26 +286,26 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
     
     Timesert.wait(MAX_WAIT).untilTrue(() -> votes.size() == 1);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     assertEquals(1, votes.size());
     assertEquals(ballotId, votes.get(0).getBallotId());
     assertEquals(Plea.TIMEOUT, votes.get(0).getResponse().getPlea());
     
     // feed the timeout back into the monitor - should produce a rejection
     vote(ballotId, "b", Plea.TIMEOUT);
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, decisions.get(0).getVerdict());
-    assertEquals(2, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals(Plea.TIMEOUT, getResponseForCohort(decisions.get(0), "b").getPlea());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(2, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Plea.TIMEOUT, getResponseForCohort(outcomes.get(0), "b").getPlea());
     
     // subsequent votes should have no effect
     vote(ballotId, "b", Plea.ACCEPT);
     
     TestSupport.sleep(10);
-    assertEquals(1, decisions.size());
+    assertEquals(1, outcomes.size());
   }
   
   @Test
@@ -317,22 +317,22 @@ public final class BasicMonitorTest {
     vote(ballotId, "a", Plea.ACCEPT);
     
     TestSupport.sleep(10);
-    assertEquals(0, decisions.size());
+    assertEquals(0, outcomes.size());
     assertEquals(0, votes.size());
     
     vote(ballotId, "b", Plea.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> decisions.size() == 1);
-    assertEquals(1, decisions.size());
-    assertEquals(ballotId, decisions.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, decisions.get(0).getVerdict());
-    assertEquals(2, decisions.get(0).getResponses().length);
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "a").getPlea());
-    assertEquals(Plea.ACCEPT, getResponseForCohort(decisions.get(0), "b").getPlea());
+    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(2, outcomes.get(0).getResponses().length);
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPlea());
+    assertEquals(Plea.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPlea());
   }
   
-  private Response getResponseForCohort(Decision decision, String cohort) {
-    for (Response response : decision.getResponses()) {
+  private Response getResponseForCohort(Outcome outcome, String cohort) {
+    for (Response response : outcome.getResponses()) {
       if (response.getCohort().equals(cohort)) {
         return response;
       }

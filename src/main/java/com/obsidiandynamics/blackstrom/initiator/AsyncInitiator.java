@@ -11,7 +11,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class AsyncInitiator implements Initiator {
   private final String source;
   
-  private final Map<Object, Consumer<Decision>> pending = new ConcurrentHashMap<>();
+  private final Map<Object, Consumer<Outcome>> pending = new ConcurrentHashMap<>();
   
   private Ledger ledger;
   
@@ -24,22 +24,22 @@ public final class AsyncInitiator implements Initiator {
     this.ledger = context.getLedger();
   }
   
-  public CompletableFuture<Decision> initiate(Object ballotId, String[] cohorts, Object proposal, int ttl) throws Exception {
-    final CompletableFuture<Decision> f = new CompletableFuture<>();
+  public CompletableFuture<Outcome> initiate(Object ballotId, String[] cohorts, Object proposal, int ttl) throws Exception {
+    final CompletableFuture<Outcome> f = new CompletableFuture<>();
     initiate(ballotId, cohorts, proposal, ttl, f::complete);
     return f;
   }
   
-  public void initiate(Object ballotId, String[] cohorts, Object proposal, int ttl, Consumer<Decision> callback) throws Exception {
+  public void initiate(Object ballotId, String[] cohorts, Object proposal, int ttl, Consumer<Outcome> callback) throws Exception {
     pending.put(ballotId, callback);
     ledger.append(new Nomination(ballotId, ballotId, source, cohorts, proposal, ttl));
   }
 
   @Override
-  public void onDecision(MessageContext context, Decision decision) {
-    final Consumer<Decision> callback = pending.remove(decision.getBallotId());
+  public void onOutcome(MessageContext context, Outcome outcome) {
+    final Consumer<Outcome> callback = pending.remove(outcome.getBallotId());
     if (callback != null) {
-      callback.accept(decision);
+      callback.accept(outcome);
     }
   }
 }

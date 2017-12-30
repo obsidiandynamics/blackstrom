@@ -7,13 +7,13 @@ public final class MessageHandlerAdapter implements MessageHandler {
   
   private final boolean nominationCapable;
   private final boolean voteCapable;
-  private final boolean decisionCapable;
+  private final boolean outcomeCapable;
   
   public MessageHandlerAdapter(Object handler) {
     this.handler = handler;
     nominationCapable = handler instanceof NominationHandler;
     voteCapable = handler instanceof VoteHandler;
-    decisionCapable = handler instanceof DecisionHandler;
+    outcomeCapable = handler instanceof OutcomeHandler;
   }
 
   @Override
@@ -31,9 +31,9 @@ public final class MessageHandlerAdapter implements MessageHandler {
         }
         break;
         
-      case DECISION:
-        if (decisionCapable) {
-          ((DecisionHandler) handler).onDecision(context, (Decision) message);
+      case OUTCOME:
+        if (outcomeCapable) {
+          ((OutcomeHandler) handler).onOutcome(context, (Outcome) message);
         }
         break;
         

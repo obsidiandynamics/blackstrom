@@ -54,17 +54,17 @@ public final class BankTransferTest {
     final List<Branch> branches = createBranches(2, initialBalance);
     buildStandardMachine(initiator, branches);
 
-    final Decision d = initiator.initiate(UUID.randomUUID(), 
+    final Outcome o = initiator.initiate(UUID.randomUUID(), 
                                           TWO_BRANCH_IDS,
                                           BankSettlement.builder()
                                           .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
                                                          new BalanceTransfer(getBranchId(1), transferAmount))
                                           .build(),
                                           Integer.MAX_VALUE).get();
-    assertEquals(Verdict.COMMIT, d.getVerdict());
-    assertEquals(2, d.getResponses().length);
-    assertEquals(Plea.ACCEPT, d.getResponse(getBranchId(0)).getPlea());
-    assertEquals(Plea.ACCEPT, d.getResponse(getBranchId(1)).getPlea());
+    assertEquals(Verdict.COMMIT, o.getVerdict());
+    assertEquals(2, o.getResponses().length);
+    assertEquals(Plea.ACCEPT, o.getResponse(getBranchId(0)).getPlea());
+    assertEquals(Plea.ACCEPT, o.getResponse(getBranchId(1)).getPlea());
     Timesert.wait(MAX_WAIT).until(() -> {
       assertEquals(initialBalance - transferAmount, branches.get(0).getBalance());
       assertEquals(initialBalance + transferAmount, branches.get(1).getBalance());
@@ -80,7 +80,7 @@ public final class BankTransferTest {
     final List<Branch> branches = createBranches(2, initialBalance);
     buildStandardMachine(initiator, branches);
 
-    final Decision d = initiator.initiate(UUID.randomUUID(), 
+    final Outcome d = initiator.initiate(UUID.randomUUID(), 
                                           TWO_BRANCH_IDS, 
                                           BankSettlement.builder()
                                           .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
@@ -110,8 +110,8 @@ public final class BankTransferTest {
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
-    final Initiator initiator = (c ,d) -> {
-      if (d.getVerdict() == Verdict.COMMIT) {
+    final Initiator initiator = (c, o) -> {
+      if (o.getVerdict() == Verdict.COMMIT) {
         commits.incrementAndGet();
       } else {
         aborts.incrementAndGet();

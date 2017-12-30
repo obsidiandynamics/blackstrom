@@ -63,11 +63,11 @@ public final class MessageHandlerAdapterTest {
   }
 
   @Test
-  public void testDecision() {
+  public void testOutcome() {
     final AtomicInteger invocations = new AtomicInteger();
-    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new DecisionHandler() {
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new OutcomeHandler() {
       @Override
-      public void onDecision(MessageContext context, Decision decision) {
+      public void onOutcome(MessageContext context, Outcome outcome) {
         invocations.incrementAndGet();
       }
     });
@@ -89,7 +89,7 @@ public final class MessageHandlerAdapterTest {
   private static void callAll(MessageHandlerAdapter adapter) {
     adapter.onMessage(null, newNomination());
     adapter.onMessage(null, newVote());
-    adapter.onMessage(null, newDecision());
+    adapter.onMessage(null, newOutcome());
   }
   
   private static Nomination newNomination() {
@@ -100,7 +100,7 @@ public final class MessageHandlerAdapterTest {
     return new Vote(null, null, null, null);
   }
   
-  private static Decision newDecision() {
-    return new Decision(null, null, null, null, null);
+  private static Outcome newOutcome() {
+    return new Outcome(null, null, null, null, null);
   }
 }
