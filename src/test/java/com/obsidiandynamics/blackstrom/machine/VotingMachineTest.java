@@ -20,7 +20,7 @@ public final class VotingMachineTest {
     
     final VotingMachine machine = VotingMachine.builder()
         .withLedger(ledger)
-        .withProcessors(initiator, cohort, monitor)
+        .withFactors(initiator, cohort, monitor)
         .build();
     
     verify(initiator).init(notNull());

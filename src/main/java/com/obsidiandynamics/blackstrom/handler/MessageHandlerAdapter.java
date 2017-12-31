@@ -3,13 +3,13 @@ package com.obsidiandynamics.blackstrom.handler;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapter implements MessageHandler {
-  private final Processor processor;
+  private final ElementalProcessor processor;
   
   private final boolean nominationCapable;
   private final boolean voteCapable;
   private final boolean outcomeCapable;
   
-  public MessageHandlerAdapter(Processor processor) {
+  public MessageHandlerAdapter(ElementalProcessor processor) {
     this.processor = processor;
     nominationCapable = processor instanceof NominationProcessor;
     voteCapable = processor instanceof VoteProcessor;

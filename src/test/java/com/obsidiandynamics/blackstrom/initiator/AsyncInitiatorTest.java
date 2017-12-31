@@ -27,7 +27,7 @@ public final class AsyncInitiatorTest {
     final AsyncInitiator initiator = new AsyncInitiator();
     machine = VotingMachine.builder()
         .withLedger(ledger)
-        .withProcessors(initiator)
+        .withFactors(initiator)
         .build();
     
     final AtomicInteger called = new AtomicInteger();

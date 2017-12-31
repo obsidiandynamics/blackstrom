@@ -39,8 +39,8 @@ public final class BankTransferTest {
   private void buildStandardMachine(Initiator initiator, List<Branch> branches) {
     machine = VotingMachine.builder()
         .withLedger(ledger)
-        .withProcessors(initiator, monitor)
-        .withProcessors(branches)
+        .withFactors(initiator, monitor)
+        .withFactors(branches)
         .build();
   }
 
