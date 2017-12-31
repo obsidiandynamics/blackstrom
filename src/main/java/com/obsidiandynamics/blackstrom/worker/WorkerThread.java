@@ -23,6 +23,9 @@ public final class WorkerThread {
     return driver;
   }
   
+  /**
+   *  Starts the worker thread.
+   */
   public final void start() {
     if (state == WorkerState.CONCEIVED) {
       state = WorkerState.RUNNING;
@@ -32,6 +35,9 @@ public final class WorkerThread {
     }
   }
   
+  /**
+   *  Terminates the worker thread.
+   */
   public final void terminate() {
     if (state == WorkerState.RUNNING) {
       state = WorkerState.TERMINATING;
@@ -50,6 +56,11 @@ public final class WorkerThread {
     state = WorkerState.TERMINATED;
   }
   
+  /**
+   *  Obtains the current state of the worker thread.
+   *  
+   *  @return The thread's state.
+   */
   public final WorkerState getState() {
     return state;
   }
@@ -58,10 +69,21 @@ public final class WorkerThread {
     worker.cycle(this);
   }
   
+  /**
+   *  Waits until the worker thread terminates.
+   *  
+   *  @throws InterruptedException If the thread is interrupted.
+   */
   public final void join() throws InterruptedException {
     driver.join();
   }
   
+  /**
+   *  Waits until the worker thread terminates.<p>
+   *  
+   *  This method suppresses an {@link InterruptedException} and will re-assert the interrupt 
+   *  prior to returning.
+   */
   public final void joinQuietly() {
     try {
       join();

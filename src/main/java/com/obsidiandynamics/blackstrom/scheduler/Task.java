@@ -19,7 +19,7 @@ public abstract class Task<I extends Comparable<I>> implements Comparable<Task<I
     return id;
   }
   
-  protected abstract void execute();
+  protected abstract void execute(TaskScheduler scheduler);
 
   @Override
   public String toString() {
