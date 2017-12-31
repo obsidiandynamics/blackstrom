@@ -3,8 +3,11 @@ package com.obsidiandynamics.blackstrom.monitor.basic;
 import static junit.framework.TestCase.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 import org.mockito.*;
 
 import com.obsidiandynamics.await.*;
@@ -12,8 +15,15 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public final class BasicMonitorTest {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(2);
+  }
+  
   private static final int MAX_WAIT = 60_000;
   
   private final InitContext initContext = new DefaultInitContext(new Ledger() {
@@ -40,9 +50,9 @@ public final class BasicMonitorTest {
   
   private Ledger ledger;
   
-  private final List<Vote> votes = new ArrayList<>();
+  private final List<Vote> votes = new CopyOnWriteArrayList<>();
   
-  private final List<Outcome> outcomes = new ArrayList<>();
+  private final List<Outcome> outcomes = new CopyOnWriteArrayList<>();
   
   @Before
   public void before() {
@@ -283,9 +293,8 @@ public final class BasicMonitorTest {
     nominate(ballotId, 1, "a", "b");
     vote(ballotId, "a", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> votes.size() == 1);
+    Timesert.wait(MAX_WAIT).untilTrue(() -> votes.size() >= 1);
     assertEquals(0, outcomes.size());
-    assertEquals(1, votes.size());
     assertEquals(ballotId, votes.get(0).getBallotId());
     assertEquals(Pledge.TIMEOUT, votes.get(0).getResponse().getPledge());
     

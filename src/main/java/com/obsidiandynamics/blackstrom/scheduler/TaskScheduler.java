@@ -21,12 +21,27 @@ public final class TaskScheduler {
   private static final long ADJ_NANOS = 500_000l;
   
   /** List of pending tasks, ordered with the most immediate at the head. */
-  private final NavigableSet<Task<?>> tasks = new ConcurrentSkipListSet<>();
+  private final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compare);
+  
+  @SuppressWarnings("unchecked")
+  private static int compare(Task t1, Task t2) {
+    final int timeComp = Long.compare(t1.getTime(), t2.getTime());
+    if (timeComp != 0) {
+      return timeComp;
+    } else {
+      @SuppressWarnings("rawtypes")
+      final Comparable c1 = t1.getId();
+      @SuppressWarnings("rawtypes")
+      final Comparable c2 = t2.getId();
+      return c1.compareTo(c2);
+    }
+  }
   
   /** Lock for the scheduler thread to sleep on; can be used to wake the thread. */
   private final Object sleepLock = new Object();
   
-  private final WorkerThread thread;
+  /** The worker thread for performing task execution. */
+  private final WorkerThread executor;
   
   /** The time when the thread should be woken, in absolute nanoseconds. See {@link System.nanoTime()}. */
   private volatile long nextWake;
@@ -42,7 +57,7 @@ public final class TaskScheduler {
   }
   
   public TaskScheduler(String threadName) {
-    thread = WorkerThread.builder()
+    executor = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withName(threadName)
                      .withDaemon(true))
@@ -51,7 +66,7 @@ public final class TaskScheduler {
   }
   
   public void start() {
-    thread.start();
+    executor.start();
   }
   
   public void clear() {
@@ -63,7 +78,7 @@ public final class TaskScheduler {
    *  task executions.
    */
   public void terminate() {
-    thread.terminate();
+    executor.terminate();
   }
   
   /**
@@ -73,7 +88,7 @@ public final class TaskScheduler {
    *  prior to returning.
    */
   public void joinQuietly() {
-    thread.joinQuietly();
+    executor.joinQuietly();
   }
   
   /**
@@ -82,7 +97,7 @@ public final class TaskScheduler {
    *  @throws InterruptedException If the thread is interrupted.
    */
   public void join() throws InterruptedException {
-    thread.join();
+    executor.join();
   }
   
   private void cycle(WorkerThread thread) {
@@ -102,14 +117,14 @@ public final class TaskScheduler {
    *  time has come.
    */
   private void scheduleSingle() {
-    final Task<?> first = tasks.pollFirst();
-    if (first != null) {
+    try {
+      final Task first = tasks.first();
       if (forceExecute || System.nanoTime() >= first.getTime() - ADJ_NANOS) {
-        first.execute(this);
-      } else {
-        schedule(first);
+        if (tasks.remove(first)) {
+          first.execute(this);
+        }
       }
-    }
+    } catch (NoSuchElementException e) {} // in case the task was aborted in the meantime
   }
   
   /**
@@ -117,7 +132,7 @@ public final class TaskScheduler {
    *  
    *  @param task The task to schedule.
    */
-  public void schedule(Task<?> task) {
+  public void schedule(Task task) {
     tasks.add(task);
     if (task.getTime() < nextWake) {
       synchronized (sleepLock) {
@@ -136,7 +151,7 @@ public final class TaskScheduler {
    *  @param task The task to abort.
    *  @return Whether the task was in the schedule (and hence was removed).
    */
-  public boolean abort(Task<?> task) {
+  public boolean abort(Task task) {
     return tasks.remove(task);
   }
   
@@ -183,7 +198,7 @@ public final class TaskScheduler {
    *  
    *  @param task The task to time out.
    */
-  public void executeNow(Task<?> task) {
+  public void executeNow(Task task) {
     if (abort(task)) {
       task.execute(this);
     }

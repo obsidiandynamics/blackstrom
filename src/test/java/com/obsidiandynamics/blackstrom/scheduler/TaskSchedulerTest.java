@@ -23,7 +23,7 @@ public final class TaskSchedulerTest implements TestSupport {
   
   private static final int MAX_WAIT = 60_000;
   
-  private static final class TestTask extends Task<UUID> {
+  private static final class TestTask extends AbstractTask<UUID> {
     private final Receiver receiver;
     
     TestTask(long time, UUID id, Receiver receiver) {
@@ -32,7 +32,7 @@ public final class TaskSchedulerTest implements TestSupport {
     }
     
     @Override
-    protected void execute(TaskScheduler scheduler) {
+    public void execute(TaskScheduler scheduler) {
       receiver.receive(getId());
     }
   }
