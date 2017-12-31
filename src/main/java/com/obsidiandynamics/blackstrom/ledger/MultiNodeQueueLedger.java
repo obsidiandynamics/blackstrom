@@ -19,20 +19,20 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   private final MessageContext context = new DefaultMessageContext(this);
   
-  private final AtomicReference<Node> tail = new AtomicReference<>(Node.anchor());
+  private final AtomicReference<QueueNode> tail = new AtomicReference<>(QueueNode.anchor());
   
   private class NodeWorker implements Worker {
     private final MessageHandler handler;
-    private AtomicReference<Node> head;
+    private AtomicReference<QueueNode> head;
     
-    NodeWorker(MessageHandler handler, AtomicReference<Node> head) {
+    NodeWorker(MessageHandler handler, AtomicReference<QueueNode> head) {
       this.handler = handler;
       this.head = head;
     }
     
     @Override
     public void cycle(WorkerThread thread) throws InterruptedException {
-      final Node n = head.get();
+      final QueueNode n = head.get();
       if (n != null) {
         handler.onMessage(context, n.m);
         head = n;
@@ -56,7 +56,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   @Override
   public void append(Message message) throws InterruptedException {
-    new Node(message).appendTo(tail);
+    new QueueNode(message).appendTo(tail);
   }
   
   @Override

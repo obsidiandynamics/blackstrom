@@ -20,9 +20,9 @@ public final class SingleNodeQueueLedger implements Ledger {
   
   private final WorkerThread thread;
   
-  private final AtomicReference<Node> tail = new AtomicReference<>(Node.anchor());
+  private final AtomicReference<QueueNode> tail = new AtomicReference<>(QueueNode.anchor());
 
-  private AtomicReference<Node> head = tail.get();
+  private AtomicReference<QueueNode> head = tail.get();
   
   public SingleNodeQueueLedger() {
     thread = WorkerThread.builder()
@@ -35,7 +35,7 @@ public final class SingleNodeQueueLedger implements Ledger {
   }
   
   private void cycle(WorkerThread thread) throws InterruptedException {
-    final Node n = head.get();
+    final QueueNode n = head.get();
     if (n != null) {
       final Message m = n.m;
       for (MessageHandler handler : handlers) {
@@ -56,7 +56,7 @@ public final class SingleNodeQueueLedger implements Ledger {
 
   @Override
   public void append(Message message) throws Exception {
-    new Node(message).appendTo(tail);
+    new QueueNode(message).appendTo(tail);
   }
 
   @Override
