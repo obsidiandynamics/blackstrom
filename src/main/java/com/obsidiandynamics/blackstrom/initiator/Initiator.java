@@ -2,5 +2,5 @@ package com.obsidiandynamics.blackstrom.initiator;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 
-public interface Initiator extends OutcomeHandler {
+public interface Initiator extends OutcomeProcessor {
 }

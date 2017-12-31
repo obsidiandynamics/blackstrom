@@ -3,17 +3,17 @@ package com.obsidiandynamics.blackstrom.handler;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapter implements MessageHandler {
-  private final Object handler;
+  private final Processor processor;
   
   private final boolean nominationCapable;
   private final boolean voteCapable;
   private final boolean outcomeCapable;
   
-  public MessageHandlerAdapter(Object handler) {
-    this.handler = handler;
-    nominationCapable = handler instanceof NominationHandler;
-    voteCapable = handler instanceof VoteHandler;
-    outcomeCapable = handler instanceof OutcomeHandler;
+  public MessageHandlerAdapter(Processor processor) {
+    this.processor = processor;
+    nominationCapable = processor instanceof NominationProcessor;
+    voteCapable = processor instanceof VoteProcessor;
+    outcomeCapable = processor instanceof OutcomeProcessor;
   }
 
   @Override
@@ -21,19 +21,19 @@ public final class MessageHandlerAdapter implements MessageHandler {
     switch (message.getMessageType()) {
       case NOMINATION:
         if (nominationCapable) {
-          ((NominationHandler) handler).onNomination(context, (Nomination) message);
+          ((NominationProcessor) processor).onNomination(context, (Nomination) message);
         }
         break;
         
       case VOTE:
         if (voteCapable) {
-          ((VoteHandler) handler).onVote(context, (Vote) message);
+          ((VoteProcessor) processor).onVote(context, (Vote) message);
         }
         break;
         
       case OUTCOME:
         if (outcomeCapable) {
-          ((OutcomeHandler) handler).onOutcome(context, (Outcome) message);
+          ((OutcomeProcessor) processor).onOutcome(context, (Outcome) message);
         }
         break;
         

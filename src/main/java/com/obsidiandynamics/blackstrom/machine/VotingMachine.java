@@ -9,31 +9,31 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 public final class VotingMachine implements Disposable {
   private final Ledger ledger;
   
-  private final Set<TypedMessageHandler> handlers;
+  private final Set<Processor> processors;
   
-  VotingMachine(Ledger ledger, Set<TypedMessageHandler> handlers) {
+  VotingMachine(Ledger ledger, Set<Processor> processors) {
     this.ledger = ledger;
-    this.handlers = handlers;
+    this.processors = processors;
     
-    handlers.forEach(h -> ledger.attach(h.toUntypedHandler()));
+    processors.forEach(p -> ledger.attach(new MessageHandlerAdapter(p)));
     ledger.init();
     
     final InitContext context = new DefaultInitContext(ledger);
-    handlers.forEach(h -> h.init(context));
+    processors.forEach(p -> p.init(context));
   }
   
   public Ledger getLedger() {
     return ledger;
   }
   
-  public Set<TypedMessageHandler> getHandlers() {
-    return Collections.unmodifiableSet(handlers);
+  public Set<Processor> getHandlers() {
+    return Collections.unmodifiableSet(processors);
   }
 
   @Override
   public void dispose() {
     ledger.dispose();
-    handlers.forEach(h -> h.dispose());
+    processors.forEach(p -> p.dispose());
   }
   
   public static VotingMachineBuilder builder() {

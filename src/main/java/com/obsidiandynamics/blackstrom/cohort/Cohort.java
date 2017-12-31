@@ -2,5 +2,5 @@ package com.obsidiandynamics.blackstrom.cohort;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 
-public interface Cohort extends NominationHandler, OutcomeHandler {
+public interface Cohort extends NominationProcessor, OutcomeProcessor {
 }
