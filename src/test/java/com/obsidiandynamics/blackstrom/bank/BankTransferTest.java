@@ -52,7 +52,7 @@ public final class BankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
-    final Branch[] branches = createBranches(2, initialBalance);
+    final Branch[] branches = createBranches(2, initialBalance, true);
     buildStandardMachine(initiator, monitor, branches);
 
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
@@ -80,7 +80,7 @@ public final class BankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
-    final Branch[] branches = createBranches(2, initialBalance);
+    final Branch[] branches = createBranches(2, initialBalance, true);
     buildStandardMachine(initiator, monitor, branches);
 
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
@@ -138,7 +138,7 @@ public final class BankTransferTest {
     final int initialBalance = 1_000;
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
-    final Branch[] branches = createBranches(2, initialBalance);
+    final Branch[] branches = createBranches(2, initialBalance, true);
 
     machine = VotingMachine.builder()
         .withLedger(ledger)
@@ -176,7 +176,8 @@ public final class BankTransferTest {
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
     final int runs = 10_000;
-    final int backlogTarget = 20_000;
+    final int backlogTarget = 10_000;
+    final boolean idempotencyEnabled = false;
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
@@ -187,7 +188,7 @@ public final class BankTransferTest {
         aborts.incrementAndGet();
       }
     };
-    final Branch[] branches = createBranches(numBranches, initialBalance);
+    final Branch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
     final Monitor monitor = new BasicMonitor();
     buildStandardMachine(initiator, monitor, branches);
 
@@ -202,7 +203,7 @@ public final class BankTransferTest {
           for (;;) {
             final int backlog = run - commits.get() - aborts.get();
             if (backlog > backlogTarget) {
-              TestSupport.sleep(10);
+              TestSupport.sleep(1);
               if (System.currentTimeMillis() - lastLogTime > 5_000) {
                 TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d txns)\n", backlog, run);
                 lastLogTime = System.currentTimeMillis();
@@ -259,10 +260,10 @@ public final class BankTransferTest {
     return "branch-" + branchIdx;
   }
 
-  private static Branch[] createBranches(int numBranches, long initialBalance) {
+  private static Branch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled) {
     final Branch[] branches = new Branch[numBranches];
     for (int branchIdx = 0; branchIdx < numBranches; branchIdx++) {
-      branches[branchIdx] = new Branch(getBranchId(branchIdx), initialBalance);
+      branches[branchIdx] = new Branch(getBranchId(branchIdx), initialBalance, idempotencyEnabled);
     }
     return branches;
   }

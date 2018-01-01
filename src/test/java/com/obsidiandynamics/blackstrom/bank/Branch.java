@@ -5,6 +5,7 @@ import java.util.*;
 import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class Branch implements Cohort {
@@ -14,17 +15,56 @@ public final class Branch implements Cohort {
   
   private final Map<Object, Outcome> decided = new HashMap<>();
   
-  private final int reapIntervalMillis = 1_000;
+  private final Object lock = new Object();
+  
+  private final boolean idempotencyEnabled;
+
+  private final WorkerThread gcThread;
+  
+  private final int gcIntervalMillis = 1_000;
   
   private final int outcomeLifetimeMillis = 1_000;
   
   private long balance;
   
-  private long lastReapTime;
-  
-  public Branch(String branchId, long initialBalance) {
+  public Branch(String branchId, long initialBalance, boolean idempotencyEnabled) {
     this.branchId = branchId;
+    this.idempotencyEnabled = idempotencyEnabled;
     balance = initialBalance;
+    
+    gcThread = WorkerThread.builder()
+        .withOptions(new WorkerOptions().withName("gc-" + branchId).withDaemon(true))
+        .withWorker(this::gcCycle)
+        .build();
+    if (idempotencyEnabled) gcThread.start();
+  }
+  
+  private void gcCycle(WorkerThread thread) throws InterruptedException {
+    Thread.sleep(gcIntervalMillis);
+    
+    final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+    final List<Outcome> deathRow = new ArrayList<>();
+    
+    final List<Outcome> decidedCopy;
+    synchronized (lock) {
+      decidedCopy = new ArrayList<>(decided.values());
+    }
+    
+    for (Outcome oucome : decidedCopy) {
+      if (oucome.getTimestamp() < collectThreshold) {
+        deathRow.add(oucome);
+      }
+    }
+    
+    if (! deathRow.isEmpty()) {
+      for (Outcome outcome : deathRow) {
+        synchronized (lock) {
+          decided.remove(outcome.getBallotId());
+        }
+      }
+
+      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: reaped %,d lapsed outcomes\n", branchId, deathRow.size());
+    }
   }
   
   public long getBalance() {
@@ -41,10 +81,14 @@ public final class Branch implements Cohort {
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
     
-    if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
-    if (decided.containsKey(nomination.getBallotId())) {
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, already decided\n", branchId);
-      return;
+    if (idempotencyEnabled) {
+      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
+      synchronized (lock) {
+        if (decided.containsKey(nomination.getBallotId())) {
+          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, already decided\n", branchId);
+          return;
+        }
+      }
     }
     
     final Pledge pledge;
@@ -76,38 +120,23 @@ public final class Branch implements Cohort {
     final Nomination nomination = nominations.remove(outcome.getBallotId());
     if (nomination == null) return; // outcome doesn't apply to this branch
     
-    decided.put(outcome.getBallotId(), outcome);
+    if (idempotencyEnabled) {
+      synchronized (lock) {
+        decided.put(outcome.getBallotId(), outcome);
+      }
+    }
+    
     if (outcome.getVerdict() == Verdict.ABORT) {
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s\n", branchId, outcome);
       final BankSettlement settlement = nomination.getProposal();
       final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
       balance -= xfer.getAmount();
     }
-    
-    final long now = outcome.getTimestamp();
-    if (now - lastReapTime > reapIntervalMillis) {
-      reapLapsedOutcomes(now);
-      lastReapTime = outcome.getTimestamp();
-    }
   }
   
-  private void reapLapsedOutcomes(long now) {
-    final long collectThreshold = now - outcomeLifetimeMillis;
-    List<Object> deathRow = null;
-    
-    for (Outcome oucome : decided.values()) {
-      if (oucome.getTimestamp() < collectThreshold) {
-        if (deathRow == null) deathRow = new ArrayList<>(decided.size() / 2);
-        deathRow.add(oucome.getBallotId());
-      }
-    }
-    
-    if (deathRow != null) {
-      for (Object ballotId : deathRow) {
-        decided.remove(ballotId);
-      }
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: reaped %,d lapsed outcomes\n", branchId, deathRow.size());
-      System.out.format("%s: reaped %,d lapsed outcomes\n", branchId, deathRow.size());
-    }
+  @Override
+  public void dispose() {
+    gcThread.terminate();
+    gcThread.joinQuietly();
   }
 }
