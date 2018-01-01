@@ -17,8 +17,9 @@ public final class TaskScheduler {
   /** Minimum sleep time. Below this threshold sleeping isn't worthwhile. */
   private static final long MIN_SLEEP_NANOS = 1_000_000l;
   
-  /** Compensation for the overhead of scheduling a task. */
-  private static final long ADJ_NANOS = 500_000l;
+  /** Compensation for the overhead of scheduling a task. Use a small positive number if the tasks
+   *  are coming in later than desired. */
+  private static final long ADJ_NANOS = 0l;
   
   /** List of pending tasks, ordered with the most immediate at the head. */
   private final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compare);

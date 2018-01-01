@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.factor;
 
-import java.util.*;
+import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
@@ -15,36 +15,43 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
   
   private final MessageHandler backingHandler;
   
-  private final EnumMap<FailureType, FailureModes> failureModes = new EnumMap<>(FailureType.class);
+  private FailureMode rxFailureMode;
+  
+  private FailureMode txFailureMode;
   
   private final TaskScheduler scheduler = new TaskScheduler();
+  
+  private final Ledger interceptedLedger = new Ledger() {
+    @Override public void attach(MessageHandler handler) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public void append(Message message) throws Exception {
+      onSend(message);
+    }
+  };
   
   public FailureProneFactor(Factor backingFactor) {
     this.backingFactor = backingFactor;
     backingHandler = new MessageHandlerAdapter(backingFactor);
   }
   
-  public FailureProneFactor withFailureModes(FailureModes... failureModes) {
-    for (FailureModes failureMode : failureModes) {
-      this.failureModes.put(failureMode.getFailureType(), failureMode);
-    }
+  public FailureProneFactor withRxFailureMode(FailureMode rxFailureMode) {
+    this.rxFailureMode = rxFailureMode;
     return this;
   }
 
+  public FailureProneFactor withTxFailureMode(FailureMode txFailureMode) {
+    this.txFailureMode = txFailureMode;
+    return this;
+  }
+  
   @Override
   public void init(InitContext context) {
     backingLedger = context.getLedger();
     backingFactor.init(new InitContext() {
       @Override public Ledger getLedger() {
-        return new Ledger() {
-          @Override public void attach(MessageHandler handler) {
-            throw new UnsupportedOperationException();
-          }
-
-          @Override public void append(Message message) throws Exception {
-            onSend(message);
-          }
-        };
+        return interceptedLedger;
       }
     });
     scheduler.start();
@@ -73,75 +80,107 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
   }
   
   private void onReceive(MessageContext context, Message message) {
-    for (FailureModes failureMode : failureModes.values()) {
-      switch (failureMode.getFailureType()) {
-        case RX_DUPLICATE:
-          onRxDuplicate(failureMode, context, message);
+    final MessageContext intercepedContext = new MessageContext() {
+      @Override
+      public Ledger getLedger() {
+        return interceptedLedger;
+      }
+    };
+    
+    if (rxFailureMode != null && rxFailureMode.isTime()) {
+      switch (rxFailureMode.getFailureType()) {
+        case DUPLICATE_DELIVERY:
+          onRxDuplicate(intercepedContext, message);
           break;
           
-        case RX_DELAY:
-          onRxDelay(failureMode, context, message);
+        case DELAYED_DELIVERY:
+          onRxDelayed((DelayedDelivery) rxFailureMode, intercepedContext, message);
+          break;
+          
+        case DELAYED_DUPLICATE_DELIVERY:
+          onRxDelayedDuplicate((DelayedDuplicateDelivery) rxFailureMode, intercepedContext, message);
           break;
           
         default:
+          throw new UnsupportedOperationException("Unsupported failure mode " + rxFailureMode.getFailureType());
       }
+    } else {
+      backingHandler.onMessage(intercepedContext, message);
     }
   }
   
-  private void onRxDuplicate(FailureModes failureMode, MessageContext context, Message message) {
-    if (! failureMode.isTime()) return;
-    
+  private void onRxDuplicate(MessageContext context, Message message) {
     backingHandler.onMessage(context, message);
     backingHandler.onMessage(context, message);
   }
   
-  private void onRxDelay(FailureModes failureMode, MessageContext context, Message message) {
-    if (! failureMode.isTime()) return;    
-    
-    final DelayedFailure delayed = failureMode.getExtent();
-    runLater(message.getTimestamp() + delayed.getDelayMillis(), message.getBallotId(), () -> {
+  private void onRxDelayed(DelayedDelivery mode, MessageContext context, Message message) {
+    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
+      backingHandler.onMessage(context, message);
+    });
+  }
+  
+  private void onRxDelayedDuplicate(DelayedDuplicateDelivery mode, MessageContext context, Message message) {
+    backingHandler.onMessage(context, message);
+    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
       backingHandler.onMessage(context, message);
     });
   }
   
   private void onSend(Message message) throws Exception {
-    for (FailureModes failureMode : failureModes.values()) {
-      switch (failureMode.getFailureType()) {
-        case TX_DUPLICATE:
-          onTxDuplicate(failureMode, message);
+    if (txFailureMode != null && txFailureMode.isTime()) {
+      switch (txFailureMode.getFailureType()) {
+        case DUPLICATE_DELIVERY:
+          onTxDuplicate(message);
           break;
           
-        case TX_DELAY:
-          onTxDelay(failureMode, message);
+        case DELAYED_DELIVERY:
+          onTxDelayed((DelayedDelivery) txFailureMode, message);
+          break;
+          
+        case DELAYED_DUPLICATE_DELIVERY:
+          onTxDelayedDuplicate((DelayedDuplicateDelivery) txFailureMode, message);
           break;
           
         default:
+          throw new UnsupportedOperationException("Unsupported failure mode " + txFailureMode.getFailureType());
       }
+    } else {
+      backingLedger.append(message);
     }
   }
   
-  private void onTxDuplicate(FailureModes failureMode, Message message) throws Exception {
-    if (! failureMode.isTime()) return;
-    
+  private void onTxDuplicate(Message message) throws Exception {
     backingLedger.append(message);
     backingLedger.append(message);
   }
-
-  private void onTxDelay(FailureModes failureMode, Message message) {
-    if (! failureMode.isTime()) return;
-    
-    final DelayedFailure delayed = failureMode.getExtent();
-    runLater(message.getTimestamp() + delayed.getDelayMillis(), message.getBallotId(), () -> {
+  
+  private void onTxDelayed(DelayedDelivery mode, Message message) {
+    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
       try {
         backingLedger.append(message);
       } catch (Exception e) {
         e.printStackTrace();
+        throw new RuntimeException(e);
       }
     });
   }
   
-  private void runLater(long time, Object ballotId, Runnable task) {
-    scheduler.schedule(new Task() {
+  private void onTxDelayedDuplicate(DelayedDuplicateDelivery mode, Message message) throws Exception {
+    backingLedger.append(message);
+    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
+      try {
+        backingLedger.append(message);
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+    });
+  }
+  
+  private Task runLater(long delayMillis, Object ballotId, Consumer<Task> job) {
+    final long time = System.nanoTime() + delayMillis * 1_000_000L;
+    final Task task = new Task() {
       @Override
       public long getTime() {
         return time;
@@ -154,8 +193,10 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
 
       @Override
       public void execute(TaskScheduler scheduler) {
-        task.run();
+        job.accept(this);
       }
-    });
+    };
+    scheduler.schedule(task);
+    return task;
   }
 }
