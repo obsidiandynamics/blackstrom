@@ -117,7 +117,8 @@ public abstract class AbstractLedgerTest {
       Timesert.wait(MAX_WAIT).untilTrue(() -> received.get() == numMessages);
     });
                                      
-    System.out.format("One-way: %,d took %,.0f ms, %,d msgs/sec\n", numMessages, took, (float) numMessages / took * 1000);
+    System.out.format("One-way: %,d took %,d ms, %,.0f msgs/sec\n", 
+                      numMessages, took, (float) numMessages / took * 1000);
   }
   
   @Test
