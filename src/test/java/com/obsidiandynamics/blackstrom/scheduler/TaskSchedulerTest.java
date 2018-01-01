@@ -4,6 +4,7 @@ import static junit.framework.TestCase.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 import org.junit.*;
@@ -18,30 +19,30 @@ import com.obsidiandynamics.junit.*;
 public final class TaskSchedulerTest implements TestSupport {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(2);
+    return TestCycle.timesQuietly(1);
   }
   
   private static final int MAX_WAIT = 60_000;
   
   private static final class TestTask extends AbstractTask<UUID> {
-    private final Receiver receiver;
+    private final Consumer<TestTask> taskBody;
     
-    TestTask(long time, UUID id, Receiver receiver) {
+    TestTask(long time, UUID id, Consumer<TestTask> taskBody) {
       super(time, id);
-      this.receiver = receiver;
+      this.taskBody = taskBody;
     }
     
     @Override
     public void execute(TaskScheduler scheduler) {
-      receiver.receive(getId());
+      taskBody.accept(this);
     }
   }
   
   private static final class Receiver {
     private final List<UUID> ids = new CopyOnWriteArrayList<>();
     
-    void receive(UUID id) {
-      ids.add(id);
+    void receive(TestTask task) {
+      ids.add(task.getId());
     }
     
     BooleanSupplier isSize(int size) {
@@ -212,6 +213,38 @@ public final class TaskSchedulerTest implements TestSupport {
     assertEquals(sorted, receiver.ids);
   }
   
+  @Test
+  public void testScheduleVolumeBenchmark() {
+    testScheduleVolumeBenchmark(10_000,
+                                Math.min(Runtime.getRuntime().availableProcessors(), 4),
+                                10_000_000,
+                                50_000_000);
+  }
+  
+  private void testScheduleVolumeBenchmark(int tasks, int submissionThreads, long minDelayNanos, long maxDelayNanos) {
+    final AtomicInteger fired = new AtomicInteger();
+    final Consumer<TestTask> counter = tt -> fired.incrementAndGet();
+    final long startNanos = System.nanoTime();
+
+    final int tasksPerThread = tasks / submissionThreads;
+    ParallelJob.nonBlocking(submissionThreads, threadIdx -> {
+      for (int i = 0; i < tasksPerThread; i++) {
+        final long delayNanos = (long) (Math.random() * (maxDelayNanos - minDelayNanos)) + minDelayNanos;
+        final TestTask task = new TestTask(startNanos + delayNanos, 
+                                           new UUID(threadIdx, i),
+                                           counter);
+        scheduler.schedule(task);
+      }
+    }).run();
+   
+    final int expectedTasks = tasksPerThread * submissionThreads;
+    Timesert.wait(MAX_WAIT).untilTrue(() -> fired.get() == expectedTasks);
+    final long took = System.nanoTime() - startNanos - minDelayNanos;
+
+    System.out.format("Schedule volume: %,d took %,d ms, %,.0f tasks/sec (%d threads)\n", 
+                      expectedTasks, took / 1_000_000L, (double) expectedTasks / took * 1_000_000_000L, submissionThreads);
+  }
+  
   private TestTask doIn(long millis) {
     return doIn(UUID.randomUUID(), millis);
   }
@@ -223,6 +256,6 @@ public final class TaskSchedulerTest implements TestSupport {
   private TestTask doIn(UUID uuid, long referenceNanos, long millis) {
     return new TestTask(referenceNanos + millis * 1_000_000l, 
                         uuid,
-                        receiver);
+                        receiver::receive);
   }
 }

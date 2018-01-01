@@ -100,7 +100,7 @@ public final class BankTransferTest {
   }
 
   @Test
-  public void testRandomTransfers() throws Exception {
+  public void testRandomTransfersBenchmark() throws Exception {
     final int numBranches = 10;
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
