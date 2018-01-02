@@ -240,7 +240,7 @@ public final class BasicMonitorTest {
   
   @Test
   public void testGCNoReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetimeMillis(60_000).withGCIntervalMillis(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetime(60_000).withGCInterval(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.ACCEPT);
@@ -254,7 +254,7 @@ public final class BasicMonitorTest {
   
   @Test
   public void testGCReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetimeMillis(1).withGCIntervalMillis(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetime(1).withGCInterval(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.ACCEPT);
@@ -287,7 +287,7 @@ public final class BasicMonitorTest {
   
   @Test
   public void testTimeout_twoCohorts() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutIntervalMillis(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutInterval(1)));
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, 1, "a", "b");
@@ -317,7 +317,7 @@ public final class BasicMonitorTest {
   
   @Test
   public void testNoTimeout_twoCohorts() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutIntervalMillis(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutInterval(1)));
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, 10_000, "a", "b");

@@ -42,9 +42,9 @@ public final class BasicMonitor implements Monitor {
   }
   
   public BasicMonitor(BasicMonitorOptions options) {
-    this.gcIntervalMillis = options.getGCIntervalMillis();
-    this.outcomeLifetimeMillis = options.getOutcomeLifetimeMillis();
-    this.timeoutIntervalMillis = options.getTimeoutIntervalMillis();
+    this.gcIntervalMillis = options.getGCInterval();
+    this.outcomeLifetimeMillis = options.getOutcomeLifetime();
+    this.timeoutIntervalMillis = options.getTimeoutInterval();
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName("gc-" + nodeId).withDaemon(true))

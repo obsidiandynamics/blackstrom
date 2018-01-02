@@ -7,29 +7,29 @@ public final class BasicMonitorOptions {
   
   private int timeoutIntervalMillis = 1_000;
 
-  public int getGCIntervalMillis() {
+  int getGCInterval() {
     return gcIntervalMillis;
   }
 
-  public BasicMonitorOptions withGCIntervalMillis(int gcIntervalMillis) {
+  public BasicMonitorOptions withGCInterval(int gcIntervalMillis) {
     this.gcIntervalMillis = gcIntervalMillis;
     return this;
   }
 
-  public int getOutcomeLifetimeMillis() {
+  int getOutcomeLifetime() {
     return outcomeLifetimeMillis;
   }
 
-  public BasicMonitorOptions withOutcomeLifetimeMillis(int outcomeLifetimeMillis) {
+  public BasicMonitorOptions withOutcomeLifetime(int outcomeLifetimeMillis) {
     this.outcomeLifetimeMillis = outcomeLifetimeMillis;
     return this;
   }
   
-  public int getTimeoutIntervalMillis() {
+  int getTimeoutInterval() {
     return timeoutIntervalMillis;
   }
 
-  public BasicMonitorOptions withTimeoutIntervalMillis(int timeoutIntervalMillis) {
+  public BasicMonitorOptions withTimeoutInterval(int timeoutIntervalMillis) {
     this.timeoutIntervalMillis = timeoutIntervalMillis;
     return this;
   }
