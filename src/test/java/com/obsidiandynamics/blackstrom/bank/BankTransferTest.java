@@ -103,54 +103,6 @@ public final class BankTransferTest {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
     });
   }
-//
-//  @Test
-//  public void testInitiatorFailure_rxDuplicate() throws InterruptedException, ExecutionException, Exception {
-//    testFactorFailure(new FailureModes()
-//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
-//                           rxFailureMode = new DuplicateDelivery(1);
-//                         }}));
-//  }
-//
-//  @Test
-//  public void testInitiatorFailure_rxDelayed() throws InterruptedException, ExecutionException, Exception {
-//    testFactorFailure(new FailureModes()
-//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
-//                           rxFailureMode = new DelayedDelivery(1, 10);
-//                         }}));
-//  }
-//
-//  @Test
-//  public void testInitiatorFailure_rxDelayedDuplicate() throws InterruptedException, ExecutionException, Exception {
-//    testFactorFailure(new FailureModes()
-//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
-//                           rxFailureMode = new DelayedDuplicateDelivery(1, 10);
-//                         }}));
-//  }
-//
-//  @Test
-//  public void testInitiatorFailure_txDuplicate() throws InterruptedException, ExecutionException, Exception {
-//    testFactorFailure(new FailureModes()
-//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
-//                           txFailureMode = new DuplicateDelivery(1);
-//                         }}));
-//  }
-//
-//  @Test
-//  public void testInitiatorFailure_txDelayed() throws InterruptedException, ExecutionException, Exception {
-//    testFactorFailure(new FailureModes()
-//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
-//                           txFailureMode = new DelayedDelivery(1, 10);
-//                         }}));
-//  }
-//
-//  @Test
-//  public void testInitiatorFailure_txDelayedDuplicate() throws InterruptedException, ExecutionException, Exception {
-//    testFactorFailure(new FailureModes()
-//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
-//                           txFailureMode = new DelayedDuplicateDelivery(1, 10);
-//                         }}));
-//  }
   
   @Test
   public void testFactorFailures() throws InterruptedException, ExecutionException, Exception {
@@ -186,7 +138,6 @@ public final class BankTransferTest {
         machine.dispose();
       }
     }
-    
   }
   
   private enum TargetFactor {
