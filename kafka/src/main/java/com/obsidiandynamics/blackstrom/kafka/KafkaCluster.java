@@ -38,6 +38,6 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
 
   @Override
   public String toString() {
-    return "KafkaCluster [config: " + config + "]";
+    return KafkaCluster.class.getSimpleName() + " [config: " + config + "]";
   }
 }
