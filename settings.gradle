@@ -1,1 +1,4 @@
 rootProject.name = 'blackstrom'
+
+include 'blackstrom-kafka'
+project(':blackstrom-kafka').projectDir = new File(settingsDir, 'kafka')
