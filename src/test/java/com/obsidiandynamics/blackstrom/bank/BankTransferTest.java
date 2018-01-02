@@ -103,38 +103,125 @@ public final class BankTransferTest {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
     });
   }
-
+//
+//  @Test
+//  public void testInitiatorFailure_rxDuplicate() throws InterruptedException, ExecutionException, Exception {
+//    testFactorFailure(new FailureModes()
+//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
+//                           rxFailureMode = new DuplicateDelivery(1);
+//                         }}));
+//  }
+//
+//  @Test
+//  public void testInitiatorFailure_rxDelayed() throws InterruptedException, ExecutionException, Exception {
+//    testFactorFailure(new FailureModes()
+//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
+//                           rxFailureMode = new DelayedDelivery(1, 10);
+//                         }}));
+//  }
+//
+//  @Test
+//  public void testInitiatorFailure_rxDelayedDuplicate() throws InterruptedException, ExecutionException, Exception {
+//    testFactorFailure(new FailureModes()
+//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
+//                           rxFailureMode = new DelayedDuplicateDelivery(1, 10);
+//                         }}));
+//  }
+//
+//  @Test
+//  public void testInitiatorFailure_txDuplicate() throws InterruptedException, ExecutionException, Exception {
+//    testFactorFailure(new FailureModes()
+//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
+//                           txFailureMode = new DuplicateDelivery(1);
+//                         }}));
+//  }
+//
+//  @Test
+//  public void testInitiatorFailure_txDelayed() throws InterruptedException, ExecutionException, Exception {
+//    testFactorFailure(new FailureModes()
+//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
+//                           txFailureMode = new DelayedDelivery(1, 10);
+//                         }}));
+//  }
+//
+//  @Test
+//  public void testInitiatorFailure_txDelayedDuplicate() throws InterruptedException, ExecutionException, Exception {
+//    testFactorFailure(new FailureModes()
+//                         .set(TargetFactor.INITIATOR, new RxTxFailureModes() {{
+//                           txFailureMode = new DelayedDuplicateDelivery(1, 10);
+//                         }}));
+//  }
+  
   @Test
-  public void testInitiatorFailure_rxDuplicate() throws InterruptedException, ExecutionException, Exception {
-    testInitiatorFailure(new DuplicateDelivery(1), null);
+  public void testFactorFailures() throws InterruptedException, ExecutionException, Exception {
+    final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
+      new RxTxFailureModes() {},
+      new RxTxFailureModes() {{
+        rxFailureMode = new DuplicateDelivery(1);
+      }},
+      new RxTxFailureModes() {{
+        rxFailureMode = new DelayedDelivery(1, 10);
+      }},
+      new RxTxFailureModes() {{
+        rxFailureMode = new DelayedDuplicateDelivery(1, 10);
+      }},
+      new RxTxFailureModes() {{
+        txFailureMode = new DuplicateDelivery(1);
+      }},
+      new RxTxFailureModes() {{
+        txFailureMode = new DelayedDelivery(1, 10);
+      }},
+      new RxTxFailureModes() {{
+        txFailureMode = new DelayedDuplicateDelivery(1, 10);
+      }}
+    };
+    
+    for (TargetFactor target : TargetFactor.values()) {
+      for (RxTxFailureModes failureModes : presetFailureModesArray) {
+        try {
+          testFactorFailure(new FailureModes().set(target, failureModes));
+        } catch (AssertionError e) {
+          throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
+        }
+        machine.dispose();
+      }
+    }
+    
+  }
+  
+  private enum TargetFactor {
+    INITIATOR,
+    COHORT,
+    MONITOR
+  }
+  
+  private abstract static class RxTxFailureModes {
+    FailureMode rxFailureMode; 
+    FailureMode txFailureMode;
+    
+    @Override
+    public String toString() {
+      return "RxTxFailureModes [rxFailureMode=" + rxFailureMode + ", txFailureMode=" + txFailureMode + "]";
+    }
+  }
+  
+  private static class FailureModes extends EnumMap<TargetFactor, RxTxFailureModes> {
+    private static final long serialVersionUID = 1L;
+    
+    FailureModes() {
+      super(TargetFactor.class);
+      for (TargetFactor target : TargetFactor.values()) {
+        set(target, new RxTxFailureModes() {});
+      }
+    }
+    
+    FailureModes set(TargetFactor target, RxTxFailureModes rxtxFailureModes) {
+      put(target, rxtxFailureModes);
+      return this;
+    }
   }
 
-  @Test
-  public void testInitiatorFailure_rxDelayed() throws InterruptedException, ExecutionException, Exception {
-    testInitiatorFailure(new DelayedDelivery(1, 10), null);
-  }
-
-  @Test
-  public void testInitiatorFailure_rxDelayedDuplicate() throws InterruptedException, ExecutionException, Exception {
-    testInitiatorFailure(new DelayedDuplicateDelivery(1, 10), null);
-  }
-
-  @Test
-  public void testInitiatorFailure_txDuplicate() throws InterruptedException, ExecutionException, Exception {
-    testInitiatorFailure(null, new DuplicateDelivery(1));
-  }
-
-  @Test
-  public void testInitiatorFailure_txDelayed() throws InterruptedException, ExecutionException, Exception {
-    testInitiatorFailure(null, new DelayedDelivery(1, 10));
-  }
-
-  @Test
-  public void testInitiatorFailure_txDelayedDuplicate() throws InterruptedException, ExecutionException, Exception {
-    testInitiatorFailure(null, new DelayedDuplicateDelivery(1, 10));
-  }
-
-  private void testInitiatorFailure(FailureMode rxFailureMode, FailureMode txFailureMode) throws InterruptedException, ExecutionException, Exception {
+  private void testFactorFailure(Map<TargetFactor, RxTxFailureModes> failureModes) throws InterruptedException, ExecutionException, Exception {
     final int initialBalance = 1_000;
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
@@ -143,10 +230,14 @@ public final class BankTransferTest {
     machine = VotingMachine.builder()
         .withLedger(ledger)
         .withFactors(new FailureProneFactor(initiator)
-                     .withRxFailureMode(rxFailureMode)
-                     .withTxFailureMode(txFailureMode),
-                     monitor,
-                     branches[0],
+                     .withRxFailureMode(failureModes.get(TargetFactor.INITIATOR).rxFailureMode)
+                     .withTxFailureMode(failureModes.get(TargetFactor.INITIATOR).txFailureMode),
+                     new FailureProneFactor(monitor)
+                     .withRxFailureMode(failureModes.get(TargetFactor.MONITOR).rxFailureMode)
+                     .withTxFailureMode(failureModes.get(TargetFactor.MONITOR).txFailureMode),
+                     new FailureProneFactor(branches[0])
+                     .withRxFailureMode(failureModes.get(TargetFactor.COHORT).rxFailureMode)
+                     .withTxFailureMode(failureModes.get(TargetFactor.COHORT).txFailureMode),
                      branches[1])
         .build();
 
