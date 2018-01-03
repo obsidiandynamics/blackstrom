@@ -21,7 +21,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   private final AtomicReference<QueueNode> tail = new AtomicReference<>(QueueNode.anchor());
   
-  private class NodeWorker implements Worker {
+  private class NodeWorker implements WorkerCycle {
     private final MessageHandler handler;
     private AtomicReference<QueueNode> head;
     
@@ -48,7 +48,7 @@ public final class MultiNodeQueueLedger implements Ledger {
         .withOptions(new WorkerOptions()
                      .withName("NodeWorker-" + Long.toHexString(System.identityHashCode(handler)))
                      .withDaemon(true))
-        .withWorker(new NodeWorker(handler, tail.get()))
+        .onCycle(new NodeWorker(handler, tail.get()))
         .build();
     threads.add(thread);
     thread.start();

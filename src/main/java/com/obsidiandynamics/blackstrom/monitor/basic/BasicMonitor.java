@@ -48,13 +48,13 @@ public final class BasicMonitor implements Monitor {
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName("gc-" + nodeId).withDaemon(true))
-        .withWorker(this::gcCycle)
+        .onCycle(this::gcCycle)
         .build();
     gcThread.start();
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName("timeout-" + nodeId).withDaemon(true))
-        .withWorker(this::timeoutCycle)
+        .onCycle(this::timeoutCycle)
         .build();
     timeoutThread.start();
   }

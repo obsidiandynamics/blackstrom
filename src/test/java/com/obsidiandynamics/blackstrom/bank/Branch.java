@@ -34,7 +34,7 @@ public final class Branch implements Cohort {
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName("gc-" + branchId).withDaemon(true))
-        .withWorker(this::gcCycle)
+        .onCycle(this::gcCycle)
         .build();
     if (idempotencyEnabled) gcThread.start();
   }

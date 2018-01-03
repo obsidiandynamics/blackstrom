@@ -37,7 +37,7 @@ public final class KafkaReceiverTest {
   
   @After
   public void after() throws InterruptedException {
-    if (receiver != null) receiver.close();
+    if (receiver != null) receiver.terminate().join();
   }
   
   private static Answer<?> split(Supplier<ConsumerRecords<String, String>> first) {
@@ -79,7 +79,7 @@ public final class KafkaReceiverTest {
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
     verify(recordHandler, never()).onReceive(any());
     verify(errorHandler, never()).onError(any());
-    receiver.await();
+    receiver.join();
   }
   
   @Test
@@ -90,8 +90,7 @@ public final class KafkaReceiverTest {
       verify(recordHandler, never()).onReceive(any());
       verify(errorHandler, atLeastOnce()).onError(any(RuntimeException.class));
     });
-    receiver.close();
-    receiver.await();
+    receiver.terminate().join();
     verify(consumer).close();
   }
 

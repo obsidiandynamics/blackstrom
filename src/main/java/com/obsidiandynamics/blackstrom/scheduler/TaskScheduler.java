@@ -62,7 +62,7 @@ public final class TaskScheduler implements Joinable {
         .withOptions(new WorkerOptions()
                      .withName(threadName)
                      .withDaemon(true))
-        .withWorker(this::cycle)
+        .onCycle(this::cycle)
         .build();
   }
   
@@ -81,8 +81,7 @@ public final class TaskScheduler implements Joinable {
    *  @return A {@link Joinable} for the caller to wait on.
    */
   public Joinable terminate() {
-    executor.terminate();
-    return this;
+    return executor.terminate();
   }
   
   @Override

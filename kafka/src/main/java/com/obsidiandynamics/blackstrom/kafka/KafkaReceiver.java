@@ -3,7 +3,9 @@ package com.obsidiandynamics.blackstrom.kafka;
 import org.apache.kafka.clients.consumer.*;
 import org.slf4j.*;
 
-public final class KafkaReceiver<K, V> extends Thread implements AutoCloseable {
+import com.obsidiandynamics.blackstrom.worker.*;
+
+public final class KafkaReceiver<K, V> implements Joinable {
   @FunctionalInterface
   public interface RecordHandler<K, V> {
     void onReceive(ConsumerRecords<K, V> records);
@@ -22,7 +24,7 @@ public final class KafkaReceiver<K, V> extends Thread implements AutoCloseable {
   
   private final ErrorHandler errorHandler;
   
-  private volatile boolean running = true;
+  private final WorkerThread thread;
   
   public static ErrorHandler genericErrorLogger(Logger logger) {
     return cause -> logger.warn("Error processing Kafka record", cause);
@@ -30,39 +32,44 @@ public final class KafkaReceiver<K, V> extends Thread implements AutoCloseable {
   
   public KafkaReceiver(Consumer<K, V> consumer, long pollTimeoutMillis, String threadName, 
                        RecordHandler<K, V> handler, ErrorHandler errorHandler) {
-    super(threadName);
     this.consumer = consumer;
     this.pollTimeoutMillis = pollTimeoutMillis;
     this.handler = handler;
     this.errorHandler = errorHandler;
-    start();
+    thread = WorkerThread.builder()
+        .withOptions(new WorkerOptions().withName(threadName).withDaemon(true))
+        .onCycle(this::cycle)
+        .onShutdown(this::shutdown)
+        .build();
+    thread.start();
   }
   
-  @Override 
-  public void run() {
-    while (running) {
-      final ConsumerRecords<K, V> records;
-      try {
-        records = consumer.poll(pollTimeoutMillis);
-      } catch (org.apache.kafka.common.errors.InterruptException e) {
-        break;
-      } catch (Throwable e) {
-        errorHandler.onError(e);
-        continue;
-      }
-      if (! records.isEmpty()) {
-        handler.onReceive(records);
-      }
+  private void cycle(WorkerThread thread) throws InterruptedException {
+    final ConsumerRecords<K, V> records;
+    try {
+      records = consumer.poll(pollTimeoutMillis);
+    } catch (org.apache.kafka.common.errors.InterruptException e) {
+      throw new InterruptedException();
+    } catch (Throwable e) {
+      errorHandler.onError(e);
+      return;
     }
+    
+    if (! records.isEmpty()) {
+      handler.onReceive(records);
+    }
+  }
+  
+  private void shutdown(WorkerThread thread, Throwable exception) {
     consumer.close();
   }
   
-  @Override
-  public void close() {
-    running = false;
+  public Joinable terminate() {
+    return thread.terminate();
   }
-  
-  public void await() throws InterruptedException {
-    join();
+
+  @Override
+  public boolean join(long timeoutMillis) throws InterruptedException {
+    return thread.join(timeoutMillis);
   }
 }

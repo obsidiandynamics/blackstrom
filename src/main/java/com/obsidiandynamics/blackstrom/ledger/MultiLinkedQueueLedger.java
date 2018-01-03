@@ -25,7 +25,7 @@ public final class MultiLinkedQueueLedger implements Ledger {
         .withOptions(new WorkerOptions()
                      .withName("LinkedQueueWorker-" + Long.toHexString(System.identityHashCode(handler)))
                      .withDaemon(true))
-        .withWorker(t -> consumeAndDispatch(queue, t, handler))
+        .onCycle(t -> consumeAndDispatch(queue, t, handler))
         .build();
     threads.add(thread);
     thread.start();

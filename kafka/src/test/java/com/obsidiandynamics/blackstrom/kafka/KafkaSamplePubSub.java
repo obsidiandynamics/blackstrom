@@ -87,8 +87,8 @@ public final class KafkaSamplePubSub {
       log("c: exception: %s\n", cause);
     }
     
-    void close() throws InterruptedException {
-      receiver.close();
+    void close() {
+      receiver.terminate();
     }
   }
   

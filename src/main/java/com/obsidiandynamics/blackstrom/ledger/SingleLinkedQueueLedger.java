@@ -26,7 +26,7 @@ public final class SingleLinkedQueueLedger implements Ledger {
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
                      .withName("LinkedQueueWorker-" + Long.toHexString(System.identityHashCode(this))))
-        .withWorker(this::cycle)
+        .onCycle(this::cycle)
         .build();
     thread.start();
   }

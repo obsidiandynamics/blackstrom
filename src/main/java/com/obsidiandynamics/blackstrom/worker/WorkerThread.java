@@ -3,12 +3,18 @@ package com.obsidiandynamics.blackstrom.worker;
 public final class WorkerThread implements Joinable {
   private final Thread driver;
   
-  private final Worker worker;
+  private final WorkerCycle worker;
+  
+  private final WorkerStartup onStartup;
+  
+  private final WorkerShutdown onShutdown;
   
   private volatile WorkerState state = WorkerState.CONCEIVED;
   
-  WorkerThread(WorkerOptions options, Worker worker) {
+  WorkerThread(WorkerOptions options, WorkerCycle worker, WorkerStartup onStartup, WorkerShutdown onShutdown) {
     this.worker = worker;
+    this.onStartup = onStartup;
+    this.onShutdown = onShutdown;
     driver = new Thread(this::run);
     
     if (options.getName() != null) {
@@ -49,14 +55,21 @@ public final class WorkerThread implements Joinable {
   }
   
   private void run() {
-    while (state == WorkerState.RUNNING) {
-      try {
-        cycle();
-      } catch (InterruptedException e) {
-        terminate();
+    onStartup.handle(this);
+    Throwable exception = null;
+    try {
+      while (state == WorkerState.RUNNING) {
+        try {
+          cycle();
+        } catch (Throwable e) {
+          state = WorkerState.TERMINATING;
+          exception = e;
+        }
       }
+    } finally {
+      onShutdown.handle(this, exception);
+      state = WorkerState.TERMINATED;
     }
-    state = WorkerState.TERMINATED;
   }
   
   /**
@@ -105,7 +118,7 @@ public final class WorkerThread implements Joinable {
     return "WorkerThread [thread=" + driver + ", state=" + state + "]";
   }
   
-  public static WorkerBuilder builder() {
-    return new WorkerBuilder();
+  public static WorkerThreadBuilder builder() {
+    return new WorkerThreadBuilder();
   }
 }

@@ -29,7 +29,7 @@ public final class SingleNodeQueueLedger implements Ledger {
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
                      .withName("NodeWorker-" + Long.toHexString(System.identityHashCode(this))))
-        .withWorker(this::cycle)
+        .onCycle(this::cycle)
         .build();
     thread.start();
   }
