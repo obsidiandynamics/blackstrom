@@ -91,15 +91,23 @@ public final class TaskSchedulerTest implements TestSupport {
   }
   
   private void testScheduleReverse(int tasks) {
-    TestSupport.sleep(10); // let the scheduler run at least once
+    // park the scheduler until we're ready to execute
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    scheduler.schedule(new AbstractTask<Long>(0, -1L) {
+      @Override public void execute(TaskScheduler scheduler) {
+        TestSupport.await(barrier);
+      }
+    });
     
     final List<UUID> ids = new ArrayList<>(tasks);  
     final long referenceNanos = System.nanoTime();
     for (int i = tasks; --i >= 0; ) {
-      final TestTask task = doIn(new UUID(0, i), referenceNanos, 10 + i);
+      final TestTask task = doIn(new UUID(0, i), referenceNanos, i);
       ids.add(task.getId());
       scheduler.schedule(task);
     }
+    
+    TestSupport.await(barrier); // resume scheduling
    
     Collections.reverse(ids);
     Timesert.wait(MAX_WAIT).untilTrue(receiver.isSize(tasks));
