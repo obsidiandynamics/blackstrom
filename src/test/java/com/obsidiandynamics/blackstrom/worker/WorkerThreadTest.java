@@ -89,8 +89,9 @@ public final class WorkerThreadTest {
         .build();
     thread.start();
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> thread.getState() == WorkerState.RUNNING);
-    verify(onStartup).handle(eq(thread));
+    Timesert.wait(MAX_WAIT).until(() -> {
+      verify(onStartup).handle(eq(thread));
+    });
     thread.terminate().joinQuietly();
     verify(onShutdown).handle(eq(thread), any());
   }
