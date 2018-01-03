@@ -106,8 +106,6 @@ def packageName = 'blackstrom-core'
 dependencies {
   compile 'org.slf4j:slf4j-api:1.7.25'
   compile 'com.obsidiandynamics.yconf:yconf-core:0.2.1'
-  compile 'com.obsidiandynamics.indigo:indigo-core:1.1.0'
-  compile 'com.lmax:disruptor:3.3.7'
 }
 
 jar {
