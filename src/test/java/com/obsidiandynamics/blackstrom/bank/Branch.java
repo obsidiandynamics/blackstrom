@@ -136,7 +136,6 @@ public final class Branch implements Cohort {
   
   @Override
   public void dispose() {
-    gcThread.terminate();
-    gcThread.joinQuietly();
+    gcThread.terminate().joinQuietly();
   }
 }

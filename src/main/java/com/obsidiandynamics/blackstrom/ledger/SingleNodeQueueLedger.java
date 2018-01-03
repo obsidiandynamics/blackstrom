@@ -61,7 +61,6 @@ public final class SingleNodeQueueLedger implements Ledger {
 
   @Override
   public void dispose() {
-    thread.terminate();
-    thread.joinQuietly();
+    thread.terminate().joinQuietly();
   }
 }

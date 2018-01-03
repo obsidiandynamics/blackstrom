@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.worker;
 
-public final class WorkerThread {
+public final class WorkerThread implements Joinable {
   private final Thread driver;
   
   private final Worker worker;
@@ -37,12 +37,15 @@ public final class WorkerThread {
   
   /**
    *  Terminates the worker thread.
+   *  
+   *  @return A {@link Joinable} for the caller to wait on.
    */
-  public final void terminate() {
+  public final Joinable terminate() {
     if (state == WorkerState.RUNNING) {
       state = WorkerState.TERMINATING;
       driver.interrupt();
     }
+    return this;
   }
   
   private void run() {
@@ -69,27 +72,10 @@ public final class WorkerThread {
     worker.cycle(this);
   }
   
-  /**
-   *  Waits until the worker thread terminates.
-   *  
-   *  @throws InterruptedException If the thread is interrupted.
-   */
-  public final void join() throws InterruptedException {
-    driver.join();
-  }
-  
-  /**
-   *  Waits until the worker thread terminates.<p>
-   *  
-   *  This method suppresses an {@link InterruptedException} and will re-assert the interrupt 
-   *  prior to returning.
-   */
-  public final void joinQuietly() {
-    try {
-      join();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+  @Override
+  public final boolean join(long timeoutMillis) throws InterruptedException {
+    driver.join(timeoutMillis);
+    return ! driver.isAlive();
   }
   
   public final String getName() {

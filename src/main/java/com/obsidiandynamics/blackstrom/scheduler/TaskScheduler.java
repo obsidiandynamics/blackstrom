@@ -9,7 +9,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 /**
  *  A scheduler for dispatching arbitrary tasks.
  */
-public final class TaskScheduler {
+public final class TaskScheduler implements Joinable {
   /** Maximum sleep time. If the next task's time is longer, the sleep will be performed in a loop.
    *  This is also the default time that the scheduler sleeps for if it has no pending tasks. */
   private static final long MAX_SLEEP_NANOS = 1_000_000_000l;
@@ -77,28 +77,17 @@ public final class TaskScheduler {
   /**
    *  Terminates the scheduler, shutting down the worker thread and preventing further 
    *  task executions.
+   *  
+   *  @return A {@link Joinable} for the caller to wait on.
    */
-  public void terminate() {
+  public Joinable terminate() {
     executor.terminate();
+    return this;
   }
   
-  /**
-   *  Waits until the worker thread terminates.<p>
-   *  
-   *  This method suppresses an {@link InterruptedException} and will re-assert the interrupt 
-   *  prior to returning.
-   */
-  public void joinQuietly() {
-    executor.joinQuietly();
-  }
-  
-  /**
-   *  Waits until the worker thread terminates.
-   *  
-   *  @throws InterruptedException If the thread is interrupted.
-   */
-  public void join() throws InterruptedException {
-    executor.join();
+  @Override
+  public boolean join(long timeoutMillis) throws InterruptedException {
+    return executor.join(timeoutMillis);
   }
   
   private void cycle(WorkerThread thread) {

@@ -63,8 +63,7 @@ public final class TaskSchedulerTest implements TestSupport {
   
   @After
   public void teardown() throws InterruptedException {
-    scheduler.terminate();
-    scheduler.joinQuietly();
+    scheduler.terminate().joinQuietly();
     scheduler.join(); // should be a no-op
   }
   

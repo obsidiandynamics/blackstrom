@@ -59,8 +59,7 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
  
   @Override
   public void dispose() {
-    scheduler.terminate();
-    scheduler.joinQuietly();
+    scheduler.terminate().joinQuietly();
     backingFactor.dispose();
   }
 

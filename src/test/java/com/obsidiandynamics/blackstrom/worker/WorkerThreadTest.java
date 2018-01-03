@@ -9,7 +9,7 @@ import org.junit.*;
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public final class WorkerTest {
+public final class WorkerThreadTest {
   @Test
   public void testSingleRun() {
     final AtomicInteger counter = new AtomicInteger();
@@ -23,7 +23,8 @@ public final class WorkerTest {
     });
     assertEquals(WorkerState.CONCEIVED, thread.getState());
     thread.start();
-    thread.joinQuietly();
+    final boolean joined = thread.joinQuietly(60_000);
+    assertTrue(joined);
     assertEquals(1, counter.get());
     TestSupport.sleep(10);
     assertEquals(1, counter.get());
@@ -70,8 +71,19 @@ public final class WorkerTest {
     thread.joinQuietly();
     assertTrue(Thread.interrupted());
     
-    thread.terminate();
-    thread.joinQuietly();
+    thread.terminate().joinQuietly();
+  }
+  
+  @Test
+  public void testJoinTimeout() throws InterruptedException {
+    final WorkerThread thread = new WorkerThread(new WorkerOptions(), t -> {
+      TestSupport.sleep(10);
+    });
+    thread.start();
+    final boolean joined = thread.join(10);
+    assertFalse(joined);
+    
+    thread.terminate().join();
   }
   
   @Test
