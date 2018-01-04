@@ -95,8 +95,9 @@ public final class WorkerThread implements Joinable {
         // can call the shutdown hook safely
         onShutdown.handle(this, exception);
       } else {
-        // we will imminently get interrupted - wait before continuing with the shutdown hook
+        // we may get interrupted - wait before continuing with the shutdown hook
         while (! interrupted) Thread.yield();
+        Thread.interrupted(); // clear the interrupt before invoking the shutdown hook
         onShutdown.handle(this, exception);
       }
       
