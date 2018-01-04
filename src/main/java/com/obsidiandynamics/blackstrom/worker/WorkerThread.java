@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.worker;
 
+import java.util.concurrent.atomic.*;
+
 public final class WorkerThread implements Joinable {
   private final Thread driver;
   
@@ -10,6 +12,15 @@ public final class WorkerThread implements Joinable {
   private final WorkerShutdown onShutdown;
   
   private volatile WorkerState state = WorkerState.CONCEIVED;
+  
+  /** Indicates that the shutdown handler is about to be run. */
+  private final AtomicBoolean shutdown = new AtomicBoolean();
+  
+  /** Indicates that the driver has been interrupted by {@link #shutdown()}. */
+  private volatile boolean interrupted;
+  
+  /** Guards the changing of the thread state. */
+  private final Object stateLock = new Object();
   
   WorkerThread(WorkerOptions options, WorkerCycle worker, WorkerStartup onStartup, WorkerShutdown onShutdown) {
     this.worker = worker;
@@ -33,11 +44,13 @@ public final class WorkerThread implements Joinable {
    *  Starts the worker thread.
    */
   public final void start() {
-    if (state == WorkerState.CONCEIVED) {
-      state = WorkerState.RUNNING;
-      driver.start();
-    } else {
-      throw new IllegalStateException("Cannot start worker in state " + state);
+    synchronized (stateLock) {
+      if (state == WorkerState.CONCEIVED) {
+        state = WorkerState.RUNNING;
+        driver.start();
+      } else {
+        throw new IllegalStateException("Cannot start worker in state " + state);
+      }
     }
   }
   
@@ -47,28 +60,49 @@ public final class WorkerThread implements Joinable {
    *  @return A {@link Joinable} for the caller to wait on.
    */
   public final Joinable terminate() {
-    if (state == WorkerState.RUNNING) {
-      state = WorkerState.TERMINATING;
-      driver.interrupt();
+    synchronized (stateLock) {
+      if (state == WorkerState.CONCEIVED) {
+        state = WorkerState.TERMINATED;
+      } else if (state == WorkerState.RUNNING) {
+        state = WorkerState.TERMINATING;
+      }
     }
+    
+    // only interrupt the driver if it hasn't finished cycling, and at most once
+    if (shutdown.compareAndSet(false, true)) {
+      driver.interrupt();
+      interrupted = true;
+    }
+    
     return this;
   }
   
   private void run() {
-    onStartup.handle(this);
     Throwable exception = null;
     try {
+      onStartup.handle(this);
       while (state == WorkerState.RUNNING) {
-        try {
-          cycle();
-        } catch (Throwable e) {
-          state = WorkerState.TERMINATING;
-          exception = e;
-        }
+        cycle();
       }
+    } catch (Throwable e) {
+      synchronized (stateLock) {
+        state = WorkerState.TERMINATING;
+      }
+      exception = e;
     } finally {
-      onShutdown.handle(this, exception);
-      state = WorkerState.TERMINATED;
+      if (shutdown.compareAndSet(false, true)) {
+        // indicate that we've finished cycling - this way we won't get interrupted and 
+        // can call the shutdown hook safely
+        onShutdown.handle(this, exception);
+      } else {
+        // we will imminently get interrupted - wait before continuing with the shutdown hook
+        while (! interrupted) Thread.yield();
+        onShutdown.handle(this, exception);
+      }
+      
+      synchronized (stateLock) {
+        state = WorkerState.TERMINATED;
+      }
     }
   }
   

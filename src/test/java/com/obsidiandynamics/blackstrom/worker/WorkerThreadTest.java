@@ -97,6 +97,28 @@ public final class WorkerThreadTest {
   }
   
   @Test(expected=IllegalStateException.class)
+  public void testTerminateOnConceive() {
+    final WorkerThread thread = WorkerThread.builder()
+        .onCycle(t -> {})
+        .build();
+    thread.terminate();
+    assertEquals(WorkerState.TERMINATED, thread.getState());
+    thread.start();
+  }
+  
+//  @Test
+//  public void testShutdownBeforeInterrupt() {
+//    final WorkerThread thread = WorkerThread.builder()
+//        .onCycle(t -> { 
+//          throw new RuntimeException("Leaving");
+//        })
+//        .onShutdown((t, e) -> {
+//          t.terminate();
+//        })
+//        .build();
+//  }
+  
+  @Test(expected=IllegalStateException.class)
   public void testBuildWithWorker() {
     WorkerThread.builder().build();
   }
