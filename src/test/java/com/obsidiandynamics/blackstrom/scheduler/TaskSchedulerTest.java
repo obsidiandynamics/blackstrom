@@ -22,7 +22,7 @@ public final class TaskSchedulerTest implements TestSupport {
     return TestCycle.timesQuietly(1);
   }
   
-  private static final int MAX_WAIT = 60_000;
+  private static final int MAX_WAIT = 10_000;
   
   private static final class TestTask extends AbstractTask<UUID> {
     private final Consumer<TestTask> taskBody;

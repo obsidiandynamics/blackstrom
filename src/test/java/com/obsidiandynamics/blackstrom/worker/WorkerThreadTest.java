@@ -4,16 +4,26 @@ import static junit.framework.TestCase.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.*;
 import java.util.concurrent.atomic.*;
 
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public final class WorkerThreadTest {
   private static final int MAX_WAIT = 10_000;
+  @Parameterized.Parameters
+  
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
   
   @Test
   public void testSingleRun() {
@@ -105,18 +115,6 @@ public final class WorkerThreadTest {
     assertEquals(WorkerState.TERMINATED, thread.getState());
     thread.start();
   }
-  
-//  @Test
-//  public void testShutdownBeforeInterrupt() {
-//    final WorkerThread thread = WorkerThread.builder()
-//        .onCycle(t -> { 
-//          throw new RuntimeException("Leaving");
-//        })
-//        .onShutdown((t, e) -> {
-//          t.terminate();
-//        })
-//        .build();
-//  }
   
   @Test(expected=IllegalStateException.class)
   public void testBuildWithWorker() {
