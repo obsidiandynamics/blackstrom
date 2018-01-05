@@ -38,7 +38,7 @@ public final class RunKafkaConsumer {
           if (System.currentTimeMillis() - lastCommitTime > commitIntervalMillis) {
             if (offsetsToCommit != null) {
               System.out.format("Committing %s\n", offsetsToCommit);
-              consumer.commitSync(offsetsToCommit);
+              consumer.commitAsync(offsetsToCommit, null);
               lastCommitTime = System.currentTimeMillis();
             }
             final ConsumerRecord<String, String> lastRecord = recordsList.get(recordsList.size() - 1);
