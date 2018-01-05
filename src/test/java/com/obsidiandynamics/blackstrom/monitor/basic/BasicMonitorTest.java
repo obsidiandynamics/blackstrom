@@ -21,10 +21,10 @@ import com.obsidiandynamics.junit.*;
 public final class BasicMonitorTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(2);
+    return TestCycle.timesQuietly(1);
   }
   
-  private static final int MAX_WAIT = 60_000;
+  private static final int MAX_WAIT = 10_000;
   
   private final InitContext initContext = new DefaultInitContext(new Ledger() {
     @Override public void attach(MessageHandler handler) {
@@ -57,7 +57,7 @@ public final class BasicMonitorTest {
   @Before
   public void before() {
     setMonitorAndInit(new BasicMonitor());
-    setLedger(new SingleLinkedQueueLedger());
+    setLedger(new SingleNodeQueueLedger());
     ledger.attach((c, m) -> { 
       if (m.getMessageType() == MessageType.OUTCOME) {
         outcomes.add((Outcome) m);

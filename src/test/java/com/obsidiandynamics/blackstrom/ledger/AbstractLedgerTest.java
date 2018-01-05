@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractLedgerTest {
-  private static final int MAX_WAIT = 60_000;
+  private static final int MAX_WAIT = 10_000;
   
   private static class TestHandler implements MessageHandler {
     private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -104,7 +104,7 @@ public abstract class AbstractLedgerTest {
   @Test
   public final void testOneWayBenchmark() {
     ledger = createLedger();
-    final int numMessages = 100_000;
+    final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((c, m) -> received.incrementAndGet());
@@ -124,7 +124,7 @@ public abstract class AbstractLedgerTest {
   @Test
   public final void testTwoWayBenchmark() {
     ledger = createLedger();
-    final int numMessages = 100_000;
+    final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((c, m) -> {
