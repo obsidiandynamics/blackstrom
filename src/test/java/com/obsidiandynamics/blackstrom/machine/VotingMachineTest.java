@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.machine;
 
 import static junit.framework.TestCase.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.*;

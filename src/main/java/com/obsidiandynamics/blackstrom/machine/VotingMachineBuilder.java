@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.machine;
 
 import java.util.*;
 
+import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 
 public final class VotingMachineBuilder {

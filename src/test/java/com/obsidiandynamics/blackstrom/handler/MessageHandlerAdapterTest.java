@@ -36,24 +36,39 @@ public final class MessageHandlerAdapterTest {
     }
   }
   
+  interface NominationFactor extends Factor, NominationProcessor, Groupable.NullGroup {};
+  
+  interface VoteFactor extends Factor, VoteProcessor, Groupable.NullGroup {};
+  
+  interface OutcomeFactor extends Factor, OutcomeProcessor, Groupable.NullGroup {};
+  
   @Test
-  public void testNomination() {
+  public void testNominationAndGroup() {
     final AtomicInteger invocations = new AtomicInteger();
-    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NominationProcessor() {
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NominationFactor() {
       @Override public void onNomination(MessageContext context, Nomination nomination) {
         invocations.incrementAndGet();
+      }
+      
+      @Override public String getGroupId() {
+        return "test-nomination";
       }
     });
     callAll(adapter);
     assertEquals(1, invocations.get());
+    assertEquals("test-nomination", adapter.getGroupId());
   }
 
   @Test
   public void testVote() {
     final AtomicInteger invocations = new AtomicInteger();
-    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new VoteProcessor() {
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new VoteFactor() {
       @Override public void onVote(MessageContext context, Vote vote) {
         invocations.incrementAndGet();
+      }
+
+      @Override public String getGroupId() {
+        return null;
       }
     });
     callAll(adapter);
@@ -63,9 +78,13 @@ public final class MessageHandlerAdapterTest {
   @Test
   public void testOutcome() {
     final AtomicInteger invocations = new AtomicInteger();
-    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new OutcomeProcessor() {
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new OutcomeFactor() {
       @Override public void onOutcome(MessageContext context, Outcome outcome) {
         invocations.incrementAndGet();
+      }
+
+      @Override public String getGroupId() {
+        return null;
       }
     });
     callAll(adapter);
@@ -74,7 +93,7 @@ public final class MessageHandlerAdapterTest {
   
   @Test(expected=UnsupportedOperationException.class)
   public void testUnsupported() {
-    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new ElementalProcessor() {});
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NullGroupFactor() {});
     adapter.onMessage(null, new Message(null) {
       @Override public MessageType getMessageType() {
         return UNKNOWN;

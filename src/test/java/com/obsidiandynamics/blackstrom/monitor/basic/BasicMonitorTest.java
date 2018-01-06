@@ -35,6 +35,10 @@ public final class BasicMonitorTest {
       ledger.append(message);
     }
     
+    @Override public void confirm(String groupId, Object messageId) {
+      ledger.confirm(groupId, messageId);
+    }
+    
     @Override public void init() {
       ledger.init();
     }
@@ -58,7 +62,7 @@ public final class BasicMonitorTest {
   public void before() {
     setMonitorAndInit(new BasicMonitor());
     setLedger(new SingleNodeQueueLedger());
-    ledger.attach((c, m) -> { 
+    ledger.attach((NullGroupMessageHandler) (c, m) -> { 
       if (m.getMessageType() == MessageType.OUTCOME) {
         outcomes.add((Outcome) m);
       } else {
@@ -84,6 +88,12 @@ public final class BasicMonitorTest {
   private void setLedger(Ledger ledger) {
     if (this.ledger != null) this.ledger.dispose();
     this.ledger = ledger;
+  }
+  
+  @Test
+  public void testInitialisation() {
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withGroupId("test-monitor")));
+    assertEquals("test-monitor", monitor.getGroupId());
   }
   
   @Test
@@ -240,7 +250,9 @@ public final class BasicMonitorTest {
   
   @Test
   public void testGCNoReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetime(60_000).withGCInterval(1)));
+    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions()
+                                       .withOutcomeLifetime(60_000)
+                                       .withGCInterval(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.ACCEPT);
@@ -273,7 +285,7 @@ public final class BasicMonitorTest {
   public void testAppendError() throws Exception {
     setLedger(Mockito.mock(Ledger.class));
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
-    ledger.attach((c, m) -> outcomes.add((Outcome) m));
+    ledger.attach((NullGroupMessageHandler) (c, m) -> outcomes.add((Outcome) m));
     ledger.init();
     context = new DefaultMessageContext(ledger);
     

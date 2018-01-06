@@ -22,16 +22,18 @@ public abstract class Message {
     return messageId;
   }
   
-  public final void setMessageId(Object messageId) {
+  public final Message withMessageId(Object messageId) {
     this.messageId = messageId;
+    return this;
   }
 
   public final String getSource() {
     return source;
   }
   
-  public final void setSource(String source) {
+  public final Message withSource(String source) {
     this.source = source;
+    return this;
   }
 
   public final long getTimestamp() {

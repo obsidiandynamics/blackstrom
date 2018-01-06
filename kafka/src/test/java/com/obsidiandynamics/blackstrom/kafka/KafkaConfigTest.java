@@ -10,12 +10,12 @@ import org.junit.*;
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.yconf.*;
 
-public final class KafkaClusterConfigTest {
+public final class KafkaConfigTest {
   @Test
   public void testConfig() throws IOException {
     final Kafka<?, ?> kafka = new MappingContext()
         .withParser(new SnakeyamlParser())
-        .fromStream(KafkaClusterConfigTest.class.getClassLoader().getResourceAsStream("kafkacluster-config.yaml"))
+        .fromStream(KafkaConfigTest.class.getClassLoader().getResourceAsStream("kafka-config.yaml"))
         .map(Kafka.class);
     assertNotNull(kafka);
     assertEquals(KafkaCluster.class, kafka.getClass());

@@ -5,10 +5,11 @@ import java.util.concurrent.*;
 import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.handler.Groupable.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-public final class AsyncInitiator implements Initiator {
+public final class AsyncInitiator implements Initiator, NullGroup {
   private final Map<Object, Consumer<Outcome>> pending = new ConcurrentHashMap<>();
   
   private Ledger ledger;

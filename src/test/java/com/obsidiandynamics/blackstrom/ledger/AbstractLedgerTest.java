@@ -16,7 +16,7 @@ import com.obsidiandynamics.indigo.util.*;
 public abstract class AbstractLedgerTest {
   private static final int MAX_WAIT = 10_000;
   
-  private static class TestHandler implements MessageHandler {
+  private static class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
     
     private volatile long lastBallotId = -1;
@@ -37,13 +37,14 @@ public abstract class AbstractLedgerTest {
         }
       }
       received.add(message);
+      context.getLedger().confirm(getGroupId(), message.getMessageId());
     }
   }
   
   private static class TestMessage extends Message {
     protected TestMessage(Object ballotId, String source) {
       super(ballotId);
-      setSource(source);
+      withSource(source);
     }
 
     @Override
@@ -107,7 +108,7 @@ public abstract class AbstractLedgerTest {
     final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
-    ledger.attach((c, m) -> received.incrementAndGet());
+    ledger.attach((NullGroupMessageHandler) (c, m) -> received.incrementAndGet());
     ledger.init();
     
     final long took = TestSupport.took(() -> {
@@ -127,18 +128,20 @@ public abstract class AbstractLedgerTest {
     final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
-    ledger.attach((c, m) -> {
+    ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (m.getSource() == "source") {
         try {
           c.getLedger().append(new TestMessage(m.getMessageId(), "echo"));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
+        c.getLedger().confirm(null, m.getMessageId());
       }
     });
-    ledger.attach((c, m) -> {
+    ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (m.getSource() == "echo") {
         received.incrementAndGet();
+        c.getLedger().confirm(null, m.getMessageId());
       }
     });
     ledger.init();

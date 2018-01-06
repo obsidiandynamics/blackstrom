@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.factor.*;
+import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.machine.*;
@@ -223,7 +224,7 @@ public final class BankTransferTest {
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
-    final Initiator initiator = (c, o) -> {
+    final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (o.getVerdict() == Verdict.COMMIT) {
         commits.incrementAndGet();
       } else {

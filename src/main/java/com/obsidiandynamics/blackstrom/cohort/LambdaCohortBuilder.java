@@ -4,6 +4,8 @@ import com.obsidiandynamics.blackstrom.cohort.LambdaCohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 
 public final class LambdaCohortBuilder {
+  private String groupId;
+  
   private OnInit onInit = c -> {};
   
   private OnDispose onDispose = () -> {};
@@ -13,6 +15,11 @@ public final class LambdaCohortBuilder {
   private OutcomeProcessor onOutcome;
   
   LambdaCohortBuilder() {}
+  
+  public LambdaCohortBuilder withGroupId(String groupId) {
+    this.groupId = groupId;
+    return this;
+  }
 
   public LambdaCohortBuilder onInit(OnInit onInit) {
     this.onInit = onInit;
@@ -37,6 +44,6 @@ public final class LambdaCohortBuilder {
   public LambdaCohort build() {
     if (onNomination == null) throw new IllegalStateException("No onNomination behaviour set");
     if (onOutcome == null) throw new IllegalStateException("No onOutcome behaviour set");
-    return new LambdaCohort(onInit, onDispose, onNomination, onOutcome);
+    return new LambdaCohort(groupId, onInit, onDispose, onNomination, onOutcome);
   }
 }

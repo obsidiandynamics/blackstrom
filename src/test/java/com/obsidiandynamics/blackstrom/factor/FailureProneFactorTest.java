@@ -27,7 +27,9 @@ public final class FailureProneFactorTest {
     return TestCycle.timesQuietly(1);
   }
   
-  private static class TestCohort implements Cohort {
+  private static final int MAX_WAIT = 10_000;
+  
+  private static class TestCohort implements Cohort, Groupable.NullGroup {
     private final List<Nomination> nominations = new CopyOnWriteArrayList<>();
     
     @Override
@@ -47,7 +49,7 @@ public final class FailureProneFactorTest {
     }
   }
   
-  private static class VoteCollector implements Factor, VoteProcessor {
+  private static class VoteCollector implements Factor, VoteProcessor, Groupable.NullGroup {
     private final List<Vote> votes = new CopyOnWriteArrayList<>();
     
     @Override
@@ -55,8 +57,6 @@ public final class FailureProneFactorTest {
       votes.add(vote);
     }
   }
-  
-  private static final int MAX_WAIT = 10_000;
   
   private VotingMachine machine;
   

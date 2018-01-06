@@ -65,6 +65,9 @@ public final class IndigoLedger implements Ledger {
   public void append(Message message) throws Exception {
     system.tell(dispatchRef, message);
   }
+  
+  @Override
+  public void confirm(String groupId, Object messageId) {}
 
   @Override
   public void dispose() {

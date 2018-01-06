@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.cohort;
 
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.*;
@@ -23,12 +25,23 @@ public final class LambdaCohortTest {
   
   @Test
   public void testDefaultInitAndDispose() {
-    final LambdaCohort c = LambdaCohort.builder()
+    final LambdaCohort l = LambdaCohort.builder()
         .onNomination(LambdaCohortTest::noOp)
         .onOutcome(LambdaCohortTest::noOp)
         .build();
-    c.init(null);
-    c.dispose();
+    l.init(null);
+    l.dispose();
+  }
+  
+  @Test
+  public void testGroupId() {
+    final LambdaCohort l = LambdaCohort.builder()
+        .withGroupId("test")
+        .onNomination((c, m) -> {})
+        .onOutcome((c, m) -> {})
+        .build();
+    
+    assertEquals("test", l.getGroupId());
   }
   
   @Test
@@ -43,23 +56,25 @@ public final class LambdaCohortTest {
     final Nomination nomination = new Nomination(0, new String[0], null, 1000);
     final Outcome outcome = new Outcome(0, Verdict.COMMIT, new Response[0]);
     
-    final LambdaCohort c = LambdaCohort.builder()
+    final LambdaCohort l = LambdaCohort.builder()
         .onInit(onInit)
         .onDispose(onDispose)
         .onNomination(onNomination)
         .onOutcome(onOutcome)
         .build();
     
-    c.init(initContext);
+    assertNull(l.getGroupId());
+    
+    l.init(initContext);
     verify(onInit).onInit(eq(initContext));
     
-    c.onNomination(messageContext, nomination);
+    l.onNomination(messageContext, nomination);
     verify(onNomination).onNomination(eq(messageContext), eq(nomination));
     
-    c.onOutcome(messageContext, outcome);
+    l.onOutcome(messageContext, outcome);
     verify(onOutcome).onOutcome(eq(messageContext), eq(outcome));
     
-    c.dispose();
+    l.dispose();
     verify(onDispose).onDispose();
   }
 }

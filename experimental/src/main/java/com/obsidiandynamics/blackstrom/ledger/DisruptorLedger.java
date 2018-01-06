@@ -59,6 +59,9 @@ public final class DisruptorLedger implements Ledger {
     }
   }
   
+  @Override
+  public void confirm(String groupId, Object messageId) {}
+  
   @SuppressWarnings("unchecked")
   @Override
   public void init() {

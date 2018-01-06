@@ -13,8 +13,8 @@ public final class MessageTest {
         return null;
       }
     };
-    m.setMessageId(100);
-    m.setSource("test");
+    m.withMessageId(100);
+    m.withSource("test");
     assertEquals(1, m.getBallotId());
     assertEquals(100, m.getMessageId());
     assertEquals("test", m.getSource());

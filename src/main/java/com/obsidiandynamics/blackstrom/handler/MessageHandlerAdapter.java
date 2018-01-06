@@ -3,17 +3,17 @@ package com.obsidiandynamics.blackstrom.handler;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapter implements MessageHandler {
-  private final ElementalProcessor processor;
+  private final Factor factor;
   
   private final boolean nominationCapable;
   private final boolean voteCapable;
   private final boolean outcomeCapable;
   
-  public MessageHandlerAdapter(ElementalProcessor processor) {
-    this.processor = processor;
-    nominationCapable = processor instanceof NominationProcessor;
-    voteCapable = processor instanceof VoteProcessor;
-    outcomeCapable = processor instanceof OutcomeProcessor;
+  public MessageHandlerAdapter(Factor factor) {
+    this.factor = factor;
+    nominationCapable = factor instanceof NominationProcessor;
+    voteCapable = factor instanceof VoteProcessor;
+    outcomeCapable = factor instanceof OutcomeProcessor;
   }
 
   @Override
@@ -21,24 +21,29 @@ public final class MessageHandlerAdapter implements MessageHandler {
     switch (message.getMessageType()) {
       case NOMINATION:
         if (nominationCapable) {
-          ((NominationProcessor) processor).onNomination(context, (Nomination) message);
+          ((NominationProcessor) factor).onNomination(context, (Nomination) message);
         }
         break;
         
       case VOTE:
         if (voteCapable) {
-          ((VoteProcessor) processor).onVote(context, (Vote) message);
+          ((VoteProcessor) factor).onVote(context, (Vote) message);
         }
         break;
         
       case OUTCOME:
         if (outcomeCapable) {
-          ((OutcomeProcessor) processor).onOutcome(context, (Outcome) message);
+          ((OutcomeProcessor) factor).onOutcome(context, (Outcome) message);
         }
         break;
         
       default:
         throw new UnsupportedOperationException("Unsupported message of type " + message.getMessageType().name());
     }
+  }
+
+  @Override
+  public String getGroupId() {
+    return factor.getGroupId();
   }
 }

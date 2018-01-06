@@ -58,6 +58,9 @@ public final class SingleNodeQueueLedger implements Ledger {
   public void append(Message message) throws Exception {
     new QueueNode(message).appendTo(tail);
   }
+  
+  @Override
+  public void confirm(String groupId, Object messageId) {}
 
   @Override
   public void dispose() {

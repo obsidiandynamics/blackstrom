@@ -20,7 +20,7 @@ public final class KafkaReceiver<K, V> implements Joinable {
   
   private final long pollTimeoutMillis;
   
-  private final RecordHandler<K, V> handler;
+  private final RecordHandler<K, V> recordHandler;
   
   private final ErrorHandler errorHandler;
   
@@ -31,10 +31,10 @@ public final class KafkaReceiver<K, V> implements Joinable {
   }
   
   public KafkaReceiver(Consumer<K, V> consumer, long pollTimeoutMillis, String threadName, 
-                       RecordHandler<K, V> handler, ErrorHandler errorHandler) {
+                       RecordHandler<K, V> recordHandler, ErrorHandler errorHandler) {
     this.consumer = consumer;
     this.pollTimeoutMillis = pollTimeoutMillis;
-    this.handler = handler;
+    this.recordHandler = recordHandler;
     this.errorHandler = errorHandler;
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName(threadName).withDaemon(true))
@@ -56,7 +56,7 @@ public final class KafkaReceiver<K, V> implements Joinable {
     }
     
     if (! records.isEmpty()) {
-      handler.onReceive(records);
+      recordHandler.onReceive(records);
     }
   }
   

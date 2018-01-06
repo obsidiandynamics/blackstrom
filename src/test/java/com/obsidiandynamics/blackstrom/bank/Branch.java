@@ -138,4 +138,9 @@ public final class Branch implements Cohort {
   public void dispose() {
     gcThread.terminate().joinQuietly();
   }
+
+  @Override
+  public String getGroupId() {
+    return branchId;
+  }
 }

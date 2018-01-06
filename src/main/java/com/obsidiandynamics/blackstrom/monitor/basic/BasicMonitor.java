@@ -21,6 +21,8 @@ public final class BasicMonitor implements Monitor {
   
   private final Map<Object, Outcome> decided = new HashMap<>();
   
+  private final String groupId;
+  
   private final String nodeId = getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
   
   private final WorkerThread gcThread;
@@ -42,6 +44,7 @@ public final class BasicMonitor implements Monitor {
   }
   
   public BasicMonitor(BasicMonitorOptions options) {
+    this.groupId = options.getGroupId();
     this.gcIntervalMillis = options.getGCInterval();
     this.outcomeLifetimeMillis = options.getOutcomeLifetime();
     this.timeoutIntervalMillis = options.getTimeoutInterval();
@@ -57,6 +60,11 @@ public final class BasicMonitor implements Monitor {
         .onCycle(this::timeoutCycle)
         .build();
     timeoutThread.start();
+  }
+
+  @Override
+  public String getGroupId() {
+    return groupId;
   }
   
   private void gcCycle(WorkerThread thread) throws InterruptedException {

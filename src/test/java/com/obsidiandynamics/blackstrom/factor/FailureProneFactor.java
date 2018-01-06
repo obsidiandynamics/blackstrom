@@ -4,7 +4,6 @@ import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.scheduler.*;
 
@@ -28,6 +27,11 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
 
     @Override public void append(Message message) throws Exception {
       onSend(message);
+    }
+    
+    @Override
+    public void confirm(String groupId, Object messageId) {
+      backingLedger.confirm(groupId, messageId);
     }
   };
   
@@ -197,5 +201,10 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
     };
     scheduler.schedule(task);
     return task;
+  }
+
+  @Override
+  public String getGroupId() {
+    return backingHandler.getGroupId();
   }
 }

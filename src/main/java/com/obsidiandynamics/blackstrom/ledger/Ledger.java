@@ -10,4 +10,6 @@ public interface Ledger extends Disposable.Default {
   void attach(MessageHandler handler);
   
   void append(Message message) throws Exception;
+  
+  void confirm(String groupId, Object messageId);
 }

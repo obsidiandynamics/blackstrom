@@ -12,6 +12,8 @@ public final class LambdaCohort implements Cohort {
     void onDispose();
   }
   
+  private final String groupId;
+  
   private final OnInit onInit;
   
   private final OnDispose onDispose;
@@ -20,8 +22,9 @@ public final class LambdaCohort implements Cohort {
   
   private final OutcomeProcessor onOutcome;
   
-  LambdaCohort(OnInit onInit, OnDispose onDispose, NominationProcessor onNomination,
+  LambdaCohort(String groupId, OnInit onInit, OnDispose onDispose, NominationProcessor onNomination,
                OutcomeProcessor onOutcome) {
+    this.groupId = groupId;
     this.onInit = onInit;
     this.onDispose = onDispose;
     this.onNomination = onNomination;
@@ -36,6 +39,11 @@ public final class LambdaCohort implements Cohort {
   @Override
   public void dispose() {
     onDispose.onDispose();
+  }
+  
+  @Override
+  public String getGroupId() {
+    return groupId;
   }
   
   @Override

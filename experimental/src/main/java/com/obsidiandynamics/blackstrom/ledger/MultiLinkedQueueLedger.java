@@ -49,6 +49,9 @@ public final class MultiLinkedQueueLedger implements Ledger {
   }
   
   @Override
+  public void confirm(String groupId, Object messageId) {}
+  
+  @Override
   public void dispose() {
     threads.forEach(t -> t.terminate());
     threads.forEach(t -> t.joinQuietly());

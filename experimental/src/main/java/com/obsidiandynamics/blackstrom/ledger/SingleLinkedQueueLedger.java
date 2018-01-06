@@ -49,6 +49,9 @@ public final class SingleLinkedQueueLedger implements Ledger {
   public void append(Message message) throws Exception {
     queue.put(message);
   }
+  
+  @Override
+  public void confirm(String groupId, Object messageId) {}
 
   @Override
   public void dispose() {

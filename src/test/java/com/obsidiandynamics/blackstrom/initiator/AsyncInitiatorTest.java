@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 
+import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -31,7 +32,7 @@ public final class AsyncInitiatorTest {
         .build();
     
     final AtomicInteger called = new AtomicInteger();
-    ledger.attach((c, m) -> {
+    ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (m.getMessageType() == MessageType.NOMINATION) {
         called.incrementAndGet();
         try {
