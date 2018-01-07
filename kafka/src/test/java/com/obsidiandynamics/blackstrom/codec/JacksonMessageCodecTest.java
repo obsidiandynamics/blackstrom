@@ -3,101 +3,17 @@ package com.obsidiandynamics.blackstrom.codec;
 import static org.junit.Assert.*;
 
 import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
 
-import org.apache.commons.lang3.builder.*;
 import org.hamcrest.core.*;
 import org.junit.*;
 import org.junit.rules.*;
-import org.junit.runner.*;
-import org.mockito.*;
-import org.powermock.api.mockito.*;
-import org.powermock.core.classloader.annotations.*;
-import org.powermock.modules.junit4.*;
-import org.powermock.reflect.*;
 
 import com.fasterxml.jackson.databind.*;
+import com.obsidiandynamics.blackstrom.codec.JacksonMessageDeserializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(MessageType.class)
 public class JacksonMessageCodecTest implements TestSupport {
-  private static MessageType UNKNOWN;
-  
-  @BeforeClass
-  public static void beforeClass() {
-    try {
-      UNKNOWN = PowerMockito.mock(MessageType.class);
-      Whitebox.setInternalState(UNKNOWN, "name", "UNKNOWN");
-      Whitebox.setInternalState(UNKNOWN, "ordinal", MessageType.values().length);
-      final MessageType[] messageTypes = new MessageType[MessageType.values().length + 1];
-      System.arraycopy(MessageType.values(), 0, messageTypes, 0, MessageType.values().length);
-      messageTypes[messageTypes.length - 1] = UNKNOWN;
-
-      final Map<String, MessageType> messageTypesMap = Arrays.stream(messageTypes)
-          .collect(Collectors.toMap(mt -> mt.name(), Function.identity()));
-          
-      PowerMockito.mockStatic(MessageType.class);
-      PowerMockito.when(MessageType.values()).thenReturn(messageTypes);
-      PowerMockito.when(MessageType.valueOf(Mockito.isNotNull())).thenAnswer(invocation -> {
-        final String name = invocation.getArgument(0);
-        return messageTypesMap.get(name);
-      });
-      
-      PowerMockito.mockStatic(Enum.class);
-      PowerMockito.when(Enum.valueOf(MessageType.class, "NOMINATION")).thenReturn(MessageType.NOMINATION);
-      PowerMockito.when(Enum.valueOf(MessageType.class, "VOTE")).thenReturn(MessageType.VOTE);
-      PowerMockito.when(Enum.valueOf(MessageType.class, "OUTCOME")).thenReturn(MessageType.OUTCOME);
-      PowerMockito.when(Enum.valueOf(MessageType.class, "UNKNOWN")).thenReturn(UNKNOWN);
-      
-      PowerMockito.when(UNKNOWN.toString()).thenReturn("UNKNOWN");
-    } catch (Throwable e) {
-      e.printStackTrace();
-    }
-  }
-  
-  public static final class UnknownMessage extends Message {
-    public UnknownMessage(Object ballotId) {
-      this(ballotId, 0);
-    }
-    
-    public UnknownMessage(Object ballotId, long timestamp) {
-      super(ballotId, timestamp);
-    }
-
-    @Override
-    public MessageType getMessageType() {
-      return UNKNOWN;
-    }
-    
-    @Override
-    public int hashCode() {
-      return new HashCodeBuilder()
-          .appendSuper(super.hashCode())
-          .toHashCode();
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      } else if (obj instanceof UnknownMessage) {
-        return new EqualsBuilder()
-            .appendSuper(super.equals(obj))
-            .isEquals();
-      } else {
-        return false;
-      }
-    }
-    
-    @Override
-    public String toString() {
-      return UnknownMessage.class.getSimpleName() + " [" + baseToString() + "]";
-    }
-  }
-  
   private static void logEncoded(String encoded) {
     if (LOG) LOG_STREAM.format("encoded %s\n", encoded);
   }
@@ -224,12 +140,12 @@ public class JacksonMessageCodecTest implements TestSupport {
     c.encode(m);
   }
   
-//  @Test
-//  public void testUnknownDeserialize() throws Exception {
-//    final MessageCodec c = new JacksonMessageCodec(false);
-//    final String encoded = "{\"messageType\":\"UNKNOWN\"}";
-//    thrown.expect(JsonMappingException.class);
-//    thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
-//    c.decode(encoded);
-//  }
+  @Test
+  public void testUnknownDeserialize() throws Exception {
+    final MessageCodec c = new JacksonMessageCodec(false);
+    final String encoded = "{\"messageType\":\"$UNKNOWN\",\"ballotId\":\"$U400\",\"timestamp\":1000}";
+    thrown.expect(MessageDeserializationException.class);
+    thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
+    c.decode(encoded);
+  }
 }

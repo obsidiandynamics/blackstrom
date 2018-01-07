@@ -22,6 +22,14 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     return mapPayload ? Payload.class : Object.class;
   }
   
+  static final class MessageDeserializationException extends JsonProcessingException {
+    private static final long serialVersionUID = 1L;
+    
+    MessageDeserializationException(Throwable cause) {
+      super("Error deserializing message", cause);
+    }
+  }
+  
   @Override
   public Message deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
     final JsonNode root = p.getCodec().readTree(p);
@@ -41,7 +49,8 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
         return deserializeOutcome(p, root, ballotId, timestamp, source);
         
       default:
-        throw new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
+        final Throwable cause = new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
+        throw new MessageDeserializationException(cause);
     }
   }
   
