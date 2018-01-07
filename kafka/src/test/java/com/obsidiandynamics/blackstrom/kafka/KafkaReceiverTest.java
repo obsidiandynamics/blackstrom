@@ -17,6 +17,7 @@ import org.slf4j.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
+import com.obsidiandynamics.indigo.util.*;
 
 
 public final class KafkaReceiverTest {
@@ -44,6 +45,15 @@ public final class KafkaReceiverTest {
     return split(first, first);
   }
   
+  /**
+   *  Generates an answer in a way such that the first invocation returns the result
+   *  of the {@code first} supplier, while the second and the rest of the invocation
+   *  return the result of {@code second}.
+   *  
+   *  @param first Supplies the return value of the first invocation.
+   *  @param others Supplies the return value of the second invocation.
+   *  @return The answer.
+   */
   private static Answer<?> split(Supplier<ConsumerRecords<String, String>> first,
                                  Supplier<ConsumerRecords<String, String>> others) {
     final AtomicBoolean firstCall = new AtomicBoolean();
@@ -71,6 +81,21 @@ public final class KafkaReceiverTest {
       verify(recordHandler, times(1)).onReceive(eq(records));
       verify(errorHandler, never()).onError(any());
     });
+  }
+  
+  @Test
+  public void testNoRecords() {
+    final Map<TopicPartition, List<ConsumerRecord<String, String>>> recordsMap = 
+        Collections.emptyMap();
+    final ConsumerRecords<String, String> records = new ConsumerRecords<>(recordsMap);
+    
+    when(consumer.poll(anyLong())).then(split(() -> records, 
+                                              () -> new ConsumerRecords<>(Collections.emptyMap())));
+    receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
+    
+    TestSupport.sleep(10);
+    verify(recordHandler, never()).onReceive(any());
+    verify(errorHandler, never()).onError(any());
   }
 
   @Test
