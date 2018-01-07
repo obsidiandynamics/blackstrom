@@ -70,6 +70,16 @@ public final class MessageHandlerAdapterTest {
     adapter.onMessage(null, new UnknownMessage(null));
   }
   
+  @Test(expected=NullPointerException.class)
+  public void testNull() {
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NullGroupFactor() {});
+    adapter.onMessage(null, new Message(0, 0) {
+      @Override public MessageType getMessageType() {
+        return null;
+      }
+    });
+  }
+  
   private static void callAll(MessageHandlerAdapter adapter) {
     adapter.onMessage(null, newNomination());
     adapter.onMessage(null, newVote());

@@ -38,6 +38,7 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
         serializeOutcome((Outcome) m, gen);
         break;
         
+      case $UNKNOWN:
       default:
         throw new UnsupportedOperationException("Cannot serialize message of type " + m.getMessageType());
     }

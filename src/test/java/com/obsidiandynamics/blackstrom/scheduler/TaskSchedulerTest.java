@@ -192,6 +192,35 @@ public final class TaskSchedulerTest implements TestSupport {
     scheduler.forceExecute();
     assertEquals(0, receiver.ids.size());
   }
+  
+  @Test
+  public void testAbortWhileExecute() {
+    final int runs = 10;
+    for (int i = 0; i < runs; i++) {
+      final long time = System.nanoTime() + i * 1_000_000L;
+      final Task task = new Task() {
+        private boolean aborting;
+        
+        @Override
+        public long getTime() {
+          if (Thread.currentThread().getName().startsWith("TaskScheduler-") && ! aborting) {
+            aborting = true;
+            scheduler.abort(this);
+          }
+          return time;
+        }
+  
+        @Override
+        public Comparable<?> getId() {
+          return 0;
+        }
+  
+        @Override
+        public void execute(TaskScheduler scheduler) {}
+      };
+      scheduler.schedule(task);
+    }
+  }
 
   @Test
   public void testEarlyExecute() {

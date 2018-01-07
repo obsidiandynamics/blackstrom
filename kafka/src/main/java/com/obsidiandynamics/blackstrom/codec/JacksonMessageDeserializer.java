@@ -48,6 +48,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
       case OUTCOME:
         return deserializeOutcome(p, root, ballotId, timestamp, source);
         
+      case $UNKNOWN:
       default:
         final Throwable cause = new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
         throw new MessageDeserializationException(cause);
