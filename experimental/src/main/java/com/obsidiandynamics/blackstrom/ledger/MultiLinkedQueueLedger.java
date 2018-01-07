@@ -23,7 +23,7 @@ public final class MultiLinkedQueueLedger implements Ledger {
     final BlockingQueue<Message> queue = new LinkedBlockingQueue<>();
     final WorkerThread thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName("LinkedQueueWorker-" + Long.toHexString(System.identityHashCode(handler)))
+                     .withName(MultiLinkedQueueLedger.class.getSimpleName() + "-" + Integer.toHexString(System.identityHashCode(handler)))
                      .withDaemon(true))
         .onCycle(t -> consumeAndDispatch(queue, t, handler))
         .build();

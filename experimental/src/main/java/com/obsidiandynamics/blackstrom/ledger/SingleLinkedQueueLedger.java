@@ -25,7 +25,7 @@ public final class SingleLinkedQueueLedger implements Ledger {
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
-                     .withName("LinkedQueueWorker-" + Long.toHexString(System.identityHashCode(this))))
+                     .withName(SingleLinkedQueueLedger.class.getSimpleName() + "-" + Integer.toHexString(System.identityHashCode(this))))
         .onCycle(this::cycle)
         .build();
     thread.start();

@@ -57,14 +57,21 @@ public final class TaskSchedulerTest implements TestSupport {
   @Before
   public void setup() {
     receiver = new Receiver();
-    scheduler = new TaskScheduler();
-    scheduler.start();
+    resetTaskScheduler(new TaskScheduler());
   }
   
   @After
   public void teardown() throws InterruptedException {
     scheduler.terminate().joinQuietly();
     scheduler.join(); // should be a no-op
+  }
+  
+  void resetTaskScheduler(TaskScheduler scheduler) {
+    if (this.scheduler != null) {
+      this.scheduler.terminate().joinQuietly();
+    }
+    this.scheduler = scheduler;
+    scheduler.start();
   }
   
   @Test
@@ -194,8 +201,12 @@ public final class TaskSchedulerTest implements TestSupport {
   }
   
   @Test
-  public void testAbortWhileExecute() {
+  public void testAbortBeforeExecute() {
+    final String threadName = TaskSchedulerTest.class.getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
+    resetTaskScheduler(new TaskScheduler(threadName));
+    
     final int runs = 10;
+    final AtomicInteger executed = new AtomicInteger();
     for (int i = 0; i < runs; i++) {
       final long time = System.nanoTime() + i * 1_000_000L;
       final Task task = new Task() {
@@ -203,7 +214,7 @@ public final class TaskSchedulerTest implements TestSupport {
         
         @Override
         public long getTime() {
-          if (Thread.currentThread().getName().startsWith("TaskScheduler-") && ! aborting) {
+          if (Thread.currentThread().getName().equals(threadName) && ! aborting) {
             aborting = true;
             scheduler.abort(this);
           }
@@ -216,10 +227,15 @@ public final class TaskSchedulerTest implements TestSupport {
         }
   
         @Override
-        public void execute(TaskScheduler scheduler) {}
+        public void execute(TaskScheduler scheduler) {
+          executed.incrementAndGet();
+        }
       };
       scheduler.schedule(task);
     }
+    
+    scheduler.terminate().joinQuietly();
+    assertEquals(0, executed.get());
   }
 
   @Test

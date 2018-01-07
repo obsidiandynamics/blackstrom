@@ -23,8 +23,6 @@ public final class BasicMonitor implements Monitor {
   
   private final String groupId;
   
-  private final String nodeId = getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
-  
   private final WorkerThread gcThread;
   
   private final int gcIntervalMillis;
@@ -50,13 +48,17 @@ public final class BasicMonitor implements Monitor {
     this.timeoutIntervalMillis = options.getTimeoutInterval();
     
     gcThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withName("gc-" + nodeId).withDaemon(true))
+        .withOptions(new WorkerOptions()
+                     .withName(BasicMonitor.class.getSimpleName() + "-gc-" + Integer.toHexString(System.identityHashCode(this)))
+                     .withDaemon(true))
         .onCycle(this::gcCycle)
         .build();
     gcThread.start();
     
     timeoutThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withName("timeout-" + nodeId).withDaemon(true))
+        .withOptions(new WorkerOptions()
+                     .withName(BasicMonitor.class.getSimpleName() + "-timeout-" + Integer.toHexString(System.identityHashCode(this)))
+                     .withDaemon(true))
         .onCycle(this::timeoutCycle)
         .build();
     timeoutThread.start();

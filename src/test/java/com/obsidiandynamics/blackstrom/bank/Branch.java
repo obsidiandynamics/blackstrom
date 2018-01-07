@@ -33,7 +33,9 @@ public final class Branch implements Cohort {
     balance = initialBalance;
     
     gcThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withName("gc-" + branchId).withDaemon(true))
+        .withOptions(new WorkerOptions()
+                     .withName(Branch.class.getSimpleName() + "-gc-" + branchId)
+                     .withDaemon(true))
         .onCycle(this::gcCycle)
         .build();
     if (idempotencyEnabled) gcThread.start();

@@ -54,7 +54,7 @@ public final class TaskScheduler implements Joinable {
   private static final AtomicInteger nextSchedulerThreadNo = new AtomicInteger();
   
   public TaskScheduler() {
-    this("TaskScheduler-" + nextSchedulerThreadNo.getAndIncrement());
+    this(TaskScheduler.class.getSimpleName() + "-" + nextSchedulerThreadNo.getAndIncrement());
   }
   
   public TaskScheduler(String threadName) {
