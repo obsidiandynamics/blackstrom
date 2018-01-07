@@ -38,4 +38,20 @@ public final class PayloadTest {
   public void testUnpackNonPayload() {
     assertEquals("value", Payload.unpack("value"));
   }
+  
+  @Test
+  public void testEqualsHashCode() {
+    final Payload p1 = Payload.pack("value");
+    final Payload p2 = Payload.pack("foo");
+    final Payload p3 = Payload.pack("value");
+    final Payload p4 = p1;
+    
+    assertNotEquals(p1, p2);
+    assertEquals(p1, p3);
+    assertEquals(p1, p4);
+    assertNotEquals(p1, new Object());
+
+    assertNotEquals(p1.hashCode(), p2.hashCode());
+    assertEquals(p1.hashCode(), p3.hashCode());
+  }
 }

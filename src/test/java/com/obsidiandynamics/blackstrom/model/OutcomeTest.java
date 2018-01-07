@@ -19,4 +19,22 @@ public final class OutcomeTest {
     
     Assertions.assertToStringOverride(outcome);
   }
+  
+  @Test
+  public void testEqualsHashCode() {
+    final Response ra = new Response("a", Pledge.ACCEPT, "a-meta");
+    final Response rb = new Response("b", Pledge.REJECT, "b-meta");
+    final Outcome o1 = new Outcome(1, 1000, Verdict.COMMIT, new Response[] {ra, rb});
+    final Outcome o2 = new Outcome(2, 1000, Verdict.COMMIT, new Response[] {ra, rb});
+    final Outcome o3 = new Outcome(1, 1000, Verdict.COMMIT, new Response[] {ra, rb});
+    final Outcome o4 = o1;
+
+    assertNotEquals(o1, o2);
+    assertEquals(o1, o3);
+    assertEquals(o1, o4);
+    assertNotEquals(o1, new Object());
+
+    assertNotEquals(o1.hashCode(), o2.hashCode());
+    assertEquals(o1.hashCode(), o3.hashCode());
+  }
 }

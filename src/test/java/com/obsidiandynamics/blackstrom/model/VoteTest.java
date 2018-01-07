@@ -15,4 +15,20 @@ public final class VoteTest {
     
     Assertions.assertToStringOverride(v);
   }
+  
+  @Test
+  public void testEqualsHashCode() {
+    final Vote v1 = new Vote(1, 1000, new Response("a", Pledge.ACCEPT, "meta-a"));
+    final Vote v2 = new Vote(2, 1000, new Response("a", Pledge.ACCEPT, "meta-a"));
+    final Vote v3 = new Vote(1, 1000, new Response("a", Pledge.ACCEPT, "meta-a"));
+    final Vote v4 = v1;
+
+    assertNotEquals(v1, v2);
+    assertEquals(v1, v3);
+    assertEquals(v1, v4);
+    assertNotEquals(v1, new Object());
+
+    assertNotEquals(v1.hashCode(), v2.hashCode());
+    assertEquals(v1.hashCode(), v3.hashCode());
+  }
 }

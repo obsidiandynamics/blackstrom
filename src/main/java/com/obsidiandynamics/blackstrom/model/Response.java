@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.model;
 
+import org.apache.commons.lang3.builder.*;
+
 import com.obsidiandynamics.blackstrom.util.*;
 
 public final class Response {
@@ -24,9 +26,34 @@ public final class Response {
   public <T> T getMetadata() {
     return Cast.from(metadata);
   }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+        .append(cohort)
+        .append(pledge)
+        .append(metadata)
+        .toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof Response) {
+      final Response other = (Response) obj;
+      return new EqualsBuilder()
+          .append(cohort, other.cohort)
+          .append(pledge, other.pledge)
+          .append(metadata, other.metadata)
+          .isEquals();
+    } else {
+      return false;
+    }
+  }
 
   @Override
   public String toString() {
-    return "Respose [cohort=" + cohort + ", pledge=" + pledge + ", metadata=" + metadata + "]";
+    return Response.class.getSimpleName() + " [cohort=" + cohort + ", pledge=" + pledge + ", metadata=" + metadata + "]";
   }
 }

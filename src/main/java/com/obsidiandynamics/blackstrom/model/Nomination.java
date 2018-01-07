@@ -68,6 +68,7 @@ public final class Nomination extends Message {
 
   @Override
   public String toString() {
-    return "Nomination [cohorts=" + Arrays.toString(cohorts) + ", proposal=" + proposal + ", ttl=" + ttl + ", " + baseToString() + "]";
+    return Nomination.class.getSimpleName() + " [cohorts=" + Arrays.toString(cohorts) + 
+        ", proposal=" + proposal + ", ttl=" + ttl + ", " + baseToString() + "]";
   }
 }

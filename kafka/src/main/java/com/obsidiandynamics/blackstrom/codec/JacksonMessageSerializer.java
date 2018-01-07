@@ -31,9 +31,11 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
         break;
         
       case VOTE:
+        serializeVote((Vote) m, gen);
         break;
         
       case OUTCOME:
+        serializeOutcome((Outcome) m, gen);
         break;
         
       default:
@@ -47,15 +49,36 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
     return value instanceof LinkedHashMap ? value : Payload.pack(value);
   }
 
-  void serializeNomination(Nomination n, JsonGenerator gen) throws IOException {
+  private void serializeNomination(Nomination n, JsonGenerator gen) throws IOException {
     gen.writeArrayFieldStart("cohorts"); 
     for (String cohort : n.getCohorts()) {
       gen.writeString(cohort);
     }
     gen.writeEndArray();
-    
     gen.writeNumberField("ttl", n.getTtl());
-    
     JacksonUtils.writeObject("proposal", packConditional(n.getProposal()), gen);
+  }
+  
+  private void serializeVote(Vote v, JsonGenerator gen) throws IOException {
+    gen.writeFieldName("response");
+    serializeResponse(v.getResponse(), gen);
+  }
+  
+  private void serializeResponse(Response r, JsonGenerator gen) throws IOException {
+    gen.writeStartObject();
+    gen.writeStringField("cohort", r.getCohort());
+    gen.writeStringField("pledge", r.getPledge().name());
+    JacksonUtils.writeObject("metadata", packConditional(r.getMetadata()), gen);
+    gen.writeEndObject();
+  }
+  
+  private void serializeOutcome(Outcome o, JsonGenerator gen) throws IOException {
+    gen.writeStringField("verdict", o.getVerdict().name());
+    gen.writeFieldName("responses");
+    gen.writeStartArray();
+    for (Response response : o.getResponses()) {
+      serializeResponse(response, gen);
+    }
+    gen.writeEndArray();
   }
 }

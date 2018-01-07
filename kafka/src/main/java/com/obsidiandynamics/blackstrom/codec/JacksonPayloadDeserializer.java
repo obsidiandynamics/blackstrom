@@ -13,7 +13,7 @@ final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
     super(Payload.class);
   }
   
-  private static class PayloadDeserializationException extends JsonProcessingException {
+  static final class PayloadDeserializationException extends JsonProcessingException {
     private static final long serialVersionUID = 1L;
     
     PayloadDeserializationException(Throwable cause) {

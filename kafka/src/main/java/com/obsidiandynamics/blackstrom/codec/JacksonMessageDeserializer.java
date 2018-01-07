@@ -34,8 +34,14 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
       case NOMINATION:
         return deserializeNomination(p, root, ballotId, timestamp, source);
         
+      case VOTE:
+        return deserializeVote(p, root, ballotId, timestamp, source);
+        
+      case OUTCOME:
+        return deserializeOutcome(p, root, ballotId, timestamp, source);
+        
       default:
-        throw new UnsupportedOperationException("Cannot serialize message of type " + messageType);
+        throw new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
     }
   }
   
@@ -49,5 +55,28 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     final int ttl = root.get("ttl").asInt();
     final Object proposal = Payload.unpack(JacksonUtils.readObject("proposal", root, p, getPayloadClass()));
     return new Nomination(ballotId, timestamp, cohorts, proposal, ttl).withSource(source);
+  }
+  
+  private Message deserializeVote(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
+    final JsonNode responseNode = root.get("response");
+    final Response response = deserializeResponse(p, responseNode);
+    return new Vote(ballotId, timestamp, response);
+  }
+  
+  private Response deserializeResponse(JsonParser p, JsonNode responseNode) throws JsonProcessingException {
+    final String cohort = responseNode.get("cohort").asText();
+    final Pledge pledge = Pledge.valueOf(responseNode.get("pledge").asText());
+    final Object metadata = Payload.unpack(JacksonUtils.readObject("metadata", responseNode, p, getPayloadClass()));
+    return new Response(cohort, pledge, metadata);
+  }
+  
+  private Message deserializeOutcome(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
+    final Verdict verdict = Verdict.valueOf(root.get("verdict").asText());
+    final ArrayNode responsesNode = (ArrayNode) root.get("responses");
+    final Response[] responses = new Response[responsesNode.size()];
+    for (int i = 0; i < responses.length; i++) {
+      responses[i] = deserializeResponse(p, responsesNode.get(i));
+    }
+    return new Outcome(ballotId, timestamp, verdict, responses);
   }
 }

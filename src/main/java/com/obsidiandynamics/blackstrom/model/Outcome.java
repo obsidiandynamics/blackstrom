@@ -40,6 +40,7 @@ public final class Outcome extends Message {
 
   @Override
   public String toString() {
-    return "Outcome [verdict=" + verdict + ", responses=" + Arrays.toString(responses) + ", " + baseToString() + "]";
+    return Outcome.class.getSimpleName() + " [verdict=" + verdict + ", responses=" + Arrays.toString(responses) + 
+        ", " + baseToString() + "]";
   }
 }

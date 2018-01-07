@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.model;
 
+import org.apache.commons.lang3.builder.*;
+
 public final class Vote extends Message {
   private final Response response;
   
@@ -20,9 +22,32 @@ public final class Vote extends Message {
   public MessageType getMessageType() {
     return MessageType.VOTE;
   }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+        .appendSuper(super.hashCode())
+        .append(response)
+        .toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof Vote) {
+      final Vote other = (Vote) obj;
+      return new EqualsBuilder()
+          .appendSuper(super.equals(obj))
+          .append(response, other.response)
+          .isEquals();
+    } else {
+      return false;
+    }
+  }
 
   @Override
   public String toString() {
-    return "Vote [response=" + response + ", " + baseToString() + "]";
+    return Vote.class.getSimpleName() + " [response=" + response + ", " + baseToString() + "]";
   }
 }

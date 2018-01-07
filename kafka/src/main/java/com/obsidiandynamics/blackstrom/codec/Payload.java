@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.codec;
 
+import org.apache.commons.lang3.builder.*;
+
 import com.obsidiandynamics.blackstrom.util.*;
 
 public final class Payload {
@@ -24,6 +26,27 @@ public final class Payload {
       return ((Payload) obj).unpack();
     } else {
       return Cast.from(obj);
+    }
+  }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+        .append(value)
+        .toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof Payload) {
+      final Payload other = (Payload) obj;
+      return new EqualsBuilder()
+          .append(value,  other.value)
+          .isEquals();
+    } else {
+      return false;
     }
   }
   

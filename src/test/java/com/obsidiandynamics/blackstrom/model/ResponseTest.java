@@ -15,4 +15,20 @@ public final class ResponseTest {
     assertEquals("a-meta", ra.getMetadata());
     Assertions.assertToStringOverride(ra);
   }
+  
+  @Test
+  public void testEqualsHashCode() {
+    final Response r1 = new Response("a", Pledge.ACCEPT, "a-meta");
+    final Response r2 = new Response("b", Pledge.ACCEPT, "b-meta"); 
+    final Response r3 = new Response("a", Pledge.ACCEPT, "a-meta"); 
+    final Response r4 = r1;
+
+    assertNotEquals(r1, r2);
+    assertEquals(r1, r3);
+    assertEquals(r1, r4);
+    assertNotEquals(r1, new Object());
+
+    assertNotEquals(r1.hashCode(), r2.hashCode());
+    assertEquals(r1.hashCode(), r3.hashCode());
+  }
 }
