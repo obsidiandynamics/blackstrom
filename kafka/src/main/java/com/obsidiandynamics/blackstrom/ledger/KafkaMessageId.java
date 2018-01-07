@@ -38,7 +38,9 @@ public final class KafkaMessageId {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof KafkaMessageId) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof KafkaMessageId) {
       final KafkaMessageId other = (KafkaMessageId) obj;
       return new EqualsBuilder()
           .append(topic, other.topic)

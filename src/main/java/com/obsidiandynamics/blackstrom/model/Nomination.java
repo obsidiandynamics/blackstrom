@@ -2,6 +2,8 @@ package com.obsidiandynamics.blackstrom.model;
 
 import java.util.*;
 
+import org.apache.commons.lang3.builder.*;
+
 import com.obsidiandynamics.blackstrom.util.*;
 
 public final class Nomination extends Message {
@@ -10,7 +12,11 @@ public final class Nomination extends Message {
   private final int ttl;
 
   public Nomination(Object ballotId, String[] cohorts, Object proposal, int ttl) {
-    super(ballotId);
+    this(ballotId, 0, cohorts, proposal, ttl);
+  }
+
+  public Nomination(Object ballotId, long timestamp, String[] cohorts, Object proposal, int ttl) {
+    super(ballotId, timestamp);
     this.cohorts = cohorts;
     this.proposal = proposal;
     this.ttl = ttl;
@@ -31,6 +37,33 @@ public final class Nomination extends Message {
   @Override
   public MessageType getMessageType() {
     return MessageType.NOMINATION;
+  }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+        .appendSuper(super.hashCode())
+        .append(cohorts)
+        .append(proposal)
+        .append(ttl)
+        .toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof Nomination) {
+      final Nomination other = (Nomination) obj;
+      return new EqualsBuilder()
+          .appendSuper(super.equals(obj))
+          .append(cohorts, other.cohorts)
+          .append(proposal, other.proposal)
+          .append(ttl, other.ttl)
+          .isEquals();
+    } else {
+      return false;
+    }
   }
 
   @Override

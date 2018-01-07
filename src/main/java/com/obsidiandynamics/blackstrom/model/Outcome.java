@@ -7,7 +7,11 @@ public final class Outcome extends Message {
   private final Response[] responses;
 
   public Outcome(Object ballotId, Verdict verdict, Response[] responses) {
-    super(ballotId);
+    this(ballotId, 0, verdict, responses);
+  }
+  
+  public Outcome(Object ballotId, long timestamp, Verdict verdict, Response[] responses) {
+    super(ballotId, timestamp);
     this.verdict = verdict;
     this.responses = responses;
   }

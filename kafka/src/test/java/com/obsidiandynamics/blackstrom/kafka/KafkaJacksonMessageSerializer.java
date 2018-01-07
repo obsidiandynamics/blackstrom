@@ -6,7 +6,7 @@ import org.apache.kafka.common.serialization.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
-public final class JsonMessageSerializer implements Serializer<Message> {
+public final class KafkaJacksonMessageSerializer implements Serializer<Message> {
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {

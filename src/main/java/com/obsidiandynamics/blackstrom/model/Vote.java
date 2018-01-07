@@ -2,9 +2,13 @@ package com.obsidiandynamics.blackstrom.model;
 
 public final class Vote extends Message {
   private final Response response;
-
+  
   public Vote(Object ballotId, Response response) {
-    super(ballotId);
+    this(ballotId, 0, response);
+  }
+
+  public Vote(Object ballotId, long timestamp, Response response) {
+    super(ballotId, timestamp);
     this.response = response;
   }
   

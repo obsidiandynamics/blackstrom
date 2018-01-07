@@ -8,7 +8,7 @@ public final class MessageTest {
   @Test
   public void test() {
     final long time = System.currentTimeMillis();
-    final Message m = new Message(1) {
+    final Message m = new Message(1, 0) {
       @Override public MessageType getMessageType() {
         return null;
       }

@@ -5,8 +5,8 @@ dependencies {
   compile project(':')
   compile 'com.obsidiandynamics.fulcrum:fulcrum-docker-compose:0.4.0'
   compile 'org.apache.kafka:kafka-clients:0.11.0.2'
-  compile 'org.apache.commons:commons-lang3:3.7'
   compile 'com.fasterxml.jackson.core:jackson-core:2.9.3'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 }
 
 jar {

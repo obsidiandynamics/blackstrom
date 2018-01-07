@@ -43,7 +43,7 @@ public abstract class AbstractLedgerTest {
   
   private static class TestMessage extends Message {
     protected TestMessage(Object ballotId, String source) {
-      super(ballotId);
+      super(ballotId, 0);
       withSource(source);
     }
 

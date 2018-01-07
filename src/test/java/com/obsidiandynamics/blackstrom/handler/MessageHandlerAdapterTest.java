@@ -94,7 +94,7 @@ public final class MessageHandlerAdapterTest {
   @Test(expected=UnsupportedOperationException.class)
   public void testUnsupported() {
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NullGroupFactor() {});
-    adapter.onMessage(null, new Message(null) {
+    adapter.onMessage(null, new Message(null, 0) {
       @Override public MessageType getMessageType() {
         return UNKNOWN;
       }
