@@ -182,7 +182,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   private static <T> T instantiate(String className) {
     try {
       final Class<?> cls = Class.forName(className);
-      return (T) cls.newInstance();
+      return (T) cls.getDeclaredConstructor().newInstance();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -190,6 +190,6 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
 
   @Override
   public String toString() {
-    return "MockKafka [maxPartitions: " + maxPartitions + ", maxHistory: " + maxHistory + "]";
+    return MockKafka.class.getSimpleName() + " [maxPartitions: " + maxPartitions + ", maxHistory: " + maxHistory + "]";
   }
 }
