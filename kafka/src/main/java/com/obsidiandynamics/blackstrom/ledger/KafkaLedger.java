@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
+import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
@@ -13,6 +14,8 @@ import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KafkaLedger implements Ledger {
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaLedger.class);
+  
   private static final long POLL_TIMEOUT_MILLIS = 1000;
   
   private final Kafka<String, Message> kafka;
@@ -22,6 +25,8 @@ public final class KafkaLedger implements Ledger {
   private final Producer<String, Message> producer;
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
+  
+  private final Map<String, Consumer<String, Message>> consumers = new ConcurrentHashMap<>();
   
   private final MessageContext context = new DefaultMessageContext(this);
   
@@ -46,10 +51,10 @@ public final class KafkaLedger implements Ledger {
     final String autoOffsetReset;
     if (groupId != null) {
       consumerGroupId = groupId;
-      autoOffsetReset = "earliest";
+      autoOffsetReset = OffsetResetStrategy.EARLIEST.name().toLowerCase();
     } else {
       consumerGroupId = null;
-      autoOffsetReset = "latest";
+      autoOffsetReset = OffsetResetStrategy.LATEST.name().toLowerCase();
     }
     
     final Properties props = new PropertiesBuilder()
@@ -59,21 +64,28 @@ public final class KafkaLedger implements Ledger {
         .with("session.timeout.ms", 6_000)
         .with("heartbeat.interval.ms", 2_000)
         .with("key.deserializer", StringDeserializer.class.getName())
-        .with("value.deserializer", StringDeserializer.class.getName())
+        .with("value.deserializer", KafkaJacksonMessageDeserializer.class.getName())
+        .with(KafkaJacksonMessageDeserializer.CONFIG_MAP_PAYLOAD, String.valueOf(false))
         .build();
     final Consumer<String, Message> consumer = kafka.getConsumer(props);
+    consumer.subscribe(Collections.singletonList(topic));
+    
     final RecordHandler<String, Message> recordHandler = records -> {
-      
-    };
-    final ErrorHandler errorHandler = throwable -> {
-      
+      for (ConsumerRecord<String, Message> record : records) {
+        final KafkaMessageId messageId = KafkaMessageId.fromRecord(record);
+        final Message message = record.value();
+        message.withMessageId(messageId);
+        handler.onMessage(context, message);
+      }
     };
     
     final String threadName = getClass().getSimpleName() + "-receiver-" + groupId;
     final KafkaReceiver<String, Message> receiver = new KafkaReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
-        threadName, recordHandler, errorHandler);
-    // TODO Auto-generated method stub
-    
+        threadName, recordHandler, KafkaReceiver.genericErrorLogger(LOG));
+    receivers.add(receiver);
+    if (groupId != null) {
+      consumers.put(groupId, consumer);
+    }
   }
 
   @Override
@@ -84,8 +96,13 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void confirm(String groupId, Object messageId) {
-    // TODO Auto-generated method stub
-    
+    if (groupId != null) {
+      final Consumer<?, ?> consumer = consumers.get(groupId);
+      final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
+      consumer.commitAsync(kafkaMessageId.toOffset(), (offsets, exception) -> {
+        LOG.warn("Error committing " + messageId, exception);
+      });
+    }
   }
 
   @Override

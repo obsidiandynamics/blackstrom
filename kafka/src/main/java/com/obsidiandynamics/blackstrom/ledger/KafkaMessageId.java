@@ -1,6 +1,10 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import java.util.*;
+
 import org.apache.commons.lang3.builder.*;
+import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.*;
 
 public final class KafkaMessageId {
   private final String topic;
@@ -55,5 +59,13 @@ public final class KafkaMessageId {
   @Override
   public String toString() {
     return topic + "-" + partition + "@" + offset;
+  }
+  
+  public Map<TopicPartition, OffsetAndMetadata> toOffset() {
+    return Collections.singletonMap(new TopicPartition(topic, partition), new OffsetAndMetadata(offset));
+  }
+
+  public static KafkaMessageId fromRecord(ConsumerRecord<?, ?> record) {
+    return new KafkaMessageId(record.topic(), record.partition(), record.offset());
   }
 }

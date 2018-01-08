@@ -6,6 +6,8 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
 
+import com.obsidiandynamics.blackstrom.ledger.*;
+
 public final class RunKafkaConsumer {
   public static void main(String[] args) {
     final Properties props = new PropertiesBuilder()
@@ -21,7 +23,7 @@ public final class RunKafkaConsumer {
     
     final int commitIntervalMillis = 1_000;
     long lastCommitTime = 0;
-    Map<TopicPartition, OffsetAndMetadata> offsetsToCommit = null;
+    Map<TopicPartition, OffsetAndMetadata> offsetToCommit = null;
     try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
       consumer.subscribe(Arrays.asList("test"));
       for (;;) {
@@ -36,16 +38,14 @@ public final class RunKafkaConsumer {
           }
           
           if (System.currentTimeMillis() - lastCommitTime > commitIntervalMillis) {
-            if (offsetsToCommit != null) {
-              System.out.format("Committing %s\n", offsetsToCommit);
-              consumer.commitAsync(offsetsToCommit, null);
+            if (offsetToCommit != null) {
+              System.out.format("Committing %s\n", offsetToCommit);
+              consumer.commitAsync(offsetToCommit, null);
               lastCommitTime = System.currentTimeMillis();
             }
             final ConsumerRecord<String, String> lastRecord = recordsList.get(recordsList.size() - 1);
-            final Map<TopicPartition, OffsetAndMetadata> offsets = 
-                Collections.singletonMap(new TopicPartition(lastRecord.topic(), lastRecord.partition()),
-                                         new OffsetAndMetadata(lastRecord.offset()));
-            offsetsToCommit = offsets;
+            final Map<TopicPartition, OffsetAndMetadata> offset = KafkaMessageId.fromRecord(lastRecord).toOffset();
+            offsetToCommit = offset;
           }
         }
       }
