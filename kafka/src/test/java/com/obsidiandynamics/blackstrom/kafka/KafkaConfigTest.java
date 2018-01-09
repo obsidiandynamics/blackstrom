@@ -23,16 +23,16 @@ public final class KafkaConfigTest {
     
     final KafkaClusterConfig config = ((KafkaCluster<?, ?>) kafka).getConfig();
     assertNotNull(config);
-    assertEquals(new PropertiesBuilder().with("bootstrap.servers", "10.20.30.40:9092").build(),
+    assertEquals(new PropertiesBuilder().with(KafkaClusterConfig.CONFIG_BOOTSTRAP_SERVERS, "10.20.30.40:9092").build(),
                  config.getCommonProps());
     Assertions.assertToStringOverride(config);
   }
   
   @Test
   public void testApi() {
-    final Properties commonProps = new Properties();
-    final Properties producerProps = new Properties();
-    final Properties consumerProps = new Properties();
+    final Properties commonProps = new PropertiesBuilder().with("common", "COMMON").build();
+    final Properties producerProps = new PropertiesBuilder().with("producer", "PRODUCER").build();
+    final Properties consumerProps = new PropertiesBuilder().with("consumer", "CONSUMER").build();
     
     final KafkaClusterConfig config = new KafkaClusterConfig()
         .withCommonProps(commonProps)
@@ -40,9 +40,21 @@ public final class KafkaConfigTest {
         .withConsumerProps(consumerProps);
     
     assertEquals(commonProps, config.getCommonProps());
-    assertEquals(producerProps, config.getProducerProps());
-    assertEquals(consumerProps, config.getConsumerProps());
+
+    producerProps.putAll(commonProps);
+    assertEquals(producerProps, config.getProducerCombinedProps());
+
+    consumerProps.putAll(commonProps);
+    assertEquals(consumerProps, config.getConsumerCombinedProps());
   }  
+  
+  @Test
+  public void testBootstrapServers() {
+    final KafkaClusterConfig config = new KafkaClusterConfig()
+        .withBootstrapServers("localhost");
+    
+    assertEquals("localhost", config.getCommonProps().getProperty(KafkaClusterConfig.CONFIG_BOOTSTRAP_SERVERS));
+  }
   
   @Test(expected=IllegalArgumentException.class)
   public void testNoBoostrapServers() {

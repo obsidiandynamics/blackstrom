@@ -23,7 +23,7 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   @Override
   public Producer<K, V> getProducer(Properties props) {
     final Properties combinedProps = new Properties();
-    combinedProps.putAll(config.getProducerProps());
+    combinedProps.putAll(config.getProducerCombinedProps());
     combinedProps.putAll(props);
     return new KafkaProducer<>(combinedProps);
   }
@@ -31,7 +31,7 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   @Override
   public Consumer<K, V> getConsumer(Properties props) {
     final Properties combinedProps = new Properties();
-    combinedProps.putAll(config.getConsumerProps());
+    combinedProps.putAll(config.getConsumerCombinedProps());
     combinedProps.putAll(props);
     return new KafkaConsumer<>(combinedProps);
   }

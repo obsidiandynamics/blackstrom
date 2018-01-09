@@ -15,6 +15,8 @@ public final class KafkaClusterConfig {
     }
   }
   
+  public static final String CONFIG_BOOTSTRAP_SERVERS = "bootstrap.servers";
+  
   @YInject
   private Properties common = new Properties();
 
@@ -25,44 +27,55 @@ public final class KafkaClusterConfig {
   private Properties consumer = new Properties();
   
   void init() {
-    if (common.getProperty("bootstrap.servers") == null) {
-      throw new IllegalArgumentException("Must specify a value for 'bootstrap.servers'");
+    if (common.getProperty(CONFIG_BOOTSTRAP_SERVERS) == null) {
+      throw new IllegalArgumentException("Must specify a value for '" + CONFIG_BOOTSTRAP_SERVERS + "'");
     }
+  }
+  
+  public KafkaClusterConfig withBootstrapServers(String bootstrapServers) {
+    return withCommonProps(Collections.singletonMap(CONFIG_BOOTSTRAP_SERVERS, bootstrapServers));
   }
   
   Properties getCommonProps() {
     return common;
   }
   
-  KafkaClusterConfig withCommonProps(Properties common) {
-    this.common = common;
+  private Properties getCommonPropsCopy() {
+    final Properties props = new Properties();
+    props.putAll(common);
+    return props;
+  }
+  
+  KafkaClusterConfig withCommonProps(Map<Object, Object> common) {
+    this.common.putAll(common);
     return this;
   }
 
-  Properties getProducerProps() {
-    final Properties props = getCommonProps();
+  Properties getProducerCombinedProps() {
+    final Properties props = getCommonPropsCopy();
     props.putAll(producer);
     return props;
   }
   
-  KafkaClusterConfig withProducerProps(Properties producer) {
-    this.producer = producer;
+  KafkaClusterConfig withProducerProps(Map<Object, Object> producer) {
+    this.producer.putAll(producer);
     return this;
   }
   
-  Properties getConsumerProps() {
-    final Properties props = getCommonProps();
+  Properties getConsumerCombinedProps() {
+    final Properties props = getCommonPropsCopy();
     props.putAll(consumer);
     return props;
   }
   
-  KafkaClusterConfig withConsumerProps(Properties consumer) {
-    this.consumer = consumer;
+  KafkaClusterConfig withConsumerProps(Map<Object, Object> consumer) {
+    this.consumer.putAll(consumer);
     return this;
   }
 
   @Override
   public String toString() {
-    return KafkaClusterConfig.class.getSimpleName() + " [common: " + common + ", producer: " + producer + ", consumer: " + consumer + "]";
+    return KafkaClusterConfig.class.getSimpleName() + " [common: " + common + ", producer: " + 
+        producer + ", consumer: " + consumer + "]";
   }
 }
