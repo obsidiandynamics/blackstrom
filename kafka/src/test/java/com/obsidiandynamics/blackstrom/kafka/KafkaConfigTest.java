@@ -51,9 +51,9 @@ public final class KafkaConfigTest {
   @Test
   public void testBootstrapServers() {
     final KafkaClusterConfig config = new KafkaClusterConfig()
-        .withBootstrapServers("localhost");
+        .withBootstrapServers("localhost:9092");
     
-    assertEquals("localhost", config.getCommonProps().getProperty(KafkaClusterConfig.CONFIG_BOOTSTRAP_SERVERS));
+    assertEquals("localhost:9092", config.getCommonProps().getProperty(KafkaClusterConfig.CONFIG_BOOTSTRAP_SERVERS));
   }
   
   @Test(expected=IllegalArgumentException.class)
