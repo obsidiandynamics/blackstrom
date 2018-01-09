@@ -36,7 +36,7 @@ public final class KafkaLedger implements Ledger {
     
     final Properties props = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
-        .with("value.serializer", StringSerializer.class.getName())
+        .with("value.serializer", KafkaJacksonMessageSerializer.class.getName())
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
@@ -90,8 +90,12 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void append(Message message) throws Exception {
-    // TODO Auto-generated method stub
-    
+    final ProducerRecord<String, Message> record = new ProducerRecord<>(topic, message);
+    producer.send(record, (metadata, exception) -> {
+      if (exception != null) {
+        LOG.warn("Error publishing record " + record, exception);
+      }
+    });
   }
 
   @Override

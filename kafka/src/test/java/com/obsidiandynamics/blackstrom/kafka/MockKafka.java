@@ -128,8 +128,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
         }
       }
       
-      @Override
-      public List<PartitionInfo> partitionsFor(String topic) {
+      @Override public List<PartitionInfo> partitionsFor(String topic) {
         final List<PartitionInfo> superInfos = super.partitionsFor(topic);
         if (superInfos != null) {
           return superInfos;
@@ -149,8 +148,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
         }
       }
       
-      @Override
-      public ConsumerRecords<K, V> poll(long timeout) {
+      @Override public ConsumerRecords<K, V> poll(long timeout) {
         final long endTime = System.currentTimeMillis() + timeout;
         for (;;) {
           final ConsumerRecords<K, V> recs = super.poll(timeout);
