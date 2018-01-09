@@ -1,2 +1,3 @@
-# blackstrom
-Implementation of the Abstract Voting Machine atomic commit protocol
+Blackstrom
+===
+Reference implementation of the Asynchronous Voting Manifold atomic commit protocol on the JVM.
