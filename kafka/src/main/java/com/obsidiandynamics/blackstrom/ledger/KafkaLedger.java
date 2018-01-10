@@ -18,7 +18,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class KafkaLedger implements Ledger {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLedger.class);
   
-  private static final long POLL_TIMEOUT_MILLIS = 1000;
+  private static final long POLL_TIMEOUT_MILLIS = 1_000;
   
   private final Kafka<String, Message> kafka;
   
@@ -42,7 +42,7 @@ public final class KafkaLedger implements Ledger {
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
-        .with("batch.size", 16384)
+        .with("batch.size", 16_384)
         .with("linger.ms", 0)
         .with("buffer.memory", 33_554_432)
         .with("compression.type", "snappy")

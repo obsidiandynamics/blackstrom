@@ -42,8 +42,7 @@ public final class KafkaJacksonMessageDeserializer implements Deserializer<Messa
   @Override
   public Message deserialize(String topic, byte[] data) {
     try {
-      final String encoded = new String(data);
-      return codec.decode(encoded);
+      return codec.decode(data);
     } catch (Throwable e) {
       LOG.error("Error deserializing message " + data, e);
       throw new MessageDeserializationException("Error deserializing message", e);

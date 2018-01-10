@@ -35,19 +35,19 @@ public class JacksonMessageCodecTest implements TestSupport {
     MessageCodec c;
     
     c = new JacksonMessageCodec(false);
-    final String encoded = c.encode(m);
+    final String encoded = c.encodeText(m);
     logEncoded(encoded);
 
-    final Nomination d1 = (Nomination) c.decode(encoded);
+    final Nomination d1 = (Nomination) c.decodeText(encoded);
     logDecoded(d1, d1.getProposal());
     assertEquals(m, d1);
     
-    final String reencoded = c.encode(d1);
+    final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
     assertEquals(encoded, reencoded);
 
     c = new JacksonMessageCodec(true);
-    final Nomination d2 = (Nomination) c.decode(reencoded);
+    final Nomination d2 = (Nomination) c.decodeText(reencoded);
     logDecoded(d2, d2.getProposal());
     assertEquals(m, d2);
   }
@@ -60,8 +60,8 @@ public class JacksonMessageCodecTest implements TestSupport {
     
     final long took = TestSupport.tookThrowing(() -> {
       for (int i = 0; i < runs; i++) {
-        final String encoded = c.encode(m);
-        c.decode(encoded);
+        final String encoded = c.encodeText(m);
+        c.decodeText(encoded);
       }
     });
     
@@ -75,19 +75,19 @@ public class JacksonMessageCodecTest implements TestSupport {
     MessageCodec c;
     
     c = new JacksonMessageCodec(false);
-    final String encoded = c.encode(m);
+    final String encoded = c.encodeText(m);
     logEncoded(encoded);
 
-    final Nomination d1 = (Nomination) c.decode(encoded);
+    final Nomination d1 = (Nomination) c.decodeText(encoded);
     logDecoded(d1, d1.getProposal());
     assertEquals(m, d1);
     
-    final String reencoded = c.encode(d1);
+    final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
     assertEquals(encoded, reencoded);
 
     c = new JacksonMessageCodec(true);
-    final Nomination d2 = (Nomination) c.decode(reencoded);
+    final Nomination d2 = (Nomination) c.decodeText(reencoded);
     logDecoded(d2, d2.getProposal());
     assertEquals(m, d2);
   }
@@ -99,20 +99,20 @@ public class JacksonMessageCodecTest implements TestSupport {
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
-    final String encoded = c.encode(m);
+    final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Nomination d1 = (Nomination) c.decode(encoded);
+    final Nomination d1 = (Nomination) c.decodeText(encoded);
     logDecoded(d1, d1.getProposal());
     assertNotNull(d1.getProposal());
     assertEquals(LinkedHashMap.class, d1.getProposal().getClass());
     
-    final String reencoded = c.encode(d1);
+    final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Nomination d2 = (Nomination) c.decode(reencoded);
+    final Nomination d2 = (Nomination) c.decodeText(reencoded);
     logDecoded(d2, d2.getProposal());
     assertEquals(m, d2);
   }
@@ -124,20 +124,20 @@ public class JacksonMessageCodecTest implements TestSupport {
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
-    final String encoded = c.encode(m);
+    final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Vote d1 = (Vote) c.decode(encoded);
+    final Vote d1 = (Vote) c.decodeText(encoded);
     logDecoded(d1, d1.getResponse().getMetadata());
     assertNotNull(d1.getResponse().getMetadata());
     assertEquals(LinkedHashMap.class, d1.getResponse().getMetadata().getClass());
     
-    final String reencoded = c.encode(d1);
+    final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Vote d2 = (Vote) c.decode(reencoded);
+    final Vote d2 = (Vote) c.decodeText(reencoded);
     logDecoded(d2, d2.getResponse().getMetadata());
     assertEquals(m, d2);
   }
@@ -151,22 +151,22 @@ public class JacksonMessageCodecTest implements TestSupport {
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
-    final String encoded = c.encode(m);
+    final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Outcome d1 = (Outcome) c.decode(encoded);
+    final Outcome d1 = (Outcome) c.decodeText(encoded);
     logDecoded(d1, d1.getResponses()[0].getMetadata());
     assertEquals(2, d1.getResponses().length);
     assertNotNull(d1.getResponses()[0].getMetadata());
     assertEquals(LinkedHashMap.class, d1.getResponses()[0].getMetadata().getClass());
     assertNull(d1.getResponses()[1].getMetadata());
     
-    final String reencoded = c.encode(d1);
+    final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Outcome d2 = (Outcome) c.decode(reencoded);
+    final Outcome d2 = (Outcome) c.decodeText(reencoded);
     logDecoded(d2, d2.getResponses()[0].getMetadata());
     assertEquals(m, d2);
   }
@@ -186,6 +186,6 @@ public class JacksonMessageCodecTest implements TestSupport {
     final String encoded = "{\"messageType\":\"$UNKNOWN\",\"ballotId\":\"$U400\",\"timestamp\":1000}";
     thrown.expect(MessageDeserializationException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
-    c.decode(encoded);
+    c.decodeText(encoded);
   }
 }

@@ -29,14 +29,12 @@ public final class KafkaJacksonMessageSerializer implements Serializer<Message> 
 
   @Override
   public byte[] serialize(String topic, Message data) {
-    final String encoded;
     try {
-      encoded = codec.encode(data);
+      return codec.encode(data);
     } catch (Throwable e) {
       LOG.error("Error serializing message " + data, e);
       throw new MessageSerializationException("Error serializing message", e);
     }
-    return encoded.getBytes();
   }
 
   @Override

@@ -24,12 +24,12 @@ public final class JacksonMessageCodec implements MessageCodec {
   }
 
   @Override
-  public String encode(Message message) throws JsonProcessingException {
-    return mapper.writeValueAsString(message);
+  public byte[] encode(Message message) throws JsonProcessingException {
+    return mapper.writeValueAsBytes(message);
   }
 
   @Override
-  public Message decode(String text) throws JsonParseException, JsonMappingException, IOException {
-    return mapper.readValue(text, Message.class);
+  public Message decode(byte[] bytes) throws JsonParseException, JsonMappingException, IOException {
+    return mapper.readValue(bytes, Message.class);
   }
 }
