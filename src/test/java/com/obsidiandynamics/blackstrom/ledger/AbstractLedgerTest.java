@@ -13,8 +13,10 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public abstract class AbstractLedgerTest {
+public abstract class AbstractLedgerTest implements TestSupport {
   private static final int MAX_WAIT = 10_000;
+  
+  private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
   private static class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -24,7 +26,8 @@ public abstract class AbstractLedgerTest {
 
     @Override
     public void onMessage(MessageContext context, Message message) {
-      final long ballotId = (Long) message.getBallotId();
+      if (LOG) LOG_STREAM.format("Received %s\n", message);
+      final long ballotId = (long) message.getBallotId();
       if (lastBallotId == -1) {
         lastBallotId = ballotId;
       } else {
@@ -38,23 +41,6 @@ public abstract class AbstractLedgerTest {
       }
       received.add(message);
       context.getLedger().confirm(getGroupId(), message.getMessageId());
-    }
-  }
-  
-  private static class TestMessage extends Message {
-    protected TestMessage(Object ballotId, String source) {
-      super(ballotId, 0);
-      withSource(source);
-    }
-
-    @Override
-    public MessageType getMessageType() {
-      return null;
-    }
-    
-    @Override
-    public String toString() {
-      return getMessageId() + "";
     }
   }
   
@@ -115,7 +101,9 @@ public abstract class AbstractLedgerTest {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("test");
       }
-      Timesert.wait(MAX_WAIT).untilTrue(() -> received.get() == numMessages);
+      Timesert.wait(MAX_WAIT).until(() -> {
+        assertEquals(numMessages, received.get());
+      });
     });
                                      
     System.out.format("One-way: %,d took %,d ms, %,.0f msgs/sec\n", 
@@ -129,9 +117,9 @@ public abstract class AbstractLedgerTest {
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
-      if (m.getSource() == "source") {
+      if (m.getSource().equals("source")) {
         try {
-          c.getLedger().append(new TestMessage(m.getMessageId(), "echo"));
+          c.getLedger().append(new Nomination(m.getMessageId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -139,7 +127,7 @@ public abstract class AbstractLedgerTest {
       }
     });
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
-      if (m.getSource() == "echo") {
+      if (m.getSource().equals("echo")) {
         received.incrementAndGet();
         c.getLedger().confirm(null, m.getMessageId());
       }
@@ -150,7 +138,9 @@ public abstract class AbstractLedgerTest {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("source");
       }
-      Timesert.wait(MAX_WAIT).untilTrue(() -> received.get() == numMessages);
+      Timesert.wait(MAX_WAIT).until(() -> {
+        assertEquals(numMessages, received.get());
+      });
     });
                                      
     System.out.format("Two-way: %,d took %,d ms, %,d msgs/sec\n", numMessages, took, numMessages / took * 1000);
@@ -158,7 +148,7 @@ public abstract class AbstractLedgerTest {
   
   private void appendMessage(String source) {
     try {
-      ledger.append(new TestMessage(messageId++, source));
+      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0).withSource(source));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

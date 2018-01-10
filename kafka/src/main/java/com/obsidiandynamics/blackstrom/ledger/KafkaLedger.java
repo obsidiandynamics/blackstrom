@@ -2,9 +2,11 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.*;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
 import org.slf4j.*;
 
@@ -40,6 +42,10 @@ public final class KafkaLedger implements Ledger {
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
+        .with("batch.size", 16384)
+        .with("linger.ms", 0)
+        .with("buffer.memory", 33_554_432)
+        .with("compression.type", "snappy")
         .build();
     producer = kafka.getProducer(props);
   }
@@ -60,7 +66,8 @@ public final class KafkaLedger implements Ledger {
     final Properties props = new PropertiesBuilder()
         .with("group.id", consumerGroupId)
         .with("auto.offset.reset", autoOffsetReset)
-        .with("enable.auto.commit", String.valueOf(false))
+        .with("enable.auto.commit", false)
+        .with("auto.commit.interval.ms", 0)
         .with("session.timeout.ms", 6_000)
         .with("heartbeat.interval.ms", 2_000)
         .with("key.deserializer", StringDeserializer.class.getName())
@@ -68,7 +75,19 @@ public final class KafkaLedger implements Ledger {
         .with(KafkaJacksonMessageDeserializer.CONFIG_MAP_PAYLOAD, String.valueOf(false))
         .build();
     final Consumer<String, Message> consumer = kafka.getConsumer(props);
-    consumer.subscribe(Collections.singletonList(topic));
+    if (groupId != null) {
+      consumer.subscribe(Collections.singletonList(topic));
+    } else {
+      final List<PartitionInfo> infos = consumer.partitionsFor(topic);
+      final List<TopicPartition> partitions = infos.stream()
+          .map(i -> new TopicPartition(i.topic(), i.partition()))
+          .collect(Collectors.toList());
+      final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
+      consumer.assign(partitions);
+      for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
+        consumer.seek(entry.getKey(), entry.getValue());
+      }
+    }
     
     final RecordHandler<String, Message> recordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
@@ -101,6 +120,7 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void confirm(String groupId, Object messageId) {
     if (groupId != null) {
+      System.out.println("COMMITTING for group " + groupId);
       final Consumer<?, ?> consumer = consumers.get(groupId);
       final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
       consumer.commitAsync(kafkaMessageId.toOffset(), (offsets, exception) -> {

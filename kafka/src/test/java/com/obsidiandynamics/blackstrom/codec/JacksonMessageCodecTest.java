@@ -31,7 +31,47 @@ public class JacksonMessageCodecTest implements TestSupport {
   
   @Test
   public void testNominationNullProposal() throws Exception {
-    final Message m = new Nomination("N100", new String[] {"a",  "b"}, null, 1000).withSource("test");
+    final Message m = new Nomination("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
+    MessageCodec c;
+    
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encode(m);
+    logEncoded(encoded);
+
+    final Nomination d1 = (Nomination) c.decode(encoded);
+    logDecoded(d1, d1.getProposal());
+    assertEquals(m, d1);
+    
+    final String reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+
+    c = new JacksonMessageCodec(true);
+    final Nomination d2 = (Nomination) c.decode(reencoded);
+    logDecoded(d2, d2.getProposal());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testCodecBenchmark() throws Exception {
+    final int runs = 100;
+    final Message m = new Nomination("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
+    final MessageCodec c = new JacksonMessageCodec(false);
+    
+    final long took = TestSupport.tookThrowing(() -> {
+      for (int i = 0; i < runs; i++) {
+        final String encoded = c.encode(m);
+        c.decode(encoded);
+      }
+    });
+    
+    System.out.format("Codec: %,d took %,d ms, %,.0f msgs/sec\n", 
+                      runs, took, (float) runs / took * 1000);
+  }
+  
+  @Test
+  public void testNominationLongBallotId() throws Exception {
+    final Message m = new Nomination(101L, new String[] {"a", "b"}, null, 1000).withSource("test");
     MessageCodec c;
     
     c = new JacksonMessageCodec(false);
@@ -55,7 +95,7 @@ public class JacksonMessageCodecTest implements TestSupport {
   @Test
   public void testNominationNonNullProposal() throws Exception {
     final Animal<?> a = new Dog().named("Rover").withFriend(new Cat().named("Misty"));
-    final Nomination m = new Nomination("N100", new String[] {"a",  "b"}, a, 1000);
+    final Nomination m = new Nomination("N100", new String[] {"a", "b"}, a, 1000);
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);

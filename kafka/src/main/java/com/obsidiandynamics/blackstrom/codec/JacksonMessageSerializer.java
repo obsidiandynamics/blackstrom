@@ -21,7 +21,12 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
   public void serialize(Message m, JsonGenerator gen, SerializerProvider provider) throws IOException {
     gen.writeStartObject();
     gen.writeStringField("messageType", m.getMessageType().name());
-    gen.writeStringField("ballotId", m.getBallotId().toString());
+    final Object ballotId = m.getBallotId();
+    if (ballotId instanceof Number) {
+      gen.writeNumberField("ballotId", ((Number) ballotId).longValue());
+    } else {
+      gen.writeStringField("ballotId", m.getBallotId().toString());
+    }
     gen.writeNumberField("timestamp", m.getTimestamp());
     writeString("source", m.getSource(), gen);
     

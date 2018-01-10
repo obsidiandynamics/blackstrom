@@ -48,15 +48,15 @@ public final class KafkaReceiver<K, V> implements Joinable {
     final ConsumerRecords<K, V> records;
     try {
       records = consumer.poll(pollTimeoutMillis);
+      
+      if (! records.isEmpty()) {
+        recordHandler.onReceive(records);
+      }
     } catch (org.apache.kafka.common.errors.InterruptException e) {
       throw new InterruptedException();
     } catch (Throwable e) {
       errorHandler.onError(e);
       return;
-    }
-    
-    if (! records.isEmpty()) {
-      recordHandler.onReceive(records);
     }
   }
   

@@ -48,6 +48,14 @@ allprojects {
     testRuntime 'log4j:log4j:1.2.17'
   }
 
+  test {
+    exclude '**/*IT.class'
+  }
+  
+  task integrationTest(type: Test, description: 'Runs integration tests.', group: 'Verification') {
+    include '**/*IT.class'
+  }
+
   jacoco {
     toolVersion = '0.8.1-SNAPSHOT'
   }
