@@ -1,5 +1,8 @@
 rootProject.name = 'blackstrom'
 
+include 'blackstrom-codec'
+project(':blackstrom-codec').projectDir = new File(settingsDir, 'codec')
+
 include 'blackstrom-kafka'
 project(':blackstrom-kafka').projectDir = new File(settingsDir, 'kafka')
 

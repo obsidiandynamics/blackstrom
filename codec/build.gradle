@@ -1,11 +1,10 @@
-def packageName = 'blackstrom-kafka'
+def packageName = 'blackstrom-codec'
 version = project(':').version
 
 dependencies {
   compile project(':')
-  compile project(':blackstrom-codec')
-  compile 'com.obsidiandynamics.fulcrum:fulcrum-docker-compose:0.4.0'
-  compile 'org.apache.kafka:kafka-clients:0.11.0.2'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.9.3'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 }
 
 jar {
@@ -50,7 +49,7 @@ publishing {
 
 def envUser = 'BINTRAY_USER'
 def envKey = 'BINTRAY_KEY'
-def packageDesc = 'Kafka-based ledger implementation'
+def packageDesc = 'Codecs for (de)serializing Blackstrom message models'
 def repoName = 'blackstrom'
 bintray {
   user = System.getenv(envUser)
