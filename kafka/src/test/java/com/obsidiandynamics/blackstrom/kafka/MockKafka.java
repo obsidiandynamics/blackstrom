@@ -23,6 +23,9 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   
   private final Object lock = new Object();
   
+  /** Tracks presence of group members. */
+  private final Set<String> groups = new HashSet<>();
+  
   public MockKafka() {
     this(10, 100_000);
   }
@@ -96,6 +99,20 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
 
   @Override
   public MockConsumer<K, V> getConsumer(Properties props) {
+    final String groupId = props.getProperty("group.id");
+    final boolean newGroupMember = groupId == null || groups.add(groupId);
+    if (newGroupMember) {
+      return createAttachedConsumer();
+    } else {
+      return createDetachedConsumer();
+    }
+  }
+  
+  private MockConsumer<K, V> createDetachedConsumer() {
+    return new MockConsumer<K, V>(OffsetResetStrategy.EARLIEST);
+  }
+  
+  private MockConsumer<K, V> createAttachedConsumer() {
     final MockConsumer<K, V> consumer = new MockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
       @Override public void subscribe(Collection<String> topics) {
         for (String topic : topics) {
