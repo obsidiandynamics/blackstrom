@@ -115,11 +115,8 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void append(Message message) throws Exception {
     final ProducerRecord<String, Message> record = new ProducerRecord<>(topic, message);
-    producer.send(record, (metadata, exception) -> {
-      if (exception != null) {
-        LOG.warn("Error publishing record " + record, exception);
-      }
-    });
+    producer.send(record, 
+                  (metadata, exception) -> logException(LOG, exception, "Error publishing %s", record));
   }
 
   @Override
@@ -127,9 +124,14 @@ public final class KafkaLedger implements Ledger {
     if (handlerId != null) {
       final Consumer<?, ?> consumer = consumers.get(handlerId);
       final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
-      consumer.commitAsync(kafkaMessageId.toOffset(), (offsets, exception) -> {
-        LOG.warn("Error committing " + messageId, exception);
-      });
+      consumer.commitAsync(kafkaMessageId.toOffset(), 
+                           (offsets, exception) -> logException(LOG, exception, "Error commiting %s", messageId));
+    }
+  }
+  
+  private static void logException(Logger log, Exception cause, String messageFormat, Object... messageArgs) {
+    if (cause != null) {
+      log.warn(String.format(messageFormat, messageArgs), cause);
     }
   }
 
