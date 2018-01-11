@@ -7,7 +7,7 @@ import org.junit.*;
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 
-public class DefaultMessageContextTest {
+public final class DefaultMessageContextTest {
   @Test
   public void testToString() {
     Assertions.assertToStringOverride(new DefaultMessageContext(null, null));
