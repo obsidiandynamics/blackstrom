@@ -11,5 +11,5 @@ public interface Ledger extends Disposable.Default {
   
   void append(Message message) throws Exception;
   
-  void confirm(String groupId, Object messageId);
+  void confirm(Object handlerId, Object messageId);
 }

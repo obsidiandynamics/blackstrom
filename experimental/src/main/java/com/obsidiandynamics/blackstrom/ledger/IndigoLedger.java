@@ -15,7 +15,7 @@ public final class IndigoLedger implements Ledger {
   private final ActorRef dispatchRef = ActorRef.of(DISPATCH_ROLE);
   
   private final ActorSystem system;
-  private final MessageContext context = new DefaultMessageContext(this);
+  private final MessageContext context = new DefaultMessageContext(this, null);
   
   public IndigoLedger() {
     system = new ActorSystemConfig(){{
@@ -67,7 +67,7 @@ public final class IndigoLedger implements Ledger {
   }
   
   @Override
-  public void confirm(String groupId, Object messageId) {}
+  public void confirm(Object handlerId, Object messageId) {}
 
   @Override
   public void dispose() {

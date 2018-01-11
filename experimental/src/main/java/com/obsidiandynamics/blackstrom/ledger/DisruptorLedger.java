@@ -12,7 +12,7 @@ import com.obsidiandynamics.blackstrom.model.*;
  *  
  */
 public final class DisruptorLedger implements Ledger {
-  private final MessageContext context = new DefaultMessageContext(this);
+  private final MessageContext context = new DefaultMessageContext(this, null);
   
   private static class MessageEvent {
     private Message message;
@@ -60,7 +60,7 @@ public final class DisruptorLedger implements Ledger {
   }
   
   @Override
-  public void confirm(String groupId, Object messageId) {}
+  public void confirm(Object handlerId, Object messageId) {}
   
   @SuppressWarnings("unchecked")
   @Override

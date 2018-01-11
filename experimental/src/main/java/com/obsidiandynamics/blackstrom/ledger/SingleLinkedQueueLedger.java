@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class SingleLinkedQueueLedger implements Ledger {
   private volatile MessageHandler[] handlers = new MessageHandler[0];
   
-  private final MessageContext context = new DefaultMessageContext(this);
+  private final MessageContext context = new DefaultMessageContext(this, null);
   
   private final BlockingQueue<Message> queue;
   
@@ -51,7 +51,7 @@ public final class SingleLinkedQueueLedger implements Ledger {
   }
   
   @Override
-  public void confirm(String groupId, Object messageId) {}
+  public void confirm(Object handlerId, Object messageId) {}
 
   @Override
   public void dispose() {

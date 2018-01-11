@@ -40,7 +40,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
         }
       }
       received.add(message);
-      context.getLedger().confirm(getGroupId(), message.getMessageId());
+      context.confirm(message.getMessageId());
     }
   }
   
@@ -123,13 +123,13 @@ public abstract class AbstractLedgerTest implements TestSupport {
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
-        c.getLedger().confirm(null, m.getMessageId());
+        c.confirm(m.getMessageId());
       }
     });
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (m.getSource().equals("echo")) {
         received.incrementAndGet();
-        c.getLedger().confirm(null, m.getMessageId());
+        c.confirm(m.getMessageId());
       }
     });
     ledger.init();

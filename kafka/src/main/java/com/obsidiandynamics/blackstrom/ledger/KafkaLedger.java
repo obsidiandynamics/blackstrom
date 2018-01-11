@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.stream.*;
 
 import org.apache.kafka.clients.consumer.*;
@@ -28,9 +29,9 @@ public final class KafkaLedger implements Ledger {
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
-  private final Map<String, Consumer<String, Message>> consumers = new ConcurrentHashMap<>();
+  private final Map<Integer, Consumer<String, Message>> consumers = new ConcurrentHashMap<>();
   
-  private final MessageContext context = new DefaultMessageContext(this);
+  private final AtomicInteger nextHandlerId = new AtomicInteger();
   
   public KafkaLedger(Kafka<String, Message> kafka, String topic) {
     this.kafka = kafka;
@@ -89,6 +90,9 @@ public final class KafkaLedger implements Ledger {
       }
     }
     
+    final Integer handlerId = groupId != null ? nextHandlerId.getAndIncrement() : null;
+    final MessageContext context = new DefaultMessageContext(this, handlerId);
+    
     final RecordHandler<String, Message> recordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
         final KafkaMessageId messageId = KafkaMessageId.fromRecord(record);
@@ -102,8 +106,9 @@ public final class KafkaLedger implements Ledger {
     final KafkaReceiver<String, Message> receiver = new KafkaReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, KafkaReceiver.genericErrorLogger(LOG));
     receivers.add(receiver);
-    if (groupId != null) {
-      consumers.put(groupId, consumer);
+    
+    if (handlerId != null) {
+      consumers.put(handlerId, consumer);
     }
   }
 
@@ -118,10 +123,9 @@ public final class KafkaLedger implements Ledger {
   }
 
   @Override
-  public void confirm(String groupId, Object messageId) {
-    if (groupId != null) {
-      System.out.println("COMMITTING for group " + groupId);
-      final Consumer<?, ?> consumer = consumers.get(groupId);
+  public void confirm(Object handlerId, Object messageId) {
+    if (handlerId != null) {
+      final Consumer<?, ?> consumer = consumers.get(handlerId);
       final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
       consumer.commitAsync(kafkaMessageId.toOffset(), (offsets, exception) -> {
         LOG.warn("Error committing " + messageId, exception);

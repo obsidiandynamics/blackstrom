@@ -6,7 +6,13 @@ import com.obsidiandynamics.blackstrom.model.*;
 public interface MessageContext {
   Ledger getLedger();
   
+  Object getHandlerId();
+  
   default void vote(Object ballotId, String cohort, Pledge pledge, Object metadata) throws Exception {
     getLedger().append(new Vote(ballotId, new Response(cohort, pledge, metadata)));
+  }
+  
+  default void confirm(Object messageId) {
+    getLedger().confirm(getHandlerId(), messageId);
   }
 }

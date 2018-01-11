@@ -30,8 +30,8 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
     }
     
     @Override
-    public void confirm(String groupId, Object messageId) {
-      backingLedger.confirm(groupId, messageId);
+    public void confirm(Object handlerId, Object messageId) {
+      backingLedger.confirm(handlerId, messageId);
     }
   };
   
@@ -87,6 +87,11 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
       @Override
       public Ledger getLedger() {
         return interceptedLedger;
+      }
+
+      @Override
+      public Object getHandlerId() {
+        return context.getHandlerId();
       }
     };
     

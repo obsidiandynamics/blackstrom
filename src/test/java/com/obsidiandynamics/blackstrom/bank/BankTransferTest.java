@@ -28,7 +28,7 @@ public final class BankTransferTest {
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
   private static final int MAX_WAIT = 10_000;
 
-  private final Ledger ledger = new MultiNodeQueueLedger();
+  private Ledger ledger;
 
   private VotingMachine machine;
 
@@ -36,8 +36,13 @@ public final class BankTransferTest {
   public void after() {
     machine.dispose();
   }
-
+  
+  private Ledger createLedger() {
+    return new MultiNodeQueueLedger();
+  }
+  
   private void buildStandardMachine(Factor first, Factor second, Factor... thirdAndOthers) {
+    ledger = createLedger();
     machine = VotingMachine.builder()
         .withLedger(ledger)
         .withFactors(first)
@@ -106,7 +111,7 @@ public final class BankTransferTest {
   }
   
   @Test
-  public void testFactorFailures() throws InterruptedException, ExecutionException, Exception {
+  public void testFactorFailures() {
     final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
       new RxTxFailureModes() {},
       new RxTxFailureModes() {{
@@ -133,7 +138,7 @@ public final class BankTransferTest {
       for (RxTxFailureModes failureModes : presetFailureModesArray) {
         try {
           testFactorFailure(new FailureModes().set(target, failureModes));
-        } catch (AssertionError e) {
+        } catch (Exception e) {
           throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
         }
         machine.dispose();
@@ -179,6 +184,7 @@ public final class BankTransferTest {
     final Monitor monitor = new BasicMonitor();
     final Branch[] branches = createBranches(2, initialBalance, true);
 
+    ledger = createLedger();
     machine = VotingMachine.builder()
         .withLedger(ledger)
         .withFactors(new FailureProneFactor(initiator)
@@ -209,7 +215,8 @@ public final class BankTransferTest {
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
                                                         new BalanceTransfer(getBranchId(1), transferAmount))
                                          .build(),
-                                         Integer.MAX_VALUE).get();
+                                         Integer.MAX_VALUE)
+        .get(MAX_WAIT, TimeUnit.MILLISECONDS);
     assertEquals(expectedVerdict, o.getVerdict());
   }
 

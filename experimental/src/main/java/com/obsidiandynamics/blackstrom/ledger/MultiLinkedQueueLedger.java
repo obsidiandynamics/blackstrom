@@ -16,7 +16,7 @@ public final class MultiLinkedQueueLedger implements Ledger {
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   private final Object lock = new Object();
   
-  private final MessageContext context = new DefaultMessageContext(this);
+  private final MessageContext context = new DefaultMessageContext(this, null);
   
   @Override
   public void attach(MessageHandler handler) {
@@ -49,7 +49,7 @@ public final class MultiLinkedQueueLedger implements Ledger {
   }
   
   @Override
-  public void confirm(String groupId, Object messageId) {}
+  public void confirm(Object handlerId, Object messageId) {}
   
   @Override
   public void dispose() {

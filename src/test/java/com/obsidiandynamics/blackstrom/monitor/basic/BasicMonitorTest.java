@@ -35,8 +35,8 @@ public final class BasicMonitorTest {
       ledger.append(message);
     }
     
-    @Override public void confirm(String groupId, Object messageId) {
-      ledger.confirm(groupId, messageId);
+    @Override public void confirm(Object handlerId, Object messageId) {
+      ledger.confirm(handlerId, messageId);
     }
     
     @Override public void init() {
@@ -70,7 +70,7 @@ public final class BasicMonitorTest {
       }
     });
     ledger.init();
-    context = new DefaultMessageContext(ledger);
+    context = new DefaultMessageContext(ledger, null);
   }
   
   @After
@@ -287,7 +287,7 @@ public final class BasicMonitorTest {
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     ledger.attach((NullGroupMessageHandler) (c, m) -> outcomes.add((Outcome) m));
     ledger.init();
-    context = new DefaultMessageContext(ledger);
+    context = new DefaultMessageContext(ledger, null);
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
