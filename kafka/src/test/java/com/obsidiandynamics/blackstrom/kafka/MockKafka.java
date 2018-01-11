@@ -109,7 +109,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   }
   
   private MockConsumer<K, V> createDetachedConsumer() {
-    return new MockConsumer<K, V>(OffsetResetStrategy.EARLIEST);
+    return new MockConsumer<>(OffsetResetStrategy.EARLIEST);
   }
   
   private MockConsumer<K, V> createAttachedConsumer() {
