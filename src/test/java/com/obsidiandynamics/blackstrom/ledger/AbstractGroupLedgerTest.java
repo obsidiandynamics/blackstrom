@@ -31,7 +31,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
     
     @Override
     public void onMessage(MessageContext context, Message message) {
-      if (! shardKeyHolder.produced(message)) return;
+      if (! shard.contains(message)) return;
       
       if (LOG) LOG_STREAM.format("Received %s\n", message);
       final long ballotId = (long) message.getBallotId();
@@ -55,7 +55,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private long messageId;
   
-  private final ShardKeyHolder shardKeyHolder = ShardKeyHolder.forTest(this);
+  private final Shard shard = Shard.forTest(this);
   
   @After
   public void after() {
@@ -98,7 +98,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
     try {
       ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
                     .withSource(source)
-                    .withShardKey(shardKeyHolder.key()));
+                    .withShardKey(shard.key()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

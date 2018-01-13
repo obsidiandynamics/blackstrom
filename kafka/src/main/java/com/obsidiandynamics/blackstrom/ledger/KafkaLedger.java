@@ -17,9 +17,9 @@ import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KafkaLedger implements Ledger {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaLedger.class);
-  
   private static final long POLL_TIMEOUT_MILLIS = 1_000;
+  
+  private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
   
   private final Kafka<String, Message> kafka;
   
@@ -49,6 +49,11 @@ public final class KafkaLedger implements Ledger {
         .with("compression.type", "snappy")
         .build();
     producer = kafka.getProducer(props);
+  }
+  
+  public KafkaLedger withLogger(Logger log) {
+    this.log = log;
+    return this;
   }
 
   @Override
@@ -104,7 +109,7 @@ public final class KafkaLedger implements Ledger {
     
     final String threadName = getClass().getSimpleName() + "-receiver-" + groupId;
     final KafkaReceiver<String, Message> receiver = new KafkaReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
-        threadName, recordHandler, KafkaReceiver.genericErrorLogger(LOG));
+        threadName, recordHandler, KafkaReceiver.genericErrorLogger(log));
     receivers.add(receiver);
     
     if (handlerId != null) {
@@ -116,7 +121,7 @@ public final class KafkaLedger implements Ledger {
   public void append(Message message) throws Exception {
     final ProducerRecord<String, Message> record = new ProducerRecord<>(topic, message.getShardKey(), message);
     producer.send(record, 
-                  (metadata, exception) -> logException(LOG, exception, "Error publishing %s", record));
+                  (metadata, exception) -> logException(exception, "Error publishing %s", record));
   }
 
   @Override
@@ -125,11 +130,11 @@ public final class KafkaLedger implements Ledger {
       final Consumer<?, ?> consumer = consumers.get(handlerId);
       final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
       consumer.commitAsync(kafkaMessageId.toOffset(), 
-                           (offsets, exception) -> logException(LOG, exception, "Error commiting %s", messageId));
+                           (offsets, exception) -> logException(exception, "Error commiting %s", messageId));
     }
   }
   
-  private static void logException(Logger log, Exception cause, String messageFormat, Object... messageArgs) {
+  private void logException(Exception cause, String messageFormat, Object... messageArgs) {
     if (cause != null) {
       log.warn(String.format(messageFormat, messageArgs), cause);
     }

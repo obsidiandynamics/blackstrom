@@ -15,7 +15,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   
   private final int maxHistory;
   
-  private MockProducer<K, V> producer;
+  private FallibleMockProducer<K, V> producer;
   
   private final List<MockConsumer<K, V>> consumers = new ArrayList<>();
   
@@ -26,6 +26,10 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();
   
+  private ExceptionGenerator<ProducerRecord<K, V>> appendExceptionGenerator = ExceptionGenerator.never();
+  
+  private ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>> confirmExceptionGenerator = ExceptionGenerator.never();
+  
   public MockKafka() {
     this(10, 100_000);
   }
@@ -35,20 +39,42 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
     this.maxHistory = maxHistory;
   }
   
+  public MockKafka<K, V> withAppendExceptionGenerator(ExceptionGenerator<ProducerRecord<K, V>> appendExceptionGenerator) {
+    this.appendExceptionGenerator = appendExceptionGenerator;
+    return this;
+  }
+
+  public MockKafka<K, V> withConfirmExceptionGenerator(ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>> confirmExceptionGenerator) {
+    this.confirmExceptionGenerator = confirmExceptionGenerator;
+    return this;
+  }
+
   @Override
-  public MockProducer<K, V> getProducer(Properties props) {
+  public FallibleMockProducer<K, V> getProducer(Properties props) {
     synchronized (lock) {
       if (producer == null) {
         final String keySerializer = props.getProperty("key.serializer");
         final String valueSerializer = props.getProperty("value.serializer");
-        producer = new MockProducer<K, V>(true, instantiate(keySerializer), instantiate(valueSerializer)) {
+        producer = new FallibleMockProducer<K, V>(true, instantiate(keySerializer), instantiate(valueSerializer)) {
+          {
+            this.sendExceptionGenerator = MockKafka.this.appendExceptionGenerator;
+          }
+          
           @Override public Future<RecordMetadata> send(ProducerRecord<K, V> r, Callback callback) {
-            final Future<RecordMetadata> f = super.send(r, (metadata, exception) -> {
-              if (callback != null) callback.onCompletion(metadata, exception);
-              final int partition = r.partition() != null ? r.partition() : metadata.partition();
-              enqueue(r, partition, metadata.offset());
-            });
-            return f;
+            final Exception generated = sendExceptionGenerator.get(r);
+            if (generated != null) {
+              if (callback != null) callback.onCompletion(null, generated);
+              final CompletableFuture<RecordMetadata> f = new CompletableFuture<>();
+              f.completeExceptionally(generated);
+              return f;
+            } else {
+              final Future<RecordMetadata> f = super.send(r, (metadata, exception) -> {
+                if (callback != null) callback.onCompletion(metadata, exception);
+                final int partition = r.partition() != null ? r.partition() : metadata.partition();
+                enqueue(r, partition, metadata.offset());
+              });
+              return f;
+            }
           }
           
           final AtomicBoolean closed = new AtomicBoolean();
@@ -98,7 +124,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   }
 
   @Override
-  public MockConsumer<K, V> getConsumer(Properties props) {
+  public FallibleMockConsumer<K, V> getConsumer(Properties props) {
     final String groupId = props.getProperty("group.id");
     final boolean newGroupMember = groupId == null || groups.add(groupId);
     if (newGroupMember) {
@@ -108,12 +134,38 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
     }
   }
   
-  private MockConsumer<K, V> createDetachedConsumer() {
-    return new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+  private FallibleMockConsumer<K, V> createDetachedConsumer() {
+    return new FallibleMockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
+      {
+        this.commitExceptionGenerator = MockKafka.this.confirmExceptionGenerator;
+      }
+      
+      @Override public void commitAsync(Map<TopicPartition, OffsetAndMetadata> offsets, OffsetCommitCallback callback) {
+        final Exception generated = commitExceptionGenerator.get(offsets);
+        if (generated != null) {
+          if (callback != null) callback.onComplete(offsets, generated);
+        } else {
+          super.commitAsync(offsets, callback);
+        }
+      }
+    };
   }
   
-  private MockConsumer<K, V> createAttachedConsumer() {
-    final MockConsumer<K, V> consumer = new MockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
+  private FallibleMockConsumer<K, V> createAttachedConsumer() {
+    final FallibleMockConsumer<K, V> consumer = new FallibleMockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
+      {
+        this.commitExceptionGenerator = MockKafka.this.confirmExceptionGenerator;
+      }
+      
+      @Override public void commitAsync(Map<TopicPartition, OffsetAndMetadata> offsets, OffsetCommitCallback callback) {
+        final Exception generated = commitExceptionGenerator.get(offsets);
+        if (generated != null) {
+          if (callback != null) callback.onComplete(offsets, generated);
+        } else {
+          super.commitAsync(offsets, callback);
+        }
+      }
+      
       @Override public void subscribe(Collection<String> topics) {
         for (String topic : topics) {
           log("MockConsumer: assigning %s\n", topic);
