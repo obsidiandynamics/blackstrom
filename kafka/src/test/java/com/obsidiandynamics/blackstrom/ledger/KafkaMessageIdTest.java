@@ -29,6 +29,7 @@ public final class KafkaMessageIdTest {
     assertNotEquals(m1, m2);
     assertEquals(m1, m3);
     assertEquals(m1, m4);
+    assertNotEquals(m1, new Object());
     
     assertNotEquals(m1.hashCode(), m2.hashCode());
     assertEquals(m1.hashCode(), m3.hashCode());
