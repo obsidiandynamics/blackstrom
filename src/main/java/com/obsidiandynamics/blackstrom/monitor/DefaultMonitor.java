@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.monitor.basic;
+package com.obsidiandynamics.blackstrom.monitor;
 
 import java.util.*;
 
@@ -7,13 +7,12 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class BasicMonitor implements Monitor {
+public final class DefaultMonitor implements Monitor {
   static final boolean DEBUG = false;
   
-  private static final Logger LOG = LoggerFactory.getLogger(BasicMonitor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultMonitor.class);
   
   private Ledger ledger;
   
@@ -37,11 +36,11 @@ public final class BasicMonitor implements Monitor {
   
   private final Object lock = new Object();
   
-  public BasicMonitor() {
-    this(new BasicMonitorOptions());
+  public DefaultMonitor() {
+    this(new DefaultMonitorOptions());
   }
   
-  public BasicMonitor(BasicMonitorOptions options) {
+  public DefaultMonitor(DefaultMonitorOptions options) {
     this.groupId = options.getGroupId();
     this.gcIntervalMillis = options.getGCInterval();
     this.outcomeLifetimeMillis = options.getOutcomeLifetime();
@@ -49,7 +48,7 @@ public final class BasicMonitor implements Monitor {
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(BasicMonitor.class.getSimpleName() + "-gc-" + Integer.toHexString(System.identityHashCode(this)))
+                     .withName(DefaultMonitor.class.getSimpleName() + "-gc-" + Integer.toHexString(System.identityHashCode(this)))
                      .withDaemon(true))
         .onCycle(this::gcCycle)
         .build();
@@ -57,7 +56,7 @@ public final class BasicMonitor implements Monitor {
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(BasicMonitor.class.getSimpleName() + "-timeout-" + Integer.toHexString(System.identityHashCode(this)))
+                     .withName(DefaultMonitor.class.getSimpleName() + "-timeout-" + Integer.toHexString(System.identityHashCode(this)))
                      .withDaemon(true))
         .onCycle(this::timeoutCycle)
         .build();

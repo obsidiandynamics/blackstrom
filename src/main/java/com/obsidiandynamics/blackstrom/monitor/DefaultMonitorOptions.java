@@ -1,6 +1,6 @@
-package com.obsidiandynamics.blackstrom.monitor.basic;
+package com.obsidiandynamics.blackstrom.monitor;
 
-public final class BasicMonitorOptions {
+public final class DefaultMonitorOptions {
   private String groupId = "monitor";
   
   private int gcIntervalMillis = 1_000;
@@ -13,7 +13,7 @@ public final class BasicMonitorOptions {
     return groupId;
   }
 
-  public BasicMonitorOptions withGroupId(String groupId) {
+  public DefaultMonitorOptions withGroupId(String groupId) {
     this.groupId = groupId;
     return this;
   }
@@ -22,7 +22,7 @@ public final class BasicMonitorOptions {
     return gcIntervalMillis;
   }
 
-  public BasicMonitorOptions withGCInterval(int gcIntervalMillis) {
+  public DefaultMonitorOptions withGCInterval(int gcIntervalMillis) {
     this.gcIntervalMillis = gcIntervalMillis;
     return this;
   }
@@ -31,7 +31,7 @@ public final class BasicMonitorOptions {
     return outcomeLifetimeMillis;
   }
 
-  public BasicMonitorOptions withOutcomeLifetime(int outcomeLifetimeMillis) {
+  public DefaultMonitorOptions withOutcomeLifetime(int outcomeLifetimeMillis) {
     this.outcomeLifetimeMillis = outcomeLifetimeMillis;
     return this;
   }
@@ -40,7 +40,7 @@ public final class BasicMonitorOptions {
     return timeoutIntervalMillis;
   }
 
-  public BasicMonitorOptions withTimeoutInterval(int timeoutIntervalMillis) {
+  public DefaultMonitorOptions withTimeoutInterval(int timeoutIntervalMillis) {
     this.timeoutIntervalMillis = timeoutIntervalMillis;
     return this;
   }

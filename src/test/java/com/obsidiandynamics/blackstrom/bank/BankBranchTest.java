@@ -12,9 +12,9 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.util.Await;
+import com.obsidiandynamics.blackstrom.util.Wait;
 
-public final class BankBranchTest implements Await {
+public final class BankBranchTest {
   private static final String BRANCH_ID = "branch";
   private static final int INITIAL_BALANCE = 1_000;
   private static final String[] COHORTS = new String[] {BRANCH_ID};
@@ -28,7 +28,7 @@ public final class BankBranchTest implements Await {
   
   private List<Message> received = new CopyOnWriteArrayList<>();
   
-  private final Timesert await = SHORT;
+  private final Timesert wait = Wait.SHORT;
   
   @Before
   public void before() {
@@ -50,7 +50,7 @@ public final class BankBranchTest implements Await {
   public void testNegativeXferAcceptCommit() {
     final int amount = -100;
     nominate(amount);
-    await.until(received(1));
+    wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
@@ -58,7 +58,7 @@ public final class BankBranchTest implements Await {
     
     // second nomination should retransmit, but have no effect on the state
     nominate(amount);
-    await.until(received(2));
+    wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
@@ -80,7 +80,7 @@ public final class BankBranchTest implements Await {
   public void testNegativeXferAcceptAbort() {
     final int amount = -100;
     nominate(amount);
-    await.until(received(1));
+    wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
@@ -88,7 +88,7 @@ public final class BankBranchTest implements Await {
     
     // second nomination should retransmit, but have no effect on the state
     nominate(amount);
-    await.until(received(2));
+    wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
@@ -110,7 +110,7 @@ public final class BankBranchTest implements Await {
   public void testNegativeXferRejectAbort() {
     final int amount = -2_000;
     nominate(amount);
-    await.until(received(1));
+    wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -118,7 +118,7 @@ public final class BankBranchTest implements Await {
     
     // second nomination should retransmit, but have no effect on the state
     nominate(amount);
-    await.until(received(2));
+    wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -141,7 +141,7 @@ public final class BankBranchTest implements Await {
   public void testPositiveXferAcceptCommit() {
     final int amount = 100;
     nominate(amount);
-    await.until(received(1));
+    wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -149,7 +149,7 @@ public final class BankBranchTest implements Await {
     
     // second nomination should retransmit, but have no effect on the state
     nominate(amount);
-    await.until(received(2));
+    wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -171,7 +171,7 @@ public final class BankBranchTest implements Await {
   public void testPositiveXferAcceptAbort() {
     final int amount = 100;
     nominate(amount);
-    await.until(received(1));
+    wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -179,7 +179,7 @@ public final class BankBranchTest implements Await {
     
     // second nomination should retransmit, but have no effect on the state
     nominate(amount);
-    await.until(received(2));
+    wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());

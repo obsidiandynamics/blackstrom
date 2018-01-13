@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.monitor.basic;
+package com.obsidiandynamics.blackstrom.monitor;
 
 import static junit.framework.TestCase.*;
 
@@ -14,17 +14,18 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class BasicMonitorTest {
+public final class DefaultMonitorTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
   
-  private static final int MAX_WAIT = 10_000;
+  private final Timesert wait = Wait.SHORT;
   
   private final InitContext initContext = new DefaultInitContext(new Ledger() {
     @Override public void attach(MessageHandler handler) {
@@ -48,7 +49,7 @@ public final class BasicMonitorTest {
     }
   });
   
-  private BasicMonitor monitor;
+  private DefaultMonitor monitor;
   
   private MessageContext context;
   
@@ -60,7 +61,7 @@ public final class BasicMonitorTest {
   
   @Before
   public void before() {
-    setMonitorAndInit(new BasicMonitor());
+    setMonitorAndInit(new DefaultMonitor());
     setLedger(new SingleNodeQueueLedger());
     ledger.attach((NullGroupMessageHandler) (c, m) -> { 
       if (m.getMessageType() == MessageType.OUTCOME) {
@@ -79,7 +80,7 @@ public final class BasicMonitorTest {
     ledger.dispose();
   }
   
-  private void setMonitorAndInit(BasicMonitor monitor) {
+  private void setMonitorAndInit(DefaultMonitor monitor) {
     if (this.monitor != null) this.monitor.dispose();
     this.monitor = monitor;
     monitor.init(initContext);
@@ -92,7 +93,7 @@ public final class BasicMonitorTest {
   
   @Test
   public void testInitialisation() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withGroupId("test-monitor")));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withGroupId("test-monitor")));
     assertEquals("test-monitor", monitor.getGroupId());
   }
   
@@ -104,7 +105,7 @@ public final class BasicMonitorTest {
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
@@ -117,7 +118,7 @@ public final class BasicMonitorTest {
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
@@ -137,7 +138,7 @@ public final class BasicMonitorTest {
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
@@ -152,7 +153,7 @@ public final class BasicMonitorTest {
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Pledge.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
@@ -165,7 +166,7 @@ public final class BasicMonitorTest {
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Pledge.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     vote(ballotId, "b", Pledge.ACCEPT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
@@ -178,7 +179,7 @@ public final class BasicMonitorTest {
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Pledge.REJECT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     vote(ballotId, "b", Pledge.REJECT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
@@ -203,7 +204,7 @@ public final class BasicMonitorTest {
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Pledge.ACCEPT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
@@ -227,7 +228,7 @@ public final class BasicMonitorTest {
     vote(ballotId, "b", Pledge.ACCEPT);
     vote(ballotId, "b", Pledge.TIMEOUT);
 
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
@@ -250,14 +251,14 @@ public final class BasicMonitorTest {
   
   @Test
   public void testGCNoReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions()
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
                                        .withOutcomeLifetime(60_000)
                                        .withGCInterval(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     
     TestSupport.sleep(10);
@@ -266,15 +267,15 @@ public final class BasicMonitorTest {
   
   @Test
   public void testGCReap() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withOutcomeLifetime(1).withGCInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withOutcomeLifetime(1).withGCInterval(1)));
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, "a");
     vote(ballotId, "a", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> monitor.getOutcomes().isEmpty());
+    wait.untilTrue(() -> monitor.getOutcomes().isEmpty());
   }
   
   private static class TestLedgerException extends Exception {
@@ -299,20 +300,20 @@ public final class BasicMonitorTest {
   
   @Test
   public void testTimeout_twoCohorts() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, 1, "a", "b");
     vote(ballotId, "a", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> votes.size() >= 1);
+    wait.until(numVotesIsAtLeast(1));
     assertEquals(0, outcomes.size());
     assertEquals(ballotId, votes.get(0).getBallotId());
     assertEquals(Pledge.TIMEOUT, votes.get(0).getResponse().getPledge());
     
     // feed the timeout back into the monitor - should produce a rejection
     vote(ballotId, "b", Pledge.TIMEOUT);
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
@@ -329,7 +330,7 @@ public final class BasicMonitorTest {
   
   @Test
   public void testNoTimeout_twoCohorts() {
-    setMonitorAndInit(new BasicMonitor(new BasicMonitorOptions().withTimeoutInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
     
     final UUID ballotId = UUID.randomUUID();
     nominate(ballotId, 10_000, "a", "b");
@@ -341,13 +342,21 @@ public final class BasicMonitorTest {
     
     vote(ballotId, "b", Pledge.ACCEPT);
     
-    Timesert.wait(MAX_WAIT).untilTrue(() -> outcomes.size() == 1);
+    wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
+  }
+  
+  private Runnable numVotesIsAtLeast(int size) {
+    return () -> assertTrue("votes.size=" + votes.size(), votes.size() >= size);
+  }
+  
+  private Runnable numOutcomesIs(int size) {
+    return () -> assertEquals(size, outcomes.size());
   }
   
   private Response getResponseForCohort(Outcome outcome, String cohort) {

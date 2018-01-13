@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.monitor.basic;
+package com.obsidiandynamics.blackstrom.monitor;
 
 import java.util.*;
 
@@ -36,7 +36,7 @@ final class PendingBallot {
     final Response response = vote.getResponse();
     final Response existing = responses.put(response.getCohort(), response);
     if (existing != null) {
-      if (BasicMonitor.DEBUG) log.trace("Skipping redundant {} (already cast in current ballot)", vote);
+      if (DefaultMonitor.DEBUG) log.trace("Skipping redundant {} (already cast in current ballot)", vote);
       responses.put(existing.getCohort(), existing);
       return false;
     }

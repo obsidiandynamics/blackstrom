@@ -18,7 +18,6 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
-import com.obsidiandynamics.blackstrom.monitor.basic.*;
 import com.obsidiandynamics.indigo.util.*;
 
 import junit.framework.*;
@@ -57,7 +56,7 @@ public final class BankTransferTest {
     final int transferAmount = initialBalance;
 
     final AsyncInitiator initiator = new AsyncInitiator();
-    final Monitor monitor = new BasicMonitor();
+    final Monitor monitor = new DefaultMonitor();
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     buildStandardMachine(initiator, monitor, branches);
 
@@ -85,7 +84,7 @@ public final class BankTransferTest {
     final int transferAmount = initialBalance + 1;
 
     final AsyncInitiator initiator = new AsyncInitiator();
-    final Monitor monitor = new BasicMonitor();
+    final Monitor monitor = new DefaultMonitor();
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     buildStandardMachine(initiator, monitor, branches);
 
@@ -181,7 +180,7 @@ public final class BankTransferTest {
   private void testFactorFailure(Map<TargetFactor, RxTxFailureModes> failureModes) throws InterruptedException, ExecutionException, Exception {
     final int initialBalance = 1_000;
     final AsyncInitiator initiator = new AsyncInitiator();
-    final Monitor monitor = new BasicMonitor();
+    final Monitor monitor = new DefaultMonitor();
     final BankBranch[] branches = createBranches(2, initialBalance, true);
 
     ledger = createLedger();
@@ -239,7 +238,7 @@ public final class BankTransferTest {
       }
     };
     final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
-    final Monitor monitor = new BasicMonitor();
+    final Monitor monitor = new DefaultMonitor();
     buildStandardMachine(initiator, monitor, branches);
 
     final long took = TestSupport.tookThrowing(() -> {
