@@ -30,7 +30,7 @@ public final class KafkaJacksonMessageDeserializer implements Deserializer<Messa
     final Object mapPayloadConfigValue = configs.get(CONFIG_MAP_PAYLOAD);
     final boolean mapPayload;
     try {
-      mapPayload = Boolean.parseBoolean(String.valueOf(mapPayloadConfigValue));
+      mapPayload = Boolean.parseBoolean(mapPayloadConfigValue.toString());
     } catch (Throwable e) {
       LOG.error("Error configuring deserializer", e);
       throw new ConfigException(CONFIG_MAP_PAYLOAD, mapPayloadConfigValue);
