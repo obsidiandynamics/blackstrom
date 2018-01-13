@@ -97,7 +97,7 @@ public final class KafkaLedger implements Ledger {
       for (ConsumerRecord<String, Message> record : records) {
         final KafkaMessageId messageId = KafkaMessageId.fromRecord(record);
         final Message message = record.value();
-        message.withMessageId(messageId);
+        message.withMessageId(messageId).withShardKey(record.key());
         handler.onMessage(context, message);
       }
     };
@@ -114,7 +114,7 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void append(Message message) throws Exception {
-    final ProducerRecord<String, Message> record = new ProducerRecord<>(topic, message);
+    final ProducerRecord<String, Message> record = new ProducerRecord<>(topic, message.getShardKey(), message);
     producer.send(record, 
                   (metadata, exception) -> logException(LOG, exception, "Error publishing %s", record));
   }

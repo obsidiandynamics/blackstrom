@@ -44,6 +44,10 @@ public abstract class Message {
     return timestamp;
   }
   
+  public final String getShardKey() {
+    return shardKey;
+  }
+  
   public final Message withShardKey(String shardKey) {
     this.shardKey = shardKey;
     return this;

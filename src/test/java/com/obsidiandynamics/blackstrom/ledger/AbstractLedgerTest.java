@@ -11,6 +11,7 @@ import org.junit.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractLedgerTest implements TestSupport {
@@ -18,7 +19,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
-  private static class TestHandler implements MessageHandler, Groupable.NullGroup {
+  private class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
     
     private volatile long lastBallotId = -1;
@@ -26,6 +27,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
 
     @Override
     public void onMessage(MessageContext context, Message message) {
+      if (! shardKeyHolder.produced(message)) return;
+      
       if (LOG) LOG_STREAM.format("Received %s\n", message);
       final long ballotId = (long) message.getBallotId();
       if (lastBallotId == -1) {
@@ -47,6 +50,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
   private Ledger ledger;
   
   private long messageId;
+  
+  private final ShardKeyHolder shardKeyHolder = ShardKeyHolder.forTest(this);
   
   @After
   public void after() {
@@ -94,7 +99,11 @@ public abstract class AbstractLedgerTest implements TestSupport {
     final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
-    ledger.attach((NullGroupMessageHandler) (c, m) -> received.incrementAndGet());
+    ledger.attach((NullGroupMessageHandler) (c, m) -> {
+      if (shardKeyHolder.produced(m)) {
+        received.incrementAndGet();
+      }
+    });
     ledger.init();
     
     final long took = TestSupport.took(() -> {
@@ -117,7 +126,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
-      if (m.getSource().equals("source")) {
+      if (shardKeyHolder.produced(m) && m.getSource().equals("source")) {
         try {
           c.getLedger().append(new Nomination(m.getMessageId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
         } catch (Exception e) {
@@ -148,7 +157,9 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private void appendMessage(String source) {
     try {
-      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0).withSource(source));
+      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
+                    .withSource(source)
+                    .withShardKey(shardKeyHolder.key()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

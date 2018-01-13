@@ -10,6 +10,7 @@ import org.junit.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractGroupLedgerTest implements TestSupport {
@@ -17,7 +18,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
-  private static class TestHandler implements MessageHandler {
+  private class TestHandler implements MessageHandler {
     private final String groupId;
     private final List<Message> received = new CopyOnWriteArrayList<>();
     
@@ -30,6 +31,8 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
     
     @Override
     public void onMessage(MessageContext context, Message message) {
+      if (! shardKeyHolder.produced(message)) return;
+      
       if (LOG) LOG_STREAM.format("Received %s\n", message);
       final long ballotId = (long) message.getBallotId();
       if (ballotId > lastBallotId) {
@@ -51,6 +54,8 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   private Ledger ledger;
   
   private long messageId;
+  
+  private final ShardKeyHolder shardKeyHolder = ShardKeyHolder.forTest(this);
   
   @After
   public void after() {
@@ -91,7 +96,9 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private void appendMessage(String source) {
     try {
-      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0).withSource(source));
+      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
+                    .withSource(source)
+                    .withShardKey(shardKeyHolder.key()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
