@@ -11,6 +11,8 @@ public abstract class Message {
   
   private String source;
   
+  private String shardKey;
+  
   protected Message(Object ballotId, long timestamp) {
     this.ballotId = ballotId;
     this.timestamp = timestamp != 0 ? timestamp : System.currentTimeMillis();
@@ -42,6 +44,11 @@ public abstract class Message {
     return timestamp;
   }
   
+  public final Message withShardKey(String shardKey) {
+    this.shardKey = shardKey;
+    return this;
+  }
+  
   public abstract MessageType getMessageType();  
   
   @Override
@@ -51,18 +58,20 @@ public abstract class Message {
         .append(timestamp)
         .append(messageId)
         .append(source)
+        .append(shardKey)
         .toHashCode();
   }
   
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Message) {
-      final Message other = (Message) obj;
+      final Message that = (Message) obj;
       return new EqualsBuilder()
-          .append(ballotId, other.ballotId)
-          .append(timestamp, other.timestamp)
-          .append(messageId, other.messageId)
-          .append(source, other.source)
+          .append(ballotId, that.ballotId)
+          .append(timestamp, that.timestamp)
+          .append(messageId, that.messageId)
+          .append(source, that.source)
+          .append(shardKey, that.shardKey)
           .isEquals();
     } else {
       return false;
@@ -70,7 +79,7 @@ public abstract class Message {
   }
   
   protected final String baseToString() {
-    return "ballotId=" + ballotId + ", messageId=" + messageId + ", source=" + source + ", timestamp="
-        + timestamp;
+    return "ballotId=" + ballotId + ", messageId=" + messageId + ", source=" + source + ", shardKey=" + shardKey + 
+        ", timestamp=" + timestamp;
   }
 }

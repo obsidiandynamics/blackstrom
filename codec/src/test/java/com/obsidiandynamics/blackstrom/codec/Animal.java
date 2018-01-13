@@ -30,9 +30,9 @@ abstract class Animal<A> {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Animal) {
-      final Animal<?> other = (Animal<?>) obj;
+      final Animal<?> that = (Animal<?>) obj;
       return new EqualsBuilder()
-          .append(friend, other.friend)
+          .append(friend, that.friend)
           .isEquals();
     } else {
       return false;

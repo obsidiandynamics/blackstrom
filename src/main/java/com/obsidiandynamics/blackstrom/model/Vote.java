@@ -36,10 +36,10 @@ public final class Vote extends Message {
     if (this == obj) {
       return true;
     } else if (obj instanceof Vote) {
-      final Vote other = (Vote) obj;
+      final Vote that = (Vote) obj;
       return new EqualsBuilder()
           .appendSuper(super.equals(obj))
-          .append(response, other.response)
+          .append(response, that.response)
           .isEquals();
     } else {
       return false;

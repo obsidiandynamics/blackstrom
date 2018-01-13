@@ -2,6 +2,8 @@ package com.obsidiandynamics.blackstrom.model;
 
 import java.util.*;
 
+import org.apache.commons.lang3.builder.*;
+
 public final class Outcome extends Message {
   private final Verdict verdict;
   private final Response[] responses;
@@ -36,6 +38,30 @@ public final class Outcome extends Message {
   @Override
   public MessageType getMessageType() {
     return MessageType.OUTCOME;
+  }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+        .append(verdict)
+        .append(responses)
+        .toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof Outcome) {
+      final Outcome that = (Outcome) obj;
+      return new EqualsBuilder()
+          .appendSuper(super.equals(obj))
+          .append(verdict, that.verdict)
+          .append(responses, that.responses)
+          .isEquals();
+    } else {
+      return false;
+    }
   }
 
   @Override

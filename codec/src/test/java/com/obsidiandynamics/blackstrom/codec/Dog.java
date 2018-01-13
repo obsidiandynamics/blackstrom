@@ -24,10 +24,10 @@ final class Dog extends Animal<Dog> {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Dog) {
-      final Dog other = (Dog) obj;
+      final Dog that = (Dog) obj;
       return new EqualsBuilder()
           .appendSuper(super.equals(obj))
-          .append(name, other.name)
+          .append(name, that.name)
           .isEquals();
     } else {
       return false;

@@ -25,7 +25,7 @@ public final class OutcomeTest {
     final Response ra = new Response("a", Pledge.ACCEPT, "a-meta");
     final Response rb = new Response("b", Pledge.REJECT, "b-meta");
     final Outcome o1 = new Outcome(1, 1000, Verdict.COMMIT, new Response[] {ra, rb});
-    final Outcome o2 = new Outcome(2, 1000, Verdict.COMMIT, new Response[] {ra, rb});
+    final Outcome o2 = new Outcome(1, 1000, Verdict.ABORT, new Response[] {ra, rb});
     final Outcome o3 = new Outcome(1, 1000, Verdict.COMMIT, new Response[] {ra, rb});
     final Outcome o4 = o1;
 

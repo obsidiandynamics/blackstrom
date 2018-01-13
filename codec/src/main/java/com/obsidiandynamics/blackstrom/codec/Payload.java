@@ -41,9 +41,9 @@ public final class Payload {
     if (this == obj) {
       return true;
     } else if (obj instanceof Payload) {
-      final Payload other = (Payload) obj;
+      final Payload that = (Payload) obj;
       return new EqualsBuilder()
-          .append(value,  other.value)
+          .append(value,  that.value)
           .isEquals();
     } else {
       return false;

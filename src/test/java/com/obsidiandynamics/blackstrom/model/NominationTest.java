@@ -21,7 +21,7 @@ public final class NominationTest {
   @Test
   public void testEqualsHashCode() {
     final Nomination n1 = new Nomination(1, 1000, new String[] {"a", "b"}, "proposal", 1000);
-    final Nomination n2 = new Nomination(2, 1000, new String[] {"a", "b"}, "proposal", 1000);
+    final Nomination n2 = new Nomination(1, 1000, new String[] {"a", "b"}, "something else", 1000);
     final Nomination n3 = new Nomination(1, 1000, new String[] {"a", "b"}, "proposal", 1000);
     final Nomination n4 = n1;
 

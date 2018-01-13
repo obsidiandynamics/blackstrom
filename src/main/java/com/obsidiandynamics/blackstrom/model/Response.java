@@ -41,11 +41,11 @@ public final class Response {
     if (this == obj) {
       return true;
     } else if (obj instanceof Response) {
-      final Response other = (Response) obj;
+      final Response that = (Response) obj;
       return new EqualsBuilder()
-          .append(cohort, other.cohort)
-          .append(pledge, other.pledge)
-          .append(metadata, other.metadata)
+          .append(cohort, that.cohort)
+          .append(pledge, that.pledge)
+          .append(metadata, that.metadata)
           .isEquals();
     } else {
       return false;

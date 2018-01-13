@@ -45,11 +45,11 @@ public final class KafkaMessageId {
     if (this == obj) {
       return true;
     } else if (obj instanceof KafkaMessageId) {
-      final KafkaMessageId other = (KafkaMessageId) obj;
+      final KafkaMessageId that = (KafkaMessageId) obj;
       return new EqualsBuilder()
-          .append(topic, other.topic)
-          .append(partition, other.partition)
-          .append(offset, other.offset)
+          .append(topic, that.topic)
+          .append(partition, that.partition)
+          .append(offset, that.offset)
           .isEquals();
     } else {
       return false;

@@ -54,12 +54,12 @@ public final class Nomination extends Message {
     if (this == obj) {
       return true;
     } else if (obj instanceof Nomination) {
-      final Nomination other = (Nomination) obj;
+      final Nomination that = (Nomination) obj;
       return new EqualsBuilder()
           .appendSuper(super.equals(obj))
-          .append(cohorts, other.cohorts)
-          .append(proposal, other.proposal)
-          .append(ttl, other.ttl)
+          .append(cohorts, that.cohorts)
+          .append(proposal, that.proposal)
+          .append(ttl, that.ttl)
           .isEquals();
     } else {
       return false;
