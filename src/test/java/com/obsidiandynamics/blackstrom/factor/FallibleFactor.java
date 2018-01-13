@@ -7,7 +7,7 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.scheduler.*;
 
-public final class FailureProneFactor implements Factor, NominationProcessor, VoteProcessor, OutcomeProcessor {
+public final class FallibleFactor implements Factor, NominationProcessor, VoteProcessor, OutcomeProcessor {
   private final Factor backingFactor;
   
   private Ledger backingLedger;
@@ -35,17 +35,17 @@ public final class FailureProneFactor implements Factor, NominationProcessor, Vo
     }
   };
   
-  public FailureProneFactor(Factor backingFactor) {
+  public FallibleFactor(Factor backingFactor) {
     this.backingFactor = backingFactor;
     backingHandler = new MessageHandlerAdapter(backingFactor);
   }
   
-  public FailureProneFactor withRxFailureMode(FailureMode rxFailureMode) {
+  public FallibleFactor withRxFailureMode(FailureMode rxFailureMode) {
     this.rxFailureMode = rxFailureMode;
     return this;
   }
 
-  public FailureProneFactor withTxFailureMode(FailureMode txFailureMode) {
+  public FallibleFactor withTxFailureMode(FailureMode txFailureMode) {
     this.txFailureMode = txFailureMode;
     return this;
   }

@@ -187,13 +187,13 @@ public final class BankTransferTest {
     ledger = createLedger();
     machine = VotingMachine.builder()
         .withLedger(ledger)
-        .withFactors(new FailureProneFactor(initiator)
+        .withFactors(new FallibleFactor(initiator)
                      .withRxFailureMode(failureModes.get(TargetFactor.INITIATOR).rxFailureMode)
                      .withTxFailureMode(failureModes.get(TargetFactor.INITIATOR).txFailureMode),
-                     new FailureProneFactor(monitor)
+                     new FallibleFactor(monitor)
                      .withRxFailureMode(failureModes.get(TargetFactor.MONITOR).rxFailureMode)
                      .withTxFailureMode(failureModes.get(TargetFactor.MONITOR).txFailureMode),
-                     new FailureProneFactor(branches[0])
+                     new FallibleFactor(branches[0])
                      .withRxFailureMode(failureModes.get(TargetFactor.COHORT).rxFailureMode)
                      .withTxFailureMode(failureModes.get(TargetFactor.COHORT).txFailureMode),
                      branches[1])

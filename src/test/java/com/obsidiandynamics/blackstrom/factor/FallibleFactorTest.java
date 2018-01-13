@@ -21,7 +21,7 @@ import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class FailureProneFactorTest {
+public final class FallibleFactorTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -84,7 +84,7 @@ public final class FailureProneFactorTest {
     final Ledger ledger = new MultiNodeQueueLedger();
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
-    final Factor fc = new FailureProneFactor(c);
+    final Factor fc = new FallibleFactor(c);
     machine = VotingMachine.builder()
         .withLedger(ledger)
         .withFactors(fc, v)
@@ -102,7 +102,7 @@ public final class FailureProneFactorTest {
   public void testRxTxZeroProbability() throws Exception {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DuplicateDelivery(0))
         .withTxFailureMode(new DuplicateDelivery(0));
     machine = VotingMachine.builder()
@@ -121,7 +121,7 @@ public final class FailureProneFactorTest {
   public void testRxDuplicate() throws Exception {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DuplicateDelivery(1));
     machine = VotingMachine.builder()
         .withLedger(ledger)
@@ -140,7 +140,7 @@ public final class FailureProneFactorTest {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
     final int delay = 10;
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DelayedDelivery(1, delay));
     machine = VotingMachine.builder()
         .withLedger(ledger)
@@ -161,7 +161,7 @@ public final class FailureProneFactorTest {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
     final int delay = 10;
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DelayedDuplicateDelivery(1, delay));
     machine = VotingMachine.builder()
         .withLedger(ledger)
@@ -182,7 +182,7 @@ public final class FailureProneFactorTest {
     final Ledger ledger = new MultiNodeQueueLedger();
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withTxFailureMode(new DuplicateDelivery(1));
     machine = VotingMachine.builder()
         .withLedger(ledger)
@@ -202,7 +202,7 @@ public final class FailureProneFactorTest {
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
     final int delay = 10;
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withTxFailureMode(new DelayedDelivery(1, delay));
     machine = VotingMachine.builder()
         .withLedger(ledger)
@@ -224,7 +224,7 @@ public final class FailureProneFactorTest {
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
     final int delay = 10;
-    final Factor fc = new FailureProneFactor(c)
+    final Factor fc = new FallibleFactor(c)
         .withTxFailureMode(new DelayedDuplicateDelivery(1, delay));
     machine = VotingMachine.builder()
         .withLedger(ledger)
