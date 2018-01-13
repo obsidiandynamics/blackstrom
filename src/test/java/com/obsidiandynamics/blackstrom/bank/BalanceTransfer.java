@@ -20,6 +20,6 @@ public final class BalanceTransfer {
 
   @Override
   public String toString() {
-    return "BalanceTransfer [branchId=" + branchId + ", amount=" + amount + "]";
+    return BalanceTransfer.class.getSimpleName() + " [branchId=" + branchId + ", amount=" + amount + "]";
   }
 }

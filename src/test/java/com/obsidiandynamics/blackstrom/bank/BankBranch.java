@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public final class Branch implements Cohort {
+public final class BankBranch implements Cohort {
   private final String branchId;
   
   private final Map<Object, Nomination> nominations = new HashMap<>();
@@ -27,14 +27,16 @@ public final class Branch implements Cohort {
   
   private long balance;
   
-  public Branch(String branchId, long initialBalance, boolean idempotencyEnabled) {
+  private long escrow;
+  
+  public BankBranch(String branchId, long initialBalance, boolean idempotencyEnabled) {
     this.branchId = branchId;
     this.idempotencyEnabled = idempotencyEnabled;
     balance = initialBalance;
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(Branch.class.getSimpleName() + "-gc-" + branchId)
+                     .withName(BankBranch.class.getSimpleName() + "-gc-" + branchId)
                      .withDaemon(true))
         .onCycle(this::gcCycle)
         .build();
@@ -72,6 +74,10 @@ public final class Branch implements Cohort {
   public long getBalance() {
     return balance;
   }
+  
+  public long getEscrow() {
+    return escrow;
+  }
 
   public String getBranchId() {
     return branchId;
@@ -83,37 +89,44 @@ public final class Branch implements Cohort {
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
     
-    if (idempotencyEnabled) {
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
-      synchronized (lock) {
-        if (decided.containsKey(nomination.getBallotId())) {
-          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, already decided\n", branchId);
-          return;
+    try {
+      if (idempotencyEnabled) {
+        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
+        synchronized (lock) {
+          if (decided.containsKey(nomination.getBallotId())) {
+            if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, already decided\n", branchId);
+            return;
+          }
         }
       }
-    }
-    
-    final Pledge pledge;
-    final long newBalance = balance + xfer.getAmount();
-    if (newBalance >= 0) {
-      final boolean inserted = nominations.put(nomination.getBallotId(), nomination) == null;
-      if (inserted) {
-        pledge = Pledge.ACCEPT;
-        balance = newBalance;
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting\n", branchId);
+      
+      final Pledge pledge;
+      final long xferAmount = xfer.getAmount();
+      final long newBalance = balance + escrow + xferAmount;
+      if (newBalance >= 0) {
+        final boolean inserted = nominations.put(nomination.getBallotId(), nomination) == null;
+        if (inserted) {
+          pledge = Pledge.ACCEPT;
+          if (xferAmount < 0) {
+            escrow += xferAmount;
+          }
+          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting\n", branchId);
+        } else {
+          pledge = Pledge.ACCEPT;
+          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: retransmitting previous acceptance\n", branchId);
+        }
       } else {
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, ballot in progress\n", branchId);
-        return;
+        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting, balance: %,d\n", branchId, balance);
+        pledge = Pledge.REJECT;
       }
-    } else {
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting, balance: %,d\n", branchId, balance);
-      pledge = Pledge.REJECT;
-    }
-    
-    try {
-      context.vote(nomination.getBallotId(), branchId, pledge, null);
-    } catch (Exception e) {
-      e.printStackTrace();
+      
+      try {
+        context.vote(nomination.getBallotId(), branchId, pledge, null);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } finally {
+      context.confirm(nomination.getMessageId());
     }
   }
 
@@ -122,17 +135,27 @@ public final class Branch implements Cohort {
     final Nomination nomination = nominations.remove(outcome.getBallotId());
     if (nomination == null) return; // outcome doesn't apply to this branch
     
-    if (idempotencyEnabled) {
-      synchronized (lock) {
-        decided.put(outcome.getBallotId(), outcome);
+    try {
+      if (idempotencyEnabled) {
+        synchronized (lock) {
+          decided.put(outcome.getBallotId(), outcome);
+        }
       }
-    }
-    
-    if (outcome.getVerdict() == Verdict.ABORT) {
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rolling back %s\n", branchId, outcome);
+  
       final BankSettlement settlement = nomination.getProposal();
       final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
-      balance -= xfer.getAmount();
+      final long xferAmount = xfer.getAmount();
+      if (xferAmount < 0) {
+        escrow -= xferAmount;
+      }
+      
+      if (outcome.getVerdict() == Verdict.COMMIT) {
+        balance += xferAmount;
+      }
+      
+      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: finalising %s\n", branchId, outcome);
+    } finally {
+      context.confirm(outcome.getMessageId());
     }
   }
   

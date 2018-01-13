@@ -24,9 +24,9 @@ public final class MessageTest {
   
   @Test
   public void testEqualsHashcode() {
-    final Message m1 = new Message(1, 0) { @Override public MessageType getMessageType() { return null; }};
-    final Message m2 = new Message(0, 0) { @Override public MessageType getMessageType() { return null; }};
-    final Message m3 = new Message(1, 0) { @Override public MessageType getMessageType() { return null; }};
+    final Message m1 = new Message(1, 1000) { @Override public MessageType getMessageType() { return null; }};
+    final Message m2 = new Message(0, 1000) { @Override public MessageType getMessageType() { return null; }};
+    final Message m3 = new Message(1, 1000) { @Override public MessageType getMessageType() { return null; }};
     final Message m4 = m1;
     
     assertNotEquals(m1, m2);

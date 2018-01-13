@@ -17,7 +17,7 @@ public final class BankSettlement {
 
   @Override
   public String toString() {
-    return "BankSettlement [xfers=" + transfers.values() + "]";
+    return BankSettlement.class.getSimpleName() + " [xfers=" + transfers.values() + "]";
   }
   
   public static BankSettlementBuilder builder() {

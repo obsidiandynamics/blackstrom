@@ -58,7 +58,7 @@ public final class BankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
-    final Branch[] branches = createBranches(2, initialBalance, true);
+    final BankBranch[] branches = createBranches(2, initialBalance, true);
     buildStandardMachine(initiator, monitor, branches);
 
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
@@ -86,7 +86,7 @@ public final class BankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
-    final Branch[] branches = createBranches(2, initialBalance, true);
+    final BankBranch[] branches = createBranches(2, initialBalance, true);
     buildStandardMachine(initiator, monitor, branches);
 
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
@@ -182,7 +182,7 @@ public final class BankTransferTest {
     final int initialBalance = 1_000;
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new BasicMonitor();
-    final Branch[] branches = createBranches(2, initialBalance, true);
+    final BankBranch[] branches = createBranches(2, initialBalance, true);
 
     ledger = createLedger();
     machine = VotingMachine.builder()
@@ -238,7 +238,7 @@ public final class BankTransferTest {
         aborts.incrementAndGet();
       }
     };
-    final Branch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
+    final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
     final Monitor monitor = new BasicMonitor();
     buildStandardMachine(initiator, monitor, branches);
 
@@ -275,7 +275,7 @@ public final class BankTransferTest {
                       runs, took, (double) runs / took * 1000, commits.get(), aborts.get());
   }
 
-  private long getTotalBalance(Branch[] branches) {
+  private long getTotalBalance(BankBranch[] branches) {
     return Arrays.stream(branches).collect(Collectors.summarizingLong(b -> b.getBalance())).getSum();
   }
 
@@ -310,10 +310,10 @@ public final class BankTransferTest {
     return "branch-" + branchIdx;
   }
 
-  private static Branch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled) {
-    final Branch[] branches = new Branch[numBranches];
+  private static BankBranch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled) {
+    final BankBranch[] branches = new BankBranch[numBranches];
     for (int branchIdx = 0; branchIdx < numBranches; branchIdx++) {
-      branches[branchIdx] = new Branch(getBranchId(branchIdx), initialBalance, idempotencyEnabled);
+      branches[branchIdx] = new BankBranch(getBranchId(branchIdx), initialBalance, idempotencyEnabled);
     }
     return branches;
   }
