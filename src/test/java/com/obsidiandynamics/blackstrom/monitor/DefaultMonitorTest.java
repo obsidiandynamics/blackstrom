@@ -299,7 +299,7 @@ public final class DefaultMonitorTest {
   }
   
   @Test
-  public void testTimeout_twoCohorts() {
+  public void testExplicitTimeout_twoCohorts() {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
     
     final UUID ballotId = UUID.randomUUID();

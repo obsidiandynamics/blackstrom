@@ -150,6 +150,35 @@ public final class BankTransferTest {  @Parameterized.Parameters
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
     });
   }
+
+  @Test
+  public void testExplicitTimeout() throws Exception {
+    final int initialBalance = 1_000;
+    final int transferAmount = initialBalance;
+
+    final AsyncInitiator initiator = new AsyncInitiator();
+    final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1));
+    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    buildStandardMachine(initiator, 
+                         monitor, 
+                         branches[0], 
+                         new FallibleFactor(branches[1]).withTxFailureMode(new DelayedDelivery(1, 60_000)));
+
+    final Outcome o = initiator.initiate(UUID.randomUUID(),
+                                         TWO_BRANCH_IDS, 
+                                         BankSettlement.builder()
+                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                        new BalanceTransfer(getBranchId(1), transferAmount))
+                                         .build(),
+                                         1)
+        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+    assertEquals(Verdict.ABORT, o.getVerdict());
+    wait.until(() -> {
+      assertEquals(initialBalance, branches[0].getBalance());
+      assertEquals(initialBalance, branches[1].getBalance());
+      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+    });
+  }
   
   @Test
   public void testFactorFailures() {
