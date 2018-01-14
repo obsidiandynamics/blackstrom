@@ -41,12 +41,16 @@ final class PendingBallot {
       return false;
     }
     
-    if (response.getPledge() != Pledge.ACCEPT) {
+    if (response.getPledge() != Pledge.ACCEPT || hasLapsed(vote)) {
       verdict = Verdict.ABORT;
       return true;
     }
     
     return allResponsesPresent();
+  }
+  
+  private boolean hasLapsed(Vote vote) {
+    return vote.getTimestamp() - nomination.getTimestamp() > nomination.getTtl();
   }
   
   boolean hasResponded(String cohort) {

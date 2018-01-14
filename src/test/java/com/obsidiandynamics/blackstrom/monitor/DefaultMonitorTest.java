@@ -351,6 +351,20 @@ public final class DefaultMonitorTest {
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
   }
   
+  @Test
+  public void testImplicitTimeout_twoCohorts() {
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(60_000)));
+    
+    final UUID ballotId = UUID.randomUUID();
+    nominate(ballotId, 1, "a", "b");
+    vote(ballotId, System.currentTimeMillis() + 1_000, "a", Pledge.ACCEPT);
+    
+    wait.until(numOutcomesIs(1));
+    assertEquals(1, outcomes.size());
+    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+  }
+  
   private Runnable numVotesIsAtLeast(int size) {
     return () -> assertTrue("votes.size=" + votes.size(), votes.size() >= size);
   }
@@ -372,11 +386,15 @@ public final class DefaultMonitorTest {
     nominate(ballotId, Integer.MAX_VALUE, cohorts);
   }
 
-  private void nominate(UUID ballotId, int timeout, String... cohorts) {
-    monitor.onNomination(context, new Nomination(ballotId, cohorts, null, timeout));
+  private void nominate(UUID ballotId, int ttl, String... cohorts) {
+    monitor.onNomination(context, new Nomination(ballotId, cohorts, null, ttl));
   }
 
   private void vote(UUID ballotId, String cohort, Pledge pledge) {
-    monitor.onVote(context, new Vote(ballotId, new Response(cohort, pledge, pledge.name())));
+    vote(ballotId, 0, cohort, pledge);
+  }
+
+  private void vote(UUID ballotId, long timestamp, String cohort, Pledge pledge) {
+    monitor.onVote(context, new Vote(ballotId, timestamp, new Response(cohort, pledge, pledge.name())));
   }
 }

@@ -48,7 +48,7 @@ public final class DefaultMonitor implements Monitor {
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(DefaultMonitor.class.getSimpleName() + "-gc-" + Integer.toHexString(System.identityHashCode(this)))
+                     .withName(nameThread("gc"))
                      .withDaemon(true))
         .onCycle(this::gcCycle)
         .build();
@@ -56,11 +56,15 @@ public final class DefaultMonitor implements Monitor {
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(DefaultMonitor.class.getSimpleName() + "-timeout-" + Integer.toHexString(System.identityHashCode(this)))
+                     .withName(nameThread("timeout"))
                      .withDaemon(true))
         .onCycle(this::timeoutCycle)
         .build();
     timeoutThread.start();
+  }
+  
+  private String nameThread(String role) {
+    return DefaultMonitor.class.getSimpleName() + "-" + role + "-" + Integer.toHexString(System.identityHashCode(this));
   }
 
   @Override
@@ -136,7 +140,7 @@ public final class DefaultMonitor implements Monitor {
     } 
   }
   
-  Map<Object, Outcome> getOutcomes() {
+  public Map<Object, Outcome> getOutcomes() {
     final Map<Object, Outcome> decidedCopy;
     synchronized (lock) {
       decidedCopy = new HashMap<>(decided);
@@ -176,7 +180,7 @@ public final class DefaultMonitor implements Monitor {
       } else if (decided.containsKey(vote.getBallotId())) {
         if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", vote);
       } else {
-        LOG.warn("Missing pending ballot for vote {}", vote);
+        if (DEBUG) LOG.trace("Missing pending ballot for vote {}", vote);
       }
     }
   }
