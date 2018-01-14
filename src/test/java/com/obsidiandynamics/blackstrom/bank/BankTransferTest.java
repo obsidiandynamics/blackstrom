@@ -9,6 +9,8 @@ import java.util.stream.*;
 
 import org.junit.*;
 import org.junit.Test;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.factor.*;
@@ -18,14 +20,23 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.junit.*;
 
 import junit.framework.*;
 
-public final class BankTransferTest {
+@RunWith(Parameterized.class)
+public final class BankTransferTest {  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
-  private static final int MAX_WAIT = 10_000;
+  private static final int FUTURE_GET_TIMEOUT = 10_000;
+  
+  private final Timesert wait = Wait.SHORT;
 
   private Ledger ledger;
 
@@ -40,13 +51,12 @@ public final class BankTransferTest {
     return new MultiNodeQueueLedger();
   }
   
-  private void buildStandardMachine(Factor first, Factor second, Factor... thirdAndOthers) {
+  private void buildStandardMachine(Factor initiator, Factor monitor, Factor... branches) {
     ledger = createLedger();
     machine = VotingMachine.builder()
         .withLedger(ledger)
-        .withFactors(first)
-        .withFactors(second)
-        .withFactors(thirdAndOthers)
+        .withFactors(initiator, monitor)
+        .withFactors(branches)
         .build();
   }
 
@@ -66,12 +76,13 @@ public final class BankTransferTest {
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
                                                         new BalanceTransfer(getBranchId(1), transferAmount))
                                          .build(),
-                                         Integer.MAX_VALUE).get();
+                                         Integer.MAX_VALUE)
+        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.COMMIT, o.getVerdict());
     assertEquals(2, o.getResponses().length);
     assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(0)).getPledge());
     assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(1)).getPledge());
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
@@ -94,15 +105,46 @@ public final class BankTransferTest {
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
                                                         new BalanceTransfer(getBranchId(1), transferAmount))
                                          .build(),
-                                         Integer.MAX_VALUE).get();
+                                         Integer.MAX_VALUE)
+        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
-    assertTrue(o.getResponses().length >= 1); // the accept status doesn't need to have been considered
+    assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
     assertEquals(Pledge.REJECT, o.getResponse(getBranchId(0)).getPledge());
     final Response acceptResponse = o.getResponse(getBranchId(1));
     if (acceptResponse != null) {
       assertEquals(Pledge.ACCEPT, acceptResponse.getPledge());  
     }
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
+      assertEquals(initialBalance, branches[0].getBalance());
+      assertEquals(initialBalance, branches[1].getBalance());
+      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+    });
+  }
+
+  @Test
+  public void testImplicitTimeout() throws Exception {
+    final int initialBalance = 1_000;
+    final int transferAmount = initialBalance;
+
+    final AsyncInitiator initiator = new AsyncInitiator();
+    final Monitor monitor = new DefaultMonitor();
+    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    buildStandardMachine(initiator, 
+                         monitor, 
+                         branches[0], 
+                         new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 10)));
+
+    final Outcome o = initiator.initiate(UUID.randomUUID(),
+                                         TWO_BRANCH_IDS, 
+                                         BankSettlement.builder()
+                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                        new BalanceTransfer(getBranchId(1), transferAmount))
+                                         .build(),
+                                         1)
+        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+    assertEquals(Verdict.ABORT, o.getVerdict());
+    assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1);
+    wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
@@ -157,7 +199,8 @@ public final class BankTransferTest {
     
     @Override
     public String toString() {
-      return "RxTxFailureModes [rxFailureMode=" + rxFailureMode + ", txFailureMode=" + txFailureMode + "]";
+      return RxTxFailureModes.class.getSimpleName() + " [rxFailureMode=" + rxFailureMode + 
+          ", txFailureMode=" + txFailureMode + "]";
     }
   }
   
@@ -201,7 +244,7 @@ public final class BankTransferTest {
     testSingleTransfer(initialBalance + 1, Verdict.ABORT, initiator);
     testSingleTransfer(initialBalance, Verdict.COMMIT, initiator);
 
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
     });
   }
@@ -215,7 +258,7 @@ public final class BankTransferTest {
                                                         new BalanceTransfer(getBranchId(1), transferAmount))
                                          .build(),
                                          Integer.MAX_VALUE)
-        .get(MAX_WAIT, TimeUnit.MILLISECONDS);
+        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(expectedVerdict, o.getVerdict());
   }
 
@@ -264,7 +307,7 @@ public final class BankTransferTest {
         }
       }
 
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         TestCase.assertEquals(runs, commits.get() + aborts.get());
         final long expectedBalance = numBranches * initialBalance;
         assertEquals(expectedBalance, getTotalBalance(branches));
