@@ -14,8 +14,6 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractGroupLedgerTest implements TestSupport {
-  private static final int MAX_WAIT = 10_000;
-  
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
   private class TestHandler implements MessageHandler {
@@ -57,6 +55,8 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private final Shard shard = Shard.forTest(this);
   
+  private final Timesert wait = getWait();
+  
   @After
   public void after() {
     if (ledger != null) {
@@ -82,14 +82,27 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
       appendMessage("test");
     }
     
-    Timesert.wait(MAX_WAIT).until(() -> {
-      int totalReceived = 0;
-      for (TestHandler handler : handlers) {
-        assertNull(handler.error);
-        totalReceived += handler.received.size();
+    boolean success = false;
+    try {
+      wait.until(() -> {
+        int totalReceived = 0;
+        for (TestHandler handler : handlers) {
+          assertNull(handler.error);
+          totalReceived += handler.received.size();
+        }
+        assertEquals(numMessages, totalReceived);
+      });
+      success = true;
+    } finally {
+      if (! success) {
+        for (TestHandler handler : handlers) {
+          System.out.println("---");
+          for (Message m : handler.received) {
+            System.out.println("- " + m);
+          }
+        }
       }
-      assertEquals(numMessages, totalReceived);
-    });
+    }
     
     ledger.dispose();
   }
@@ -107,6 +120,8 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   private Ledger createLedger() {
     return createLedgerImpl();
   }
+  
+  protected abstract Timesert getWait();
   
   protected abstract Ledger createLedgerImpl();
 }

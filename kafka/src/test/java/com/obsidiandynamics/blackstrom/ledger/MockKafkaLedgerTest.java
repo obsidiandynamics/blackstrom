@@ -8,12 +8,19 @@ import java.util.concurrent.*;
 import org.junit.*;
 import org.slf4j.*;
 
+import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class MockKafkaLedgerTest extends AbstractLedgerTest {
+  @Override
+  protected Timesert getWait() {
+    return Wait.SHORT;
+  }
+  
   @Override
   protected Ledger createLedgerImpl() {
     final Kafka<String, Message> kafka = new MockKafka<>();

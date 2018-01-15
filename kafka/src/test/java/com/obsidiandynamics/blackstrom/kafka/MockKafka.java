@@ -17,7 +17,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   
   private FallibleMockProducer<K, V> producer;
   
-  private final List<MockConsumer<K, V>> consumers = new ArrayList<>();
+  private final List<FallibleMockConsumer<K, V>> consumers = new ArrayList<>();
   
   private List<ConsumerRecord<K, V>> backlog = new ArrayList<>();
   
@@ -135,23 +135,14 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   }
   
   private FallibleMockConsumer<K, V> createDetachedConsumer() {
-    return new FallibleMockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
-      {
-        this.commitExceptionGenerator = MockKafka.this.confirmExceptionGenerator;
-      }
-      
-      @Override public void commitAsync(Map<TopicPartition, OffsetAndMetadata> offsets, OffsetCommitCallback callback) {
-        final Exception generated = commitExceptionGenerator.get(offsets);
-        if (generated != null) {
-          if (callback != null) callback.onComplete(offsets, generated);
-        } else {
-          super.commitAsync(offsets, callback);
-        }
-      }
-    };
+    return createConsumer(new Object(), new ArrayList<>(1));
   }
   
   private FallibleMockConsumer<K, V> createAttachedConsumer() {
+    return createConsumer(lock, consumers);
+  }
+  
+  private FallibleMockConsumer<K, V> createConsumer(Object lock, List<FallibleMockConsumer<K, V>> consumers) {
     final FallibleMockConsumer<K, V> consumer = new FallibleMockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
       {
         this.commitExceptionGenerator = MockKafka.this.confirmExceptionGenerator;
@@ -209,6 +200,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
             newInfos.add(new PartitionInfo(topic, i, null, new Node[0], new Node[0]));
             offsets.put(new TopicPartition(topic, i), 0L);
           }
+          
           synchronized (lock) {
             updateBeginningOffsets(offsets);
             updateEndOffsets(offsets);
@@ -218,12 +210,16 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
       }
       
       @Override public ConsumerRecords<K, V> poll(long timeout) {
+        // super.poll() disregards the timeout, resulting in a spin loop in the absence of records
+        // and resource exhaustion on single-CPU machines
+        
         final long endTime = System.currentTimeMillis() + timeout;
         for (;;) {
           final ConsumerRecords<K, V> recs = super.poll(timeout);
           if (! recs.isEmpty()) {
             return recs;
           } else {
+            // enforce minimum sleep time if there are no records
             final long remainingMillis = endTime - System.currentTimeMillis();
             if (remainingMillis <= 0) {
               return recs;
@@ -239,6 +235,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
         }
       }
     };
+    
     synchronized (lock) {
       consumers.add(consumer);
     }

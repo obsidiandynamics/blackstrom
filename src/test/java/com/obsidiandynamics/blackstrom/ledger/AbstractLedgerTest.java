@@ -15,8 +15,6 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public abstract class AbstractLedgerTest implements TestSupport {
-  private static final int MAX_WAIT = 10_000;
-  
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
   private class TestHandler implements MessageHandler, Groupable.NullGroup {
@@ -53,6 +51,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private final Shard shard = Shard.forTest(this);
   
+  private final Timesert wait = getWait();
+  
   @After
   public void after() {
     if (ledger != null) {
@@ -78,17 +78,30 @@ public abstract class AbstractLedgerTest implements TestSupport {
       appendMessage("test");
     }
     
-    Timesert.wait(MAX_WAIT).until(() -> {
-      for (TestHandler handler : handlers) {
-        assertNull(handler.error);
-        assertEquals(numMessages, handler.received.size());
-        long index = 0;
-        for (Message m  : handler.received) {
-          assertEquals(index, m.getBallotId());
-          index++;
+    boolean success = false;
+    try {
+      wait.until(() -> {
+        for (TestHandler handler : handlers) {
+          assertNull(handler.error);
+          assertEquals(numMessages, handler.received.size());
+          long index = 0;
+          for (Message m  : handler.received) {
+            assertEquals(index, m.getBallotId());
+            index++;
+          }
+        }
+      });
+      success = true;
+    } finally {
+      if (! success) {
+        for (TestHandler handler : handlers) {
+          System.out.println("---");
+          for (Message m : handler.received) {
+            System.out.println("- " + m);
+          }
         }
       }
-    });
+    }
     
     ledger.dispose();
   }
@@ -110,7 +123,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("test");
       }
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         assertEquals(numMessages, received.get());
       });
     });
@@ -147,7 +160,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("source");
       }
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         assertEquals(numMessages, received.get());
       });
     });
@@ -168,6 +181,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
   private Ledger createLedger() {
     return createLedgerImpl();
   }
+  
+  protected abstract Timesert getWait();
   
   protected abstract Ledger createLedgerImpl();
 }
