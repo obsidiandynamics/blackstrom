@@ -188,7 +188,7 @@ public final class DefaultMonitor implements Monitor {
   private void decideBallot(PendingBallot ballot) {
     if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getNomination(), ballot.getVerdict());
     final Object ballotId = ballot.getNomination().getBallotId();
-    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getResponses());
+    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses());
     pending.remove(ballotId);
     decided.put(ballotId, outcome);
     append(outcome);

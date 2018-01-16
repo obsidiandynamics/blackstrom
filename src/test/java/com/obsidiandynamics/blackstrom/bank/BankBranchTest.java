@@ -211,6 +211,6 @@ public final class BankBranchTest {
   }
   
   private void outcome(Verdict verdict) {
-    branch.onOutcome(context, new Outcome(0, verdict, new Response[0]));
+    branch.onOutcome(context, new Outcome(0, verdict, AbortReason.REJECT, new Response[0]));
   }
 }

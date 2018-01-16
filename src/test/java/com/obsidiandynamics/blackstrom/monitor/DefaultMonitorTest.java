@@ -109,6 +109,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertNull(outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals("ACCEPT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
@@ -122,6 +123,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals("REJECT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
@@ -142,6 +144,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
@@ -157,6 +160,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "b").getPledge());
@@ -171,6 +175,7 @@ public final class DefaultMonitorTest {
     vote(ballotId, "b", Pledge.ACCEPT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     outcomes.clear();
@@ -184,6 +189,7 @@ public final class DefaultMonitorTest {
     vote(ballotId, "b", Pledge.REJECT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.REJECT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     outcomes.clear();
@@ -208,6 +214,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
@@ -232,6 +239,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
@@ -317,6 +325,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(AbortReason.EXPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.TIMEOUT, getResponseForCohort(outcomes.get(0), "b").getPledge());
@@ -346,6 +355,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getPledge());
     assertEquals(Pledge.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getPledge());
@@ -363,6 +373,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
   }
   
   private Runnable numVotesIsAtLeast(int size) {

@@ -1,8 +1,7 @@
 package com.obsidiandynamics.blackstrom.bank;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -79,6 +78,7 @@ public final class BankTransferTest {
                                          Integer.MAX_VALUE)
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.COMMIT, o.getVerdict());
+    assertNull(o.getAbortReason());
     assertEquals(2, o.getResponses().length);
     assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(0)).getPledge());
     assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(1)).getPledge());
@@ -109,6 +109,7 @@ public final class BankTransferTest {
                                          Integer.MAX_VALUE)
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
+    assertEquals(AbortReason.REJECT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
     assertEquals(Pledge.REJECT, o.getResponse(getBranchId(0)).getPledge());
     final Response acceptResponse = o.getResponse(getBranchId(1));
@@ -145,6 +146,7 @@ public final class BankTransferTest {
                                          1)
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
+    assertEquals(AbortReason.IMPLICIT_TIMEOUT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1);
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
@@ -176,6 +178,7 @@ public final class BankTransferTest {
                                          1)
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
+    assertEquals(AbortReason.EXPLICIT_TIMEOUT, o.getAbortReason());
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
@@ -274,8 +277,8 @@ public final class BankTransferTest {
                      branches[1])
         .build();
 
-    testSingleTransfer(initialBalance + 1, Verdict.ABORT, initiator);
-    testSingleTransfer(initialBalance, Verdict.COMMIT, initiator);
+    testSingleTransfer(initialBalance + 1, Verdict.ABORT, AbortReason.REJECT, initiator);
+    testSingleTransfer(initialBalance, Verdict.COMMIT, null, initiator);
 
     wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
@@ -283,8 +286,9 @@ public final class BankTransferTest {
     });
   }
 
-  private void testSingleTransfer(int transferAmount, Verdict expectedVerdict,
+  private void testSingleTransfer(int transferAmount, Verdict expectedVerdict, AbortReason expectedAbortReason,
                                   AsyncInitiator initiator) throws InterruptedException, ExecutionException, Exception {
+    assert expectedVerdict == Verdict.COMMIT || expectedAbortReason != null;
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
                                          TWO_BRANCH_IDS, 
                                          BankSettlement.builder()
@@ -294,6 +298,7 @@ public final class BankTransferTest {
                                          Integer.MAX_VALUE)
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(expectedVerdict, o.getVerdict());
+    assertEquals(expectedAbortReason, o.getAbortReason());
   }
 
   @Test
@@ -308,11 +313,7 @@ public final class BankTransferTest {
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
-      if (o.getVerdict() == Verdict.COMMIT) {
-        commits.incrementAndGet();
-      } else {
-        aborts.incrementAndGet();
-      }
+      (o.getVerdict() == Verdict.COMMIT ? commits : aborts).incrementAndGet();
     };
     final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
     final Monitor monitor = new DefaultMonitor();

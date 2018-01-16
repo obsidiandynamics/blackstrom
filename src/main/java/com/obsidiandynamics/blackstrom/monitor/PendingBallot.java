@@ -13,6 +13,8 @@ final class PendingBallot {
   
   private Verdict verdict = Verdict.COMMIT;
   
+  private AbortReason abortReason;
+  
   PendingBallot(Nomination nomination) {
     this.nomination = nomination;
     responses = new HashMap<>(nomination.getCohorts().length);
@@ -24,6 +26,10 @@ final class PendingBallot {
   
   Verdict getVerdict() {
     return verdict;
+  }
+  
+  AbortReason getAbortReason() {
+    return abortReason;
   }
   
   Response[] getResponses() {
@@ -41,8 +47,18 @@ final class PendingBallot {
       return false;
     }
     
-    if (response.getPledge() != Pledge.ACCEPT || hasLapsed(vote)) {
+    final Pledge pledge = response.getPledge();
+    if (pledge == Pledge.REJECT) {
       verdict = Verdict.ABORT;
+      abortReason = AbortReason.REJECT;
+      return true;
+    } else if (pledge == Pledge.TIMEOUT) {
+      verdict = Verdict.ABORT;
+      abortReason = AbortReason.EXPLICIT_TIMEOUT;
+      return true;
+    } else if (hasLapsed(vote)) {
+      verdict = Verdict.ABORT;
+      abortReason = AbortReason.IMPLICIT_TIMEOUT;
       return true;
     }
     

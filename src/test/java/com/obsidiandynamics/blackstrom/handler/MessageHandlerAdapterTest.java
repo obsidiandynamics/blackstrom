@@ -95,6 +95,6 @@ public final class MessageHandlerAdapterTest {
   }
   
   private static Outcome newOutcome() {
-    return new Outcome(null, null, null);
+    return new Outcome(null, null, null, null);
   }
 }

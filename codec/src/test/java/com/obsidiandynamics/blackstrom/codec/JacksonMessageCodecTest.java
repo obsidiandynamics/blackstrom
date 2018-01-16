@@ -143,11 +143,40 @@ public class JacksonMessageCodecTest implements TestSupport {
   }
 
   @Test
-  public void testOutcomeMixedMetadata() throws Exception {
+  public void testOutcomeCommitMixedMetadata() throws Exception {
+    final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
+    final Response ra = new Response("test-cohort-a", Pledge.ACCEPT, a);
+    final Response rb = new Response("test-cohort-b", Pledge.ACCEPT, null);
+    final Outcome m = new Outcome("O100", Verdict.COMMIT, null, new Response[] {ra, rb});
+    MessageCodec c;
+
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+    
+    final Outcome d1 = (Outcome) c.decodeText(encoded);
+    logDecoded(d1, d1.getResponses()[0].getMetadata());
+    assertEquals(2, d1.getResponses().length);
+    assertNotNull(d1.getResponses()[0].getMetadata());
+    assertEquals(LinkedHashMap.class, d1.getResponses()[0].getMetadata().getClass());
+    assertNull(d1.getResponses()[1].getMetadata());
+    
+    final String reencoded = c.encodeText(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+    
+    c = new JacksonMessageCodec(true);
+    final Outcome d2 = (Outcome) c.decodeText(reencoded);
+    logDecoded(d2, d2.getResponses()[0].getMetadata());
+    assertEquals(m, d2);
+  }
+
+  @Test
+  public void testOutcomeAbortMixedMetadata() throws Exception {
     final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
     final Response ra = new Response("test-cohort-a", Pledge.REJECT, a);
     final Response rb = new Response("test-cohort-b", Pledge.ACCEPT, null);
-    final Outcome m = new Outcome("O100", Verdict.ABORT, new Response[] {ra, rb});
+    final Outcome m = new Outcome("O100", Verdict.ABORT, AbortReason.REJECT, new Response[] {ra, rb});
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
