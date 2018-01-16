@@ -10,9 +10,6 @@ public final class Response {
   private final Object metadata;
   
   public Response(String cohort, Pledge pledge, Object metadata) {
-    assert cohort != null;
-    assert pledge != null;
-    
     this.cohort = cohort;
     this.pledge = pledge;
     this.metadata = metadata;

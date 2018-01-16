@@ -15,9 +15,6 @@ public final class Outcome extends Message {
   
   public Outcome(Object ballotId, long timestamp, Verdict verdict, AbortReason abortReason, Response[] responses) {
     super(ballotId, timestamp);
-    assert verdict == Verdict.COMMIT ^ abortReason != null;
-    assert responses != null;
-    
     this.verdict = verdict;
     this.abortReason = abortReason;
     this.responses = responses;
