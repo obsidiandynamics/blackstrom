@@ -130,8 +130,9 @@ public final class BankTransferTest {
     final int transferAmount = initialBalance;
 
     final AsyncInitiator initiator = new AsyncInitiator();
-    final Monitor monitor = new DefaultMonitor();
+    final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(60_000));
     final BankBranch[] branches = createBranches(2, initialBalance, true);
+    // we delay the receive rather than the send, so that the send timestamp appears recent — triggering implicit timeout
     buildStandardMachine(initiator, 
                          monitor, 
                          branches[0], 
@@ -164,10 +165,12 @@ public final class BankTransferTest {
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1));
     final BankBranch[] branches = createBranches(2, initialBalance, true);
+    // it doesn't matter whether we delay receive or send, since the messages are sufficiently delayed, such
+    // that they won't get there within the test's running time — either failure mode will trigger an explicit timeout
     buildStandardMachine(initiator, 
                          monitor, 
-                         branches[0], 
-                         new FallibleFactor(branches[1]).withTxFailureMode(new DelayedDelivery(1, 60_000)));
+                         new FallibleFactor(branches[0]).withRxFailureMode(new DelayedDelivery(1, 60_000)),
+                         new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 60_000)));
 
     final Outcome o = initiator.initiate(UUID.randomUUID(),
                                          TWO_BRANCH_IDS, 
