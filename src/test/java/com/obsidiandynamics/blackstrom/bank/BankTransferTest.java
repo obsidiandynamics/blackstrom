@@ -1,6 +1,8 @@
 package com.obsidiandynamics.blackstrom.bank;
 
-import static org.junit.Assert.*;
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -8,7 +10,6 @@ import java.util.concurrent.atomic.*;
 import java.util.stream.*;
 
 import org.junit.*;
-import org.junit.Test;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
@@ -24,10 +25,9 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
-import junit.framework.*;
-
 @RunWith(Parameterized.class)
-public final class BankTransferTest {  @Parameterized.Parameters
+public final class BankTransferTest {  
+  @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
@@ -86,6 +86,7 @@ public final class BankTransferTest {  @Parameterized.Parameters
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertTrue(allZeroEscrow(branches));
     });
   }
 
@@ -118,6 +119,7 @@ public final class BankTransferTest {  @Parameterized.Parameters
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertTrue(allZeroEscrow(branches));
     });
   }
 
@@ -148,6 +150,7 @@ public final class BankTransferTest {  @Parameterized.Parameters
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertTrue(allZeroEscrow(branches));
     });
   }
 
@@ -177,6 +180,7 @@ public final class BankTransferTest {  @Parameterized.Parameters
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertTrue(allZeroEscrow(branches));
     });
   }
   
@@ -275,6 +279,7 @@ public final class BankTransferTest {  @Parameterized.Parameters
 
     wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertTrue(allZeroEscrow(branches));
     });
   }
 
@@ -337,17 +342,22 @@ public final class BankTransferTest {  @Parameterized.Parameters
       }
 
       wait.until(() -> {
-        TestCase.assertEquals(runs, commits.get() + aborts.get());
+        assertEquals(runs, commits.get() + aborts.get());
         final long expectedBalance = numBranches * initialBalance;
         assertEquals(expectedBalance, getTotalBalance(branches));
+        assertTrue(allZeroEscrow(branches));
       });
     });
     System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts)\n", 
                       runs, took, (double) runs / took * 1000, commits.get(), aborts.get());
   }
 
-  private long getTotalBalance(BankBranch[] branches) {
+  private static long getTotalBalance(BankBranch[] branches) {
     return Arrays.stream(branches).collect(Collectors.summarizingLong(b -> b.getBalance())).getSum();
+  }
+
+  private static boolean allZeroEscrow(BankBranch[] branches) {
+    return Arrays.stream(branches).allMatch(b -> b.getEscrow() == 0);
   }
 
   private static BankSettlement generateRandomSettlement(String[] branchIds, long amount) {
