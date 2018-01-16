@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import org.junit.*;
@@ -48,7 +49,7 @@ public final class WorkerThreadTest {
     assertEquals(1, counter.get());
     TestSupport.sleep(10);
     assertEquals(1, counter.get());
-    assertFalse(thread.getDriver().isAlive());
+    assertFalse(thread.getDriverThread().isAlive());
     assertEquals(WorkerState.TERMINATED, thread.getState());
   }
 
@@ -68,7 +69,7 @@ public final class WorkerThreadTest {
     
     assertEquals(WorkerState.TERMINATED, thread.getState());
     assertEquals(1, counter.get());
-    assertFalse(thread.getDriver().isAlive());
+    assertFalse(thread.getDriverThread().isAlive());
     verify(onShutdown).handle(eq(thread), any(InterruptedException.class));
   }
 
@@ -81,12 +82,13 @@ public final class WorkerThreadTest {
           throw exception;
         })
         .onShutdown(onShutdown)
+        .onUncaughtException((t, x) -> {})
         .build();
     thread.start();
     thread.joinQuietly();
     
     assertEquals(WorkerState.TERMINATED, thread.getState());
-    assertFalse(thread.getDriver().isAlive());
+    assertFalse(thread.getDriverThread().isAlive());
     verify(onShutdown).handle(eq(thread), eq(exception));
   }
   
@@ -197,19 +199,98 @@ public final class WorkerThreadTest {
     assertTrue(t1.hashCode() == t3.hashCode());
   }
   
+  private static class ListExceptionHandler implements WorkerExceptionHandler {
+    private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
+
+    @Override
+    public void handle(WorkerThread thread, Throwable exception) {
+      exceptions.add(exception);
+    }
+  }
+  
   @Test
-  public void testUncaughtExceptionHandler() {
-    final AtomicReference<Throwable> handler = new AtomicReference<>();
-    final WorkerShutdown shutdown = WorkerThreadBuilder.createUncaughtExceptionHandler(handler::set);
+  public void testUncaughtExceptionHandlerOnStartup() {
+    final RuntimeException causeOnStartup = new RuntimeException();
+    final ListExceptionHandler handler = new ListExceptionHandler();
+    final WorkerThread thread = WorkerThread.builder()
+        .onStartup(t -> {
+          throw causeOnStartup;
+        })
+        .onCycle(t -> {})
+        .onUncaughtException(handler)
+        .build();
+
+    thread.start();
+    thread.joinQuietly();
     
-    shutdown.handle(null, null);
-    assertNull(handler.get());
+    assertEquals(1, handler.exceptions.size());
+    assertEquals(causeOnStartup, handler.exceptions.get(0));
+  }
+  
+  @Test
+  public void testUncaughtExceptionHandlerOnCycle() {
+    final RuntimeException causeOnCycle = new RuntimeException();
+    final ListExceptionHandler handler = new ListExceptionHandler();
+    final WorkerThread thread = WorkerThread.builder()
+        .onCycle(t -> {
+          throw causeOnCycle;
+        })
+        .onUncaughtException(handler)
+        .build();
+
+    thread.start();
+    thread.joinQuietly();
     
-    shutdown.handle(null, new InterruptedException());
-    assertNull(handler.get());
+    assertEquals(1, handler.exceptions.size());
+    assertEquals(causeOnCycle, handler.exceptions.get(0));
+  }
+  
+  @Test
+  public void testUncaughtExceptionHandlerOnShutdown() {
+    final RuntimeException causeOnCycle = new RuntimeException();
+    final RuntimeException causeOnShutdown = new RuntimeException();
+    final ListExceptionHandler handler = new ListExceptionHandler();
+    final WorkerThread thread = WorkerThread.builder()
+        .onCycle(t -> {
+          throw causeOnCycle;
+        })
+        .onShutdown((t, x) -> {
+          throw causeOnShutdown;
+        })
+        .onUncaughtException(handler)
+        .build();
+
+    thread.start();
+    thread.joinQuietly();
     
-    shutdown.handle(null, new Exception());
-    assertNotNull(handler.get());
+    assertEquals(2, handler.exceptions.size());
+    assertEquals(causeOnCycle, handler.exceptions.get(0));
+    assertEquals(causeOnShutdown, handler.exceptions.get(1));
+  }
+  
+  @Test
+  public void testExceptionInUncaughtExceptionHandler() {
+    final RuntimeException causeOnCycle = new RuntimeException();
+    final RuntimeException causeOnUncaughtException = new RuntimeException();
+    final ListExceptionHandler handler = new ListExceptionHandler();
+    final WorkerThread thread = WorkerThread.builder()
+        .onCycle(t -> {
+          throw causeOnCycle;
+        })
+        .onUncaughtException((t, x) -> {
+          handler.handle(t, x);
+          throw causeOnUncaughtException;
+        })
+        .build();
+
+    final AtomicReference<Throwable> driverExceptionHandler = new AtomicReference<>();
+    thread.getDriverThread().setUncaughtExceptionHandler((t, x) -> driverExceptionHandler.set(x));
+    thread.start();
+    thread.joinQuietly();
+    
+    assertEquals(1, handler.exceptions.size());
+    assertEquals(causeOnCycle, handler.exceptions.get(0));
+    assertEquals(causeOnUncaughtException, driverExceptionHandler.get());
   }
   
   @Test
@@ -217,10 +298,10 @@ public final class WorkerThreadTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final PrintStream p = new PrintStream(baos);
     final WorkerThread thread = WorkerThread.builder()
-    .onCycle(t -> {
-      throw new RuntimeException("boom");
-    })
-    .onShutdown(WorkerThreadBuilder.createPrintStreamUncaughtExceptionHandler(p))
+        .onCycle(t -> {
+          throw new RuntimeException("boom");
+        })
+    .onUncaughtException(WorkerThreadBuilder.createPrintStreamUncaughtExceptionHandler(p))
     .build();
     
     thread.start();

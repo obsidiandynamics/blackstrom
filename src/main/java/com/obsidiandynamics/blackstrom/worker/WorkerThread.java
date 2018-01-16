@@ -11,6 +11,8 @@ public final class WorkerThread implements Joinable {
   
   private final WorkerShutdown onShutdown;
   
+  private final WorkerExceptionHandler onUncaughtException;
+  
   private volatile WorkerState state = WorkerState.CONCEIVED;
   
   /** Indicates that the shutdown handler is about to be run. */
@@ -22,10 +24,15 @@ public final class WorkerThread implements Joinable {
   /** Guards the changing of the thread state. */
   private final Object stateLock = new Object();
   
-  WorkerThread(WorkerOptions options, WorkerCycle worker, WorkerStartup onStartup, WorkerShutdown onShutdown) {
-    this.worker = worker;
+  WorkerThread(WorkerOptions options, 
+               WorkerCycle onCycle, 
+               WorkerStartup onStartup, 
+               WorkerShutdown onShutdown, 
+               WorkerExceptionHandler onUncaughtException) {
+    this.worker = onCycle;
     this.onStartup = onStartup;
     this.onShutdown = onShutdown;
+    this.onUncaughtException = onUncaughtException;
     driver = new Thread(this::run);
     
     if (options.getName() != null) {
@@ -36,7 +43,7 @@ public final class WorkerThread implements Joinable {
     driver.setPriority(options.getPriority());
   }
   
-  Thread getDriver() {
+  public Thread getDriverThread() {
     return driver;
   }
   
@@ -90,20 +97,34 @@ public final class WorkerThread implements Joinable {
       }
       exception = e;
     } finally {
-      if (shutdown.compareAndSet(false, true)) {
-        // indicate that we've finished cycling - this way we won't get interrupted and 
-        // can call the shutdown hook safely
-        onShutdown.handle(this, exception);
-      } else {
-        // we may get interrupted - wait before continuing with the shutdown hook
-        while (! interrupted) Thread.yield();
-        Thread.interrupted(); // clear the interrupt before invoking the shutdown hook
-        onShutdown.handle(this, exception);
+      try {
+        handleUncaughtException(exception);
+      } finally {
+        if (shutdown.compareAndSet(false, true)) {
+          // indicate that we've finished cycling - this way we won't get interrupted and 
+          // can call the shutdown hook safely
+        } else {
+          // we may get interrupted - wait before proceeding with the shutdown hook
+          while (! interrupted) Thread.yield();
+          Thread.interrupted(); // clear the interrupt before invoking the shutdown hook
+        }
+        
+        try {
+          onShutdown.handle(this, exception);
+        } catch (Throwable e) {
+          handleUncaughtException(e);
+        } finally {
+          synchronized (stateLock) {
+            state = WorkerState.TERMINATED;
+          }
+        }
       }
-      
-      synchronized (stateLock) {
-        state = WorkerState.TERMINATED;
-      }
+    }
+  }
+  
+  private void handleUncaughtException(Throwable exception) {
+    if (exception != null && ! (exception instanceof InterruptedException)) {
+      onUncaughtException.handle(this, exception);
     }
   }
   
@@ -150,7 +171,7 @@ public final class WorkerThread implements Joinable {
 
   @Override
   public final String toString() {
-    return "WorkerThread [thread=" + driver + ", state=" + state + "]";
+    return WorkerThread.class.getSimpleName() + " [thread=" + driver + ", state=" + state + "]";
   }
   
   public static WorkerThreadBuilder builder() {

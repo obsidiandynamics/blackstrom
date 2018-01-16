@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.worker;
 
 import java.io.*;
-import java.util.function.*;
 
 public final class WorkerThreadBuilder {
   private WorkerOptions options = new WorkerOptions();
@@ -10,20 +9,14 @@ public final class WorkerThreadBuilder {
   
   private WorkerStartup onStartup = t -> {};
   
-  private WorkerShutdown onShutdown = DEFAULT_UNCAUGHT_EXCEPTION_HANDLER;
+  private WorkerShutdown onShutdown = (t, x) -> {};
   
-  public static final WorkerShutdown DEFAULT_UNCAUGHT_EXCEPTION_HANDLER = createPrintStreamUncaughtExceptionHandler(System.err);
+  private WorkerExceptionHandler onUncaughtException = SYS_ERR_UNCAUGHT_EXCEPTION_HANDLER;
   
-  public static WorkerShutdown createPrintStreamUncaughtExceptionHandler(PrintStream printStream) {
-    return createUncaughtExceptionHandler(x -> x.printStackTrace(printStream));
-  }
+  public static final WorkerExceptionHandler SYS_ERR_UNCAUGHT_EXCEPTION_HANDLER = createPrintStreamUncaughtExceptionHandler(System.err);
   
-  public static WorkerShutdown createUncaughtExceptionHandler(Consumer<Throwable> exceptionHandler) {
-    return (t, e) -> {
-      if (e != null && ! (e instanceof InterruptedException)) {
-        exceptionHandler.accept(e);
-      }
-    };
+  public static WorkerExceptionHandler createPrintStreamUncaughtExceptionHandler(PrintStream printStream) {
+    return (t, x) -> x.printStackTrace(printStream);
   }
   
   WorkerThreadBuilder() {}
@@ -48,11 +41,16 @@ public final class WorkerThreadBuilder {
     return this;
   }
   
+  public WorkerThreadBuilder onUncaughtException(WorkerExceptionHandler onUncaughtException) {
+    this.onUncaughtException = onUncaughtException;
+    return this;
+  }
+  
   public WorkerThread build() {
     if (onCycle == null) {
       throw new IllegalStateException("onCycle behaviour not set");
     }
     
-    return new WorkerThread(options, onCycle, onStartup, onShutdown);
+    return new WorkerThread(options, onCycle, onStartup, onShutdown, onUncaughtException);
   }
 }
