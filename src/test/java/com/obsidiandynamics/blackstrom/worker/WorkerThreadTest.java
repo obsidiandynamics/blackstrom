@@ -4,6 +4,7 @@ import static junit.framework.TestCase.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -194,5 +195,37 @@ public final class WorkerThreadTest {
     assertTrue(t1.equals(t3));
     assertFalse(t1.equals(t4));
     assertTrue(t1.hashCode() == t3.hashCode());
+  }
+  
+  @Test
+  public void testUncaughtExceptionHandler() {
+    final AtomicReference<Throwable> handler = new AtomicReference<>();
+    final WorkerShutdown shutdown = WorkerThreadBuilder.createUncaughtExceptionHandler(handler::set);
+    
+    shutdown.handle(null, null);
+    assertNull(handler.get());
+    
+    shutdown.handle(null, new InterruptedException());
+    assertNull(handler.get());
+    
+    shutdown.handle(null, new Exception());
+    assertNotNull(handler.get());
+  }
+  
+  @Test
+  public void testPrintStreamUncaughtExceptionHandler() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final PrintStream p = new PrintStream(baos);
+    final WorkerThread thread = WorkerThread.builder()
+    .onCycle(t -> {
+      throw new RuntimeException("boom");
+    })
+    .onShutdown(WorkerThreadBuilder.createPrintStreamUncaughtExceptionHandler(p))
+    .build();
+    
+    thread.start();
+    thread.joinQuietly();
+    
+    assertTrue(baos.toByteArray().length > 0);
   }
 }

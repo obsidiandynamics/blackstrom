@@ -288,7 +288,7 @@ public final class BankTransferTest {
 
   private void testSingleTransfer(int transferAmount, Verdict expectedVerdict, AbortReason expectedAbortReason,
                                   AsyncInitiator initiator) throws InterruptedException, ExecutionException, Exception {
-    assert expectedVerdict == Verdict.COMMIT || expectedAbortReason != null;
+    assert expectedVerdict == Verdict.COMMIT ^ expectedAbortReason != null;
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
                                          TWO_BRANCH_IDS, 
                                          BankSettlement.builder()

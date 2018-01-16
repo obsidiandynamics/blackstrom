@@ -11,6 +11,8 @@ public final class Vote extends Message {
 
   public Vote(Object ballotId, long timestamp, Response response) {
     super(ballotId, timestamp);
+    assert response != null;
+    
     this.response = response;
   }
   

@@ -36,6 +36,6 @@ public final class WorkerOptions {
 
   @Override
   public String toString() {
-    return "WorkerOptions [name=" + name + ", daemon=" + daemon + ", priority=" + priority + "]";
+    return WorkerOptions.class.getSimpleName() + " [name=" + name + ", daemon=" + daemon + ", priority=" + priority + "]";
   }
 }

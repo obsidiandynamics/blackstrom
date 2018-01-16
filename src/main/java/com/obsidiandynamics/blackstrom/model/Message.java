@@ -14,10 +14,13 @@ public abstract class Message {
   private String shardKey;
   
   protected Message(Object ballotId, long timestamp) {
+    assert ballotId != null;
+    assert timestamp >= 0;
+    
     this.ballotId = ballotId;
     this.timestamp = timestamp != 0 ? timestamp : System.currentTimeMillis();
   }
-
+  
   public final Object getBallotId() {
     return ballotId;
   }

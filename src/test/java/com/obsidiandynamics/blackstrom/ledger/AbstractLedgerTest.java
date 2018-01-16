@@ -141,7 +141,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (shard.contains(m) && m.getSource().equals("source")) {
         try {
-          c.getLedger().append(new Nomination(m.getMessageId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
+          c.getLedger().append(new Nomination(m.getBallotId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }

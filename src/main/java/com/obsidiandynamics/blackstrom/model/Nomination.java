@@ -17,6 +17,9 @@ public final class Nomination extends Message {
 
   public Nomination(Object ballotId, long timestamp, String[] cohorts, Object proposal, int ttl) {
     super(ballotId, timestamp);
+    assert cohorts != null;
+    assert ttl >= 0;
+    
     this.cohorts = cohorts;
     this.proposal = proposal;
     this.ttl = ttl;

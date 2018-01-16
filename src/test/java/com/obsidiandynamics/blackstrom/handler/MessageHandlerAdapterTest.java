@@ -67,7 +67,7 @@ public final class MessageHandlerAdapterTest {
   @Test(expected=UnsupportedOperationException.class)
   public void testUnsupported() {
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NullGroupFactor() {});
-    adapter.onMessage(null, new UnknownMessage(null));
+    adapter.onMessage(null, new UnknownMessage(0L));
   }
   
   @Test(expected=NullPointerException.class)
@@ -87,14 +87,14 @@ public final class MessageHandlerAdapterTest {
   }
   
   private static Nomination newNomination() {
-    return new Nomination(null, null, null, 0);
+    return new Nomination(0L, new String[0], null, 0);
   }
   
   private static Vote newVote() {
-    return new Vote(null, null);
+    return new Vote(0L, new Response("c", Pledge.ACCEPT, null));
   }
   
   private static Outcome newOutcome() {
-    return new Outcome(null, null, null, null);
+    return new Outcome(0L, Verdict.COMMIT, null, new Response[0]);
   }
 }
