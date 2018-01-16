@@ -12,6 +12,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -21,8 +22,6 @@ public final class TaskSchedulerTest implements TestSupport {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-  
-  private static final int MAX_WAIT = 10_000;
   
   private static final class TestTask extends AbstractTask<UUID> {
     private final Consumer<TestTask> taskBody;
@@ -45,14 +44,16 @@ public final class TaskSchedulerTest implements TestSupport {
       ids.add(task.getId());
     }
     
-    BooleanSupplier isSize(int size) {
-      return () -> ids.size() == size;
+    Runnable isSize(int size) {
+      return () -> assertEquals(size, ids.size());
     }
   }
   
   private Receiver receiver;
   
   private TaskScheduler scheduler;
+  
+  private final Timesert wait = Wait.SHORT;
   
   @Before
   public void setup() {
@@ -87,7 +88,7 @@ public final class TaskSchedulerTest implements TestSupport {
       scheduler.schedule(task);
     }
    
-    Timesert.wait(MAX_WAIT).untilTrue(receiver.isSize(tasks));
+    wait.until(receiver.isSize(tasks));
     assertEquals(ids, receiver.ids);
   }
   
@@ -116,7 +117,7 @@ public final class TaskSchedulerTest implements TestSupport {
     TestSupport.await(barrier); // resume scheduling
    
     Collections.reverse(ids);
-    Timesert.wait(MAX_WAIT).untilTrue(receiver.isSize(tasks));
+    wait.until(receiver.isSize(tasks));
     assertEquals(ids, receiver.ids);
   }
   
@@ -135,7 +136,7 @@ public final class TaskSchedulerTest implements TestSupport {
       }
     }).run();
     
-    Timesert.wait(MAX_WAIT).untilTrue(receiver.isSize(addThreads * tasksPerThread));
+    wait.until(receiver.isSize(addThreads * tasksPerThread));
   }
   
   @Test
@@ -171,7 +172,7 @@ public final class TaskSchedulerTest implements TestSupport {
    
     assertEquals(0, receiver.ids.size());
     scheduler.forceExecute();
-    Timesert.wait(MAX_WAIT).untilTrue(receiver.isSize(tasks));
+    wait.until(receiver.isSize(tasks));
     assertEquals(ids, receiver.ids);
   }
   
@@ -290,7 +291,7 @@ public final class TaskSchedulerTest implements TestSupport {
     }).run();
    
     final int expectedTasks = tasksPerThread * submissionThreads;
-    Timesert.wait(MAX_WAIT).untilTrue(() -> fired.get() == expectedTasks);
+    wait.until(() -> assertEquals(expectedTasks, fired.get()));
     final long took = System.nanoTime() - startNanos - minDelayNanos;
 
     System.out.format("Schedule volume: %,d took %,d ms, %,.0f tasks/sec (%d threads)\n", 

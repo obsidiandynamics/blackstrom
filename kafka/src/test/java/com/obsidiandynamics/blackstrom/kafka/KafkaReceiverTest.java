@@ -17,16 +17,17 @@ import org.slf4j.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 
 public final class KafkaReceiverTest {
-  private static final int MAX_WAIT = 10_000;
-  
   private KafkaReceiver<String, String> receiver;
   private Consumer<String, String> consumer;
   private RecordHandler<String, String> recordHandler;
   private ErrorHandler errorHandler;
+  
+  private final Timesert wait = Wait.SHORT;
   
   @Before
   @SuppressWarnings("unchecked")
@@ -77,7 +78,7 @@ public final class KafkaReceiverTest {
     when(consumer.poll(anyLong())).then(split(() -> records, 
                                               () -> new ConsumerRecords<>(Collections.emptyMap())));
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       verify(recordHandler, times(1)).onReceive(eq(records));
       verify(errorHandler, never()).onError(any());
     });
@@ -111,7 +112,7 @@ public final class KafkaReceiverTest {
   public void testError() throws InterruptedException {
     when(consumer.poll(anyLong())).then(split(() -> { throw new RuntimeException("boom"); }));
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       verify(recordHandler, never()).onReceive(any());
       verify(errorHandler, atLeastOnce()).onError(any(RuntimeException.class));
     });
@@ -124,7 +125,7 @@ public final class KafkaReceiverTest {
     when(consumer.poll(anyLong())).then(split(() -> { throw new RuntimeException("boom"); }));
     final Logger logger = mock(Logger.class);
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, KafkaReceiver.genericErrorLogger(logger));
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       verify(recordHandler, never()).onReceive(any());
       verify(logger, atLeastOnce()).warn(anyString(), any(RuntimeException.class));
     });

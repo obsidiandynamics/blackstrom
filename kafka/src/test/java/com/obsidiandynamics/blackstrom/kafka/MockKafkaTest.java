@@ -14,6 +14,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -24,9 +25,9 @@ public final class MockKafkaTest {
     return TestCycle.timesQuietly(1);
   }
   
-  private static final int MAX_WAIT = 10_000;
-  
   private static final String TOPIC = "test";
+  
+  private final Timesert wait = Wait.SHORT;
   
   @Test
   public void test() throws InterruptedException {
@@ -63,7 +64,7 @@ public final class MockKafkaTest {
     }
   }
 
-  private static void test(int messages, int partitions, int sendIntervalMillis, int numConsumers) throws InterruptedException {
+  private void test(int messages, int partitions, int sendIntervalMillis, int numConsumers) throws InterruptedException {
     final int maxHistory = messages * partitions;
     final MockKafka<Integer, Integer> kafka = new MockKafka<>(partitions, maxHistory);
     final Properties props = new Properties();
@@ -95,7 +96,7 @@ public final class MockKafkaTest {
     }
     
     try {
-      Timesert.wait(MAX_WAIT).untilTrue(() -> consumers.stream().filter(c -> c.received.totalSize() < expectedMessages).count() == 0);
+      wait.untilTrue(() -> consumers.stream().filter(c -> c.received.totalSize() < expectedMessages).count() == 0);
     } finally {
       for (TestConsumer<Integer, Integer> consumer : consumers) {
         assertEquals(expectedMessages, consumer.received.totalSize());
@@ -118,7 +119,6 @@ public final class MockKafkaTest {
       consumer.terminate();
     }
     producer.close();
-    
     for (TestConsumer<?, ?> consumer : consumers) {
       consumer.join();
     }

@@ -17,6 +17,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.machine.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -26,8 +27,6 @@ public final class FallibleFactorTest {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-  
-  private static final int MAX_WAIT = 10_000;
   
   private static class TestCohort implements Cohort, Groupable.NullGroup {
     private final List<Nomination> nominations = new CopyOnWriteArrayList<>();
@@ -59,6 +58,8 @@ public final class FallibleFactorTest {
   }
   
   private VotingMachine machine;
+  
+  private final Timesert wait = Wait.SHORT;
   
   @After
   public void after() {
@@ -92,7 +93,7 @@ public final class FallibleFactorTest {
     
     ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
     
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       assertEquals(1, c.nominations.size());
       assertEquals(1, v.votes.size());
     });
@@ -112,7 +113,7 @@ public final class FallibleFactorTest {
     
     ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
     
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       assertEquals(1, c.nominations.size());
     });
   }
@@ -130,7 +131,7 @@ public final class FallibleFactorTest {
     
     ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
     
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       assertEquals(2, c.nominations.size());
     });
   }
@@ -149,7 +150,7 @@ public final class FallibleFactorTest {
     
     final long took = TestSupport.tookThrowing(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         assertEquals(1, c.nominations.size());
       });
     });
@@ -170,7 +171,7 @@ public final class FallibleFactorTest {
     
     final long took = TestSupport.tookThrowing(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         assertEquals(2, c.nominations.size());
       });
     });
@@ -191,7 +192,7 @@ public final class FallibleFactorTest {
     
     ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
     
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       assertEquals(2, v.votes.size());
     });
   }
@@ -211,7 +212,7 @@ public final class FallibleFactorTest {
     
     final long took = TestSupport.tookThrowing(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         assertEquals(1, v.votes.size());
       });
     });
@@ -233,7 +234,7 @@ public final class FallibleFactorTest {
     
     final long took = TestSupport.tookThrowing(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
-      Timesert.wait(MAX_WAIT).until(() -> {
+      wait.until(() -> {
         assertEquals(2, v.votes.size());
       });
     });

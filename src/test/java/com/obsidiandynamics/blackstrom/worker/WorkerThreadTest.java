@@ -13,17 +13,18 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
 public final class WorkerThreadTest {
-  private static final int MAX_WAIT = 10_000;
   @Parameterized.Parameters
-  
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
+
+  private final Timesert wait = Wait.SHORT;
   
   @Test
   public void testSingleRun() {
@@ -99,7 +100,7 @@ public final class WorkerThreadTest {
         .build();
     thread.start();
     
-    Timesert.wait(MAX_WAIT).until(() -> {
+    wait.until(() -> {
       verify(onStartup).handle(eq(thread));
     });
     thread.terminate().joinQuietly();
