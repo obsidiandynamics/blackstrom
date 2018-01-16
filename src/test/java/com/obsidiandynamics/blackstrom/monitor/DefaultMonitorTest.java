@@ -64,11 +64,7 @@ public final class DefaultMonitorTest {
     setMonitorAndInit(new DefaultMonitor());
     setLedger(new SingleNodeQueueLedger());
     ledger.attach((NullGroupMessageHandler) (c, m) -> { 
-      if (m.getMessageType() == MessageType.OUTCOME) {
-        outcomes.add((Outcome) m);
-      } else {
-        votes.add((Vote) m);
-      }
+      (m.getMessageType() == MessageType.OUTCOME ? outcomes : votes).add(Cast.from(m));
     });
     ledger.init();
     context = new DefaultMessageContext(ledger, null);
