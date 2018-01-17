@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 public final class KafkaLedgerIT extends AbstractLedgerTest {
   @Override
   protected Timesert getWait() {
-    return Wait.SHORT;
+    return Wait.MEDIUM;
   }
   
   @Override
