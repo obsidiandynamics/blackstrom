@@ -8,6 +8,16 @@ dependencies {
   compile 'org.apache.kafka:kafka-clients:0.11.0.2'
 }
 
+task startKafka(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  main = 'com.obsidiandynamics.blackstrom.kafka.RunKafkaDocker$Start'
+}
+
+task stopKafka(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  main = 'com.obsidiandynamics.blackstrom.kafka.RunKafkaDocker$Stop'
+}
+
 jar {
   baseName packageName
 }
