@@ -307,8 +307,9 @@ public final class DefaultMonitorTest {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
     
     final UUID ballotId = UUID.randomUUID();
-    nominate(ballotId, 1, "a", "b");
-    vote(ballotId, "a", Pledge.ACCEPT);
+    final long startTimestamp = System.currentTimeMillis();
+    nominate(ballotId, 0, "a", "b");
+    vote(ballotId, startTimestamp, "a", Pledge.ACCEPT);
     
     wait.until(numVotesIsAtLeast(1));
     assertEquals(0, outcomes.size());
