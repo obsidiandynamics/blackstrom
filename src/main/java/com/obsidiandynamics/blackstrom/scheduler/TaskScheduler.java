@@ -81,7 +81,8 @@ public final class TaskScheduler implements Joinable {
    *  @return A {@link Joinable} for the caller to wait on.
    */
   public Joinable terminate() {
-    return executor.terminate();
+    executor.terminate();
+    return this;
   }
   
   @Override

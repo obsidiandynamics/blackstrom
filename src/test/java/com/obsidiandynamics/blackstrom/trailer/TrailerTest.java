@@ -17,14 +17,13 @@ public final class TrailerTest {
   
   private Trailer trailer;
   
-  @Before
-  public void before() {
-    trailer = new Trailer();
-  }
-  
   @After
   public void after() {
     if (trailer != null) trailer.terminate().joinQuietly();
+  }
+  
+  private void createTrailer(CompletionStrategyFactory completionStrategyFactory) {
+    trailer = new Trailer(completionStrategyFactory); 
   }
   
   private static class TestTask implements Runnable {
@@ -48,7 +47,8 @@ public final class TrailerTest {
   }
   
   @Test
-  public void testNoComplete() {
+  public void testStrictNoComplete() {
+    createTrailer(StrictCompletionStrategy::new);
     final int runs = 10;
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     
@@ -61,7 +61,8 @@ public final class TrailerTest {
   }
   
   @Test
-  public void testIncreasing() {
+  public void testStrictIncreasing() {
+    createTrailer(StrictCompletionStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
@@ -75,7 +76,8 @@ public final class TrailerTest {
   }
   
   @Test
-  public void testDecreasing() {
+  public void testStrictDecreasing() {
+    createTrailer(StrictCompletionStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
@@ -89,7 +91,8 @@ public final class TrailerTest {
   }
   
   @Test
-  public void testRandom() {
+  public void testStrictRandom() {
+    createTrailer(StrictCompletionStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();

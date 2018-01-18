@@ -5,51 +5,25 @@ import java.util.concurrent.atomic.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class Trailer implements Joinable {
-  private static final int CYCLE_IDLE_INTERVAL_MILLIS = 10;
-  
   private final WorkerThread executor;
   
-  private final AtomicReference<Action> tail = new AtomicReference<>(Action.anchor());
-  
-  private Action head = tail.get();
-  
-  private Action current = head;
+  protected final AtomicReference<Action> tail = new AtomicReference<>(Action.anchor());
   
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
   
-  public Trailer() {
-    this(Trailer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
+  public Trailer(CompletionStrategyFactory completionStrategyFactory) {
+    this(completionStrategyFactory, Trailer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
   }
   
-  public Trailer(String threadName) {
+  public Trailer(CompletionStrategyFactory completionStrategyFactory, String threadName) {
     executor = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
                      .withName(threadName))
-        .onCycle(this::cycle)
+        .onCycle(completionStrategyFactory.apply(tail))
         .build();
     executor.start();
-  }
-  
-  private void cycle(WorkerThread t) throws InterruptedException {
-    if (current != null) {
-      if (current.isAnchor()) {
-        // skip the anchor
-      } else if (current.isComplete()) {
-        current.run();
-      } else {
-        Thread.sleep(CYCLE_IDLE_INTERVAL_MILLIS);
-        return;
-      }
-    } else {
-      Thread.sleep(CYCLE_IDLE_INTERVAL_MILLIS);
-    }
-    
-    current = head.next();
-    if (current != null) {
-      head = current;
-    }
   }
   
   public Action begin(Runnable task) {
@@ -65,7 +39,8 @@ public final class Trailer implements Joinable {
    *  @return A {@link Joinable} for the caller to wait on.
    */
   public Joinable terminate() {
-    return executor.terminate();
+    executor.terminate();
+    return this;
   }
   
   @Override
