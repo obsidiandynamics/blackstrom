@@ -46,14 +46,6 @@ public final class Trailer implements Joinable {
     if (current != null) {
       head = current;
     }
-    
-//    final Action n = head.next();
-//    if (n != null && n.isComplete()) {
-//      n.run();
-//      head = n; 
-//    } else {
-//      Thread.sleep(CYCLE_IDLE_INTERVAL_MILLIS);
-//    }
   }
   
   public Action begin(Runnable task) {

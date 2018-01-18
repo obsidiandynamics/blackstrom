@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.*;
 
 import org.junit.*;
 
@@ -81,7 +82,7 @@ public final class TrailerTest {
     final List<Action> actions = new ArrayList<>(runs);
     
     expected.forEach(i -> actions.add(trailer.begin(new TestTask(completed, i))));
-    reversed(actions).forEach(a -> a.complete());
+    Apply.to(actions).transform(Collections::reverse).forEach(a -> a.complete());
     
     wait.until(Size.of(completed).is(runs));
     assertEquals(expected, completed);
@@ -95,22 +96,28 @@ public final class TrailerTest {
     final List<Action> actions = new ArrayList<>(runs);
     
     expected.forEach(i -> actions.add(trailer.begin(new TestTask(completed, i))));
-    shuffled(actions).forEach(a -> a.complete());
+    Apply.to(actions).transform(Collections::shuffle).forEach(a -> a.complete());
     
     wait.until(Size.of(completed).is(runs));
     assertEquals(expected, completed);
   }
   
-  private static <T> List<T> reversed(List<T> original) {
-    final List<T> copy = new ArrayList<>(original);
-    Collections.reverse(copy);
-    return copy;
-  }
-  
-  private static <T> List<T> shuffled(List<T> original) {
-    final List<T> copy = new ArrayList<>(original);
-    Collections.shuffle(copy);
-    return copy;
+  private static class Apply<T> {
+    private final List<T> list;
+    
+    private Apply(List<T> list) {
+      this.list = list;
+    }
+    
+    static <T> Apply<T> to(List<T> list) {
+      return new Apply<>(list);
+    }
+    
+    List<T> transform(Consumer<List<T>> transform) {
+      final List<T> copy = new ArrayList<>(list);
+      transform.accept(copy);
+      return copy;
+    }
   }
   
   private static List<Integer> increasingListOf(int numElements) {
