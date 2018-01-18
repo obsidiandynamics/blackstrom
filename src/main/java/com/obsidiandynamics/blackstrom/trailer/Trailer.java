@@ -7,22 +7,26 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class Trailer implements Joinable {
   private static final int CYCLE_IDLE_INTERVAL_MILLIS = 10;
   
+  private final WorkerThread executor;
+  
   private final AtomicReference<Action> tail = new AtomicReference<>(Action.anchor());
   
   private Action head = tail.get();
   
   private Action current = head;
   
-  private final WorkerThread executor;
-  
-  /** Atomically assigns numbers for scheduler thread naming. */
+  /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
   
   public Trailer() {
+    this(Trailer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
+  }
+  
+  public Trailer(String threadName) {
     executor = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
-                     .withName(Trailer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement()))
+                     .withName(threadName))
         .onCycle(this::cycle)
         .build();
     executor.start();
