@@ -13,6 +13,8 @@ public abstract class Message {
   
   private String shardKey;
   
+  private Integer shardIndex;
+  
   protected Message(Object ballotId, long timestamp) {
     this.ballotId = ballotId;
     this.timestamp = timestamp != 0 ? timestamp : System.currentTimeMillis();
@@ -53,6 +55,15 @@ public abstract class Message {
     return this;
   }
   
+  public final Integer getShardIndex() {
+    return shardIndex;
+  }
+  
+  public final Message withShardIndex(Integer shardIndex) {
+    this.shardIndex = shardIndex;
+    return this;
+  }
+  
   public abstract MessageType getMessageType();  
   
   @Override
@@ -63,6 +74,7 @@ public abstract class Message {
         .append(messageId)
         .append(source)
         .append(shardKey)
+        .append(shardIndex)
         .toHashCode();
   }
   
@@ -76,6 +88,7 @@ public abstract class Message {
           .append(messageId, that.messageId)
           .append(source, that.source)
           .append(shardKey, that.shardKey)
+          .append(shardIndex, that.shardIndex)
           .isEquals();
     } else {
       return false;
@@ -84,6 +97,6 @@ public abstract class Message {
   
   protected final String baseToString() {
     return "ballotId=" + ballotId + ", messageId=" + messageId + ", source=" + source + ", shardKey=" + shardKey + 
-        ", timestamp=" + timestamp;
+        ", shardIndex=" + shardIndex + ", timestamp=" + timestamp;
   }
 }

@@ -31,7 +31,7 @@ public class Keyed<K, P> {
   }
   
   /**
-   *  Looks up a partition for key, creating one if it doesn't already exist.
+   *  Looks up a partition for the key, creating one if it doesn't already exist.
    *  
    *  @param key The key.
    *  @return The partition.
@@ -41,7 +41,7 @@ public class Keyed<K, P> {
   }
   
   /**
-   *  Utility for atomically retrieving a mapped value if it exists, or assigning a value from a 
+   *  Utility for atomically retrieving a mapped value if one exists, or assigning a value from a 
    *  given factory if it doesn't.
    *  
    *  @param <K> Key type.
