@@ -23,8 +23,8 @@ public final class TracerTest {
       tracer.terminate().joinQuietly();
   }
 
-  private void createTracer(CompletionStrategyFactory completionStrategyFactory) {
-    tracer = new Tracer(completionStrategyFactory);
+  private void createTracer(FiringStrategyFactory firingStrategyFactory) {
+    tracer = new Tracer(firingStrategyFactory);
   }
 
   private static class TestTask implements Runnable {
@@ -49,7 +49,7 @@ public final class TracerTest {
 
   @Test
   public void testStrictNoComplete() {
-    createTracer(StrictCompletionStrategy::new);
+    createTracer(StrictFiringStrategy::new);
     final int runs = 10;
     final List<Integer> completed = new CopyOnWriteArrayList<>();
 
@@ -63,7 +63,7 @@ public final class TracerTest {
 
   @Test
   public void testStrictIncreasing() {
-    createTracer(StrictCompletionStrategy::new);
+    createTracer(StrictFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
@@ -78,7 +78,7 @@ public final class TracerTest {
 
   @Test
   public void testStrictDecreasing() {
-    createTracer(StrictCompletionStrategy::new);
+    createTracer(StrictFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
@@ -93,7 +93,7 @@ public final class TracerTest {
 
   @Test
   public void testStrictRandom() {
-    createTracer(StrictCompletionStrategy::new);
+    createTracer(StrictFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();

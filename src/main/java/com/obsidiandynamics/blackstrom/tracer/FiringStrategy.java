@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public abstract class CompletionStrategy implements WorkerCycle {
+public abstract class FiringStrategy implements WorkerCycle {
   protected static final int CYCLE_IDLE_INTERVAL_MILLIS = 1;
   
   protected final AtomicReference<Action> tail;
@@ -13,7 +13,7 @@ public abstract class CompletionStrategy implements WorkerCycle {
   
   protected Action current;
   
-  protected CompletionStrategy(AtomicReference<Action> tail) {
+  protected FiringStrategy(AtomicReference<Action> tail) {
     this.tail = tail;
     head = tail.get();
     current = head;

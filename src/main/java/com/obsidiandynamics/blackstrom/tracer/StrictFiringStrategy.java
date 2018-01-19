@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class StrictCompletionStrategy extends CompletionStrategy {
-  public StrictCompletionStrategy(AtomicReference<Action> tail) {
+public final class StrictFiringStrategy extends FiringStrategy {
+  public StrictFiringStrategy(AtomicReference<Action> tail) {
     super(tail);
   }
 

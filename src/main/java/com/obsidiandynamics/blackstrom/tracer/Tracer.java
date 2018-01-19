@@ -12,16 +12,16 @@ public final class Tracer implements Joinable {
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
   
-  public Tracer(CompletionStrategyFactory completionStrategyFactory) {
+  public Tracer(FiringStrategyFactory completionStrategyFactory) {
     this(completionStrategyFactory, Tracer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
   }
   
-  public Tracer(CompletionStrategyFactory completionStrategyFactory, String threadName) {
+  public Tracer(FiringStrategyFactory firingStrategyFactory, String threadName) {
     executor = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
                      .withName(threadName))
-        .onCycle(completionStrategyFactory.apply(tail))
+        .onCycle(firingStrategyFactory.apply(tail))
         .build();
     executor.start();
   }
