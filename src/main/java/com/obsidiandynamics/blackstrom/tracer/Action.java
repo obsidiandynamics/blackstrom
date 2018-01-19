@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.trailer;
+package com.obsidiandynamics.blackstrom.tracer;
 
 import java.util.concurrent.atomic.*;
 
@@ -30,7 +30,7 @@ public final class Action {
     t1.next.lazySet(this);
   }
   
-  void run() {
+  void fire() {
     task.run();
   }
   

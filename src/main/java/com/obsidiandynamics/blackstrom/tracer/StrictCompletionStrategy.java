@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.trailer;
+package com.obsidiandynamics.blackstrom.tracer;
 
 import java.util.concurrent.atomic.*;
 
@@ -15,7 +15,7 @@ public final class StrictCompletionStrategy extends CompletionStrategy {
       if (current.isAnchor()) {
         // skip the anchor
       } else if (current.isComplete()) {
-        current.run();
+        current.fire();
       } else {
         Thread.sleep(CYCLE_IDLE_INTERVAL_MILLIS);
         return;

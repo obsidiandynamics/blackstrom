@@ -1,10 +1,10 @@
-package com.obsidiandynamics.blackstrom.trailer;
+package com.obsidiandynamics.blackstrom.tracer;
 
 import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class Trailer implements Joinable {
+public final class Tracer implements Joinable {
   private final WorkerThread executor;
   
   protected final AtomicReference<Action> tail = new AtomicReference<>(Action.anchor());
@@ -12,11 +12,11 @@ public final class Trailer implements Joinable {
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
   
-  public Trailer(CompletionStrategyFactory completionStrategyFactory) {
-    this(completionStrategyFactory, Trailer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
+  public Tracer(CompletionStrategyFactory completionStrategyFactory) {
+    this(completionStrategyFactory, Tracer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
   }
   
-  public Trailer(CompletionStrategyFactory completionStrategyFactory, String threadName) {
+  public Tracer(CompletionStrategyFactory completionStrategyFactory, String threadName) {
     executor = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
@@ -33,7 +33,7 @@ public final class Trailer implements Joinable {
   }
   
   /**
-   *  Terminates the trailer, shutting down the worker thread and preventing further 
+   *  Terminates the tracer, shutting down the worker thread and preventing further 
    *  task executions.
    *  
    *  @return A {@link Joinable} for the caller to wait on.

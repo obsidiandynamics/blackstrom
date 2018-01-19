@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.trailer;
+package com.obsidiandynamics.blackstrom.tracer;
 
 import org.junit.*;
 
