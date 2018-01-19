@@ -19,8 +19,7 @@ public final class TracerTest {
 
   @After
   public void after() {
-    if (tracer != null)
-      tracer.terminate().joinQuietly();
+    if (tracer != null) tracer.terminate().joinQuietly();
   }
 
   private void createTracer(FiringStrategyFactory firingStrategyFactory) {
@@ -72,7 +71,7 @@ public final class TracerTest {
     expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
     actions.forEach(a -> a.complete());
 
-    wait.until(Size.of(completed).is(runs));
+    wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
   }
 
@@ -85,9 +84,9 @@ public final class TracerTest {
     final List<Action> actions = new ArrayList<>(runs);
 
     expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    Apply.to(actions).transform(Collections::reverse).forEach(a -> a.complete());
+    ListQuery.of(actions).transform(Collections::reverse).list().forEach(a -> a.complete());
 
-    wait.until(Size.of(completed).is(runs));
+    wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
   }
 
@@ -100,28 +99,69 @@ public final class TracerTest {
     final List<Action> actions = new ArrayList<>(runs);
 
     expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    Apply.to(actions).transform(Collections::shuffle).forEach(a -> a.complete());
+    ListQuery.of(actions).transform(Collections::shuffle).list().forEach(a -> a.complete());
 
-    wait.until(Size.of(completed).is(runs));
+    wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
   }
 
-  private static class Apply<T> {
-    private final List<T> list;
+  @Test
+  public void testLazyNoComplete() {
+    createTracer(LazyFiringStrategy::new);
+    final int runs = 10;
+    final List<Integer> completed = new CopyOnWriteArrayList<>();
 
-    private Apply(List<T> list) {
-      this.list = list;
+    for (int i = 0; i < runs; i++) {
+      tracer.begin(new TestTask(completed, i));
     }
 
-    static <T> Apply<T> to(List<T> list) {
-      return new Apply<>(list);
-    }
+    TestSupport.sleep(10);
+    assertEquals(0, completed.size());
+  }
 
-    List<T> transform(Consumer<List<T>> transform) {
-      final List<T> copy = new ArrayList<>(list);
-      transform.accept(copy);
-      return copy;
-    }
+  @Test
+  public void testLazyIncreasing() {
+    createTracer(LazyFiringStrategy::new);
+    final int runs = 100;
+    final List<Integer> expected = increasingListOf(runs);
+    final List<Integer> completed = new CopyOnWriteArrayList<>();
+    final List<Action> actions = new ArrayList<>(runs);
+
+    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
+    ListQuery.of(actions).delayedBy(1).forEach(a -> a.complete());
+
+    wait.until(ListQuery.of(completed).contains(runs - 1));
+    assertThat(ListQuery.of(completed).isOrderedBy(Integer::compare));
+  }
+
+  @Test
+  public void testLazyDecreasing() {
+    createTracer(LazyFiringStrategy::new);
+    final int runs = 100;
+    final List<Integer> expected = increasingListOf(runs);
+    final List<Integer> completed = new CopyOnWriteArrayList<>();
+    final List<Action> actions = new ArrayList<>(runs);
+
+    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
+    ListQuery.of(actions).transform(Collections::reverse).list().forEach(a -> a.complete());
+
+    wait.until(ListQuery.of(completed).contains(runs - 1));
+    assertEquals(1, completed.size());
+  }
+
+  @Test
+  public void testLazyRandom() {
+    createTracer(LazyFiringStrategy::new);
+    final int runs = 100;
+    final List<Integer> expected = increasingListOf(runs);
+    final List<Integer> completed = new CopyOnWriteArrayList<>();
+    final List<Action> actions = new ArrayList<>(runs);
+
+    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
+    ListQuery.of(actions).transform(Collections::shuffle).delayedBy(1).forEach(a -> a.complete());
+
+    wait.until(ListQuery.of(completed).contains(runs - 1));
+    assertThat(ListQuery.of(completed).isOrderedBy(Integer::compare));
   }
 
   private static List<Integer> increasingListOf(int numElements) {
@@ -131,22 +171,62 @@ public final class TracerTest {
     }
     return nums;
   }
+  
+  private static void assertThat(Runnable assertion) {
+    assertion.run();
+  }
 
-  private static class Size {
-    private final List<?> list;
+  private static class ListQuery<T> {
+    private final List<T> list;
 
-    private Size(List<?> list) {
+    private ListQuery(List<T> list) {
       this.list = list;
     }
 
-    static Size of(List<?> list) {
-      return new Size(list);
+    static <T> ListQuery<T> of(List<T> list) {
+      return new ListQuery<T>(list);
     }
 
-    Runnable is(int numberOfElements) {
-      return () -> {
-        assertEquals(numberOfElements, list.size());
-      };
+    Runnable isSize(int numberOfElements) {
+      return () -> assertEquals(numberOfElements, list.size());
+    }
+    
+    Runnable contains(T element) {
+      return () -> assertTrue("element " + element + " missing from list " + list, list.contains(element));
+    }
+    
+    Runnable isOrderedBy(Comparator<T> comparator) {
+      final List<T> ordered = transform(l -> Collections.sort(l, comparator)).list;
+      return () -> assertEquals(ordered, list);
+    }
+    
+    List<T> list() {
+      return list;
+    }
+
+    ListQuery<T> transform(Consumer<List<T>> transform) {
+      final List<T> copy = new ArrayList<>(list);
+      transform.accept(copy);
+      return new ListQuery<>(copy);
+    }
+    
+    DelayedLoop delayedBy(int delayMillis) {
+      return new DelayedLoop(delayMillis);
+    }
+    
+    class DelayedLoop {
+      private final int delayMillis;
+
+      DelayedLoop(int delayMillis) {
+        this.delayMillis = delayMillis;
+      }
+      
+      void forEach(Consumer<T> consumer) {
+        list.forEach(t -> {
+          if (delayMillis != 0) TestSupport.sleep(delayMillis); else Thread.yield();
+          consumer.accept(t);
+        });
+      }
     }
   }
 }
