@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.kafka;
+package com.obsidiandynamics.blackstrom.keyed;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -37,7 +37,7 @@ public class Keyed<K, P> {
    *  @return The partition.
    */
   public final P forKey(K key) {
-    return getOrSet(map, map, key, partitionFactory);
+    return getOrSetDoubleChecked(map, map, key, partitionFactory);
   }
   
   /**
@@ -52,26 +52,30 @@ public class Keyed<K, P> {
    *  @param valueFactory A way of creating a missing value.
    *  @return The value.
    */
-  public static <K, V> V getOrSet(Object lock, Map<K, V> map, K key, Supplier<V> valueFactory) {
+  public static <K, V> V getOrSetDoubleChecked(Object lock, Map<K, V> map, K key, Supplier<V> valueFactory) {
     final V existing = map.get(key);
     if (existing != null) {
       return existing;
     } else {
-      synchronized (lock) {
-        final V existing2 = map.get(key);
-        if (existing2 != null) {
-          return existing2;
-        } else {
-          final V created = valueFactory.get();
-          map.put(key, created);
-          return created;
-        }
+      return getOrSetSingleChecked(lock, map, key, valueFactory);
+    }
+  }
+  
+  public static <K, V> V getOrSetSingleChecked(Object lock, Map<K, V> map, K key, Supplier<V> valueFactory) {
+    synchronized (lock) {
+      final V existing = map.get(key);
+      if (existing != null) {
+        return existing;
+      } else {
+        final V created = valueFactory.get();
+        map.put(key, created);
+        return created;
       }
     }
   }
 
   @Override
-  public String toString() {
+  public final String toString() {
     return getClass().getSimpleName() + " [map=" + map + "]";
   }
 }

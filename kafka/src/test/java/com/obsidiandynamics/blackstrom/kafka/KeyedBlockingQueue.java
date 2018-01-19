@@ -4,6 +4,8 @@ import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import com.obsidiandynamics.blackstrom.keyed.*;
+
 public final class KeyedBlockingQueue<K, E> extends Keyed<K, BlockingQueue<E>> {
   public KeyedBlockingQueue(Supplier<BlockingQueue<E>> partitionFactory) {
     super(partitionFactory);
