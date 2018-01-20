@@ -1,9 +1,12 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
 import static junit.framework.TestCase.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 import org.junit.runner.*;
@@ -32,8 +35,8 @@ public final class DefaultMonitorTest {
       ledger.attach(handler);
     }
 
-    @Override public void append(Message message) throws Exception {
-      ledger.append(message);
+    @Override public void append(Message message, AppendCallback callback) {
+      ledger.append(message, callback);
     }
     
     @Override public void confirm(Object handlerId, Object messageId) {
@@ -287,7 +290,7 @@ public final class DefaultMonitorTest {
   }
   
   @Test
-  public void testAppendError() throws Exception {
+  public void testAppendError() {
     setLedger(Mockito.mock(Ledger.class));
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     ledger.attach((NullGroupMessageHandler) (c, m) -> outcomes.add((Outcome) m));
@@ -373,6 +376,48 @@ public final class DefaultMonitorTest {
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
   }
   
+  @Test
+  public void testTimeoutVoteBadLedger() {
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
+    final Ledger ledger = mock(Ledger.class);
+    setLedger(ledger);
+    ledger.init();
+    
+    final AtomicBoolean responded = new AtomicBoolean();
+    doAnswer(invocation -> {
+      final AppendCallback callback = invocation.getArgument(1);
+      callback.onAppend(null, new Exception("simulated append error"));
+      responded.set(true);
+      return null;
+    }).when(ledger).append(any(), any());
+    
+    final UUID ballotId = UUID.randomUUID();
+    nominate(ballotId, 0, "a");
+    
+    wait.untilTrue(responded::get);
+  }
+  
+  @Test
+  public void testOutcomeBadLedger() {
+    final Ledger ledger = mock(Ledger.class);
+    setLedger(ledger);
+    ledger.init();
+    
+    final AtomicBoolean responded = new AtomicBoolean();
+    doAnswer(invocation -> {
+      final AppendCallback callback = invocation.getArgument(1);
+      callback.onAppend(null, new Exception("simulated append error"));
+      responded.set(true);
+      return null;
+    }).when(ledger).append(any(), any());
+    
+    final UUID ballotId = UUID.randomUUID();
+    nominate(ballotId, "a");
+    vote(ballotId, "a", Pledge.ACCEPT);
+    
+    wait.untilTrue(responded::get);
+  }
+  
   private Runnable numVotesIsAtLeast(int size) {
     return () -> assertTrue("votes.size=" + votes.size(), votes.size() >= size);
   }
@@ -382,12 +427,7 @@ public final class DefaultMonitorTest {
   }
   
   private Response getResponseForCohort(Outcome outcome, String cohort) {
-    for (Response response : outcome.getResponses()) {
-      if (response.getCohort().equals(cohort)) {
-        return response;
-      }
-    }
-    return null;
+    return Arrays.stream(outcome.getResponses()).filter(r -> r.getCohort().equals(cohort)).findAny().get();
   }
 
   private void nominate(UUID ballotId, String... cohorts) {

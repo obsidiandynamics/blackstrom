@@ -108,13 +108,9 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   }
   
   private void appendMessage(String source) {
-    try {
-      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
-                    .withSource(source)
-                    .withShardKey(shard.key()));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
+                  .withSource(source)
+                  .withShardKey(shard.key()));
   }
   
   private Ledger createLedger() {

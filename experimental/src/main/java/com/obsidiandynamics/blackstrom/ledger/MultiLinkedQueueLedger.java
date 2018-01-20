@@ -40,10 +40,10 @@ public final class MultiLinkedQueueLedger implements Ledger {
   }
   
   @Override
-  public void append(Message message) throws InterruptedException {
+  public void append(Message message, AppendCallback callback) {
     synchronized (lock) {
       for (int i = queues.size(); --i >= 0; ) {
-        queues.get(i).put(message);
+        BlockingQueueUtils.put(queues.get(i), message, callback);
       }
     }
   }

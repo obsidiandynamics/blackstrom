@@ -118,11 +118,18 @@ public final class KafkaLedger implements Ledger {
   }
 
   @Override
-  public void append(Message message) throws Exception {
+  public void append(Message message, AppendCallback callback) {
     final ProducerRecord<String, Message> record = 
         new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
     producer.send(record, 
-                  (metadata, exception) -> logException(exception, "Error publishing %s", record));
+                  (metadata, exception) -> {
+                    if (exception == null) {
+                      callback.onAppend(new KafkaMessageId(topic, metadata.partition(), metadata.offset()), null);
+                    } else {
+                      callback.onAppend(null, exception);
+                      logException(exception, "Error publishing %s", record);
+                    }
+                  });
   }
 
   @Override

@@ -62,8 +62,9 @@ public final class IndigoLedger implements Ledger {
   }
 
   @Override
-  public void append(Message message) throws Exception {
+  public void append(Message message, AppendCallback callback) {
     system.tell(dispatchRef, message);
+    callback.onAppend(message.getMessageId(), null);
   }
   
   @Override

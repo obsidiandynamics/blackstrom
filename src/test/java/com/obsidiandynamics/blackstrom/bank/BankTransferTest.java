@@ -311,7 +311,7 @@ public final class BankTransferTest {
    *  @throws Exception
    */
   @Test
-  public void testRandomTransfersBenchmark() throws Exception {
+  public void testRandomTransfersBenchmark() {
     final int numBranches = PropertyUtils.get("BankTransferTest.numBranches", Integer::valueOf, 10);
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
@@ -330,7 +330,7 @@ public final class BankTransferTest {
     final Monitor monitor = new DefaultMonitor();
     buildStandardMachine(initiator, monitor, branches);
 
-    final long took = TestSupport.tookThrowing(() -> {
+    final long took = TestSupport.took(() -> {
       String[] branchIds = null;
       BankSettlement settlement = null;
       if (! randomiseRuns) {

@@ -8,7 +8,7 @@ public interface MessageContext {
   
   Object getHandlerId();
   
-  default void vote(Object ballotId, String cohort, Pledge pledge, Object metadata) throws Exception {
+  default void vote(Object ballotId, String cohort, Pledge pledge, Object metadata) {
     getLedger().append(new Vote(ballotId, new Response(cohort, pledge, metadata)));
   }
   

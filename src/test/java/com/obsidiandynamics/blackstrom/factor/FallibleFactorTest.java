@@ -81,7 +81,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testNoFault() throws Exception {
+  public void testNoFault() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
@@ -100,7 +100,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testRxTxZeroProbability() throws Exception {
+  public void testRxTxZeroProbability() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
     final Factor fc = new FallibleFactor(c)
@@ -119,7 +119,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testRxDuplicate() throws Exception {
+  public void testRxDuplicate() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
     final Factor fc = new FallibleFactor(c)
@@ -137,7 +137,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testRxDelayed() throws Exception {
+  public void testRxDelayed() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
     final int delay = 10;
@@ -148,7 +148,7 @@ public final class FallibleFactorTest {
         .withFactors(fc)
         .build();
     
-    final long took = TestSupport.tookThrowing(() -> {
+    final long took = TestSupport.took(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(1, c.nominations.size());
@@ -158,7 +158,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testRxDelayedDuplicate() throws Exception {
+  public void testRxDelayedDuplicate() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final TestCohort c = new TestCohort();
     final int delay = 10;
@@ -169,7 +169,7 @@ public final class FallibleFactorTest {
         .withFactors(fc)
         .build();
     
-    final long took = TestSupport.tookThrowing(() -> {
+    final long took = TestSupport.took(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(2, c.nominations.size());
@@ -179,7 +179,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testTxDuplicate() throws Exception {
+  public void testTxDuplicate() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
@@ -198,7 +198,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testTxDelayed() throws Exception {
+  public void testTxDelayed() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
@@ -210,7 +210,7 @@ public final class FallibleFactorTest {
         .withFactors(fc, v)
         .build();
     
-    final long took = TestSupport.tookThrowing(() -> {
+    final long took = TestSupport.took(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(1, v.votes.size());
@@ -220,7 +220,7 @@ public final class FallibleFactorTest {
   }
   
   @Test
-  public void testTxDelayedDuplicate() throws Exception {
+  public void testTxDelayedDuplicate() {
     final Ledger ledger = new MultiNodeQueueLedger();
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
@@ -232,7 +232,7 @@ public final class FallibleFactorTest {
         .withFactors(fc, v)
         .build();
     
-    final long took = TestSupport.tookThrowing(() -> {
+    final long took = TestSupport.took(() -> {
       ledger.append(new Nomination(UUID.randomUUID(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(2, v.votes.size());

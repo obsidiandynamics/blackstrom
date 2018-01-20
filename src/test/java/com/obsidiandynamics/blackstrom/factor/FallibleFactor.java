@@ -25,8 +25,8 @@ public final class FallibleFactor implements Factor, NominationProcessor, VotePr
       throw new UnsupportedOperationException();
     }
 
-    @Override public void append(Message message) throws Exception {
-      onSend(message);
+    @Override public void append(Message message, AppendCallback callback) {
+      onSend(message, callback);
     }
     
     @Override
@@ -135,54 +135,44 @@ public final class FallibleFactor implements Factor, NominationProcessor, VotePr
     });
   }
   
-  private void onSend(Message message) throws Exception {
+  private void onSend(Message message, AppendCallback callback) {
     if (txFailureMode != null && txFailureMode.isTime()) {
       switch (txFailureMode.getFailureType()) {
         case DUPLICATE_DELIVERY:
-          onTxDuplicate(message);
+          onTxDuplicate(message, callback);
           break;
           
         case DELAYED_DELIVERY:
-          onTxDelayed((DelayedDelivery) txFailureMode, message);
+          onTxDelayed((DelayedDelivery) txFailureMode, message, callback);
           break;
           
         case DELAYED_DUPLICATE_DELIVERY:
-          onTxDelayedDuplicate((DelayedDuplicateDelivery) txFailureMode, message);
+          onTxDelayedDuplicate((DelayedDuplicateDelivery) txFailureMode, message, callback);
           break;
           
         default:
           throw new UnsupportedOperationException("Unsupported failure mode " + txFailureMode.getFailureType());
       }
     } else {
-      backingLedger.append(message);
+      backingLedger.append(message, callback);
     }
   }
   
-  private void onTxDuplicate(Message message) throws Exception {
-    backingLedger.append(message);
-    backingLedger.append(message);
+  private void onTxDuplicate(Message message, AppendCallback callback) {
+    backingLedger.append(message, callback);
+    backingLedger.append(message, callback);
   }
   
-  private void onTxDelayed(DelayedDelivery mode, Message message) {
+  private void onTxDelayed(DelayedDelivery mode, Message message, AppendCallback callback) {
     runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
-      try {
-        backingLedger.append(message);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
-      }
+      backingLedger.append(message, callback);
     });
   }
   
-  private void onTxDelayedDuplicate(DelayedDuplicateDelivery mode, Message message) throws Exception {
-    backingLedger.append(message);
+  private void onTxDelayedDuplicate(DelayedDuplicateDelivery mode, Message message, AppendCallback callback) {
+    backingLedger.append(message, callback);
     runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
-      try {
-        backingLedger.append(message);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
-      }
+      backingLedger.append(message, callback);
     });
   }
   

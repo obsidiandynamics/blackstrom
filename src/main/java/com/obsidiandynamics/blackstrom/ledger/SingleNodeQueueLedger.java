@@ -60,8 +60,9 @@ public final class SingleNodeQueueLedger implements Ledger {
   }
 
   @Override
-  public void append(Message message) throws Exception {
+  public void append(Message message, AppendCallback callback) {
     new QueueNode(message).appendTo(tail);
+    callback.onAppend(message.getMessageId(), null);
   }
   
   @Override

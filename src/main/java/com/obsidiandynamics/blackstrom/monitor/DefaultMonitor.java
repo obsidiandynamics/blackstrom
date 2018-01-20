@@ -136,11 +136,10 @@ public final class DefaultMonitor implements Monitor {
   }
   
   private void append(Message message) {
-    try {
-      ledger.append(message);
-    } catch (Exception e) {
-      LOG.warn("Error appending to ledger [message: " + message + "]", e);
-    } 
+    ledger.append(message, (id, x) -> {
+      System.out.println("x is " + x);
+      if (x != null) LOG.warn("Error appending to ledger [message: " + message + "]", x);
+    });
   }
   
   public Map<Object, Outcome> getOutcomes() {
@@ -197,8 +196,13 @@ public final class DefaultMonitor implements Monitor {
     final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses());
     pending.remove(ballotId);
     decided.put(ballotId, outcome);
-    append(outcome);
-    ballot.getAction().complete();
+    ledger.append(outcome, (id, x) -> {
+      if (x == null) {
+        ballot.getAction().complete();
+      } else {
+        LOG.warn("Error appending to ledger [message: " + outcome + "]", x);
+      }
+    });
   }
   
   @Override

@@ -28,7 +28,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   }
   
   @Test
-  public void testSendExceptionLoggerPass() throws Exception {
+  public void testSendExceptionLoggerPass() {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("Boom");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
@@ -43,7 +43,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   }
   
   @Test
-  public void testSendExceptionLoggerFail() throws Exception {
+  public void testSendExceptionLoggerFail() {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("Boom");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
@@ -58,7 +58,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   }
   
   @Test
-  public void testCommitExceptionLoggerFail() throws Exception {
+  public void testCommitExceptionLoggerFail() {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("Boom");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()

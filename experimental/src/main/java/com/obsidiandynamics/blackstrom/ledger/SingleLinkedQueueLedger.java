@@ -46,8 +46,8 @@ public final class SingleLinkedQueueLedger implements Ledger {
   }
 
   @Override
-  public void append(Message message) throws Exception {
-    queue.put(message);
+  public void append(Message message, AppendCallback callback) {
+    BlockingQueueUtils.put(queue, message, callback);
   }
   
   @Override

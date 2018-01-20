@@ -48,12 +48,13 @@ public final class DisruptorLedger implements Ledger {
   }
 
   @Override
-  public void append(Message message) throws Exception {
+  public void append(Message message, AppendCallback callback) {
     final RingBuffer<MessageEvent> buf = disruptor.getRingBuffer();
     final long sequence = buf.next();
     try {
       final MessageEvent event = buf.get(sequence);
       event.set(message);
+      callback.onAppend(sequence, null);
     } finally {
       buf.publish(sequence);
     }

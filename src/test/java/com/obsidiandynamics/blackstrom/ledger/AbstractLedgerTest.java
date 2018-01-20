@@ -140,11 +140,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (shard.contains(m) && m.getSource().equals("source")) {
-        try {
-          c.getLedger().append(new Nomination(m.getBallotId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        c.getLedger().append(new Nomination(m.getBallotId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
         c.confirm(m.getMessageId());
       }
     });
@@ -169,13 +165,9 @@ public abstract class AbstractLedgerTest implements TestSupport {
   }
   
   private void appendMessage(String source) {
-    try {
-      ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
-                    .withSource(source)
-                    .withShardKey(shard.key()));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    ledger.append(new Nomination(messageId++, 0, TEST_COHORTS, null, 0)
+                  .withSource(source)
+                  .withShardKey(shard.key()));
   }
   
   private Ledger createLedger() {
