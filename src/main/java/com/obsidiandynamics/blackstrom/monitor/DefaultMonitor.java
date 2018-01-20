@@ -137,7 +137,6 @@ public final class DefaultMonitor implements Monitor {
   
   private void append(Message message) {
     ledger.append(message, (id, x) -> {
-      System.out.println("x is " + x);
       if (x != null) LOG.warn("Error appending to ledger [message: " + message + "]", x);
     });
   }

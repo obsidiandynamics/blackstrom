@@ -168,4 +168,9 @@ public final class BankBranch implements Cohort {
   public String getGroupId() {
     return branchId;
   }
+
+  @Override
+  public String toString() {
+    return BankBranch.class.getSimpleName() + " [branchId=" + branchId + ", balance=" + balance + ", escrow=" + escrow + "]";
+  }
 }

@@ -86,7 +86,7 @@ public final class BankTransferTest {
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-      assertTrue(allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
     });
   }
 
@@ -120,7 +120,7 @@ public final class BankTransferTest {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-      assertTrue(allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
     });
   }
 
@@ -153,7 +153,7 @@ public final class BankTransferTest {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-      assertTrue(allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
     });
   }
 
@@ -186,7 +186,7 @@ public final class BankTransferTest {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-      assertTrue(allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
     });
   }
   
@@ -285,7 +285,8 @@ public final class BankTransferTest {
 
     wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-      assertTrue(allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
     });
   }
 
@@ -313,9 +314,9 @@ public final class BankTransferTest {
   @Test
   public void testRandomTransfersBenchmark() {
     final int numBranches = PropertyUtils.get("BankTransferTest.numBranches", Integer::valueOf, 10);
-    final long initialBalance = 1_000_000;
-    final long transferAmount = 1_000;
     final int runs = PropertyUtils.get("BankTransferTest.runs", Integer::valueOf, 10_000);
+    final long transferAmount = 1_000;
+    final long initialBalance = runs * transferAmount / (numBranches * numBranches);
     final int backlogTarget = 10_000;
     final boolean idempotencyEnabled = false;
     final boolean randomiseRuns = PropertyUtils.get("BankTransferTest.randomiseRuns", Boolean::valueOf, true);
@@ -366,7 +367,8 @@ public final class BankTransferTest {
         assertEquals(runs, commits.get() + aborts.get());
         final long expectedBalance = numBranches * initialBalance;
         assertEquals(expectedBalance, getTotalBalance(branches));
-        assertTrue(allZeroEscrow(branches));
+        assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
+        assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
       });
     });
     System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts)\n", 
@@ -379,6 +381,10 @@ public final class BankTransferTest {
 
   private static boolean allZeroEscrow(BankBranch[] branches) {
     return Arrays.stream(branches).allMatch(b -> b.getEscrow() == 0);
+  }
+
+  private static boolean nonZeroBalances(BankBranch[] branches) {
+    return Arrays.stream(branches).allMatch(b -> b.getBalance() >= 0);
   }
 
   private static BankSettlement generateRandomSettlement(String[] branchIds, long amount) {
