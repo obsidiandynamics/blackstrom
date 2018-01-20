@@ -304,14 +304,22 @@ public final class BankTransferTest {
     assertEquals(expectedAbortReason, o.getAbortReason());
   }
 
+  /**
+   *  For benchmarking, run with 
+   *  -DBankTransferTest.numBranches=2 -DBankTransferTest.runs=4000000 -DBankTransferTest.randomiseRuns=false -DBankTransferTest.enableLogging=false
+   *  
+   *  @throws Exception
+   */
   @Test
   public void testRandomTransfersBenchmark() throws Exception {
-    final int numBranches = 10;
+    final int numBranches = PropertyUtils.get("BankTransferTest.numBranches", Integer::valueOf, 10);
     final long initialBalance = 1_000_000;
     final long transferAmount = 1_000;
-    final int runs = 10_000;
+    final int runs = PropertyUtils.get("BankTransferTest.runs", Integer::valueOf, 10_000);
     final int backlogTarget = 10_000;
     final boolean idempotencyEnabled = false;
+    final boolean randomiseRuns = PropertyUtils.get("BankTransferTest.randomiseRuns", Boolean::valueOf, true);
+    final boolean enableLogging = PropertyUtils.get("BankTransferTest.enableLogging", Boolean::valueOf, true);
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
@@ -323,9 +331,18 @@ public final class BankTransferTest {
     buildStandardMachine(initiator, monitor, branches);
 
     final long took = TestSupport.tookThrowing(() -> {
+      String[] branchIds = null;
+      BankSettlement settlement = null;
+      if (! randomiseRuns) {
+        branchIds = numBranches != TWO_BRANCHES ? generateBranches(numBranches) : TWO_BRANCH_IDS;
+        settlement = generateRandomSettlement(branchIds, transferAmount);
+      }
+      
       for (int run = 0; run < runs; run++) {
-        final String[] branchIds = numBranches != TWO_BRANCHES ? generateRandomBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
-        final BankSettlement settlement = generateRandomSettlement(branchIds, transferAmount);
+        if (randomiseRuns) {
+          branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
+          settlement = generateRandomSettlement(branchIds, transferAmount);
+        }
         ledger.append(new Nomination(run, branchIds, settlement, Integer.MAX_VALUE));
 
         if (run % backlogTarget == 0) {
@@ -334,7 +351,7 @@ public final class BankTransferTest {
             final int backlog = run - commits.get() - aborts.get();
             if (backlog > backlogTarget) {
               TestSupport.sleep(1);
-              if (System.currentTimeMillis() - lastLogTime > 5_000) {
+              if (enableLogging && System.currentTimeMillis() - lastLogTime > 5_000) {
                 TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d txns)\n", backlog, run);
                 lastLogTime = System.currentTimeMillis();
               }
@@ -379,16 +396,12 @@ public final class BankTransferTest {
     return new BankSettlement(transfers);
   }
 
-  private static String[] generateRandomBranches(int numBranches) {
-    final Set<String> branches = new HashSet<>(numBranches);
+  private static String[] generateBranches(int numBranches) {
+    final String[] branches = new String[numBranches];
     for (int i = 0; i < numBranches; i++) {
-      while (! branches.add(getRandomBranchId(numBranches)));
+      branches[i] = getBranchId(i);
     }
-    return branches.toArray(new String[numBranches]);
-  }
-
-  private static String getRandomBranchId(int numBranches) {
-    return getBranchId((int) (Math.random() * numBranches));
+    return branches;
   }
 
   private static String getBranchId(int branchIdx) {

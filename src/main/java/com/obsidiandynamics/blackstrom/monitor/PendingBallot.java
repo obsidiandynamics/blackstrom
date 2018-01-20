@@ -5,6 +5,7 @@ import java.util.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.tracer.*;
 
 final class PendingBallot {
   private final Nomination nomination;
@@ -14,6 +15,8 @@ final class PendingBallot {
   private Verdict verdict = Verdict.COMMIT;
   
   private AbortReason abortReason;
+  
+  private Action action;
   
   PendingBallot(Nomination nomination) {
     this.nomination = nomination;
@@ -38,6 +41,14 @@ final class PendingBallot {
     return array;
   }
   
+  Action getAction() {
+    return action;
+  }
+
+  void setAction(Action action) {
+    this.action = action;
+  }
+
   boolean castVote(Logger log, Vote vote) {
     final Response response = vote.getResponse();
     final Response existing = responses.put(response.getCohort(), response);

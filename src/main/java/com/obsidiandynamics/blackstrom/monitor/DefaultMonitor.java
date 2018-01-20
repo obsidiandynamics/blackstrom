@@ -7,6 +7,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.tracer.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultMonitor implements Monitor {
@@ -35,6 +36,8 @@ public final class DefaultMonitor implements Monitor {
   private final int timeoutIntervalMillis;
   
   private final Object lock = new Object();
+  
+  private final ShardedTracer tracer = new ShardedTracer();
   
   public DefaultMonitor() {
     this(new DefaultMonitorOptions());
@@ -156,11 +159,14 @@ public final class DefaultMonitor implements Monitor {
         return;
       }
       
-      final PendingBallot existing = pending.put(nomination.getBallotId(), new PendingBallot(nomination));
-      if (existing != null) {
+      final PendingBallot newBallot = new PendingBallot(nomination);
+      final PendingBallot existingBallot = pending.put(nomination.getBallotId(), newBallot);
+      if (existingBallot != null) {
         if (DEBUG) LOG.trace("Skipping redundant {} (ballot already pending)", nomination);
-        pending.put(nomination.getBallotId(), existing);
+        pending.put(nomination.getBallotId(), existingBallot);
         return;
+      } else {
+        newBallot.setAction(tracer.begin(context, nomination));
       }
     }
     
@@ -192,6 +198,7 @@ public final class DefaultMonitor implements Monitor {
     pending.remove(ballotId);
     decided.put(ballotId, outcome);
     append(outcome);
+    ballot.getAction().complete();
   }
   
   @Override
@@ -205,5 +212,6 @@ public final class DefaultMonitor implements Monitor {
     timeoutThread.terminate();
     gcThread.joinQuietly();
     timeoutThread.joinQuietly();
+    tracer.dispose();
   }
 }
