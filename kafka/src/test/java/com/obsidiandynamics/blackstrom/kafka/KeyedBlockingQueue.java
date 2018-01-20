@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.keyed.*;
 
 public final class KeyedBlockingQueue<K, E> extends Keyed<K, BlockingQueue<E>> {
   public KeyedBlockingQueue(Supplier<BlockingQueue<E>> partitionFactory) {
-    super(partitionFactory);
+    super(k -> partitionFactory.get());
   }
 
   public int totalSize() {

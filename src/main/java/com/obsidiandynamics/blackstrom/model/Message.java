@@ -3,6 +3,8 @@ package com.obsidiandynamics.blackstrom.model;
 import org.apache.commons.lang3.builder.*;
 
 public abstract class Message {
+  private static final int UNASSIGNED = -1;
+  
   private final Object ballotId;
   
   private final long timestamp;
@@ -13,7 +15,7 @@ public abstract class Message {
   
   private String shardKey;
   
-  private Integer shardIndex;
+  private int shard = UNASSIGNED;
   
   protected Message(Object ballotId, long timestamp) {
     this.ballotId = ballotId;
@@ -55,12 +57,16 @@ public abstract class Message {
     return this;
   }
   
-  public final Integer getShardIndex() {
-    return shardIndex;
+  public final int getShard() {
+    return shard;
   }
   
-  public final Message withShardIndex(Integer shardIndex) {
-    this.shardIndex = shardIndex;
+  public final Integer getShardIfAssigned() {
+    return shard != UNASSIGNED ? shard : null;
+  }
+  
+  public final Message withShard(int shard) {
+    this.shard = shard;
     return this;
   }
   
@@ -74,7 +80,7 @@ public abstract class Message {
         .append(messageId)
         .append(source)
         .append(shardKey)
-        .append(shardIndex)
+        .append(shard)
         .toHashCode();
   }
   
@@ -88,7 +94,7 @@ public abstract class Message {
           .append(messageId, that.messageId)
           .append(source, that.source)
           .append(shardKey, that.shardKey)
-          .append(shardIndex, that.shardIndex)
+          .append(shard, that.shard)
           .isEquals();
     } else {
       return false;
@@ -97,6 +103,6 @@ public abstract class Message {
   
   protected final String baseToString() {
     return "ballotId=" + ballotId + ", messageId=" + messageId + ", source=" + source + ", shardKey=" + shardKey + 
-        ", shardIndex=" + shardIndex + ", timestamp=" + timestamp;
+        ", shard=" + shard + ", timestamp=" + timestamp;
   }
 }
