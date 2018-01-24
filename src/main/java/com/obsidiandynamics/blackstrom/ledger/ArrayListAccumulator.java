@@ -2,46 +2,63 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
 final class ArrayListAccumulator implements Accumulator {
   private static class Buffer {
     private final Buffer previous;
-    private volatile long baseOffset;
-    private final List<Message> list = new CopyOnWriteArrayList<>();
+    private final long baseOffset;
+    private final List<Message> items = new CopyOnWriteArrayList<>();
     private volatile Buffer next;
     
-    Buffer(Buffer previous) {
+    Buffer(Buffer previous, long baseOffset) {
       this.previous = previous;
+      this.baseOffset = baseOffset;
     }
     
-    void populate(List<Message> messages) {
-      
+    int retrieve(long fromOffset, List<Message> sink) {
+      final int length = items.size();
+      final int startIndex = (int) Math.max(0, Math.min(fromOffset - baseOffset, length));
+      for (int i = startIndex; i < length; i++) {
+        sink.add(items.get(i));
+      }
+      return length - startIndex;
     }
   }
   
   private final int shard;
+  private final int bufferSize;
   private volatile long nextOffset;
   
-  private volatile Buffer earliest = new Buffer(null);
-  private volatile Buffer latest = earliest;
+  private volatile Buffer latest;
   
   private final Object lock = new Object();
   
-  ArrayListAccumulator(int shard) {
+  ArrayListAccumulator(int shard, int bufferSize, long baseOffset) {
     this.shard = shard;
+    this.bufferSize = bufferSize;
+    latest = new Buffer(null, baseOffset);
+    nextOffset = baseOffset;
   }
 
   @Override
   public void append(Message message) {
     synchronized (lock) {
+      if (latest.items.size() == bufferSize) {
+        createNextBuffer();
+      }
       final BalancedMessageId messageId = new BalancedMessageId(shard, nextOffset);
       message.withMessageId(messageId);
-      latest.list.add(message);
+      latest.items.add(message);
       nextOffset++;
     }
+  }
+  
+  private void createNextBuffer() {
+    final Buffer next = new Buffer(latest, latest.baseOffset + latest.items.size());
+    latest.next = next;
+    latest = next;
   }
 
   @Override
@@ -50,9 +67,14 @@ final class ArrayListAccumulator implements Accumulator {
   }
 
   @Override
-  public List<Message> retrieve(long fromOffset) {
+  public int retrieve(long fromOffset, List<Message> sink) {
     Buffer buffer = findBuffer(fromOffset);
-    return null;
+    int retrieved = 0;
+    while (buffer != null) {
+      retrieved += buffer.retrieve(fromOffset, sink);
+      buffer = buffer.next;
+    }
+    return retrieved;
   }
   
   private Buffer findBuffer(long offset) {

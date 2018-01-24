@@ -55,6 +55,10 @@ public final class BalancedLedgerBroker implements Disposable {
     void leave(Object handlerId) {
       Arrays.stream(assignments).forEach(a -> a.remove(handlerId));
     }
+    
+    long getReadOffset(int shard) {
+      return offsets[shard].get();
+    }
 
     boolean isAssignee(int shard, Object handlerId) {
       return assignments[shard].activeHandler.equals(handlerId);

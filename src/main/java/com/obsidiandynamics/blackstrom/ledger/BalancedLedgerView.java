@@ -21,6 +21,8 @@ public final class BalancedLedgerView implements Ledger {
     private final MessageContext context = new DefaultMessageContext(BalancedLedgerView.this, handlerId);
     private final Accumulator[] accumulators = broker.getAccumulators(); 
     private long[] nextReadOffsets = new long[accumulators.length];
+    
+    private final List<Message> sink = new ArrayList<>();
 
     Consumer(MessageHandler handler, ConsumerGroup group) {
       this.handler = handler;
@@ -40,24 +42,29 @@ public final class BalancedLedgerView implements Ledger {
     }
     
     private void cycle(WorkerThread t) throws InterruptedException {
-      boolean consumed = false;
       for (int shard = 0; shard < accumulators.length; shard++) {
         final Accumulator accumulator = accumulators[shard];
         if (group == null || group.isAssignee(shard, handlerId)) {
-          final long nextReadOffset = nextReadOffsets[shard];
-          final List<Message> backlog = accumulator.retrieve(nextReadOffset);
-          final int backlogSize = backlog.size();
-          if (backlogSize != 0) {
-            consumed = true;
-            for (Message message : backlog) {
-              handler.onMessage(context, message);
-            }
-            nextReadOffsets[shard] += backlogSize;
+          final long nextReadOffset;
+          if (group != null) {
+            nextReadOffset = Math.max(nextReadOffsets[shard], group.getReadOffset(shard));
+          } else {
+            nextReadOffset = nextReadOffsets[shard];
+          }
+          
+          final int retrieved = accumulator.retrieve(nextReadOffset, sink);
+          if (retrieved != 0) {
+            nextReadOffsets[shard] = nextReadOffset + retrieved;
           }
         }
       }
       
-      if (! consumed) {
+      if (! sink.isEmpty()) {
+        for (Message message : sink) {
+          handler.onMessage(context, message);
+        }
+        sink.clear();
+      } else {
         Thread.sleep(CONSUME_WAIT_MILLIS);
       }
     }

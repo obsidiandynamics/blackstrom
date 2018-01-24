@@ -10,5 +10,5 @@ public interface Accumulator extends Disposable.Default {
   
   long getNextOffset();
   
-  List<Message> retrieve(long fromOffset);
+  int retrieve(long fromOffset, List<Message> sink);
 }
