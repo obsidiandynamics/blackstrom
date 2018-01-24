@@ -53,4 +53,10 @@ public final class WorkerThreadBuilder {
     
     return new WorkerThread(options, onCycle, onStartup, onShutdown, onUncaughtException);
   }
+  
+  public WorkerThread buildAndStart() {
+    final WorkerThread thread = build();
+    thread.start();
+    return thread;
+  }
 }

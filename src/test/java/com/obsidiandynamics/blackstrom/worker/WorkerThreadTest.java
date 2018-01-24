@@ -63,8 +63,7 @@ public final class WorkerThreadTest {
           throw new InterruptedException();
         })
         .onShutdown(onShutdown)
-        .build();
-    thread.start();
+        .buildAndStart();
     thread.joinQuietly();
     
     assertEquals(WorkerState.TERMINATED, thread.getState());

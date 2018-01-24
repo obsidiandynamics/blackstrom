@@ -61,6 +61,10 @@ public abstract class Message {
     return shard;
   }
   
+  public final boolean isShardAssigned() {
+    return shard != UNASSIGNED;
+  }
+  
   public final Integer getShardIfAssigned() {
     return shard != UNASSIGNED ? shard : null;
   }

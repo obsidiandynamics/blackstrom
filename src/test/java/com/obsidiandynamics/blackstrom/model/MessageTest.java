@@ -47,6 +47,7 @@ public final class MessageTest {
         .withShardKey("key");
     
     assertEquals(-1, m.getShard());
+    assertFalse(m.isShardAssigned());
     assertNull(m.getShardIfAssigned());
     assertEquals(1000, time);
   }
