@@ -54,9 +54,8 @@ public final class MultiNodeQueueLedger implements Ledger {
                      .withName(MultiNodeQueueLedger.class.getSimpleName() + "-" + Integer.toHexString(System.identityHashCode(handler)))
                      .withDaemon(true))
         .onCycle(new NodeWorker(handler, tail.get()))
-        .build();
+        .buildAndStart();
     threads.add(thread);
-    thread.start();
   }
   
   @Override

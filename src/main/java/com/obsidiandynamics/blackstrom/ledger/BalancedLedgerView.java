@@ -19,7 +19,7 @@ public final class BalancedLedgerView implements Ledger {
     private final Object handlerId = UUID.randomUUID();
     private final WorkerThread thread;
     private final MessageContext context = new DefaultMessageContext(BalancedLedgerView.this, handlerId);
-    private final ShardAccumulator[] accumulators = broker.getAccumulators(); 
+    private final Accumulator[] accumulators = broker.getAccumulators(); 
     private long[] nextReadOffsets = new long[accumulators.length];
 
     Consumer(MessageHandler handler, ConsumerGroup group) {
@@ -27,7 +27,12 @@ public final class BalancedLedgerView implements Ledger {
       this.group = group;
       if (group != null) {
         group.join(handler);
+      } else {
+        for (int shard = 0; shard < accumulators.length; shard++) {
+          nextReadOffsets[shard] = accumulators[shard].getNextOffset();
+        }
       }
+      
       thread = WorkerThread.builder()
           .withOptions(new WorkerOptions().withDaemon(true).withName(BalancedLedgerView.class.getSimpleName() + "-" + handlerId))
           .onCycle(this::cycle)
@@ -37,7 +42,7 @@ public final class BalancedLedgerView implements Ledger {
     private void cycle(WorkerThread t) throws InterruptedException {
       boolean consumed = false;
       for (int shard = 0; shard < accumulators.length; shard++) {
-        final ShardAccumulator accumulator = accumulators[shard];
+        final Accumulator accumulator = accumulators[shard];
         if (group == null || group.isAssignee(shard, handlerId)) {
           final long nextReadOffset = nextReadOffsets[shard];
           final List<Message> backlog = accumulator.retrieve(nextReadOffset);
@@ -86,10 +91,11 @@ public final class BalancedLedgerView implements Ledger {
   }
 
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
     consumers.forEach(c -> c.thread.joinQuietly());
     consumers.stream().filter(c -> c.group != null).forEach(c -> c.group.leave(c.handlerId));
+    this.consumers.clear();
   }
 }

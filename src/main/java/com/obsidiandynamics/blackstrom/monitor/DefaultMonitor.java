@@ -54,16 +54,14 @@ public final class DefaultMonitor implements Monitor {
                      .withName(nameThread("gc"))
                      .withDaemon(true))
         .onCycle(this::gcCycle)
-        .build();
-    gcThread.start();
+        .buildAndStart();
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withName(nameThread("timeout"))
                      .withDaemon(true))
         .onCycle(this::timeoutCycle)
-        .build();
-    timeoutThread.start();
+        .buildAndStart();
   }
   
   private String nameThread(String role) {

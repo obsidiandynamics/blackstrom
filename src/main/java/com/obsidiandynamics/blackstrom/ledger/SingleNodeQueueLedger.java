@@ -33,8 +33,7 @@ public final class SingleNodeQueueLedger implements Ledger {
                      .withDaemon(true)
                      .withName(SingleNodeQueueLedger.class.getSimpleName() + "-" + Integer.toHexString(System.identityHashCode(this))))
         .onCycle(this::cycle)
-        .build();
-    thread.start();
+        .buildAndStart();
   }
   
   private void cycle(WorkerThread thread) throws InterruptedException {

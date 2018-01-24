@@ -22,8 +22,7 @@ public final class Tracer implements Joinable {
                      .withDaemon(true)
                      .withName(threadName))
         .onCycle(firingStrategyFactory.apply(tail))
-        .build();
-    executor.start();
+        .buildAndStart();
   }
   
   public Action begin(Runnable task) {
