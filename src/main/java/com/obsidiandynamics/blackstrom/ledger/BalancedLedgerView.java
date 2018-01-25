@@ -3,13 +3,13 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerBroker.*;
+import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class BalancedLedgerView implements Ledger {
-  private final BalancedLedgerBroker broker;
+  private final BalancedLedgerHub hub;
   
   private class Consumer {
     private static final int CONSUME_WAIT_MILLIS = 1;
@@ -27,7 +27,7 @@ public final class BalancedLedgerView implements Ledger {
       this.handler = handler;
       this.group = group;
       if (group != null) {
-        group.join(handler);
+        group.join(handlerId);
       } else {
         for (int shard = 0; shard < accumulators.length; shard++) {
           nextReadOffsets[shard] = accumulators[shard].getNextOffset();
@@ -42,14 +42,18 @@ public final class BalancedLedgerView implements Ledger {
     
     private void cycle(WorkerThread t) throws InterruptedException {
       for (int shard = 0; shard < accumulators.length; shard++) {
-        final Accumulator accumulator = accumulators[shard];
+        //TODO
+//        System.out.format("shard=%s, group=%s, assignee=%b\n", 
+//                          shard, group, group != null ? group.isAssignee(shard, handlerId) : false);
         if (group == null || group.isAssignee(shard, handlerId)) {
+          final Accumulator accumulator = accumulators[shard];
           final long nextReadOffset;
           if (group != null) {
             nextReadOffset = Math.max(nextReadOffsets[shard], group.getReadOffset(shard));
           } else {
             nextReadOffset = nextReadOffsets[shard];
           }
+//          System.out.format("  next read %d\n", nextReadOffset);
           
           final int retrieved = accumulator.retrieve(nextReadOffset, sink);
           if (retrieved != 0) {
@@ -73,21 +77,26 @@ public final class BalancedLedgerView implements Ledger {
   
   private final Accumulator[] accumulators;
   
-  BalancedLedgerView(BalancedLedgerBroker broker) {
-    this.broker = broker;
-    accumulators = broker.getAccumulators(); 
+  BalancedLedgerView(BalancedLedgerHub hub) {
+    this.hub = hub;
+    accumulators = hub.getAccumulators(); 
+  }
+  
+  public BalancedLedgerHub getHub() {
+    return hub;
   }
 
   @Override
   public void attach(MessageHandler handler) {
-    final ConsumerGroup group = broker.getOrCreateGroup(handler.getGroupId());
+    final ConsumerGroup group = handler.getGroupId() != null ? hub.getOrCreateGroup(handler.getGroupId()) : null;
     final Consumer consumer = new Consumer(handler, group);
     consumers.put(consumer.handlerId, consumer);
   }
 
   @Override
   public void append(Message message, AppendCallback callback) {
-    broker.append(message, callback);
+    hub.append(message, callback);
+    callback.onAppend(message.getMessageId(), null);
   }
 
   @Override
@@ -101,7 +110,7 @@ public final class BalancedLedgerView implements Ledger {
 
   @Override
   public synchronized void dispose() {
-    broker.detachView(this);
+    hub.detachView(this);
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
     consumers.forEach(c -> c.thread.joinQuietly());

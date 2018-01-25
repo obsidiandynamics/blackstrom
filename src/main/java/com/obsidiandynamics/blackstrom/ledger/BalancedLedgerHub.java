@@ -1,49 +1,24 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
-public final class BalancedLedgerBroker implements Disposable {
+public final class BalancedLedgerHub implements Disposable {
+  private final ShardAssignment.Factory shardAssignmentFactory;
+  
   private final Accumulator[] accumulators;
-
-  static class Assignment {
-    private volatile Object activeHandler;
-    private final Set<Object> allHandlers = new CopyOnWriteArraySet<>();
-
-    void add(Object handlerId) {
-      allHandlers.add(handlerId);
-      if (activeHandler == null) {
-        activeHandler = handlerId;
-      }
-    }
-
-    void remove(Object handlerId) {
-      allHandlers.remove(handlerId);
-      if (handlerId.equals(activeHandler)) {
-        activeHandler = randomHandler();
-      }
-    }
-
-    private Object randomHandler() {
-      final List<Object> handlers = new ArrayList<>(allHandlers);
-      return handlers.get((int) (Math.random() * handlers.size()));
-    }
-  }
 
   class ConsumerGroup {
     private final AtomicLong[] offsets = new AtomicLong[accumulators.length];
-    private final Assignment[] assignments = new Assignment[accumulators.length];
+    private final ShardAssignment[] assignments = new ShardAssignment[accumulators.length];
 
     ConsumerGroup() {
-      for (int i = 0; i < accumulators.length; i++) {
-        offsets[i] = new AtomicLong();
-        assignments[i] = new Assignment();
-      }
+      Arrays.setAll(offsets, i-> new AtomicLong());
+      Arrays.setAll(assignments, i -> shardAssignmentFactory.create());
     }
 
     void join(Object handlerId) {
@@ -59,7 +34,7 @@ public final class BalancedLedgerBroker implements Disposable {
     }
 
     boolean isAssignee(int shard, Object handlerId) {
-      return assignments[shard].activeHandler.equals(handlerId);
+      return assignments[shard].isAssignee(handlerId);
     }
 
     void confirm(int shard, long offset) {
@@ -73,7 +48,8 @@ public final class BalancedLedgerBroker implements Disposable {
 
   private final Object lock = new Object();
 
-  public BalancedLedgerBroker(int shards, Accumulator.Factory accumulatorFactory) {
+  public BalancedLedgerHub(int shards, ShardAssignment.Factory shardAssignmentFactory, Accumulator.Factory accumulatorFactory) {
+    this.shardAssignmentFactory = shardAssignmentFactory;
     accumulators = new Accumulator[shards];
     Arrays.setAll(accumulators, accumulatorFactory::create);
   }
@@ -82,6 +58,10 @@ public final class BalancedLedgerBroker implements Disposable {
     final BalancedLedgerView view = new BalancedLedgerView(this);
     views.add(view);
     return view;
+  }
+  
+  public int getShards() {
+    return accumulators.length;
   }
   
   void detachView(BalancedLedgerView view) {
@@ -114,6 +94,6 @@ public final class BalancedLedgerBroker implements Disposable {
   @Override
   public void dispose() {
     Arrays.stream(accumulators).forEach(a -> a.dispose());
-    views.forEach(v -> v.dispose());
+    new ArrayList<>(views).forEach(v -> v.dispose());
   }
 }

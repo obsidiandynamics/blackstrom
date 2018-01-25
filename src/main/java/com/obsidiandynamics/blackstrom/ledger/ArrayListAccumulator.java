@@ -31,7 +31,72 @@ final class ArrayListAccumulator implements Accumulator {
       return length - startIndex;
     }
   }
-  
+//  private static class Buffer {
+//    private final Buffer previous;
+//    private final long baseOffset;
+//    private final BlockingQueue<Message> items = new LinkedBlockingQueue<>();
+//    private volatile Buffer next;
+//    
+//    Buffer(Buffer previous, long baseOffset) {
+//      this.previous = previous;
+//      this.baseOffset = baseOffset;
+//    }
+//    
+//    int retrieve(long fromOffset, List<Message> sink) {
+//      final int length = items.size();
+//      final int startIndex;
+//      if (fromOffset > baseOffset) {
+//        startIndex = (int) Math.min(fromOffset - baseOffset, length);
+//      } else {
+//        startIndex = 0;
+//      }
+//      
+//      int skipped = 0;
+//      int added = 0;
+//      for (Message m : items) {
+//        if (skipped == startIndex) {
+//          sink.add(m);
+//          added++;
+//        } else {
+//          skipped++;
+//        }
+//      }
+//      return added;
+//    }
+//  }
+//  private class Buffer {
+//    private final Buffer previous;
+//    private final long baseOffset;
+//    private final BlockingQueue<Message> items = new ArrayBlockingQueue<>(bufferSize);
+//    private volatile Buffer next;
+//    
+//    Buffer(Buffer previous, long baseOffset) {
+//      this.previous = previous;
+//      this.baseOffset = baseOffset;
+//    }
+//    
+//    int retrieve(long fromOffset, List<Message> sink) {
+//      final int startIndex;
+//      if (fromOffset > baseOffset) {
+//        startIndex = (int) (fromOffset - baseOffset);
+//      } else {
+//        startIndex = 0;
+//      }
+//      
+//      int skipped = 0;
+//      int added = 0;
+//      for (Message m : items) {
+//        if (skipped == startIndex) {
+//          sink.add(m);
+//          added++;
+//        } else {
+//          skipped++;
+//        }
+//      }
+//      return added;
+//    }
+//  }
+//  
   private final int shard;
   private final int bufferSize;
   private volatile long nextOffset;
@@ -72,12 +137,17 @@ final class ArrayListAccumulator implements Accumulator {
   @Override
   public int retrieve(long fromOffset, List<Message> sink) {
     Buffer buffer = findBuffer(fromOffset);
-    int retrieved = 0;
+    int totalRetrieved = 0;
     while (buffer != null) {
-      retrieved += buffer.retrieve(fromOffset, sink);
-      buffer = buffer.next;
+      final boolean bufferFull = buffer.next != null;
+      totalRetrieved += buffer.retrieve(fromOffset, sink);
+      if (bufferFull) {
+        buffer = buffer.next;
+      } else {
+        break;
+      }
     }
-    return retrieved;
+    return totalRetrieved;
   }
   
   private Buffer findBuffer(long offset) {

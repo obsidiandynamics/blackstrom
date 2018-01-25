@@ -57,8 +57,18 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private final Timesert wait = getWait();
   
+  protected void startup() {}
+  
+  protected void shutdown() {}
+  
+  @Before
+  public void before() {
+    startup();
+  }
+  
   @After
   public void after() {
+    shutdown();
     if (ledger != null) {
       ledger.dispose();
     }
