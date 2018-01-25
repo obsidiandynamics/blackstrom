@@ -19,7 +19,6 @@ public final class BalancedLedgerView implements Ledger {
     private final Object handlerId = UUID.randomUUID();
     private final WorkerThread thread;
     private final MessageContext context = new DefaultMessageContext(BalancedLedgerView.this, handlerId);
-    private final Accumulator[] accumulators = broker.getAccumulators(); 
     private long[] nextReadOffsets = new long[accumulators.length];
     
     private final List<Message> sink = new ArrayList<>();
@@ -72,8 +71,11 @@ public final class BalancedLedgerView implements Ledger {
   
   private final Map<Object, Consumer> consumers = new HashMap<>();
   
+  private final Accumulator[] accumulators;
+  
   BalancedLedgerView(BalancedLedgerBroker broker) {
     this.broker = broker;
+    accumulators = broker.getAccumulators(); 
   }
 
   @Override
@@ -99,6 +101,7 @@ public final class BalancedLedgerView implements Ledger {
 
   @Override
   public synchronized void dispose() {
+    broker.detachView(this);
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
     consumers.forEach(c -> c.thread.joinQuietly());

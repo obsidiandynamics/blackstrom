@@ -36,12 +36,10 @@ public final class BalancedLedgerBroker implements Disposable {
   }
 
   class ConsumerGroup {
-    private final String groupId;
     private final AtomicLong[] offsets = new AtomicLong[accumulators.length];
     private final Assignment[] assignments = new Assignment[accumulators.length];
 
-    ConsumerGroup(String groupId) {
-      this.groupId = groupId;
+    ConsumerGroup() {
       for (int i = 0; i < accumulators.length; i++) {
         offsets[i] = new AtomicLong();
         assignments[i] = new Assignment();
@@ -75,14 +73,19 @@ public final class BalancedLedgerBroker implements Disposable {
 
   private final Object lock = new Object();
 
-  public BalancedLedgerBroker(int shards) {
+  public BalancedLedgerBroker(int shards, Accumulator.Factory accumulatorFactory) {
     accumulators = new Accumulator[shards];
+    Arrays.setAll(accumulators, accumulatorFactory::create);
   }
 
-  public BalancedLedgerView createView() {
+  public BalancedLedgerView connect() {
     final BalancedLedgerView view = new BalancedLedgerView(this);
     views.add(view);
     return view;
+  }
+  
+  void detachView(BalancedLedgerView view) {
+    views.remove(view);
   }
 
   void append(Message message, AppendCallback callback) {
@@ -97,7 +100,7 @@ public final class BalancedLedgerBroker implements Disposable {
       if (existing != null) {
         return existing;
       } else {
-        final ConsumerGroup created = new ConsumerGroup(groupId);
+        final ConsumerGroup created = new ConsumerGroup();
         groups.put(groupId, created);
         return created;
       }

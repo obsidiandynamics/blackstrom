@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import org.junit.*;
 
@@ -166,9 +167,7 @@ public final class TracerTest {
 
   private static List<Integer> increasingListOf(int numElements) {
     final List<Integer> nums = new ArrayList<>(numElements);
-    for (int i = 0; i < numElements; i++) {
-      nums.add(i);
-    }
+    IntStream.range(0, numElements).forEach(nums::add);
     return nums;
   }
   

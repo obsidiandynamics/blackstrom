@@ -109,11 +109,9 @@ public final class ArrayListAccumulatorTest {
       return stream().map(i -> new UnknownMessage(i, 0)).collect(Collectors.toList());
     }
     
-    static LongList generate(long firstInclusive, long lastExclusive) {
-      final LongList list = new LongList((int) (lastExclusive - firstInclusive));
-      for (long i = firstInclusive; i < lastExclusive; i++) {
-        list.add(i);
-      }
+    static LongList generate(long startInclusive, long endExclusive) {
+      final LongList list = new LongList((int) (endExclusive - startInclusive));
+      LongStream.range(startInclusive, endExclusive).forEach(list::add);
       return list;
     }
     
