@@ -6,10 +6,10 @@ import java.util.concurrent.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 final class ArrayListAccumulator implements Accumulator {
-  private class Buffer {
+  private static class Buffer {
     private final Buffer previous;
     private final long baseOffset;
-    private final AppendOnlyArray items = new AppendOnlyArray(bufferSize);
+    private final List<Message> items = new CopyOnWriteArrayList<>();
     private volatile Buffer next;
     
     Buffer(Buffer previous, long baseOffset) {

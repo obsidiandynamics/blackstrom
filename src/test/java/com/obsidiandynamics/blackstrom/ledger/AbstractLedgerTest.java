@@ -119,7 +119,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   @Test
   public final void testOneWayBenchmark() {
     ledger = createLedger();
-    final int numMessages = 10_000;
+    final int numMessages = 10000_000;
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
