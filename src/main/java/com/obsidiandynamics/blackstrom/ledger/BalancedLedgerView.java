@@ -92,8 +92,8 @@ public final class BalancedLedgerView implements Ledger {
   public void confirm(Object handlerId, Object messageId) {
     final ConsumerGroup group = consumers.get(handlerId).group;
     if (group != null) {
-      final BalancedMessageId balancedId = Cast.from(messageId);
-      group.confirm(balancedId.getShard(), balancedId.getOffset());
+      final ShardMessageId shardMessageId = Cast.from(messageId);
+      group.confirm(shardMessageId.getShard(), shardMessageId.getOffset());
     }
   }
 

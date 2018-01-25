@@ -2,12 +2,12 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import org.apache.commons.lang3.builder.*;
 
-public final class BalancedMessageId {
+public final class ShardMessageId {
   private final int shard;
   
   private final long offset;
 
-  public BalancedMessageId(int shard, long offset) {
+  public ShardMessageId(int shard, long offset) {
     this.shard = shard;
     this.offset = offset;
   }
@@ -32,8 +32,8 @@ public final class BalancedMessageId {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof BalancedMessageId) {
-      final BalancedMessageId that = (BalancedMessageId) obj;
+    } else if (obj instanceof ShardMessageId) {
+      final ShardMessageId that = (ShardMessageId) obj;
       return new EqualsBuilder()
           .append(shard, that.shard)
           .append(offset, that.offset)

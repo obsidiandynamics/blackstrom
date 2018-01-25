@@ -11,4 +11,9 @@ public interface Accumulator extends Disposable.Default {
   long getNextOffset();
   
   int retrieve(long fromOffset, List<Message> sink);
+  
+  @FunctionalInterface
+  interface Factory {
+    Accumulator create(int shard);
+  }
 }

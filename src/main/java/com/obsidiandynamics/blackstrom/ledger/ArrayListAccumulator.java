@@ -19,7 +19,12 @@ final class ArrayListAccumulator implements Accumulator {
     
     int retrieve(long fromOffset, List<Message> sink) {
       final int length = items.size();
-      final int startIndex = (int) Math.max(0, Math.min(fromOffset - baseOffset, length));
+      final int startIndex;
+      if (fromOffset > baseOffset) {
+        startIndex = (int) Math.min(fromOffset - baseOffset, length);
+      } else {
+        startIndex = 0;
+      }
       for (int i = startIndex; i < length; i++) {
         sink.add(items.get(i));
       }
@@ -30,9 +35,7 @@ final class ArrayListAccumulator implements Accumulator {
   private final int shard;
   private final int bufferSize;
   private volatile long nextOffset;
-  
   private volatile Buffer latest;
-  
   private final Object lock = new Object();
   
   ArrayListAccumulator(int shard, int bufferSize, long baseOffset) {
@@ -48,7 +51,7 @@ final class ArrayListAccumulator implements Accumulator {
       if (latest.items.size() == bufferSize) {
         createNextBuffer();
       }
-      final BalancedMessageId messageId = new BalancedMessageId(shard, nextOffset);
+      final ShardMessageId messageId = new ShardMessageId(shard, nextOffset);
       message.withMessageId(messageId);
       latest.items.add(message);
       nextOffset++;
@@ -79,9 +82,13 @@ final class ArrayListAccumulator implements Accumulator {
   
   private Buffer findBuffer(long offset) {
     Buffer buffer = latest;
-    while (buffer.baseOffset > offset) {
+    while (buffer.baseOffset > offset && buffer.previous != null) {
       buffer = buffer.previous;
     }
     return buffer;
+  }
+  
+  static Accumulator.Factory factory(int bufferSize) {
+    return shard -> new ArrayListAccumulator(shard, bufferSize, 0);
   }
 }
