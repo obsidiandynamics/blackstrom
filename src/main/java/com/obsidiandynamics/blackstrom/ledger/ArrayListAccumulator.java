@@ -1,15 +1,14 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
 final class ArrayListAccumulator implements Accumulator {
-  private static class Buffer {
+  private class Buffer {
     private final Buffer previous;
     private final long baseOffset;
-    private final List<Message> items = new CopyOnWriteArrayList<>();
+    private final AppendOnlyArray items = new AppendOnlyArray(bufferSize);
     private volatile Buffer next;
     
     Buffer(Buffer previous, long baseOffset) {
@@ -18,7 +17,7 @@ final class ArrayListAccumulator implements Accumulator {
     }
     
     int retrieve(long fromOffset, List<Message> sink) {
-      final int length = items.size();
+      final int length = items.size(); // volatile piggyback (inside the AppendOnlyArray)
       final int startIndex;
       if (fromOffset > baseOffset) {
         startIndex = (int) Math.min(fromOffset - baseOffset, length);
