@@ -287,7 +287,7 @@ public final class BalancedLedgerHubTest {
   }
   
   @Test
-  public void testHandover() {
+  public void testHandoverRandomNoConfirm() {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
@@ -304,8 +304,82 @@ public final class BalancedLedgerHubTest {
     v0.view.dispose();
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
-    v1.attach("group");
     wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v1), expected));
+  }
+  
+  @Test
+  public void testHandoverFifoNoConfirm() {
+    final int shards = 1;
+    final int messages = 20;
+    final int handlers = 2;
+    hub = new BalancedLedgerHub(shards, FifoShardAssignment::new, ArrayListAccumulator.factory(10));
+    
+    final TestView v0 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
+    final LongList expected = LongList.generate(0, messages);
+    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(ballotId, 0).withShard(shard));
+    }));
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
+    
+    final TestView v1 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
+    TestSupport.sleep(10);
+    assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
+    
+    v0.view.dispose();
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
+  }
+  
+  @Test
+  public void testHandoverFifoConfirmFirst() {
+    final int shards = 1;
+    final int messages = 20;
+    final int handlers = 2;
+    hub = new BalancedLedgerHub(shards, FifoShardAssignment::new, ArrayListAccumulator.factory(10));
+    
+    final TestView v0 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
+    final LongList expected = LongList.generate(0, messages);
+    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(ballotId, 0).withShard(shard));
+    }));
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
+    
+    final TestView v1 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
+    TestSupport.sleep(10);
+    assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
+    
+    v0.confirmFirst();
+    v0.view.dispose();
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
+  }
+  
+  @Test
+  public void testHandoverFifoConfirmLast() {
+    final int shards = 1;
+    final int messages = 20;
+    final int handlers = 2;
+    hub = new BalancedLedgerHub(shards, FifoShardAssignment::new, ArrayListAccumulator.factory(10));
+    
+    final TestView v0 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
+    final LongList expectedFull = LongList.generate(0, messages);
+    expectedFull.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(ballotId, 0).withShard(shard));
+    }));
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
+    
+    final TestView v1 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
+    TestSupport.sleep(10);
+    assertNoneForEachShard(1, Collections.singletonList(v1), expectedFull).run();
+    
+    v0.confirmLast();
+    v0.view.dispose();
+    final LongList expectedTail = LongList.generate(messages - 1, messages);
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedTail));
   }
   
   private static List<TestView> viewsWithAtLeastOne(List<TestView> views, LongList expected) {
@@ -330,9 +404,9 @@ public final class BalancedLedgerHubTest {
 //    return assertForEachShard(shards, views, expected, 0, 1);
 //  }
 //
-//  private static Runnable assertExactlyOneForEachShard(int shards, List<TestView> views, LongList expected) {
-//    return assertForEachShard(shards, views, expected, 1, 1);
-//  }
+  private static Runnable assertExactlyOneForEachShard(int shards, List<TestView> views, LongList expected) {
+    return assertForEachShard(shards, views, expected, 1, 1);
+  }
   
   /**
    *  Verifies that each shard's message content has been received by some bounded number of handlers (across all
