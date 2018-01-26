@@ -42,9 +42,6 @@ public final class BalancedLedgerView implements Ledger {
     
     private void cycle(WorkerThread t) throws InterruptedException {
       for (int shard = 0; shard < accumulators.length; shard++) {
-        //TODO
-//        System.out.format("shard=%s, group=%s, assignee=%b\n", 
-//                          shard, group, group != null ? group.isAssignee(shard, handlerId) : false);
         if (group == null || group.isAssignee(shard, handlerId)) {
           final Accumulator accumulator = accumulators[shard];
           final long nextReadOffset;
@@ -53,7 +50,6 @@ public final class BalancedLedgerView implements Ledger {
           } else {
             nextReadOffset = nextReadOffsets[shard];
           }
-//          System.out.format("  next read %d\n", nextReadOffset);
           
           final int retrieved = accumulator.retrieve(nextReadOffset, sink);
           if (retrieved != 0) {

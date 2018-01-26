@@ -25,7 +25,7 @@ public final class BalancedLedgerGroupTest extends AbstractGroupLedgerTest {
   
   @Override
   protected void startup() {
-    hub = new BalancedLedgerHub(2, FifoShardAssignment::new, ArrayListAccumulator.factory(100));
+    hub = new BalancedLedgerHub(2, StickyShardAssignment::new, ArrayListAccumulator.factory(100));
   }
   
   @Override

@@ -3,7 +3,10 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.*;
 
-public final class FifoShardAssignment extends ShardAssignment {
+/**
+ *  Maintains the shard assignment until the assignee explicitly calls {@link #remove(Object)}.
+ */
+public final class StickyShardAssignment extends ShardAssignment {
   private final Set<Object> allHandlers = new CopyOnWriteArraySet<>();
 
   @Override

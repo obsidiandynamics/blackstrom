@@ -308,11 +308,11 @@ public final class BalancedLedgerHubTest {
   }
   
   @Test
-  public void testHandoverFifoNoConfirm() {
+  public void testHandoverStickyNoConfirm() {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, FifoShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -332,11 +332,11 @@ public final class BalancedLedgerHubTest {
   }
   
   @Test
-  public void testHandoverFifoConfirmFirst() {
+  public void testHandoverStickyConfirmFirst() {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, FifoShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -357,11 +357,11 @@ public final class BalancedLedgerHubTest {
   }
   
   @Test
-  public void testHandoverFifoConfirmLast() {
+  public void testHandoverStickyConfirmLast() {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, FifoShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -382,6 +382,26 @@ public final class BalancedLedgerHubTest {
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedTail));
   }
   
+  @Test
+  public void testTwoGroups() {
+    final int shards = 1;
+    final int messages = 20;
+    final int handlers = 2;
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
+    
+    final TestView v0 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v0.attach("group-0"));
+    final LongList expectedFull = LongList.generate(0, messages);
+    expectedFull.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(ballotId, 0).withShard(shard));
+    }));
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
+    
+    final TestView v1 = TestView.connectTo(0, hub);
+    IntStream.range(0, handlers).forEach(h -> v1.attach("group-1"));
+    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedFull));
+  }
+  
   private static List<TestView> viewsWithAtLeastOne(List<TestView> views, LongList expected) {
     return views.stream().filter(view -> {
       final long receiptsInView = view.handlers.stream().map(handler -> {
@@ -400,10 +420,6 @@ public final class BalancedLedgerHubTest {
     return assertForEachShard(shards, views, expected, 1, Integer.MAX_VALUE);
   }
 
-//  private static Runnable assertAtMostOneForEachShard(int shards, List<TestView> views, LongList expected) {
-//    return assertForEachShard(shards, views, expected, 0, 1);
-//  }
-//
   private static Runnable assertExactlyOneForEachShard(int shards, List<TestView> views, LongList expected) {
     return assertForEachShard(shards, views, expected, 1, 1);
   }
