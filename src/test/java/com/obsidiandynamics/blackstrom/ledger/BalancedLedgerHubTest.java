@@ -126,7 +126,7 @@ public final class BalancedLedgerHubTest {
     final int numViews = 2;
     final int handlers = 2;
     final int messages = 20;
-    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> {
           final TestView view = TestView.connectTo(v, hub);
@@ -154,7 +154,7 @@ public final class BalancedLedgerHubTest {
     final int numViews = 2;
     final int handlers = 2;
     final int messages = 20;
-    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> TestView.connectTo(v, hub))
         .collect(Collectors.toList());
@@ -181,7 +181,7 @@ public final class BalancedLedgerHubTest {
     final int numViews = 3;
     final int handlers = 2;
     final int messages = 20;
-    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> {
           final TestView view = TestView.connectTo(v, hub);
@@ -213,7 +213,7 @@ public final class BalancedLedgerHubTest {
     final int numViews = 3;
     final int handlers = 2;
     final int messages = 20;
-    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> {
           final TestView view = TestView.connectTo(v, hub);
@@ -248,7 +248,7 @@ public final class BalancedLedgerHubTest {
     final int numViews = shards + 2;
     final int handlers = 2;
     final int messages = 20;
-    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> {
           final TestView view = TestView.connectTo(v, hub);
@@ -291,7 +291,7 @@ public final class BalancedLedgerHubTest {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -312,7 +312,7 @@ public final class BalancedLedgerHubTest {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -336,7 +336,7 @@ public final class BalancedLedgerHubTest {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -361,7 +361,7 @@ public final class BalancedLedgerHubTest {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
@@ -387,7 +387,7 @@ public final class BalancedLedgerHubTest {
     final int shards = 1;
     final int messages = 20;
     final int handlers = 2;
-    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10));
+    hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group-0"));

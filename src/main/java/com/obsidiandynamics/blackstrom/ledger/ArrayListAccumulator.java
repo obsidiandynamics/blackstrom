@@ -6,7 +6,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 
 final class ArrayListAccumulator implements Accumulator {
   private class Buffer {
-    private final Buffer previous;
+    private volatile Buffer previous;
     private final long baseOffset;
     private final AppendOnlyArray items = new AppendOnlyArray(bufferSize);
     private volatile Buffer next;
@@ -33,14 +33,19 @@ final class ArrayListAccumulator implements Accumulator {
 
   private final int shard;
   private final int bufferSize;
+  private final int retainBuffers;
   private volatile long nextOffset;
   private volatile Buffer latest;
-  private final Object lock = new Object();
+  private Buffer earliest;
   
-  ArrayListAccumulator(int shard, int bufferSize, long baseOffset) {
+  private final Object lock = new Object();
+  private int numBuffers = 1;
+  
+  ArrayListAccumulator(int shard, int bufferSize, int retainBuffers, long baseOffset) {
     this.shard = shard;
     this.bufferSize = bufferSize;
-    latest = new Buffer(null, baseOffset);
+    this.retainBuffers = retainBuffers;
+    earliest = latest = new Buffer(null, baseOffset);
     nextOffset = baseOffset;
   }
 
@@ -49,6 +54,11 @@ final class ArrayListAccumulator implements Accumulator {
     synchronized (lock) {
       if (latest.items.size() == bufferSize) {
         createNextBuffer();
+        if (numBuffers == retainBuffers) {
+          removeEarliestBuffer();
+        } else {
+          numBuffers++;
+        }
       }
       final ShardMessageId messageId = new ShardMessageId(shard, nextOffset);
       message.withMessageId(messageId);
@@ -61,6 +71,12 @@ final class ArrayListAccumulator implements Accumulator {
     final Buffer next = new Buffer(latest, latest.baseOffset + latest.items.size());
     latest.next = next;
     latest = next;
+  }
+  
+  private void removeEarliestBuffer() {
+    final Buffer second = earliest.next;
+    second.previous = null;
+    earliest = second;
   }
 
   @Override
@@ -85,13 +101,14 @@ final class ArrayListAccumulator implements Accumulator {
   
   private Buffer findBuffer(long offset) {
     Buffer buffer = latest;
-    while (buffer.baseOffset > offset && buffer.previous != null) {
-      buffer = buffer.previous;
+    Buffer previous;
+    while (buffer.baseOffset > offset && (previous = buffer.previous) != null) {
+      buffer = previous;
     }
     return buffer;
   }
   
-  static Accumulator.Factory factory(int bufferSize) {
-    return shard -> new ArrayListAccumulator(shard, bufferSize, 0);
+  static Accumulator.Factory factory(int bufferSize, int retainBuffers) {
+    return shard -> new ArrayListAccumulator(shard, bufferSize, retainBuffers, 0);
   }
 }

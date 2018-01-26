@@ -14,7 +14,8 @@ public final class ArrayListAccumulatorTest {
   public void testHalfOfSingleBuffer() {
     final long baseOffset = 0;
     final int bufferSize = 10;
-    final Accumulator a = ArrayListAccumulator.factory(bufferSize).create(0);
+    final int retainBuffers = 1;
+    final Accumulator a = ArrayListAccumulator.factory(bufferSize, retainBuffers).create(0);
     LongList.generate(0, 5).toMessages().forEach(a::append);
     assertEquals(baseOffset + 5, a.getNextOffset());
 
@@ -31,7 +32,8 @@ public final class ArrayListAccumulatorTest {
   public void testSingleBuffer() {
     final long baseOffset = Integer.MAX_VALUE;
     final int bufferSize = 10;
-    final Accumulator a = new ArrayListAccumulator(0, bufferSize, baseOffset);
+    final int retainBuffers = 1;
+    final Accumulator a = new ArrayListAccumulator(0, bufferSize, retainBuffers, baseOffset);
     LongList.generate(0, 10).toMessages().forEach(a::append);
     assertEquals(baseOffset + 10, a.getNextOffset());
 
@@ -48,7 +50,8 @@ public final class ArrayListAccumulatorTest {
   public void testMultipleBuffers() {
     final long baseOffset = Integer.MAX_VALUE;
     final int bufferSize = 10;
-    final Accumulator a = new ArrayListAccumulator(0, bufferSize, baseOffset);
+    final int retainBuffers = 3;
+    final Accumulator a = new ArrayListAccumulator(0, bufferSize, retainBuffers, baseOffset);
     LongList.generate(0, 30).toMessages().forEach(a::append);
     assertEquals(baseOffset + 30, a.getNextOffset());
 
@@ -60,6 +63,35 @@ public final class ArrayListAccumulatorTest {
     assertEquals(LongList.generate(0, 30), getItems(a, 0));
     assertEquals(LongList.generate(0, 30), getItems(a, baseOffset - 1));
     assertEquals(LongList.generate(5, 30), getItems(a, baseOffset + 5));
+    assertEquals(LongList.generate(10, 30), getItems(a, baseOffset + 10));
+    assertEquals(LongList.generate(11, 30), getItems(a, baseOffset + 11));
+    assertEquals(LongList.generate(11, 30).plus(baseOffset), getOffsets(a, baseOffset + 11));
+    assertEquals(LongList.generate(19, 30), getItems(a, baseOffset + 19));
+    assertEquals(LongList.generate(20, 30), getItems(a, baseOffset + 20));
+    assertEquals(LongList.generate(21, 30), getItems(a, baseOffset + 21));
+    assertEquals(LongList.generate(29, 30), getItems(a, baseOffset + 29));
+    assertEquals(LongList.empty(), getItems(a, baseOffset + 30));
+    assertEquals(LongList.empty(), getItems(a, baseOffset + 31));
+    assertEquals(LongList.empty(), getItems(a, Long.MAX_VALUE));
+  }
+  
+  @Test
+  public void testMultipleBuffersWithReducedRetention() {
+    final long baseOffset = Integer.MAX_VALUE;
+    final int bufferSize = 10;
+    final int retainBuffers = 2;
+    final Accumulator a = new ArrayListAccumulator(0, bufferSize, retainBuffers, baseOffset);
+    LongList.generate(0, 30).toMessages().forEach(a::append);
+    assertEquals(baseOffset + 30, a.getNextOffset());
+
+    assertEquals(LongList.generate(10, 30), getItems(a, baseOffset));
+    assertEquals(LongList.generate(10, 30).plus(baseOffset), getOffsets(a, baseOffset));
+
+    assertEquals(LongList.generate(10, 30), getItems(a, Long.MIN_VALUE));
+    assertEquals(LongList.generate(10, 30), getItems(a, -1));
+    assertEquals(LongList.generate(10, 30), getItems(a, 0));
+    assertEquals(LongList.generate(10, 30), getItems(a, baseOffset - 1));
+    assertEquals(LongList.generate(10, 30), getItems(a, baseOffset + 5));
     assertEquals(LongList.generate(10, 30), getItems(a, baseOffset + 10));
     assertEquals(LongList.generate(11, 30), getItems(a, baseOffset + 11));
     assertEquals(LongList.generate(11, 30).plus(baseOffset), getOffsets(a, baseOffset + 11));
