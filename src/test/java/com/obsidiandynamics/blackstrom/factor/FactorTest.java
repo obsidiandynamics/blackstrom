@@ -1,8 +1,10 @@
-package com.obsidiandynamics.blackstrom.handler;
+package com.obsidiandynamics.blackstrom.factor;
 
 import static org.junit.Assert.*;
 
 import org.junit.*;
+
+import com.obsidiandynamics.blackstrom.handler.*;
 
 public final class FactorTest {
   private static class ClassGroupFactor implements Factor, Groupable.ClassGroup {}

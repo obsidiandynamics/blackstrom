@@ -1,5 +1,6 @@
-package com.obsidiandynamics.blackstrom.handler;
+package com.obsidiandynamics.blackstrom.factor;
 
+import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapter implements MessageHandler {

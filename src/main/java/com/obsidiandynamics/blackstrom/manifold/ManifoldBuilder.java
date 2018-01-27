@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.manifold;
 
 import java.util.*;
 
-import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 
 public final class ManifoldBuilder {

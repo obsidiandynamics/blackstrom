@@ -1,7 +1,7 @@
 package com.obsidiandynamics.blackstrom.cohort;
 
 import com.obsidiandynamics.blackstrom.cohort.LambdaCohort.*;
-import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.factor.*;
 
 public final class LambdaCohortBuilder {
   private String groupId;

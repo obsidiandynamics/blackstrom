@@ -12,7 +12,6 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.util.Wait;
 
 public final class BankBranchTest {
   private static final String BRANCH_ID = "branch";

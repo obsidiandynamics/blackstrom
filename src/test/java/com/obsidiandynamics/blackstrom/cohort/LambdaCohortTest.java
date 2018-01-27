@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.cohort.LambdaCohort.*;
+import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 

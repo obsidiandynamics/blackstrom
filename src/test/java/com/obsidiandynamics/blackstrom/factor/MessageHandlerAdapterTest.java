@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.handler;
+package com.obsidiandynamics.blackstrom.factor;
 
 import static junit.framework.TestCase.*;
 
@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 
+import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapterTest {

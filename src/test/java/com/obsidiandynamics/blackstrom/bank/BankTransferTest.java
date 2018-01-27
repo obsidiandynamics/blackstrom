@@ -1,7 +1,8 @@
 package com.obsidiandynamics.blackstrom.bank;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -14,7 +15,6 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.factor.*;
-import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;

@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.cohort;
 
+import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
