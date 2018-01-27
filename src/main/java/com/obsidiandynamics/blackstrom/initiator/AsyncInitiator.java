@@ -19,15 +19,15 @@ public final class AsyncInitiator implements Initiator, NullGroup {
     this.ledger = context.getLedger();
   }
   
-  public CompletableFuture<Outcome> initiate(Object ballotId, String[] cohorts, Object proposal, int ttl) {
+  public CompletableFuture<Outcome> initiate(Object ballotId, String[] cohorts, Object objective, int ttl) {
     final CompletableFuture<Outcome> f = new CompletableFuture<>();
-    initiate(ballotId, cohorts, proposal, ttl, f::complete);
+    initiate(ballotId, cohorts, objective, ttl, f::complete);
     return f;
   }
   
-  public void initiate(Object ballotId, String[] cohorts, Object proposal, int ttl, Consumer<Outcome> callback) {
+  public void initiate(Object ballotId, String[] cohorts, Object objective, int ttl, Consumer<Outcome> callback) {
     pending.put(ballotId, callback);
-    ledger.append(new Nomination(ballotId, cohorts, proposal, ttl));
+    ledger.append(new Proposal(ballotId, cohorts, objective, ttl));
   }
 
   @Override

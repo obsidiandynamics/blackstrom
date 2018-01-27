@@ -112,25 +112,25 @@ public final class DefaultMonitor implements Monitor {
     }
     
     for (PendingBallot pending : pendingCopy) {
-      final Nomination nomination = pending.getNomination();
-      if (nomination.getTimestamp() + nomination.getTtl() < System.currentTimeMillis()) {
-        for (String cohort : nomination.getCohorts()) {
+      final Proposal proposal = pending.getProposal();
+      if (proposal.getTimestamp() + proposal.getTtl() < System.currentTimeMillis()) {
+        for (String cohort : proposal.getCohorts()) {
           final boolean cohortResponded;
           synchronized (lock) {
             cohortResponded = pending.hasResponded(cohort);
           }
           
           if (! cohortResponded) {
-            timeoutCohort(nomination, cohort);
+            timeoutCohort(proposal, cohort);
           }
         }
       }
     }
   }
   
-  private void timeoutCohort(Nomination nomination, String cohort) {
-    LOG.debug("Timed out {} for cohort {}", nomination, cohort);
-    append(new Vote(nomination.getBallotId(), new Response(cohort, Pledge.TIMEOUT, null)));
+  private void timeoutCohort(Proposal proposal, String cohort) {
+    LOG.debug("Timed out {} for cohort {}", proposal, cohort);
+    append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null)));
   }
   
   private void append(Message message) {
@@ -148,25 +148,25 @@ public final class DefaultMonitor implements Monitor {
   }
   
   @Override
-  public void onNomination(MessageContext context, Nomination nomination) {
+  public void onProposal(MessageContext context, Proposal proposal) {
     synchronized (lock) {
-      if (decided.containsKey(nomination.getBallotId())) {
-        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", nomination);
+      if (decided.containsKey(proposal.getBallotId())) {
+        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", proposal);
         return;
       }
       
-      final PendingBallot newBallot = new PendingBallot(nomination);
-      final PendingBallot existingBallot = pending.put(nomination.getBallotId(), newBallot);
+      final PendingBallot newBallot = new PendingBallot(proposal);
+      final PendingBallot existingBallot = pending.put(proposal.getBallotId(), newBallot);
       if (existingBallot != null) {
-        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already pending)", nomination);
-        pending.put(nomination.getBallotId(), existingBallot);
+        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already pending)", proposal);
+        pending.put(proposal.getBallotId(), existingBallot);
         return;
       } else {
-        newBallot.setAction(tracer.begin(context, nomination));
+        newBallot.setAction(tracer.begin(context, proposal));
       }
     }
     
-    if (DEBUG) LOG.trace("Initiating ballot for {}", nomination);
+    if (DEBUG) LOG.trace("Initiating ballot for {}", proposal);
   }
 
   @Override
@@ -188,8 +188,8 @@ public final class DefaultMonitor implements Monitor {
   }
   
   private void decideBallot(PendingBallot ballot) {
-    if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getNomination(), ballot.getVerdict());
-    final Object ballotId = ballot.getNomination().getBallotId();
+    if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getProposal(), ballot.getVerdict());
+    final Object ballotId = ballot.getProposal().getBallotId();
     final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses());
     pending.remove(ballotId);
     decided.put(ballotId, outcome);

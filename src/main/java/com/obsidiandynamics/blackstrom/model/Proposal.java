@@ -6,19 +6,19 @@ import org.apache.commons.lang3.builder.*;
 
 import com.obsidiandynamics.blackstrom.util.*;
 
-public final class Nomination extends Message {
+public final class Proposal extends Message {
   private final String[] cohorts;
-  private final Object proposal;
+  private final Object objective;
   private final int ttl;
 
-  public Nomination(Object ballotId, String[] cohorts, Object proposal, int ttl) {
-    this(ballotId, 0, cohorts, proposal, ttl);
+  public Proposal(Object ballotId, String[] cohorts, Object objective, int ttl) {
+    this(ballotId, 0, cohorts, objective, ttl);
   }
 
-  public Nomination(Object ballotId, long timestamp, String[] cohorts, Object proposal, int ttl) {
+  public Proposal(Object ballotId, long timestamp, String[] cohorts, Object objective, int ttl) {
     super(ballotId, timestamp);
     this.cohorts = cohorts;
-    this.proposal = proposal;
+    this.objective = objective;
     this.ttl = ttl;
   }
   
@@ -26,8 +26,8 @@ public final class Nomination extends Message {
     return cohorts;
   }
 
-  public <T> T getProposal() {
-    return Cast.from(proposal);
+  public <T> T getObjective() {
+    return Cast.from(objective);
   }
   
   public int getTtl() {
@@ -36,7 +36,7 @@ public final class Nomination extends Message {
 
   @Override
   public MessageType getMessageType() {
-    return MessageType.NOMINATION;
+    return MessageType.PROPOSAL;
   }
   
   @Override
@@ -44,7 +44,7 @@ public final class Nomination extends Message {
     return new HashCodeBuilder()
         .appendSuper(super.hashCode())
         .append(cohorts)
-        .append(proposal)
+        .append(objective)
         .append(ttl)
         .toHashCode();
   }
@@ -53,12 +53,12 @@ public final class Nomination extends Message {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof Nomination) {
-      final Nomination that = (Nomination) obj;
+    } else if (obj instanceof Proposal) {
+      final Proposal that = (Proposal) obj;
       return new EqualsBuilder()
           .appendSuper(super.equals(obj))
           .append(cohorts, that.cohorts)
-          .append(proposal, that.proposal)
+          .append(objective, that.objective)
           .append(ttl, that.ttl)
           .isEquals();
     } else {
@@ -68,7 +68,7 @@ public final class Nomination extends Message {
 
   @Override
   public String toString() {
-    return Nomination.class.getSimpleName() + " [cohorts=" + Arrays.toString(cohorts) + 
-        ", proposal=" + proposal + ", ttl=" + ttl + ", " + baseToString() + "]";
+    return Proposal.class.getSimpleName() + " [cohorts=" + Arrays.toString(cohorts) + 
+        ", objective=" + objective + ", ttl=" + ttl + ", " + baseToString() + "]";
   }
 }

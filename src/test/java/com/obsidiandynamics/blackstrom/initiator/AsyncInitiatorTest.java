@@ -33,7 +33,7 @@ public final class AsyncInitiatorTest {
     
     final AtomicInteger called = new AtomicInteger();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
-      if (m.getMessageType() == MessageType.NOMINATION) {
+      if (m.getMessageType() == MessageType.PROPOSAL) {
         called.incrementAndGet();
         try {
           c.getLedger().append(new Outcome(m.getBallotId(), Verdict.COMMIT, null, new Response[0]));

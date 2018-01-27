@@ -40,8 +40,8 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     final String source = JacksonUtils.readString("source", root);
     
     switch (messageType) {
-      case NOMINATION:
-        return deserializeNomination(p, root, ballotId, timestamp, source);
+      case PROPOSAL:
+        return deserializeProposal(p, root, ballotId, timestamp, source);
         
       case VOTE:
         return deserializeVote(p, root, ballotId, timestamp, source);
@@ -56,7 +56,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     }
   }
   
-  private Message deserializeNomination(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeProposal(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {
     final ArrayNode cohortsNode = (ArrayNode) root.get("cohorts");
     final String[] cohorts = new String[cohortsNode.size()];
     for (int i = 0; i < cohorts.length; i++) {
@@ -64,8 +64,8 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     }
     
     final int ttl = root.get("ttl").asInt();
-    final Object proposal = Payload.unpack(JacksonUtils.readObject("proposal", root, p, getPayloadClass()));
-    return new Nomination(ballotId, timestamp, cohorts, proposal, ttl).withSource(source);
+    final Object objective = Payload.unpack(JacksonUtils.readObject("objective", root, p, getPayloadClass()));
+    return new Proposal(ballotId, timestamp, cohorts, objective, ttl).withSource(source);
   }
   
   private Message deserializeVote(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {
@@ -76,9 +76,9 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
   
   private Response deserializeResponse(JsonParser p, JsonNode responseNode) throws JsonProcessingException {
     final String cohort = responseNode.get("cohort").asText();
-    final Pledge pledge = Pledge.valueOf(responseNode.get("pledge").asText());
+    final Intent intent = Intent.valueOf(responseNode.get("intent").asText());
     final Object metadata = Payload.unpack(JacksonUtils.readObject("metadata", responseNode, p, getPayloadClass()));
-    return new Response(cohort, pledge, metadata);
+    return new Response(cohort, intent, metadata);
   }
   
   private Message deserializeOutcome(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {

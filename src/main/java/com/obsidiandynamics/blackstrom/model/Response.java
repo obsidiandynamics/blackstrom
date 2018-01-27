@@ -6,12 +6,12 @@ import com.obsidiandynamics.blackstrom.util.*;
 
 public final class Response {
   private final String cohort;
-  private final Pledge pledge;
+  private final Intent intent;
   private final Object metadata;
   
-  public Response(String cohort, Pledge pledge, Object metadata) {
+  public Response(String cohort, Intent intent, Object metadata) {
     this.cohort = cohort;
-    this.pledge = pledge;
+    this.intent = intent;
     this.metadata = metadata;
   }
 
@@ -19,8 +19,8 @@ public final class Response {
     return cohort;
   }
 
-  public Pledge getPledge() {
-    return pledge;
+  public Intent getIntent() {
+    return intent;
   }
 
   public <T> T getMetadata() {
@@ -31,7 +31,7 @@ public final class Response {
   public int hashCode() {
     return new HashCodeBuilder()
         .append(cohort)
-        .append(pledge)
+        .append(intent)
         .append(metadata)
         .toHashCode();
   }
@@ -44,7 +44,7 @@ public final class Response {
       final Response that = (Response) obj;
       return new EqualsBuilder()
           .append(cohort, that.cohort)
-          .append(pledge, that.pledge)
+          .append(intent, that.intent)
           .append(metadata, that.metadata)
           .isEquals();
     } else {
@@ -54,6 +54,6 @@ public final class Response {
 
   @Override
   public String toString() {
-    return Response.class.getSimpleName() + " [cohort=" + cohort + ", pledge=" + pledge + ", metadata=" + metadata + "]";
+    return Response.class.getSimpleName() + " [cohort=" + cohort + ", intent=" + intent + ", metadata=" + metadata + "]";
   }
 }

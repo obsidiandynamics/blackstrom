@@ -6,8 +6,10 @@ import com.obsidiandynamics.shell.*;
 
 public final class KafkaDocker {
   private static final String PROJECT = "blackstrom";
+  private static final String PATH = "/usr/local/bin";
   
   private static final DockerCompose COMPOSE = new DockerCompose()
+      .withShell(new BourneShell().withPath(PATH))
       .withProject(PROJECT)
       .withEcho(true)
       .withSink(TestSupport.LOG_STREAM::append)
@@ -17,7 +19,7 @@ public final class KafkaDocker {
   
   public static boolean isRunning() {
     final StringBuilder sink = new StringBuilder();
-    BourneUtils.run("docker ps | grep \"kafka\" | wc -l", null, false, sink::append);
+    BourneUtils.run("docker ps | grep \"kafka\" | wc -l", PATH, false, sink::append);
     return Integer.parseInt(sink.toString().trim()) >= 1;
   }
   

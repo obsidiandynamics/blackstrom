@@ -11,7 +11,7 @@ import com.obsidiandynamics.indigo.util.*;
 public final class BankBranch implements Cohort {
   private final String branchId;
   
-  private final Map<Object, Nomination> nominations = new HashMap<>();
+  private final Map<Object, Proposal> proposals = new HashMap<>();
   
   private final Map<Object, Outcome> decided = new HashMap<>();
   
@@ -84,56 +84,56 @@ public final class BankBranch implements Cohort {
   }
 
   @Override
-  public void onNomination(MessageContext context, Nomination nomination) {
-    final BankSettlement settlement = nomination.getProposal();
+  public void onProposal(MessageContext context, Proposal proposal) {
+    final BankSettlement settlement = proposal.getObjective();
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
     
     try {
       if (idempotencyEnabled) {
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, nomination);
+        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, proposal);
         synchronized (lock) {
-          if (decided.containsKey(nomination.getBallotId())) {
+          if (decided.containsKey(proposal.getBallotId())) {
             if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, already decided\n", branchId);
             return;
           }
         }
       }
       
-      final Pledge pledge;
+      final Intent intent;
       final long xferAmount = xfer.getAmount();
       final long newBalance = balance + escrow + xferAmount;
       if (newBalance >= 0) {
-        final boolean inserted = nominations.put(nomination.getBallotId(), nomination) == null;
+        final boolean inserted = proposals.put(proposal.getBallotId(), proposal) == null;
         if (inserted) {
-          pledge = Pledge.ACCEPT;
+          intent = Intent.ACCEPT;
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
           if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting\n", branchId);
         } else {
-          pledge = Pledge.ACCEPT;
+          intent = Intent.ACCEPT;
           if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: retransmitting previous acceptance\n", branchId);
         }
       } else {
         if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting, balance: %,d\n", branchId, balance);
-        pledge = Pledge.REJECT;
+        intent = Intent.REJECT;
       }
       
       try {
-        context.vote(nomination.getBallotId(), branchId, pledge, null);
+        context.vote(proposal.getBallotId(), branchId, intent, null);
       } catch (Exception e) {
         e.printStackTrace();
       }
     } finally {
-      context.confirm(nomination.getMessageId());
+      context.confirm(proposal.getMessageId());
     }
   }
 
   @Override
   public void onOutcome(MessageContext context, Outcome outcome) {
-    final Nomination nomination = nominations.remove(outcome.getBallotId());
-    if (nomination == null) return; // outcome doesn't apply to this branch
+    final Proposal proposal = proposals.remove(outcome.getBallotId());
+    if (proposal == null) return; // outcome doesn't apply to this branch
     
     try {
       if (idempotencyEnabled) {
@@ -142,7 +142,7 @@ public final class BankBranch implements Cohort {
         }
       }
   
-      final BankSettlement settlement = nomination.getProposal();
+      final BankSettlement settlement = proposal.getObjective();
       final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
       final long xferAmount = xfer.getAmount();
       if (xferAmount < 0) {

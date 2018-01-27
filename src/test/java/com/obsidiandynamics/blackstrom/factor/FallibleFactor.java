@@ -7,7 +7,7 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.scheduler.*;
 
-public final class FallibleFactor implements Factor, NominationProcessor, VoteProcessor, OutcomeProcessor {
+public final class FallibleFactor implements Factor, ProposalProcessor, VoteProcessor, OutcomeProcessor {
   private final Factor backingFactor;
   
   private Ledger backingLedger;
@@ -68,8 +68,8 @@ public final class FallibleFactor implements Factor, NominationProcessor, VotePr
   }
 
   @Override
-  public void onNomination(MessageContext context, Nomination nomination) {
-    onReceive(context, nomination);
+  public void onProposal(MessageContext context, Proposal proposal) {
+    onReceive(context, proposal);
   }
 
   @Override

@@ -10,7 +10,7 @@ public final class LambdaCohortBuilder {
   
   private OnDispose onDispose = () -> {};
   
-  private NominationProcessor onNomination;
+  private ProposalProcessor onProposal;
   
   private OutcomeProcessor onOutcome;
   
@@ -31,8 +31,8 @@ public final class LambdaCohortBuilder {
     return this;
   }
 
-  public LambdaCohortBuilder onNomination(NominationProcessor onNomination) {
-    this.onNomination = onNomination;
+  public LambdaCohortBuilder onProposal(ProposalProcessor onProposal) {
+    this.onProposal = onProposal;
     return this;
   }
 
@@ -42,8 +42,8 @@ public final class LambdaCohortBuilder {
   }
   
   public LambdaCohort build() {
-    if (onNomination == null) throw new IllegalStateException("No onNomination behaviour set");
+    if (onProposal == null) throw new IllegalStateException("No onProposal behaviour set");
     if (onOutcome == null) throw new IllegalStateException("No onOutcome behaviour set");
-    return new LambdaCohort(groupId, onInit, onDispose, onNomination, onOutcome);
+    return new LambdaCohort(groupId, onInit, onDispose, onProposal, onOutcome);
   }
 }

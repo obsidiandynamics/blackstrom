@@ -9,18 +9,18 @@ import com.obsidiandynamics.assertion.*;
 public final class ResponseTest {
   @Test
   public void test() {
-    final Response ra = new Response("a", Pledge.ACCEPT, "a-meta"); 
+    final Response ra = new Response("a", Intent.ACCEPT, "a-meta"); 
     assertEquals("a", ra.getCohort());
-    assertEquals(Pledge.ACCEPT, ra.getPledge());
+    assertEquals(Intent.ACCEPT, ra.getIntent());
     assertEquals("a-meta", ra.getMetadata());
     Assertions.assertToStringOverride(ra);
   }
   
   @Test
   public void testEqualsHashCode() {
-    final Response r1 = new Response("a", Pledge.ACCEPT, "a-meta");
-    final Response r2 = new Response("b", Pledge.ACCEPT, "b-meta"); 
-    final Response r3 = new Response("a", Pledge.ACCEPT, "a-meta"); 
+    final Response r1 = new Response("a", Intent.ACCEPT, "a-meta");
+    final Response r2 = new Response("b", Intent.ACCEPT, "b-meta"); 
+    final Response r3 = new Response("a", Intent.ACCEPT, "a-meta"); 
     final Response r4 = r1;
 
     assertNotEquals(r1, r2);

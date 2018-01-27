@@ -5,13 +5,13 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class MessageHandlerAdapter implements MessageHandler {
   private final Factor factor;
   
-  private final boolean nominationCapable;
+  private final boolean proposalCapable;
   private final boolean voteCapable;
   private final boolean outcomeCapable;
   
   public MessageHandlerAdapter(Factor factor) {
     this.factor = factor;
-    nominationCapable = factor instanceof NominationProcessor;
+    proposalCapable = factor instanceof ProposalProcessor;
     voteCapable = factor instanceof VoteProcessor;
     outcomeCapable = factor instanceof OutcomeProcessor;
   }
@@ -19,9 +19,9 @@ public final class MessageHandlerAdapter implements MessageHandler {
   @Override
   public void onMessage(MessageContext context, Message message) {
     switch (message.getMessageType()) {
-      case NOMINATION:
-        if (nominationCapable) {
-          ((NominationProcessor) factor).onNomination(context, (Nomination) message);
+      case PROPOSAL:
+        if (proposalCapable) {
+          ((ProposalProcessor) factor).onProposal(context, (Proposal) message);
         }
         break;
         

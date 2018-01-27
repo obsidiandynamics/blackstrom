@@ -11,22 +11,22 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class LambdaCohortTest {
-  private static <M extends Message> void noOp(MessageContext context, M nomination) {}
+  private static <M extends Message> void noOp(MessageContext context, M proposal) {}
   
   @Test(expected=IllegalStateException.class)
-  public void testMissingOnNomination() {
+  public void testMissingOnProposal() {
     LambdaCohort.builder().onOutcome(LambdaCohortTest::noOp).build();
   }
   
   @Test(expected=IllegalStateException.class)
   public void testMissingOnOutcome() {
-    LambdaCohort.builder().onNomination(LambdaCohortTest::noOp).build();
+    LambdaCohort.builder().onProposal(LambdaCohortTest::noOp).build();
   }
   
   @Test
   public void testDefaultInitAndDispose() {
     final LambdaCohort l = LambdaCohort.builder()
-        .onNomination(LambdaCohortTest::noOp)
+        .onProposal(LambdaCohortTest::noOp)
         .onOutcome(LambdaCohortTest::noOp)
         .build();
     l.init(null);
@@ -37,7 +37,7 @@ public final class LambdaCohortTest {
   public void testGroupId() {
     final LambdaCohort l = LambdaCohort.builder()
         .withGroupId("test")
-        .onNomination((c, m) -> {})
+        .onProposal((c, m) -> {})
         .onOutcome((c, m) -> {})
         .build();
     
@@ -48,18 +48,18 @@ public final class LambdaCohortTest {
   public void testHandlers() {
     final OnInit onInit = mock(OnInit.class);
     final OnDispose onDispose = mock(OnDispose.class);
-    final NominationProcessor onNomination = mock(NominationProcessor.class);
+    final ProposalProcessor onProposal = mock(ProposalProcessor.class);
     final OutcomeProcessor onOutcome = mock(OutcomeProcessor.class);
     
     final InitContext initContext = mock(InitContext.class);
     final MessageContext messageContext = mock(MessageContext.class);
-    final Nomination nomination = new Nomination(0, new String[0], null, 1000);
+    final Proposal proposal = new Proposal(0, new String[0], null, 1000);
     final Outcome outcome = new Outcome(0, Verdict.COMMIT, null, new Response[0]);
     
     final LambdaCohort l = LambdaCohort.builder()
         .onInit(onInit)
         .onDispose(onDispose)
-        .onNomination(onNomination)
+        .onProposal(onProposal)
         .onOutcome(onOutcome)
         .build();
     
@@ -68,8 +68,8 @@ public final class LambdaCohortTest {
     l.init(initContext);
     verify(onInit).onInit(eq(initContext));
     
-    l.onNomination(messageContext, nomination);
-    verify(onNomination).onNomination(eq(messageContext), eq(nomination));
+    l.onProposal(messageContext, proposal);
+    verify(onProposal).onProposal(eq(messageContext), eq(proposal));
     
     l.onOutcome(messageContext, outcome);
     verify(onOutcome).onOutcome(eq(messageContext), eq(outcome));

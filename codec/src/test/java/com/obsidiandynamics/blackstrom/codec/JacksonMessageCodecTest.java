@@ -30,16 +30,16 @@ public class JacksonMessageCodecTest implements TestSupport {
   public ExpectedException thrown = ExpectedException.none();
   
   @Test
-  public void testNominationNullProposal() throws Exception {
-    final Message m = new Nomination("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
+  public void testProposalNullObjective() throws Exception {
+    final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
     MessageCodec c;
     
     c = new JacksonMessageCodec(false);
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
 
-    final Nomination d1 = (Nomination) c.decodeText(encoded);
-    logDecoded(d1, d1.getProposal());
+    final Proposal d1 = (Proposal) c.decodeText(encoded);
+    logDecoded(d1, d1.getObjective());
     assertEquals(m, d1);
     
     final String reencoded = c.encodeText(d1);
@@ -47,15 +47,15 @@ public class JacksonMessageCodecTest implements TestSupport {
     assertEquals(encoded, reencoded);
 
     c = new JacksonMessageCodec(true);
-    final Nomination d2 = (Nomination) c.decodeText(reencoded);
-    logDecoded(d2, d2.getProposal());
+    final Proposal d2 = (Proposal) c.decodeText(reencoded);
+    logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
   
   @Test
   public void testCodecBenchmark() throws Exception {
     final int runs = 100;
-    final Message m = new Nomination("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
+    final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
     final MessageCodec c = new JacksonMessageCodec(false);
     
     final long took = TestSupport.tookThrowing(() -> {
@@ -70,16 +70,16 @@ public class JacksonMessageCodecTest implements TestSupport {
   }
   
   @Test
-  public void testNominationLongBallotId() throws Exception {
-    final Message m = new Nomination(101L, new String[] {"a", "b"}, null, 1000).withSource("test");
+  public void testProposalLongBallotId() throws Exception {
+    final Message m = new Proposal(101L, new String[] {"a", "b"}, null, 1000).withSource("test");
     MessageCodec c;
     
     c = new JacksonMessageCodec(false);
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
 
-    final Nomination d1 = (Nomination) c.decodeText(encoded);
-    logDecoded(d1, d1.getProposal());
+    final Proposal d1 = (Proposal) c.decodeText(encoded);
+    logDecoded(d1, d1.getObjective());
     assertEquals(m, d1);
     
     final String reencoded = c.encodeText(d1);
@@ -87,40 +87,40 @@ public class JacksonMessageCodecTest implements TestSupport {
     assertEquals(encoded, reencoded);
 
     c = new JacksonMessageCodec(true);
-    final Nomination d2 = (Nomination) c.decodeText(reencoded);
-    logDecoded(d2, d2.getProposal());
+    final Proposal d2 = (Proposal) c.decodeText(reencoded);
+    logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
 
   @Test
-  public void testNominationNonNullProposal() throws Exception {
+  public void testProposalNonNullObjective() throws Exception {
     final Animal<?> a = new Dog().named("Rover").withFriend(new Cat().named("Misty"));
-    final Nomination m = new Nomination("N100", new String[] {"a", "b"}, a, 1000);
+    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Nomination d1 = (Nomination) c.decodeText(encoded);
-    logDecoded(d1, d1.getProposal());
-    assertNotNull(d1.getProposal());
-    assertEquals(LinkedHashMap.class, d1.getProposal().getClass());
+    final Proposal d1 = (Proposal) c.decodeText(encoded);
+    logDecoded(d1, d1.getObjective());
+    assertNotNull(d1.getObjective());
+    assertEquals(LinkedHashMap.class, d1.getObjective().getClass());
     
     final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Nomination d2 = (Nomination) c.decodeText(reencoded);
-    logDecoded(d2, d2.getProposal());
+    final Proposal d2 = (Proposal) c.decodeText(reencoded);
+    logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
 
   @Test
   public void testVoteNonNullMetadata() throws Exception {
     final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
-    final Vote m = new Vote("V100", new Response("test-cohort", Pledge.ACCEPT, a));
+    final Vote m = new Vote("V100", new Response("test-cohort", Intent.ACCEPT, a));
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
@@ -145,8 +145,8 @@ public class JacksonMessageCodecTest implements TestSupport {
   @Test
   public void testOutcomeCommitMixedMetadata() throws Exception {
     final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
-    final Response ra = new Response("test-cohort-a", Pledge.ACCEPT, a);
-    final Response rb = new Response("test-cohort-b", Pledge.ACCEPT, null);
+    final Response ra = new Response("test-cohort-a", Intent.ACCEPT, a);
+    final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
     final Outcome m = new Outcome("O100", Verdict.COMMIT, null, new Response[] {ra, rb});
     MessageCodec c;
 
@@ -174,8 +174,8 @@ public class JacksonMessageCodecTest implements TestSupport {
   @Test
   public void testOutcomeAbortMixedMetadata() throws Exception {
     final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
-    final Response ra = new Response("test-cohort-a", Pledge.REJECT, a);
-    final Response rb = new Response("test-cohort-b", Pledge.ACCEPT, null);
+    final Response ra = new Response("test-cohort-a", Intent.REJECT, a);
+    final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
     final Outcome m = new Outcome("O100", Verdict.ABORT, AbortReason.REJECT, new Response[] {ra, rb});
     MessageCodec c;
 

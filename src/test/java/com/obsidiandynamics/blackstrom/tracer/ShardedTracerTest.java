@@ -66,6 +66,6 @@ public class ShardedTracerTest {
   }
 
   private static Message message(long ballotId, int shard) {
-    return new Nomination(ballotId, new String[0], null, 0).withShard(shard).withMessageId(ballotId);
+    return new Proposal(ballotId, new String[0], null, 0).withShard(shard).withMessageId(ballotId);
   }
 }

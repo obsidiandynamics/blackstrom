@@ -80,8 +80,8 @@ public final class BankTransferTest {
     assertEquals(Verdict.COMMIT, o.getVerdict());
     assertNull(o.getAbortReason());
     assertEquals(2, o.getResponses().length);
-    assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(0)).getPledge());
-    assertEquals(Pledge.ACCEPT, o.getResponse(getBranchId(1)).getPledge());
+    assertEquals(Intent.ACCEPT, o.getResponse(getBranchId(0)).getIntent());
+    assertEquals(Intent.ACCEPT, o.getResponse(getBranchId(1)).getIntent());
     wait.until(() -> {
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
@@ -111,10 +111,10 @@ public final class BankTransferTest {
     assertEquals(Verdict.ABORT, o.getVerdict());
     assertEquals(AbortReason.REJECT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
-    assertEquals(Pledge.REJECT, o.getResponse(getBranchId(0)).getPledge());
+    assertEquals(Intent.REJECT, o.getResponse(getBranchId(0)).getIntent());
     final Response acceptResponse = o.getResponse(getBranchId(1));
     if (acceptResponse != null) {
-      assertEquals(Pledge.ACCEPT, acceptResponse.getPledge());  
+      assertEquals(Intent.ACCEPT, acceptResponse.getIntent());  
     }
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
@@ -344,7 +344,7 @@ public final class BankTransferTest {
           branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
           settlement = generateRandomSettlement(branchIds, transferAmount);
         }
-        ledger.append(new Nomination(run, branchIds, settlement, Integer.MAX_VALUE));
+        ledger.append(new Proposal(run, branchIds, settlement, Integer.MAX_VALUE));
 
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;

@@ -16,7 +16,7 @@ public class KafkaJacksonMessageSerdeTest {
   public void testSerde() {
     final KafkaJacksonMessageSerializer serializer = new KafkaJacksonMessageSerializer();
     serializer.configure(Collections.emptyMap(), false);
-    final Message m = new Nomination(100L, new String[0], null, 0);
+    final Message m = new Proposal(100L, new String[0], null, 0);
     final byte[] encoded = serializer.serialize("test", m);
     serializer.close();
     

@@ -9,27 +9,27 @@ import org.junit.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapterTest {
-  interface NominationFactor extends Factor, NominationProcessor, Groupable.NullGroup {};
+  interface ProposalFactor extends Factor, ProposalProcessor, Groupable.NullGroup {};
   
   interface VoteFactor extends Factor, VoteProcessor, Groupable.NullGroup {};
   
   interface OutcomeFactor extends Factor, OutcomeProcessor, Groupable.NullGroup {};
   
   @Test
-  public void testNominationAndGroup() {
+  public void testProposalAndGroup() {
     final AtomicInteger invocations = new AtomicInteger();
-    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NominationFactor() {
-      @Override public void onNomination(MessageContext context, Nomination nomination) {
+    final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new ProposalFactor() {
+      @Override public void onProposal(MessageContext context, Proposal proposal) {
         invocations.incrementAndGet();
       }
       
       @Override public String getGroupId() {
-        return "test-nomination";
+        return "test-proposal";
       }
     });
     callAll(adapter);
     assertEquals(1, invocations.get());
-    assertEquals("test-nomination", adapter.getGroupId());
+    assertEquals("test-proposal", adapter.getGroupId());
   }
 
   @Test
@@ -81,17 +81,17 @@ public final class MessageHandlerAdapterTest {
   }
   
   private static void callAll(MessageHandlerAdapter adapter) {
-    adapter.onMessage(null, newNomination());
+    adapter.onMessage(null, newProposal());
     adapter.onMessage(null, newVote());
     adapter.onMessage(null, newOutcome());
   }
   
-  private static Nomination newNomination() {
-    return new Nomination(0L, new String[0], null, 0);
+  private static Proposal newProposal() {
+    return new Proposal(0L, new String[0], null, 0);
   }
   
   private static Vote newVote() {
-    return new Vote(0L, new Response("c", Pledge.ACCEPT, null));
+    return new Vote(0L, new Response("c", Intent.ACCEPT, null));
   }
   
   private static Outcome newOutcome() {

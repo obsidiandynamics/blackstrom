@@ -49,20 +49,20 @@ public final class BankBranchTest {
   @Test
   public void testNegativeXferAcceptCommit() {
     final int amount = -100;
-    nominate(amount);
+    propose(amount);
     wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    // second nomination should retransmit, but have no effect on the state
-    nominate(amount);
+    // second proposal should retransmit, but have no effect on the state
+    propose(amount);
     wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
     outcome(Verdict.COMMIT);
 
@@ -79,20 +79,20 @@ public final class BankBranchTest {
   @Test
   public void testNegativeXferAcceptAbort() {
     final int amount = -100;
-    nominate(amount);
+    propose(amount);
     wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    // second nomination should retransmit, but have no effect on the state
-    nominate(amount);
+    // second proposal should retransmit, but have no effect on the state
+    propose(amount);
     wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(amount, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
     outcome(Verdict.ABORT);
     
@@ -109,20 +109,20 @@ public final class BankBranchTest {
   @Test
   public void testNegativeXferRejectAbort() {
     final int amount = -2_000;
-    nominate(amount);
+    propose(amount);
     wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
-    assertEquals(Pledge.REJECT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.REJECT, voteAt(0).getResponse().getIntent());
     
-    // second nomination should retransmit, but have no effect on the state
-    nominate(amount);
+    // second proposal should retransmit, but have no effect on the state
+    propose(amount);
     wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
-    assertEquals(Pledge.REJECT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.REJECT, voteAt(0).getResponse().getIntent());
     
     outcome(Verdict.ABORT);
     
@@ -140,20 +140,20 @@ public final class BankBranchTest {
   @Test
   public void testPositiveXferAcceptCommit() {
     final int amount = 100;
-    nominate(amount);
+    propose(amount);
     wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    // second nomination should retransmit, but have no effect on the state
-    nominate(amount);
+    // second proposal should retransmit, but have no effect on the state
+    propose(amount);
     wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
     outcome(Verdict.COMMIT);
 
@@ -170,20 +170,20 @@ public final class BankBranchTest {
   @Test
   public void testPositiveXferAcceptAbort() {
     final int amount = 100;
-    nominate(amount);
+    propose(amount);
     wait.until(received(1));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    // second nomination should retransmit, but have no effect on the state
-    nominate(amount);
+    // second proposal should retransmit, but have no effect on the state
+    propose(amount);
     wait.until(received(2));
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
-    assertEquals(Pledge.ACCEPT, voteAt(0).getResponse().getPledge());
+    assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
     outcome(Verdict.ABORT);
     
@@ -205,9 +205,9 @@ public final class BankBranchTest {
     return () -> assertEquals(numMessages, received.size());
   }
   
-  private void nominate(long amount) {
+  private void propose(long amount) {
     final BankSettlement settlement = new BankSettlement(Collections.singletonMap(BRANCH_ID, new BalanceTransfer(BRANCH_ID, amount)));
-    branch.onNomination(context, new Nomination(0, COHORTS, settlement, TTL));
+    branch.onProposal(context, new Proposal(0, COHORTS, settlement, TTL));
   }
   
   private void outcome(Verdict verdict) {

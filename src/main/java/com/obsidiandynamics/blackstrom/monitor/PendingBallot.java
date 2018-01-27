@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.tracer.*;
 
 final class PendingBallot {
-  private final Nomination nomination;
+  private final Proposal proposal;
   
   private final Map<String, Response> responses;
   
@@ -18,13 +18,13 @@ final class PendingBallot {
   
   private Action action;
   
-  PendingBallot(Nomination nomination) {
-    this.nomination = nomination;
-    responses = new HashMap<>(nomination.getCohorts().length);
+  PendingBallot(Proposal proposal) {
+    this.proposal = proposal;
+    responses = new HashMap<>(proposal.getCohorts().length);
   }
   
-  Nomination getNomination() {
-    return nomination;
+  Proposal getProposal() {
+    return proposal;
   }
   
   Verdict getVerdict() {
@@ -58,12 +58,12 @@ final class PendingBallot {
       return false;
     }
     
-    final Pledge pledge = response.getPledge();
-    if (pledge == Pledge.REJECT) {
+    final Intent intent = response.getIntent();
+    if (intent == Intent.REJECT) {
       verdict = Verdict.ABORT;
       abortReason = AbortReason.REJECT;
       return true;
-    } else if (pledge == Pledge.TIMEOUT) {
+    } else if (intent == Intent.TIMEOUT) {
       verdict = Verdict.ABORT;
       abortReason = AbortReason.EXPLICIT_TIMEOUT;
       return true;
@@ -77,7 +77,7 @@ final class PendingBallot {
   }
   
   private boolean hasLapsed(Vote vote) {
-    return vote.getTimestamp() - nomination.getTimestamp() > nomination.getTtl();
+    return vote.getTimestamp() - proposal.getTimestamp() > proposal.getTtl();
   }
   
   boolean hasResponded(String cohort) {
@@ -85,6 +85,6 @@ final class PendingBallot {
   }
   
   private boolean allResponsesPresent() {
-    return responses.size() == nomination.getCohorts().length;
+    return responses.size() == proposal.getCohorts().length;
   }
 }

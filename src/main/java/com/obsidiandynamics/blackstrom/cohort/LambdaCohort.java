@@ -18,16 +18,16 @@ public final class LambdaCohort implements Cohort {
   
   private final OnDispose onDispose;
   
-  private final NominationProcessor onNomination;
+  private final ProposalProcessor onProposal;
   
   private final OutcomeProcessor onOutcome;
   
-  LambdaCohort(String groupId, OnInit onInit, OnDispose onDispose, NominationProcessor onNomination,
+  LambdaCohort(String groupId, OnInit onInit, OnDispose onDispose, ProposalProcessor onProposal,
                OutcomeProcessor onOutcome) {
     this.groupId = groupId;
     this.onInit = onInit;
     this.onDispose = onDispose;
-    this.onNomination = onNomination;
+    this.onProposal = onProposal;
     this.onOutcome = onOutcome;
   }
 
@@ -47,8 +47,8 @@ public final class LambdaCohort implements Cohort {
   }
   
   @Override
-  public void onNomination(MessageContext context, Nomination nomination) {
-    onNomination.onNomination(context, nomination);
+  public void onProposal(MessageContext context, Proposal proposal) {
+    onProposal.onProposal(context, proposal);
   }
 
   @Override
