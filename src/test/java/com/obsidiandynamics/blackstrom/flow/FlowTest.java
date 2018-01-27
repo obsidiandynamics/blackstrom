@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.tracer;
+package com.obsidiandynamics.blackstrom.flow;
 
 import static org.junit.Assert.*;
 
@@ -13,18 +13,18 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public final class TracerTest {
+public final class FlowTest {
   private final Timesert wait = Wait.SHORT;
 
-  private Tracer tracer;
+  private Flow flow;
 
   @After
   public void after() {
-    if (tracer != null) tracer.terminate().joinQuietly();
+    if (flow != null) flow.terminate().joinQuietly();
   }
 
-  private void createTracer(FiringStrategyFactory firingStrategyFactory) {
-    tracer = new Tracer(firingStrategyFactory);
+  private void createFlow(FiringStrategy.Factory firingStrategyFactory) {
+    flow = new Flow(firingStrategyFactory);
   }
 
   private static class TestTask implements Runnable {
@@ -49,12 +49,12 @@ public final class TracerTest {
 
   @Test
   public void testStrictNoComplete() {
-    createTracer(StrictFiringStrategy::new);
+    createFlow(StrictFiringStrategy::new);
     final int runs = 10;
     final List<Integer> completed = new CopyOnWriteArrayList<>();
 
     for (int i = 0; i < runs; i++) {
-      tracer.begin(new TestTask(completed, i));
+      flow.begin(new TestTask(completed, i));
     }
 
     TestSupport.sleep(10);
@@ -63,14 +63,14 @@ public final class TracerTest {
 
   @Test
   public void testStrictIncreasing() {
-    createTracer(StrictFiringStrategy::new);
+    createFlow(StrictFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Action> actions = new ArrayList<>(runs);
+    final List<Confirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    actions.forEach(a -> a.complete());
+    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    cons.forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
@@ -78,14 +78,14 @@ public final class TracerTest {
 
   @Test
   public void testStrictDecreasing() {
-    createTracer(StrictFiringStrategy::new);
+    createFlow(StrictFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Action> actions = new ArrayList<>(runs);
+    final List<Confirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    ListQuery.of(actions).transform(Collections::reverse).list().forEach(a -> a.complete());
+    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    ListQuery.of(cons).transform(Collections::reverse).list().forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
@@ -93,14 +93,14 @@ public final class TracerTest {
 
   @Test
   public void testStrictRandom() {
-    createTracer(StrictFiringStrategy::new);
+    createFlow(StrictFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Action> actions = new ArrayList<>(runs);
+    final List<Confirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    ListQuery.of(actions).transform(Collections::shuffle).list().forEach(a -> a.complete());
+    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    ListQuery.of(cons).transform(Collections::shuffle).list().forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
@@ -108,12 +108,12 @@ public final class TracerTest {
 
   @Test
   public void testLazyNoComplete() {
-    createTracer(LazyFiringStrategy::new);
+    createFlow(LazyFiringStrategy::new);
     final int runs = 10;
     final List<Integer> completed = new CopyOnWriteArrayList<>();
 
     for (int i = 0; i < runs; i++) {
-      tracer.begin(new TestTask(completed, i));
+      flow.begin(new TestTask(completed, i));
     }
 
     TestSupport.sleep(10);
@@ -122,14 +122,14 @@ public final class TracerTest {
 
   @Test
   public void testLazyIncreasing() {
-    createTracer(LazyFiringStrategy::new);
+    createFlow(LazyFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Action> actions = new ArrayList<>(runs);
+    final List<Confirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    ListQuery.of(actions).delayedBy(1).forEach(a -> a.complete());
+    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    ListQuery.of(cons).delayedBy(1).forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).contains(runs - 1));
     assertThat(ListQuery.of(completed).isOrderedBy(Integer::compare));
@@ -137,14 +137,14 @@ public final class TracerTest {
 
   @Test
   public void testLazyDecreasing() {
-    createTracer(LazyFiringStrategy::new);
+    createFlow(LazyFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Action> actions = new ArrayList<>(runs);
+    final List<Confirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    ListQuery.of(actions).transform(Collections::reverse).list().forEach(a -> a.complete());
+    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    ListQuery.of(cons).transform(Collections::reverse).list().forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).contains(runs - 1));
     assertEquals(1, completed.size());
@@ -152,14 +152,14 @@ public final class TracerTest {
 
   @Test
   public void testLazyRandom() {
-    createTracer(LazyFiringStrategy::new);
+    createFlow(LazyFiringStrategy::new);
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Action> actions = new ArrayList<>(runs);
+    final List<Confirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> actions.add(tracer.begin(new TestTask(completed, i))));
-    ListQuery.of(actions).transform(Collections::shuffle).delayedBy(1).forEach(a -> a.complete());
+    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    ListQuery.of(cons).transform(Collections::shuffle).delayedBy(1).forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).contains(runs - 1));
     assertThat(ListQuery.of(completed).isOrderedBy(Integer::compare));

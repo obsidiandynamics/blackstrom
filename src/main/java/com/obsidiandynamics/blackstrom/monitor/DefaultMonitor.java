@@ -4,10 +4,10 @@ import java.util.*;
 
 import org.slf4j.*;
 
+import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.tracer.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultMonitor implements Monitor {
@@ -37,7 +37,7 @@ public final class DefaultMonitor implements Monitor {
   
   private final Object lock = new Object();
   
-  private final ShardedTracer tracer = new ShardedTracer();
+  private final ShardedFlow flow = new ShardedFlow();
   
   public DefaultMonitor() {
     this(new DefaultMonitorOptions());
@@ -162,7 +162,7 @@ public final class DefaultMonitor implements Monitor {
         pending.put(proposal.getBallotId(), existingBallot);
         return;
       } else {
-        newBallot.setAction(tracer.begin(context, proposal));
+        newBallot.setConfirmation(flow.begin(context, proposal));
       }
     }
     
@@ -195,7 +195,7 @@ public final class DefaultMonitor implements Monitor {
     decided.put(ballotId, outcome);
     ledger.append(outcome, (id, x) -> {
       if (x == null) {
-        ballot.getAction().complete();
+        ballot.getConfirmation().confirm();
       } else {
         LOG.warn("Error appending to ledger [message: " + outcome + "]", x);
       }
@@ -213,6 +213,6 @@ public final class DefaultMonitor implements Monitor {
     timeoutThread.terminate();
     gcThread.joinQuietly();
     timeoutThread.joinQuietly();
-    tracer.dispose();
+    flow.dispose();
   }
 }

@@ -4,8 +4,8 @@ import java.util.*;
 
 import org.slf4j.*;
 
+import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.tracer.*;
 
 final class PendingBallot {
   private final Proposal proposal;
@@ -16,7 +16,7 @@ final class PendingBallot {
   
   private AbortReason abortReason;
   
-  private Action action;
+  private Confirmation confirmation;
   
   PendingBallot(Proposal proposal) {
     this.proposal = proposal;
@@ -41,12 +41,12 @@ final class PendingBallot {
     return array;
   }
   
-  Action getAction() {
-    return action;
+  Confirmation getConfirmation() {
+    return confirmation;
   }
 
-  void setAction(Action action) {
-    this.action = action;
+  void setConfirmation(Confirmation confirmation) {
+    this.confirmation = confirmation;
   }
 
   boolean castVote(Logger log, Vote vote) {

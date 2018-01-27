@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.tracer;
+package com.obsidiandynamics.blackstrom.flow;
 
 import static org.junit.Assert.*;
 
@@ -13,14 +13,14 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
-public class ShardedTracerTest {
+public class ShardedFlowTest {
   private final Timesert wait = Wait.SHORT;
   
-  private ShardedTracer tracer;
+  private ShardedFlow tracer;
   
   @Before
   public void before() {
-    tracer = new ShardedTracer();
+    tracer = new ShardedFlow();
   }
   
   @After
@@ -45,21 +45,21 @@ public class ShardedTracerTest {
       }
     };
     
-    final Action a0 = tracer.begin(context, message(0, 0));
-    final Action a1 = tracer.begin(context, message(1, 0));
-    final Action a2 = tracer.begin(context, message(2, 1));
-    final Action a3 = tracer.begin(context, message(3, 1));
+    final Confirmation a0 = tracer.begin(context, message(0, 0));
+    final Confirmation a1 = tracer.begin(context, message(1, 0));
+    final Confirmation a2 = tracer.begin(context, message(2, 1));
+    final Confirmation a3 = tracer.begin(context, message(3, 1));
     
-    a1.complete();
-    a3.complete();
+    a1.confirm();
+    a3.confirm();
     assertEquals(0, confirmed.size());
     
-    a2.complete();
+    a2.confirm();
     wait.until(() -> {
       assertEquals(Arrays.asList(3L), confirmed);
     });
     
-    a0.complete();
+    a0.confirm();
     wait.until(() -> {
       assertEquals(Arrays.asList(3L, 1L), confirmed);
     });

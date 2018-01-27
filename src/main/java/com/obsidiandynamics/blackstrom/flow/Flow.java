@@ -1,22 +1,22 @@
-package com.obsidiandynamics.blackstrom.tracer;
+package com.obsidiandynamics.blackstrom.flow;
 
 import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class Tracer implements Joinable {
+public final class Flow implements Joinable {
   private final WorkerThread executor;
   
-  protected final AtomicReference<Action> tail = new AtomicReference<>(Action.anchor());
+  protected final AtomicReference<Confirmation> tail = new AtomicReference<>(Confirmation.anchor());
   
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
   
-  public Tracer(FiringStrategyFactory completionStrategyFactory) {
-    this(completionStrategyFactory, Tracer.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
+  public Flow(FiringStrategy.Factory completionStrategyFactory) {
+    this(completionStrategyFactory, Flow.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
   }
   
-  public Tracer(FiringStrategyFactory firingStrategyFactory, String threadName) {
+  public Flow(FiringStrategy.Factory firingStrategyFactory, String threadName) {
     executor = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
@@ -25,14 +25,14 @@ public final class Tracer implements Joinable {
         .buildAndStart();
   }
   
-  public Action begin(Runnable task) {
-    final Action action = new Action(task);
-    action.appendTo(tail);
-    return action;
+  public Confirmation begin(Runnable task) {
+    final Confirmation confirmation = new Confirmation(task);
+    confirmation.appendTo(tail);
+    return confirmation;
   }
   
   /**
-   *  Terminates the tracer, shutting down the worker thread and preventing further 
+   *  Terminates the flow, shutting down the worker thread and preventing further 
    *  task executions.
    *  
    *  @return A {@link Joinable} for the caller to wait on.
