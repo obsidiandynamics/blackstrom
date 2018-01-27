@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.machine;
+package com.obsidiandynamics.blackstrom.manifold;
 
 import java.util.*;
 
@@ -6,12 +6,12 @@ import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 
-public final class VotingMachine implements Disposable {
+public final class Manifold implements Disposable {
   private final Ledger ledger;
   
   private final Set<Factor> factors;
   
-  VotingMachine(Ledger ledger, Set<Factor> factors) {
+  Manifold(Ledger ledger, Set<Factor> factors) {
     this.ledger = ledger;
     this.factors = factors;
     
@@ -26,7 +26,7 @@ public final class VotingMachine implements Disposable {
     return ledger;
   }
   
-  public Set<ElementalProcessor> getHandlers() {
+  public Set<Factor> getFactors() {
     return Collections.unmodifiableSet(factors);
   }
 
@@ -36,7 +36,7 @@ public final class VotingMachine implements Disposable {
     factors.forEach(p -> p.dispose());
   }
   
-  public static VotingMachineBuilder builder() {
-    return new VotingMachineBuilder();
+  public static ManifoldBuilder builder() {
+    return new ManifoldBuilder();
   }
 }

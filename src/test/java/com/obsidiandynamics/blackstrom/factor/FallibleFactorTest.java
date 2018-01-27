@@ -15,7 +15,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.machine.*;
+import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
@@ -57,26 +57,26 @@ public final class FallibleFactorTest {
     }
   }
   
-  private VotingMachine machine;
+  private Manifold manifold;
   
   private final Timesert wait = Wait.SHORT;
   
   @After
   public void after() {
-    if (machine != null) machine.dispose();
+    if (manifold != null) manifold.dispose();
   }
   
   @Test
   public void testInitDisposeProxy() {
     final Ledger ledger = mock(Ledger.class);
     final Cohort c = mock(Cohort.class);
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(c)
         .build();
     
     verify(c).init(notNull());
-    machine.dispose();
+    manifold.dispose();
     verify(c).dispose();
   }
   
@@ -86,7 +86,7 @@ public final class FallibleFactorTest {
     final VoteCollector v = new VoteCollector();
     final TestCohort c = new TestCohort();
     final Factor fc = new FallibleFactor(c);
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc, v)
         .build();
@@ -106,7 +106,7 @@ public final class FallibleFactorTest {
     final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DuplicateDelivery(0))
         .withTxFailureMode(new DuplicateDelivery(0));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc)
         .build();
@@ -124,7 +124,7 @@ public final class FallibleFactorTest {
     final TestCohort c = new TestCohort();
     final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DuplicateDelivery(1));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc)
         .build();
@@ -143,7 +143,7 @@ public final class FallibleFactorTest {
     final int delay = 10;
     final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DelayedDelivery(1, delay));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc)
         .build();
@@ -164,7 +164,7 @@ public final class FallibleFactorTest {
     final int delay = 10;
     final Factor fc = new FallibleFactor(c)
         .withRxFailureMode(new DelayedDuplicateDelivery(1, delay));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc)
         .build();
@@ -185,7 +185,7 @@ public final class FallibleFactorTest {
     final TestCohort c = new TestCohort();
     final Factor fc = new FallibleFactor(c)
         .withTxFailureMode(new DuplicateDelivery(1));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc, v)
         .build();
@@ -205,7 +205,7 @@ public final class FallibleFactorTest {
     final int delay = 10;
     final Factor fc = new FallibleFactor(c)
         .withTxFailureMode(new DelayedDelivery(1, delay));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc, v)
         .build();
@@ -227,7 +227,7 @@ public final class FallibleFactorTest {
     final int delay = 10;
     final Factor fc = new FallibleFactor(c)
         .withTxFailureMode(new DelayedDuplicateDelivery(1, delay));
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(fc, v)
         .build();

@@ -17,7 +17,7 @@ import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.machine.*;
+import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
@@ -39,20 +39,20 @@ public final class BankTransferTest {
 
   private Ledger ledger;
 
-  private VotingMachine machine;
+  private Manifold manifold;
 
   @After
   public void after() {
-    machine.dispose();
+    manifold.dispose();
   }
   
   private Ledger createLedger() {
     return new MultiNodeQueueLedger();
   }
   
-  private void buildStandardMachine(Factor initiator, Factor monitor, Factor... branches) {
+  private void buildStandardManifold(Factor initiator, Factor monitor, Factor... branches) {
     ledger = createLedger();
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(initiator, monitor)
         .withFactors(branches)
@@ -67,7 +67,7 @@ public final class BankTransferTest {
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
     final BankBranch[] branches = createBranches(2, initialBalance, true);
-    buildStandardMachine(initiator, monitor, branches);
+    buildStandardManifold(initiator, monitor, branches);
 
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
                                          TWO_BRANCH_IDS,
@@ -98,7 +98,7 @@ public final class BankTransferTest {
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
     final BankBranch[] branches = createBranches(2, initialBalance, true);
-    buildStandardMachine(initiator, monitor, branches);
+    buildStandardManifold(initiator, monitor, branches);
 
     final Outcome o = initiator.initiate(UUID.randomUUID(), 
                                          TWO_BRANCH_IDS, 
@@ -133,7 +133,7 @@ public final class BankTransferTest {
     final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(60_000));
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     // we delay the receive rather than the send, so that the send timestamp appears recent — triggering implicit timeout
-    buildStandardMachine(initiator, 
+    buildStandardManifold(initiator, 
                          monitor, 
                          branches[0], 
                          new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 10)));
@@ -167,7 +167,7 @@ public final class BankTransferTest {
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     // it doesn't matter whether we delay receive or send, since the messages are sufficiently delayed, such
     // that they won't get there within the test's running time — either failure mode will trigger an explicit timeout
-    buildStandardMachine(initiator, 
+    buildStandardManifold(initiator, 
                          monitor, 
                          new FallibleFactor(branches[0]).withRxFailureMode(new DelayedDelivery(1, 60_000)),
                          new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 60_000)));
@@ -221,7 +221,7 @@ public final class BankTransferTest {
         } catch (Exception e) {
           throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
         }
-        machine.dispose();
+        manifold.dispose();
       }
     }
   }
@@ -266,7 +266,7 @@ public final class BankTransferTest {
     final BankBranch[] branches = createBranches(2, initialBalance, true);
 
     ledger = createLedger();
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(new FallibleFactor(initiator)
                      .withRxFailureMode(failureModes.get(TargetFactor.INITIATOR).rxFailureMode)
@@ -329,7 +329,7 @@ public final class BankTransferTest {
     };
     final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
     final Monitor monitor = new DefaultMonitor();
-    buildStandardMachine(initiator, monitor, branches);
+    buildStandardManifold(initiator, monitor, branches);
 
     final long took = TestSupport.took(() -> {
       String[] branchIds = null;

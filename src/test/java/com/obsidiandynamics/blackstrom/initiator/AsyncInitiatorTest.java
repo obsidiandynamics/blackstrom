@@ -9,16 +9,16 @@ import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.machine.*;
+import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class AsyncInitiatorTest {
-  private VotingMachine machine;
+  private Manifold manifold;
   
   @After
   public void after() {
-    if (machine != null) {
-      machine.dispose();
+    if (manifold != null) {
+      manifold.dispose();
     }
   }
   
@@ -26,7 +26,7 @@ public final class AsyncInitiatorTest {
   public void testFuture() throws Exception {
     final Ledger ledger = new SingleNodeQueueLedger();
     final AsyncInitiator initiator = new AsyncInitiator();
-    machine = VotingMachine.builder()
+    manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(initiator)
         .build();
