@@ -29,9 +29,7 @@ public final class BalancedLedgerView implements Ledger {
       if (group != null) {
         group.join(handlerId);
       } else {
-        for (int shard = 0; shard < accumulators.length; shard++) {
-          nextReadOffsets[shard] = accumulators[shard].getNextOffset();
-        }
+        Arrays.setAll(nextReadOffsets, shard -> accumulators[shard].getNextOffset());
       }
       
       thread = WorkerThread.builder()
@@ -53,7 +51,7 @@ public final class BalancedLedgerView implements Ledger {
           
           final int retrieved = accumulator.retrieve(nextReadOffset, sink);
           if (retrieved != 0) {
-            nextReadOffsets[shard] = nextReadOffset + retrieved;
+            nextReadOffsets[shard] = ((ShardMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset() + 1;
           }
         }
       }
