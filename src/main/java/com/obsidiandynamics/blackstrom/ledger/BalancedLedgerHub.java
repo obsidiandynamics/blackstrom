@@ -47,7 +47,7 @@ public final class BalancedLedgerHub implements Disposable {
   private final Set<BalancedLedgerView> views = new HashSet<>();
 
   private final Object lock = new Object();
-
+  
   public BalancedLedgerHub(int shards, ShardAssignment.Factory shardAssignmentFactory, Accumulator.Factory accumulatorFactory) {
     this.shardAssignmentFactory = shardAssignmentFactory;
     accumulators = new Accumulator[shards];
@@ -60,11 +60,21 @@ public final class BalancedLedgerHub implements Disposable {
     return view;
   }
   
+  public BalancedLedgerView connectDetached() {
+    final BalancedLedgerView view = connect();
+    view.detach();
+    return view;
+  }
+  
   public int getShards() {
     return accumulators.length;
   }
   
-  void detachView(BalancedLedgerView view) {
+  public Set<BalancedLedgerView> getViews() {
+    return Collections.unmodifiableSet(views);
+  }
+  
+  void removeView(BalancedLedgerView view) {
     views.remove(view);
   }
 
@@ -95,5 +105,6 @@ public final class BalancedLedgerHub implements Disposable {
   public void dispose() {
     Arrays.stream(accumulators).forEach(a -> a.dispose());
     new ArrayList<>(views).forEach(v -> v.dispose());
+    views.clear();
   }
 }

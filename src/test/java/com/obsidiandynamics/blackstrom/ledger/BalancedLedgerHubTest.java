@@ -45,7 +45,7 @@ public final class BalancedLedgerHubTest {
     }
     
     static TestView connectTo(int viewId, BalancedLedgerHub hub) {
-      return new TestView(viewId, hub.connect());
+      return new TestView(viewId, hub.connectDetached());
     }
     
     void attach(String groupId) {
@@ -118,6 +118,28 @@ public final class BalancedLedgerHubTest {
         lastMessageByShard.forEach(messageRef -> messageRef.set(null));
       }
     }
+  }
+  
+  @Test
+  public void testAttachedDispose() {
+    hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
+    final BalancedLedgerView v0 = hub.connect();
+    final BalancedLedgerView v1 = hub.connect();
+    assertEquals(new HashSet<>(Arrays.asList(v0, v1)), hub.getViews());
+    
+    v0.dispose(); // this should also have the effect of disposing both the hub and v1
+    assertEquals(Collections.emptySet(), hub.getViews());
+  }
+  
+  @Test
+  public void testDetachedDispose() {
+    hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
+    final BalancedLedgerView v0 = hub.connectDetached();
+    final BalancedLedgerView v1 = hub.connectDetached();
+    assertEquals(new HashSet<>(Arrays.asList(v0, v1)), hub.getViews());
+    
+    v0.dispose(); // this should have no effect on the hub or v1
+    assertEquals(Collections.singleton(v1), hub.getViews());
   }
 
   @Test

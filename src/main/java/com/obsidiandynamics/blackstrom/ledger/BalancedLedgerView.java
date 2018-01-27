@@ -71,6 +71,8 @@ public final class BalancedLedgerView implements Ledger {
   
   private final Accumulator[] accumulators;
   
+  private boolean detached;
+  
   BalancedLedgerView(BalancedLedgerHub hub) {
     this.hub = hub;
     accumulators = hub.getAccumulators(); 
@@ -78,6 +80,10 @@ public final class BalancedLedgerView implements Ledger {
   
   public BalancedLedgerHub getHub() {
     return hub;
+  }
+  
+  public void detach() {
+    detached = true;
   }
 
   @Override
@@ -104,11 +110,15 @@ public final class BalancedLedgerView implements Ledger {
 
   @Override
   public synchronized void dispose() {
-    hub.detachView(this);
+    hub.removeView(this);
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
     consumers.forEach(c -> c.thread.joinQuietly());
     consumers.stream().filter(c -> c.group != null).forEach(c -> c.group.leave(c.handlerId));
     this.consumers.clear();
+    
+    if (! detached) {
+      hub.dispose();
+    }
   }
 }

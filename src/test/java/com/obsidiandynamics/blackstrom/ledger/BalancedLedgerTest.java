@@ -21,20 +21,9 @@ public final class BalancedLedgerTest extends AbstractLedgerTest {
     return Wait.SHORT;
   }
   
-  private BalancedLedgerHub hub;
-  
-  @Override
-  protected void startup() {
-    hub = new BalancedLedgerHub(2, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000, 10_000));
-  }
-  
-  @Override
-  protected void shutdown() {
-    hub.dispose();
-  }
-  
   @Override
   protected Ledger createLedgerImpl() {
-    return hub.connect();
+    return new BalancedLedgerHub(2, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000, 10_000))
+        .connectDetached();
   }
 }
