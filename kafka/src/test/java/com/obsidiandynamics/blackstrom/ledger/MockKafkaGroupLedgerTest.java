@@ -24,7 +24,7 @@ public final class MockKafkaGroupLedgerTest extends AbstractGroupLedgerTest {
   }
   
   @Override
-  protected Ledger createLedgerImpl() {
+  protected Ledger createLedger() {
     final Kafka<String, Message> kafka = new MockKafka<>();
     return new KafkaLedger(kafka, "test");
   }

@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.ledger;
+package com.obsidiandynamics.blackstrom.bank;
 
 import java.util.*;
 
@@ -6,28 +6,29 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class MultiNodeQueueLedgerTest extends AbstractLedgerTest {
+public final class MultiNodeQueueLedgerBankTransferTest extends AbstractBankTransferTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
   
   @Override
+  protected Ledger createLedger() {
+    return new MultiNodeQueueLedger();
+  }
+
+  @Override
   protected Timesert getWait() {
     return Wait.SHORT;
   }
   
-  @Override
-  protected Ledger createLedger() {
-    return new MultiNodeQueueLedger();
-  }
-  
   public static void main(String[] args) {
-    AbstractLedgerTest.enableBenchmark();
-    JUnitCore.runClasses(MultiNodeQueueLedgerTest.class);
+    AbstractBankTransferTest.enableBenchmark();
+    JUnitCore.runClasses(MultiNodeQueueLedgerBankTransferTest.class);
   }
 }

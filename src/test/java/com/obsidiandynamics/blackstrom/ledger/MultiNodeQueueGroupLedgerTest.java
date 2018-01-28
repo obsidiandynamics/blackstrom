@@ -22,7 +22,7 @@ public final class MultiNodeQueueGroupLedgerTest extends AbstractGroupLedgerTest
   }
   
   @Override
-  protected Ledger createLedgerImpl() {
+  protected Ledger createLedger() {
     return new MultiNodeQueueLedger();
   }
 }

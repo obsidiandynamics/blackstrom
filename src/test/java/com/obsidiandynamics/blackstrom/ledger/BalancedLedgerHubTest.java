@@ -141,6 +141,29 @@ public final class BalancedLedgerHubTest {
     v0.dispose(); // this should have no effect on the hub or v1
     assertEquals(Collections.singleton(v1), hub.getViews());
   }
+  
+  @Test
+  public void testConfirmAfterDispose() {
+    hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
+    final BalancedLedgerView view = hub.connectDetached();
+    final AtomicBoolean received = new AtomicBoolean();
+    view.attach(new MessageHandler() {
+      @Override
+      public String getGroupId() {
+        return null;
+      }
+    
+      @Override
+      public void onMessage(MessageContext context, Message message) {
+        view.dispose();
+        context.confirm(message.getMessageId());
+        received.set(true);
+      }
+    });
+    view.append(new UnknownMessage(0L, 0).withShard(0));
+    
+    wait.untilTrue(() -> received.get());
+  }
 
   @Test
   public void testUngroupedAll() {

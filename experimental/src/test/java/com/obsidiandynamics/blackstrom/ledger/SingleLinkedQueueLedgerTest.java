@@ -10,7 +10,7 @@ public final class SingleLinkedQueueLedgerTest extends AbstractLedgerTest {
   }
   
   @Override
-  protected Ledger createLedgerImpl() {
+  protected Ledger createLedger() {
     return new SingleLinkedQueueLedger();
   }
 }

@@ -4,7 +4,7 @@ import java.util.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
-final class ArrayListAccumulator implements Accumulator {
+public final class ArrayListAccumulator implements Accumulator {
   private class Buffer {
     private volatile Buffer previous;
     private final long baseOffset;
@@ -108,7 +108,11 @@ final class ArrayListAccumulator implements Accumulator {
     return buffer;
   }
   
-  static Accumulator.Factory factory(int bufferSize, int retainBuffers) {
+  public static Accumulator.Factory factory(int bufferSize) {
+    return factory(bufferSize, Integer.MAX_VALUE);
+  }
+  
+  public static Accumulator.Factory factory(int bufferSize, int retainBuffers) {
     return shard -> new ArrayListAccumulator(shard, bufferSize, retainBuffers, 0);
   }
 }

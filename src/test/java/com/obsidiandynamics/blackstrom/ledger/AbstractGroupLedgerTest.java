@@ -57,18 +57,12 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private final Timesert wait = getWait();
   
-  protected void startup() {}
+  protected abstract Timesert getWait();
   
-  protected void shutdown() {}
-  
-  @Before
-  public void before() {
-    startup();
-  }
+  protected abstract Ledger createLedger();
   
   @After
-  public void after() {
-    shutdown();
+  public void afterBase() {
     if (ledger != null) {
       ledger.dispose();
     }
@@ -122,12 +116,4 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
                   .withSource(source)
                   .withShardKey(shard.key()));
   }
-  
-  private Ledger createLedger() {
-    return createLedgerImpl();
-  }
-  
-  protected abstract Timesert getWait();
-  
-  protected abstract Ledger createLedgerImpl();
 }

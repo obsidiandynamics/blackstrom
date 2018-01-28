@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.*;
 import java.util.stream.*;
 
 import org.junit.*;
-import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
@@ -20,34 +19,27 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
-import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
-import com.obsidiandynamics.junit.*;
 
-@RunWith(Parameterized.class)
-public final class BankTransferTest {  
-  @Parameterized.Parameters
-  public static List<Object[]> data() {
-    return TestCycle.timesQuietly(1);
-  }
-  
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public abstract class AbstractBankTransferTest {  
   private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
   private static final int FUTURE_GET_TIMEOUT = 10_000;
   
-  private final Timesert wait = Wait.SHORT;
+  private final Timesert wait = getWait();
 
   private Ledger ledger;
 
   private Manifold manifold;
+  
+  protected abstract Ledger createLedger();
+  
+  protected abstract Timesert getWait();
 
   @After
-  public void after() {
-    manifold.dispose();
-  }
-  
-  private Ledger createLedger() {
-    return new MultiNodeQueueLedger();
+  public final void after() {
+    if (manifold != null) manifold.dispose();
   }
   
   private void buildStandardManifold(Factor initiator, Factor monitor, Factor... branches) {
@@ -60,7 +52,7 @@ public final class BankTransferTest {
   }
 
   @Test
-  public void testCommit() throws Exception {
+  public final void testCommit() throws Exception {
     final int initialBalance = 1_000;
     final int transferAmount = initialBalance;
 
@@ -91,7 +83,7 @@ public final class BankTransferTest {
   }
 
   @Test
-  public void testAbort() throws Exception {
+  public final void testAbort() throws Exception {
     final int initialBalance = 1_000;
     final int transferAmount = initialBalance + 1;
 
@@ -125,7 +117,7 @@ public final class BankTransferTest {
   }
 
   @Test
-  public void testImplicitTimeout() throws Exception {
+  public final void testImplicitTimeout() throws Exception {
     final int initialBalance = 1_000;
     final int transferAmount = initialBalance;
 
@@ -158,7 +150,7 @@ public final class BankTransferTest {
   }
 
   @Test
-  public void testExplicitTimeout() throws Exception {
+  public final void testExplicitTimeout() throws Exception {
     final int initialBalance = 1_000;
     final int transferAmount = initialBalance;
 
@@ -191,7 +183,7 @@ public final class BankTransferTest {
   }
   
   @Test
-  public void testFactorFailures() {
+  public final void testFactorFailures() {
     final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
       new RxTxFailureModes() {},
       new RxTxFailureModes() {{
@@ -304,23 +296,28 @@ public final class BankTransferTest {
     assertEquals(expectedVerdict, o.getVerdict());
     assertEquals(expectedAbortReason, o.getAbortReason());
   }
+  
+  protected static void enableBenchmark() {
+    System.setProperty(AbstractBankTransferTest.class.getSimpleName() + ".benchmark", String.valueOf(true));
+  }
 
-  /**
-   *  For benchmarking, run with 
-   *  -DBankTransferTest.numBranches=2 -DBankTransferTest.runs=4000000 -DBankTransferTest.randomiseRuns=false -DBankTransferTest.enableLogging=false
-   *  
-   *  @throws Exception
-   */
   @Test
-  public void testRandomTransfersBenchmark() {
-    final int numBranches = PropertyUtils.get("BankTransferTest.numBranches", Integer::valueOf, 10);
-    final int runs = PropertyUtils.get("BankTransferTest.runs", Integer::valueOf, 10_000);
+  public final void testRandomTransfers() {
+    testRandomTransfers(10, 10_000, true, true);
+  }
+
+  @Test
+  public final void testRandomTransfersBenchmark() {
+    if (PropertyUtils.get(AbstractBankTransferTest.class.getSimpleName() + ".benchmark", Boolean::valueOf, false)) {
+      testRandomTransfers(2, 4_000_000, false, false);
+    }
+  }
+
+  private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging) {
     final long transferAmount = 1_000;
     final long initialBalance = runs * transferAmount / (numBranches * numBranches);
     final int backlogTarget = 10_000;
     final boolean idempotencyEnabled = false;
-    final boolean randomiseRuns = PropertyUtils.get("BankTransferTest.randomiseRuns", Boolean::valueOf, true);
-    final boolean enableLogging = PropertyUtils.get("BankTransferTest.enableLogging", Boolean::valueOf, true);
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();

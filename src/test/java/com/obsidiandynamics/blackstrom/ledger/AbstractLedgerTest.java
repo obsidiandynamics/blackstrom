@@ -7,6 +7,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import org.junit.*;
+import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
@@ -14,6 +15,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractLedgerTest implements TestSupport {
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
@@ -53,18 +55,12 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private final Timesert wait = getWait();
   
-  protected void startup() {}
+  protected abstract Timesert getWait();
   
-  protected void shutdown() {}
-  
-  @Before
-  public void before() {
-    startup();
-  }
+  protected abstract Ledger createLedger();
   
   @After
-  public void after() {
-    shutdown();
+  public void afterBase() {
     if (ledger != null) {
       ledger.dispose();
     }
@@ -116,10 +112,24 @@ public abstract class AbstractLedgerTest implements TestSupport {
     ledger.dispose();
   }
   
+  protected static void enableBenchmark() {
+    System.setProperty(AbstractLedgerTest.class.getSimpleName() + ".benchmark", String.valueOf(true));
+  }
+  
+  @Test
+  public final void testOneWay() {
+    testOneWay(10_000);
+  }
+  
   @Test
   public final void testOneWayBenchmark() {
+    if (PropertyUtils.get(AbstractLedgerTest.class.getSimpleName() + ".benchmark", Boolean::parseBoolean, false)) {
+      testOneWay(10_000_000);
+    }
+  }
+  
+  private final void testOneWay(int numMessages) {
     ledger = createLedger();
-    final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
@@ -143,9 +153,19 @@ public abstract class AbstractLedgerTest implements TestSupport {
   }
   
   @Test
+  public final void testTwoWay() {
+    testTwoWay(10_000);
+  }
+  
+  @Test
   public final void testTwoWayBenchmark() {
+    if (PropertyUtils.get(AbstractLedgerTest.class.getSimpleName() + ".benchmark", Boolean::parseBoolean, false)) {
+      testTwoWay(10_000_000);
+    }
+  }
+  
+  private final void testTwoWay(int numMessages) {
     ledger = createLedger();
-    final int numMessages = 10_000;
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
@@ -179,12 +199,4 @@ public abstract class AbstractLedgerTest implements TestSupport {
                   .withSource(source)
                   .withShardKey(shard.key()));
   }
-  
-  private Ledger createLedger() {
-    return createLedgerImpl();
-  }
-  
-  protected abstract Timesert getWait();
-  
-  protected abstract Ledger createLedgerImpl();
 }

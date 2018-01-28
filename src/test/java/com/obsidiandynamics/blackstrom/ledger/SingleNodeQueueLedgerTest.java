@@ -22,7 +22,7 @@ public final class SingleNodeQueueLedgerTest extends AbstractLedgerTest {
   }
   
   @Override
-  protected Ledger createLedgerImpl() {
+  protected Ledger createLedger() {
     return new SingleNodeQueueLedger();
   }
 }

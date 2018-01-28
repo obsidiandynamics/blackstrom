@@ -22,7 +22,7 @@ public final class BalancedLedgerGroupTest extends AbstractGroupLedgerTest {
   }
   
   @Override
-  protected Ledger createLedgerImpl() {
+  protected Ledger createLedger() {
     return new BalancedLedgerHub(2, StickyShardAssignment::new, ArrayListAccumulator.factory(2, 10))
         .connectDetached();
   }

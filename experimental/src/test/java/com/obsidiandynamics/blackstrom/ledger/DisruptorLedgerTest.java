@@ -10,7 +10,7 @@ public final class DisruptorLedgerTest extends AbstractLedgerTest {
   }
   
   @Override
-  protected Ledger createLedgerImpl() {
+  protected Ledger createLedger() {
     return new DisruptorLedger(1 << 20);
   }
 }

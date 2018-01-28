@@ -35,7 +35,11 @@ public final class BalancedLedgerView implements Ledger {
       thread = WorkerThread.builder()
           .withOptions(new WorkerOptions().withDaemon(true).withName(BalancedLedgerView.class.getSimpleName() + "-" + handlerId))
           .onCycle(this::cycle)
-          .buildAndStart();
+          .build();
+    }
+    
+    void start() {
+      thread.start();
     }
     
     private void cycle(WorkerThread t) throws InterruptedException {
@@ -91,6 +95,7 @@ public final class BalancedLedgerView implements Ledger {
     final ConsumerGroup group = handler.getGroupId() != null ? hub.getOrCreateGroup(handler.getGroupId()) : null;
     final Consumer consumer = new Consumer(handler, group);
     consumers.put(consumer.handlerId, consumer);
+    consumer.start();
   }
 
   @Override
@@ -101,10 +106,13 @@ public final class BalancedLedgerView implements Ledger {
 
   @Override
   public void confirm(Object handlerId, Object messageId) {
-    final ConsumerGroup group = consumers.get(handlerId).group;
-    if (group != null) {
-      final ShardMessageId shardMessageId = Cast.from(messageId);
-      group.confirm(shardMessageId.getShard(), shardMessageId.getOffset());
+    final Consumer consumer = consumers.get(handlerId);
+    if (consumer != null) {
+      final ConsumerGroup group = consumer.group;
+      if (group != null) {
+        final ShardMessageId shardMessageId = Cast.from(messageId);
+        group.confirm(shardMessageId.getShard(), shardMessageId.getOffset());
+      }
     }
   }
 
