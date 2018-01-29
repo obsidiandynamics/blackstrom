@@ -16,11 +16,11 @@ public final class Manifold implements Disposable {
     this.ledger = ledger;
     this.factors = factors;
     
-    factors.forEach(f -> ledger.attach(new MessageHandlerAdapter(f)));
-    ledger.init();
-    
     final InitContext context = new DefaultInitContext(ledger);
     factors.forEach(f -> f.init(context));
+    
+    factors.forEach(f -> ledger.attach(new MessageHandlerAdapter(f)));
+    ledger.init();
   }
   
   public Ledger getLedger() {

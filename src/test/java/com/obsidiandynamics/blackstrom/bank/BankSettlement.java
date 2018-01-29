@@ -4,10 +4,13 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import com.fasterxml.jackson.annotation.*;
+
 public final class BankSettlement {
   private final Map<String, BalanceTransfer> transfers;
 
-  public BankSettlement(Map<String, BalanceTransfer> transfers) {
+  @JsonCreator
+  public BankSettlement(@JsonProperty(value="transfers") Map<String, BalanceTransfer> transfers) {
     this.transfers = transfers;
   }
 

@@ -24,7 +24,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   @Override
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = new MockKafka<>();
-    return new KafkaLedger(kafka, "test");
+    return new KafkaLedger(kafka, "test", false);
   }
   
   @Test
@@ -33,7 +33,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     final Exception exception = new Exception("Boom");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withAppendExceptionGenerator(ExceptionGenerator.never());
-    final KafkaLedger ledger = new KafkaLedger(kafka, "test").withLogger(log);
+    final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
     try {
       ledger.append(new Proposal(100, new String[0], null, 0));
       verify(log, never()).warn(isNotNull(), eq(exception));
@@ -48,7 +48,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     final Exception exception = new Exception("Boom");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withAppendExceptionGenerator(ExceptionGenerator.once(exception));
-    final KafkaLedger ledger = new KafkaLedger(kafka, "test").withLogger(log);
+    final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
     try {
       ledger.append(new Proposal(100, new String[0], null, 0));
       verify(log).warn(isNotNull(), eq(exception));
@@ -63,7 +63,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     final Exception exception = new Exception("Boom");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withConfirmExceptionGenerator(ExceptionGenerator.once(exception));
-    final KafkaLedger ledger = new KafkaLedger(kafka, "test").withLogger(log);
+    final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
     try {
       final String groupId = "test";
       

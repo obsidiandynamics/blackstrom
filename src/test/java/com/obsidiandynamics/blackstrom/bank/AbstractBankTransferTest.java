@@ -61,7 +61,7 @@ public abstract class AbstractBankTransferTest {
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     buildStandardManifold(initiator, monitor, branches);
 
-    final Outcome o = initiator.initiate(UUID.randomUUID(), 
+    final Outcome o = initiator.initiate(UUID.randomUUID().toString(), 
                                          TWO_BRANCH_IDS,
                                          BankSettlement.builder()
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
@@ -92,7 +92,7 @@ public abstract class AbstractBankTransferTest {
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     buildStandardManifold(initiator, monitor, branches);
 
-    final Outcome o = initiator.initiate(UUID.randomUUID(), 
+    final Outcome o = initiator.initiate(UUID.randomUUID().toString(), 
                                          TWO_BRANCH_IDS, 
                                          BankSettlement.builder()
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
@@ -126,11 +126,11 @@ public abstract class AbstractBankTransferTest {
     final BankBranch[] branches = createBranches(2, initialBalance, true);
     // we delay the receive rather than the send, so that the send timestamp appears recent — triggering implicit timeout
     buildStandardManifold(initiator, 
-                         monitor, 
-                         branches[0], 
-                         new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 10)));
+                          monitor, 
+                          branches[0], 
+                          new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 10)));
 
-    final Outcome o = initiator.initiate(UUID.randomUUID(),
+    final Outcome o = initiator.initiate(UUID.randomUUID().toString(),
                                          TWO_BRANCH_IDS, 
                                          BankSettlement.builder()
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
@@ -160,11 +160,11 @@ public abstract class AbstractBankTransferTest {
     // it doesn't matter whether we delay receive or send, since the messages are sufficiently delayed, such
     // that they won't get there within the test's running time — either failure mode will trigger an explicit timeout
     buildStandardManifold(initiator, 
-                         monitor, 
-                         new FallibleFactor(branches[0]).withRxFailureMode(new DelayedDelivery(1, 60_000)),
-                         new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 60_000)));
+                          monitor, 
+                          new FallibleFactor(branches[0]).withRxFailureMode(new DelayedDelivery(1, 60_000)),
+                          new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 60_000)));
 
-    final Outcome o = initiator.initiate(UUID.randomUUID(),
+    final Outcome o = initiator.initiate(UUID.randomUUID().toString(),
                                          TWO_BRANCH_IDS, 
                                          BankSettlement.builder()
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
@@ -212,8 +212,9 @@ public abstract class AbstractBankTransferTest {
           testFactorFailure(new FailureModes().set(target, failureModes));
         } catch (Exception e) {
           throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
+        } finally {
+          manifold.dispose();
         }
-        manifold.dispose();
       }
     }
   }
@@ -285,7 +286,7 @@ public abstract class AbstractBankTransferTest {
   private void testSingleTransfer(int transferAmount, Verdict expectedVerdict, AbortReason expectedAbortReason,
                                   AsyncInitiator initiator) throws InterruptedException, ExecutionException, Exception {
     assert expectedVerdict == Verdict.COMMIT ^ expectedAbortReason != null;
-    final Outcome o = initiator.initiate(UUID.randomUUID(), 
+    final Outcome o = initiator.initiate(UUID.randomUUID().toString(), 
                                          TWO_BRANCH_IDS, 
                                          BankSettlement.builder()
                                          .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
@@ -303,7 +304,7 @@ public abstract class AbstractBankTransferTest {
 
   @Test
   public final void testRandomTransfers() {
-    testRandomTransfers(10, 10_000, true, true);
+    testRandomTransfers(10, 100, true, true);
   }
 
   @Test
@@ -336,7 +337,7 @@ public abstract class AbstractBankTransferTest {
         settlement = generateRandomSettlement(branchIds, transferAmount);
       }
       
-      for (int run = 0; run < runs; run++) {
+      for (long run = 0; run < runs; run++) {
         if (randomiseRuns) {
           branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
           settlement = generateRandomSettlement(branchIds, transferAmount);
@@ -346,7 +347,7 @@ public abstract class AbstractBankTransferTest {
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;
           for (;;) {
-            final int backlog = run - commits.get() - aborts.get();
+            final int backlog = (int) (run - commits.get() - aborts.get());
             if (backlog > backlogTarget) {
               TestSupport.sleep(1);
               if (enableLogging && System.currentTimeMillis() - lastLogTime > 5_000) {

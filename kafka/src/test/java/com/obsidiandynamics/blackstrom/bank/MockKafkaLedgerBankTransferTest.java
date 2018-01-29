@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.ledger;
+package com.obsidiandynamics.blackstrom.bank;
 
 import java.util.*;
 
@@ -7,25 +7,31 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
+import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class MockKafkaGroupLedgerTest extends AbstractGroupLedgerTest {
+public final class MockKafkaLedgerBankTransferTest extends AbstractBankTransferTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
   
   @Override
+  protected Ledger createLedger() {
+    final Kafka<String, Message> kafka = new MockKafka<>();
+    return new KafkaLedger(kafka, "test", false);
+  }
+
+  @Override
   protected Timesert getWait() {
     return Wait.SHORT;
   }
   
-  @Override
-  protected Ledger createLedger() {
-    final Kafka<String, Message> kafka = new MockKafka<>();
-    return new KafkaLedger(kafka, "test", false);
+  public static void main(String[] args) {
+    AbstractBankTransferTest.enableBenchmark();
+    JUnitCore.runClasses(MockKafkaLedgerBankTransferTest.class);
   }
 }

@@ -22,6 +22,6 @@ public final class KafkaLedgerIT extends AbstractLedgerTest {
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    return new KafkaLedger(kafka, KafkaLedgerIT.class.getSimpleName() + ".v2");
+    return new KafkaLedger(kafka, KafkaLedgerIT.class.getSimpleName() + ".v2", false);
   }
 }

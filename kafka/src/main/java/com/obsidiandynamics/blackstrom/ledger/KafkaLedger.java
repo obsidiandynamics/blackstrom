@@ -33,9 +33,12 @@ public final class KafkaLedger implements Ledger {
   
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
-  public KafkaLedger(Kafka<String, Message> kafka, String topic) {
+  private final boolean mapPayload;
+  
+  public KafkaLedger(Kafka<String, Message> kafka, String topic, boolean mapPayload) {
     this.kafka = kafka;
     this.topic = topic;
+    this.mapPayload = mapPayload;
     
     final Properties props = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
@@ -78,7 +81,7 @@ public final class KafkaLedger implements Ledger {
         .with("heartbeat.interval.ms", 2_000)
         .with("key.deserializer", StringDeserializer.class.getName())
         .with("value.deserializer", KafkaJacksonMessageDeserializer.class.getName())
-        .with(KafkaJacksonMessageDeserializer.CONFIG_MAP_PAYLOAD, String.valueOf(false))
+        .with(KafkaJacksonMessageDeserializer.CONFIG_MAP_PAYLOAD, mapPayload)
         .build();
     final Consumer<String, Message> consumer = kafka.getConsumer(props);
     if (groupId != null) {

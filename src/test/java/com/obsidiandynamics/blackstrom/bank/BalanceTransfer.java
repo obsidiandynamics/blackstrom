@@ -1,11 +1,15 @@
 package com.obsidiandynamics.blackstrom.bank;
 
+import com.fasterxml.jackson.annotation.*;
+
 public final class BalanceTransfer {
   private final String branchId;
   
   private final long amount;
 
-  public BalanceTransfer(String branchId, long amount) {
+  @JsonCreator
+  public BalanceTransfer(@JsonProperty(value="branchId") String branchId, 
+                         @JsonProperty(value="amount") long amount) {
     this.branchId = branchId;
     this.amount = amount;
   }
