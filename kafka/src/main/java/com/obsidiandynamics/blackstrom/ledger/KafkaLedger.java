@@ -29,11 +29,18 @@ public final class KafkaLedger implements Ledger {
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
-  private final Map<Integer, Consumer<String, Message>> consumers = new ConcurrentHashMap<>();
+  private static class ConsumerOffsets {
+    final Map<TopicPartition, OffsetAndMetadata> offsets = new ConcurrentHashMap<>();
+  }
+  
+  /** Maps handler IDs to consumer offsets. */
+  private final Map<Integer, ConsumerOffsets> consumers = new ConcurrentHashMap<>();
   
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
   private final boolean mapPayload;
+  
+  private final AtomicBoolean disposed = new AtomicBoolean();
   
   public KafkaLedger(Kafka<String, Message> kafka, String topic, boolean mapPayload) {
     this.kafka = kafka;
@@ -98,50 +105,66 @@ public final class KafkaLedger implements Ledger {
       }
     }
     
-    final Integer handlerId = groupId != null ? nextHandlerId.getAndIncrement() : null;
+    final Integer handlerId;
+    final ConsumerOffsets consumerOffsets;
+    if (groupId != null) {
+      handlerId = nextHandlerId.getAndIncrement();
+      consumerOffsets = new ConsumerOffsets();
+      consumers.put(handlerId, consumerOffsets);
+    } else {
+      handlerId = null;
+      consumerOffsets = null;
+    }
+    
     final MessageContext context = new DefaultMessageContext(this, handlerId);
     
     final RecordHandler<String, Message> recordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
         final KafkaMessageId messageId = KafkaMessageId.fromRecord(record);
         final Message message = record.value();
-        message.withMessageId(messageId).withShardKey(record.key()).withShard(record.partition());
+        message.setMessageId(messageId);
+        message.setShardKey(record.key());
+        message.setShard(record.partition());
         handler.onMessage(context, message);
+      }
+      
+      if (consumerOffsets != null && ! consumerOffsets.offsets.isEmpty()) {
+        consumer.commitAsync(consumerOffsets.offsets, 
+                             (offsets, exception) -> logException(exception, "Error committing offsets %s", consumerOffsets.offsets));
+        consumerOffsets.offsets.clear();
       }
     };
     
-    final String threadName = getClass().getSimpleName() + "-receiver-" + groupId;
+    final String threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
     final KafkaReceiver<String, Message> receiver = new KafkaReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, KafkaReceiver.genericErrorLogger(log));
     receivers.add(receiver);
-    
-    if (handlerId != null) {
-      consumers.put(handlerId, consumer);
-    }
   }
 
   @Override
   public void append(Message message, AppendCallback callback) {
-    final ProducerRecord<String, Message> record = 
-        new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
-    producer.send(record, 
-                  (metadata, exception) -> {
-                    if (exception == null) {
-                      callback.onAppend(new KafkaMessageId(topic, metadata.partition(), metadata.offset()), null);
-                    } else {
-                      callback.onAppend(null, exception);
-                      logException(exception, "Error publishing %s", record);
-                    }
-                  });
+    if (! disposed.get()) {
+      final ProducerRecord<String, Message> record = 
+          new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
+      producer.send(record, 
+                    (metadata, exception) -> {
+                      if (exception == null) {
+                        callback.onAppend(new KafkaMessageId(topic, metadata.partition(), metadata.offset()), null);
+                      } else {
+                        callback.onAppend(null, exception);
+                        logException(exception, "Error publishing %s", record);
+                      }
+                    });
+    }
   }
 
   @Override
   public void confirm(Object handlerId, Object messageId) {
     if (handlerId != null) {
-      final Consumer<?, ?> consumer = consumers.get(handlerId);
+      final ConsumerOffsets consumer = consumers.get(handlerId);
       final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
-      consumer.commitAsync(kafkaMessageId.toOffset(), 
-                           (offsets, exception) -> logException(exception, "Error commiting %s", messageId));
+      consumer.offsets.put(new TopicPartition(topic, kafkaMessageId.getPartition()), 
+                           new OffsetAndMetadata(kafkaMessageId.getOffset()));
     }
   }
   
@@ -153,7 +176,10 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void dispose() {
-    receivers.forEach(t -> t.terminate());
-    receivers.forEach(t -> t.joinQuietly());
+    if (disposed.compareAndSet(false, true)) {
+      producer.close();
+      receivers.forEach(t -> t.terminate());
+      receivers.forEach(t -> t.joinQuietly());
+    }
   }
 }

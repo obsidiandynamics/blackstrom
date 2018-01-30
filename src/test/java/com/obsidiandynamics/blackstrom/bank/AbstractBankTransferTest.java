@@ -19,16 +19,18 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractBankTransferTest {  
   private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
-  private static final int FUTURE_GET_TIMEOUT = 10_000;
+  private static final int PROPOSAL_TIMEOUT = 10_000;
+  private static final int FUTURE_GET_TIMEOUT = PROPOSAL_TIMEOUT * 2;
   
   private final Timesert wait = getWait();
-
+  
   private Ledger ledger;
 
   private Manifold manifold;
@@ -58,16 +60,17 @@ public abstract class AbstractBankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
-    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    final Shard shard = Shard.forTest(this);
+    final BankBranch[] branches = createBranches(2, initialBalance, true, shard);
     buildStandardManifold(initiator, monitor, branches);
 
-    final Outcome o = initiator.initiate(UUID.randomUUID().toString(), 
-                                         TWO_BRANCH_IDS,
-                                         BankSettlement.builder()
-                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                        new BalanceTransfer(getBranchId(1), transferAmount))
-                                         .build(),
-                                         Integer.MAX_VALUE)
+    final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
+                                                      TWO_BRANCH_IDS,
+                                                      BankSettlement.builder()
+                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
+                                                      .build(),
+                                                      PROPOSAL_TIMEOUT).withShardKey(shard.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.COMMIT, o.getVerdict());
     assertNull(o.getAbortReason());
@@ -89,16 +92,17 @@ public abstract class AbstractBankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
-    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    final Shard shard = Shard.forTest(this);
+    final BankBranch[] branches = createBranches(2, initialBalance, true, shard);
     buildStandardManifold(initiator, monitor, branches);
 
-    final Outcome o = initiator.initiate(UUID.randomUUID().toString(), 
-                                         TWO_BRANCH_IDS, 
-                                         BankSettlement.builder()
-                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                        new BalanceTransfer(getBranchId(1), transferAmount))
-                                         .build(),
-                                         Integer.MAX_VALUE)
+    final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
+                                                      TWO_BRANCH_IDS, 
+                                                      BankSettlement.builder()
+                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
+                                                      .build(),
+                                                      PROPOSAL_TIMEOUT).withShardKey(shard.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
     assertEquals(AbortReason.REJECT, o.getAbortReason());
@@ -123,20 +127,21 @@ public abstract class AbstractBankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(60_000));
-    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    final Shard shard = Shard.forTest(this);
+    final BankBranch[] branches = createBranches(2, initialBalance, true, shard);
     // we delay the receive rather than the send, so that the send timestamp appears recent — triggering implicit timeout
     buildStandardManifold(initiator, 
                           monitor, 
                           branches[0], 
                           new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 10)));
 
-    final Outcome o = initiator.initiate(UUID.randomUUID().toString(),
-                                         TWO_BRANCH_IDS, 
-                                         BankSettlement.builder()
-                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                        new BalanceTransfer(getBranchId(1), transferAmount))
-                                         .build(),
-                                         1)
+    final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(),
+                                                      TWO_BRANCH_IDS, 
+                                                      BankSettlement.builder()
+                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
+                                                      .build(),
+                                                      1).withShardKey(shard.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, o.getAbortReason());
@@ -156,7 +161,8 @@ public abstract class AbstractBankTransferTest {
 
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1));
-    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    final Shard shard = Shard.forTest(this);
+    final BankBranch[] branches = createBranches(2, initialBalance, true, shard);
     // it doesn't matter whether we delay receive or send, since the messages are sufficiently delayed, such
     // that they won't get there within the test's running time — either failure mode will trigger an explicit timeout
     buildStandardManifold(initiator, 
@@ -164,13 +170,13 @@ public abstract class AbstractBankTransferTest {
                           new FallibleFactor(branches[0]).withRxFailureMode(new DelayedDelivery(1, 60_000)),
                           new FallibleFactor(branches[1]).withRxFailureMode(new DelayedDelivery(1, 60_000)));
 
-    final Outcome o = initiator.initiate(UUID.randomUUID().toString(),
-                                         TWO_BRANCH_IDS, 
-                                         BankSettlement.builder()
-                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                        new BalanceTransfer(getBranchId(1), transferAmount))
-                                         .build(),
-                                         1)
+    final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(),
+                                                      TWO_BRANCH_IDS, 
+                                                      BankSettlement.builder()
+                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
+                                                      .build(),
+                                                      1).withShardKey(shard.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, o.getAbortReason());
@@ -208,11 +214,14 @@ public abstract class AbstractBankTransferTest {
     
     for (TargetFactor target : TargetFactor.values()) {
       for (RxTxFailureModes failureModes : presetFailureModesArray) {
+        boolean success = false;
         try {
           testFactorFailure(new FailureModes().set(target, failureModes));
+          success = true;
         } catch (Exception e) {
           throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
         } finally {
+          if (! success) System.out.format("Failure for target=%s, failureModes=%s\n", target, failureModes);
           manifold.dispose();
         }
       }
@@ -256,7 +265,8 @@ public abstract class AbstractBankTransferTest {
     final int initialBalance = 1_000;
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
-    final BankBranch[] branches = createBranches(2, initialBalance, true);
+    final Shard shard = Shard.forTest(this);
+    final BankBranch[] branches = createBranches(2, initialBalance, true, shard);
 
     ledger = createLedger();
     manifold = Manifold.builder()
@@ -273,8 +283,8 @@ public abstract class AbstractBankTransferTest {
                      branches[1])
         .build();
 
-    testSingleTransfer(initialBalance + 1, Verdict.ABORT, AbortReason.REJECT, initiator);
-    testSingleTransfer(initialBalance, Verdict.COMMIT, null, initiator);
+    testSingleTransfer(initialBalance + 1, Verdict.ABORT, AbortReason.REJECT, initiator, shard);
+    testSingleTransfer(initialBalance, Verdict.COMMIT, null, initiator, shard);
 
     wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
@@ -284,15 +294,16 @@ public abstract class AbstractBankTransferTest {
   }
 
   private void testSingleTransfer(int transferAmount, Verdict expectedVerdict, AbortReason expectedAbortReason,
-                                  AsyncInitiator initiator) throws InterruptedException, ExecutionException, Exception {
+                                  AsyncInitiator initiator, Shard shard) throws InterruptedException, ExecutionException, Exception {
     assert expectedVerdict == Verdict.COMMIT ^ expectedAbortReason != null;
-    final Outcome o = initiator.initiate(UUID.randomUUID().toString(), 
-                                         TWO_BRANCH_IDS, 
-                                         BankSettlement.builder()
-                                         .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                        new BalanceTransfer(getBranchId(1), transferAmount))
-                                         .build(),
-                                         Integer.MAX_VALUE)
+    final String ballotId = UUID.randomUUID().toString();
+    final Outcome o = initiator.initiate(new Proposal(ballotId, 
+                                                      TWO_BRANCH_IDS, 
+                                                      BankSettlement.builder()
+                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
+                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
+                                                      .build(),
+                                                      PROPOSAL_TIMEOUT).withShardKey(shard.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(expectedVerdict, o.getVerdict());
     assertEquals(expectedAbortReason, o.getAbortReason());
@@ -322,10 +333,13 @@ public abstract class AbstractBankTransferTest {
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
+    final Shard shard = Shard.forTest(this);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
-      (o.getVerdict() == Verdict.COMMIT ? commits : aborts).incrementAndGet();
+      if (shard.contains(o)) {
+        (o.getVerdict() == Verdict.COMMIT ? commits : aborts).incrementAndGet();
+      }
     };
-    final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled);
+    final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled, shard);
     final Monitor monitor = new DefaultMonitor();
     buildStandardManifold(initiator, monitor, branches);
 
@@ -337,12 +351,13 @@ public abstract class AbstractBankTransferTest {
         settlement = generateRandomSettlement(branchIds, transferAmount);
       }
       
+      final long ballotIdBase = System.currentTimeMillis() << 32;
       for (long run = 0; run < runs; run++) {
         if (randomiseRuns) {
           branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
           settlement = generateRandomSettlement(branchIds, transferAmount);
         }
-        ledger.append(new Proposal(run, branchIds, settlement, Integer.MAX_VALUE));
+        ledger.append(new Proposal(ballotIdBase + run, branchIds, settlement, PROPOSAL_TIMEOUT).withShardKey(shard.key()));
 
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;
@@ -412,10 +427,10 @@ public abstract class AbstractBankTransferTest {
     return "branch-" + branchIdx;
   }
 
-  private static BankBranch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled) {
+  private static BankBranch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled, Shard shard) {
     final BankBranch[] branches = new BankBranch[numBranches];
     for (int branchIdx = 0; branchIdx < numBranches; branchIdx++) {
-      branches[branchIdx] = new BankBranch(getBranchId(branchIdx), initialBalance, idempotencyEnabled);
+      branches[branchIdx] = new BankBranch(getBranchId(branchIdx), initialBalance, idempotencyEnabled, shard::contains);
     }
     return branches;
   }

@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 public final class MessageTest {
-  private static final class UntypedMessage extends Message {
+  private static final class UntypedMessage extends FluentMessage<UntypedMessage> {
     UntypedMessage(Object ballotId, long timestamp) {
       super(ballotId, timestamp);
     }

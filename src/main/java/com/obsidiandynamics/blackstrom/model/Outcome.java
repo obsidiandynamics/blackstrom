@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.*;
 
-public final class Outcome extends Message {
+public final class Outcome extends FluentMessage<Outcome> {
   private final Verdict verdict;
   private final AbortReason abortReason;
   private final Response[] responses;
@@ -74,7 +74,7 @@ public final class Outcome extends Message {
 
   @Override
   public String toString() {
-    return Outcome.class.getSimpleName() + " [verdict=" + verdict + ", abortReason=" + abortReason + 
-        ", responses=" + Arrays.toString(responses) + ", " + baseToString() + "]";
+    return Outcome.class.getSimpleName() + " [" + baseToString() + ", verdict=" + verdict + ", abortReason=" + abortReason + 
+        ", responses=" + Arrays.toString(responses) + "]";
   }
 }

@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.model;
 
 import org.apache.commons.lang3.builder.*;
 
-public final class UnknownMessage extends Message {
+public final class UnknownMessage extends FluentMessage<UnknownMessage> {
   public UnknownMessage(Object ballotId) {
     this(ballotId, 0);
   }

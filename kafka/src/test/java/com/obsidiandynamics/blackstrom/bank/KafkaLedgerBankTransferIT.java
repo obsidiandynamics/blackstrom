@@ -29,7 +29,7 @@ public final class KafkaLedgerBankTransferIT extends AbstractBankTransferTest {
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    return new KafkaLedger(kafka, KafkaLedgerBankTransferIT.class.getSimpleName() + ".v2b", true);
+    return new KafkaLedger(kafka, KafkaLedgerBankTransferIT.class.getSimpleName() + ".v2d", true);
   }
 
   @Override

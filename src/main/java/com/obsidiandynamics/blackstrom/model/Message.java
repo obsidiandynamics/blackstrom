@@ -30,18 +30,16 @@ public abstract class Message {
     return messageId;
   }
   
-  public final Message withMessageId(Object messageId) {
+  public final void setMessageId(Object messageId) {
     this.messageId = messageId;
-    return this;
   }
-
+  
   public final String getSource() {
     return source;
   }
   
-  public final Message withSource(String source) {
+  public final void setSource(String source) {
     this.source = source;
-    return this;
   }
 
   public final long getTimestamp() {
@@ -52,9 +50,8 @@ public abstract class Message {
     return shardKey;
   }
   
-  public final Message withShardKey(String shardKey) {
+  public final void setShardKey(String shardKey) {
     this.shardKey = shardKey;
-    return this;
   }
   
   public final int getShard() {
@@ -69,9 +66,8 @@ public abstract class Message {
     return shard != UNASSIGNED ? shard : null;
   }
   
-  public final Message withShard(int shard) {
+  public final void setShard(int shard) {
     this.shard = shard;
-    return this;
   }
   
   public abstract MessageType getMessageType();  

@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.model;
 
 import org.apache.commons.lang3.builder.*;
 
-public final class Vote extends Message {
+public final class Vote extends FluentMessage<Vote> {
   private final Response response;
   
   public Vote(Object ballotId, Response response) {
@@ -48,6 +48,6 @@ public final class Vote extends Message {
 
   @Override
   public String toString() {
-    return Vote.class.getSimpleName() + " [response=" + response + ", " + baseToString() + "]";
+    return Vote.class.getSimpleName() + " [" + baseToString() + ", response=" + response + "]";
   }
 }

@@ -31,7 +31,7 @@ public final class BankBranchTest {
   
   @Before
   public void before() {
-    branch = new BankBranch(BRANCH_ID, INITIAL_BALANCE, false);
+    branch = new BankBranch(BRANCH_ID, INITIAL_BALANCE, false, m -> true);
     ledger = new SingleNodeQueueLedger();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       received.add(m);

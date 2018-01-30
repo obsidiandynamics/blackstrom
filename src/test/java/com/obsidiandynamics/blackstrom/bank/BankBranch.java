@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.bank;
 
 import java.util.*;
+import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
@@ -25,13 +26,16 @@ public final class BankBranch implements Cohort {
   
   private final int outcomeLifetimeMillis = 1_000;
   
+  private final Predicate<Message> messageFilter;
+  
   private long balance;
   
   private long escrow;
   
-  public BankBranch(String branchId, long initialBalance, boolean idempotencyEnabled) {
+  public BankBranch(String branchId, long initialBalance, boolean idempotencyEnabled, Predicate<Message> messageFilter) {
     this.branchId = branchId;
     this.idempotencyEnabled = idempotencyEnabled;
+    this.messageFilter = messageFilter;
     balance = initialBalance;
     
     gcThread = WorkerThread.builder()
@@ -85,6 +89,8 @@ public final class BankBranch implements Cohort {
 
   @Override
   public void onProposal(MessageContext context, Proposal proposal) {
+    if (! messageFilter.test(proposal)) return;
+    
     final BankSettlement settlement = proposal.getObjective();
     final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
     if (xfer == null) return; // settlement doesn't apply to this branch
@@ -110,18 +116,18 @@ public final class BankBranch implements Cohort {
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
-          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting\n", branchId);
+          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting %s\n", branchId, proposal.getBallotId());
         } else {
           intent = Intent.ACCEPT;
           if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: retransmitting previous acceptance\n", branchId);
         }
       } else {
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting, balance: %,d\n", branchId, balance);
+        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting %s, balance: %,d\n", branchId, proposal.getBallotId(), balance);
         intent = Intent.REJECT;
       }
       
       try {
-        context.vote(proposal.getBallotId(), branchId, intent, null);
+        context.getLedger().append(new Vote(proposal.getBallotId(), new Response(branchId, intent, null)).inResponseTo(proposal));
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -132,6 +138,8 @@ public final class BankBranch implements Cohort {
 
   @Override
   public void onOutcome(MessageContext context, Outcome outcome) {
+    if (! messageFilter.test(outcome)) return;
+    
     final Proposal proposal = proposals.remove(outcome.getBallotId());
     if (proposal == null) return; // outcome doesn't apply to this branch
     

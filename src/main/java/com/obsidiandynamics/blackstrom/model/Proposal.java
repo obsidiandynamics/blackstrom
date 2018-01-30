@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.*;
 
 import com.obsidiandynamics.blackstrom.util.*;
 
-public final class Proposal extends Message {
+public final class Proposal extends FluentMessage<Proposal> {
   private final String[] cohorts;
   private final Object objective;
   private final int ttl;
@@ -33,7 +33,7 @@ public final class Proposal extends Message {
   public int getTtl() {
     return ttl;
   }
-
+  
   @Override
   public MessageType getMessageType() {
     return MessageType.PROPOSAL;
@@ -68,7 +68,7 @@ public final class Proposal extends Message {
 
   @Override
   public String toString() {
-    return Proposal.class.getSimpleName() + " [cohorts=" + Arrays.toString(cohorts) + 
-        ", objective=" + objective + ", ttl=" + ttl + ", " + baseToString() + "]";
+    return Proposal.class.getSimpleName() + " [" + baseToString() + ", cohorts=" + Arrays.toString(cohorts) + 
+        ", objective=" + objective + ", ttl=" + ttl + "]";
   }
 }

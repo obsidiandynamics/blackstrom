@@ -40,8 +40,7 @@ public final class KafkaReceiver<K, V> implements Joinable {
         .withOptions(new WorkerOptions().withName(threadName).withDaemon(true))
         .onCycle(this::cycle)
         .onShutdown(this::shutdown)
-        .build();
-    thread.start();
+        .buildAndStart();
   }
   
   private void cycle(WorkerThread thread) throws InterruptedException {

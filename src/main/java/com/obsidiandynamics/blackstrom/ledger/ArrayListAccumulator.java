@@ -61,7 +61,7 @@ public final class ArrayListAccumulator implements Accumulator {
         }
       }
       final ShardMessageId messageId = new ShardMessageId(shard, nextOffset);
-      message.withMessageId(messageId);
+      message.setMessageId(messageId);
       latest.items.add(message);
       nextOffset++;
     }

@@ -20,7 +20,7 @@ public final class Shard {
   }
   
   public static Shard forTest(Object test) {
-    final String key = test.getClass().getSimpleName() + "%" + Long.toHexString(System.currentTimeMillis());
+    final String key = test.getClass().getSimpleName() + "-" + UUID.randomUUID();
     return new Shard(key);
   }
   

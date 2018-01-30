@@ -130,7 +130,7 @@ public final class DefaultMonitor implements Monitor {
   
   private void timeoutCohort(Proposal proposal, String cohort) {
     LOG.debug("Timed out {} for cohort {}", proposal, cohort);
-    append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null)));
+    append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null)).inResponseTo(proposal));
   }
   
   private void append(Message message) {
@@ -189,8 +189,9 @@ public final class DefaultMonitor implements Monitor {
   
   private void decideBallot(PendingBallot ballot) {
     if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getProposal(), ballot.getVerdict());
-    final Object ballotId = ballot.getProposal().getBallotId();
-    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses());
+    final Proposal proposal = ballot.getProposal();
+    final Object ballotId = proposal.getBallotId();
+    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses()).inResponseTo(proposal);
     pending.remove(ballotId);
     decided.put(ballotId, outcome);
     ledger.append(outcome, (id, x) -> {
