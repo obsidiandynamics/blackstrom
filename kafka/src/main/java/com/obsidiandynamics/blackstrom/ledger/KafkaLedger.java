@@ -180,11 +180,11 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void dispose() {
+    receivers.forEach(t -> t.terminate());
     synchronized (producerLock) {
       producer.close();
       producerDisposed = true;
     }
-    receivers.forEach(t -> t.terminate());
     receivers.forEach(t -> t.joinQuietly());
   }
 }
