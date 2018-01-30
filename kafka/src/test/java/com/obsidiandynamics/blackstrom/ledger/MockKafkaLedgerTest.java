@@ -29,7 +29,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   @Test
   public void testSendExceptionLoggerPass() {
     final Logger log = mock(Logger.class);
-    final Exception exception = new Exception("Boom");
+    final Exception exception = new Exception("testSendExceptionLoggerPass");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withAppendExceptionGenerator(ExceptionGenerator.never());
     final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
@@ -44,12 +44,12 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   @Test
   public void testSendExceptionLoggerFail() {
     final Logger log = mock(Logger.class);
-    final Exception exception = new Exception("Boom");
+    final Exception exception = new Exception("testSendExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withAppendExceptionGenerator(ExceptionGenerator.once(exception));
     final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
     try {
-      ledger.append(new Proposal("B100", new String[0], null, 0));
+      ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
       verify(log).warn(isNotNull(), eq(exception));
     } finally {
       ledger.dispose();
@@ -59,7 +59,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   @Test
   public void testCommitExceptionLoggerFail() {
     final Logger log = mock(Logger.class);
-    final Exception exception = new Exception("Boom");
+    final Exception exception = new Exception("testCommitExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withConfirmExceptionGenerator(ExceptionGenerator.once(exception));
     final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
@@ -91,5 +91,15 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     } finally {
       ledger.dispose();
     }
+  }
+  
+  @Test
+  public void testAppendAfterDispose() {
+    final KafkaLedger ledger = MockKafkaLedger.create();
+    ledger.dispose();
+    final AppendCallback callback = mock(AppendCallback.class);
+    ledger.append(new Proposal("B100", new String[0], null, 0), callback);
+    TestSupport.sleep(10);
+    verifyNoMoreInteractions(callback);
   }
 }
