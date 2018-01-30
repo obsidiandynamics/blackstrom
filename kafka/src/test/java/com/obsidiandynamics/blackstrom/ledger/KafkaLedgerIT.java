@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import org.junit.*;
+import org.junit.runner.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
@@ -23,5 +24,10 @@ public final class KafkaLedgerIT extends AbstractLedgerTest {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, KafkaLedgerIT.class.getSimpleName() + ".v2", false);
+  }
+  
+  public static void main(String[] args) {
+    AbstractLedgerTest.enableBenchmark();
+    JUnitCore.runClasses(KafkaLedgerIT.class);
   }
 }
