@@ -352,12 +352,13 @@ public abstract class AbstractBankTransferTest {
       }
       
       final long ballotIdBase = System.currentTimeMillis() << 32;
-      for (long run = 0; run < runs; run++) {
+      for (int run = 0; run < runs; run++) {
         if (randomiseRuns) {
           branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
           settlement = generateRandomSettlement(branchIds, transferAmount);
         }
-        ledger.append(new Proposal(ballotIdBase + run, branchIds, settlement, PROPOSAL_TIMEOUT).withShardKey(shard.key()));
+        ledger.append(new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
+                      .withShardKey(shard.key()));
 
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;

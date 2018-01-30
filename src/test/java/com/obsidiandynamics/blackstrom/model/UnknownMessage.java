@@ -3,11 +3,11 @@ package com.obsidiandynamics.blackstrom.model;
 import org.apache.commons.lang3.builder.*;
 
 public final class UnknownMessage extends FluentMessage<UnknownMessage> {
-  public UnknownMessage(Object ballotId) {
+  public UnknownMessage(String ballotId) {
     this(ballotId, 0);
   }
   
-  public UnknownMessage(Object ballotId, long timestamp) {
+  public UnknownMessage(String ballotId, long timestamp) {
     super(ballotId, timestamp);
   }
 

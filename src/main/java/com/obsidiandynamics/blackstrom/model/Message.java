@@ -5,7 +5,7 @@ import org.apache.commons.lang3.builder.*;
 public abstract class Message {
   private static final int UNASSIGNED = -1;
   
-  private final Object ballotId;
+  private final String ballotId;
   
   private final long timestamp;
   
@@ -17,12 +17,12 @@ public abstract class Message {
   
   private int shard = UNASSIGNED;
   
-  protected Message(Object ballotId, long timestamp) {
+  protected Message(String ballotId, long timestamp) {
     this.ballotId = ballotId;
     this.timestamp = timestamp != 0 ? timestamp : System.currentTimeMillis();
   }
   
-  public final Object getBallotId() {
+  public final String getBallotId() {
     return ballotId;
   }
 

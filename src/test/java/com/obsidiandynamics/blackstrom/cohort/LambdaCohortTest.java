@@ -54,8 +54,8 @@ public final class LambdaCohortTest {
     
     final InitContext initContext = mock(InitContext.class);
     final MessageContext messageContext = mock(MessageContext.class);
-    final Proposal proposal = new Proposal(0, new String[0], null, 1000);
-    final Outcome outcome = new Outcome(0, Verdict.COMMIT, null, new Response[0]);
+    final Proposal proposal = new Proposal("B0", new String[0], null, 1000);
+    final Outcome outcome = new Outcome("B0", Verdict.COMMIT, null, new Response[0]);
     
     final LambdaCohort l = LambdaCohort.builder()
         .onInit(onInit)

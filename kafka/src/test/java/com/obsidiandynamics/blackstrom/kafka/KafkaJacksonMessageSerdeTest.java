@@ -16,7 +16,7 @@ public class KafkaJacksonMessageSerdeTest {
   public void testSerde() {
     final KafkaJacksonMessageSerializer serializer = new KafkaJacksonMessageSerializer();
     serializer.configure(Collections.emptyMap(), false);
-    final Message m = new Proposal(100L, new String[0], null, 0);
+    final Message m = new Proposal("B100", new String[0], null, 0);
     final byte[] encoded = serializer.serialize("test", m);
     serializer.close();
     
@@ -32,7 +32,7 @@ public class KafkaJacksonMessageSerdeTest {
   public void testSerializationError() {
     final KafkaJacksonMessageSerializer serializer = new KafkaJacksonMessageSerializer();
     serializer.configure(Collections.emptyMap(), false);
-    final Message m = new UnknownMessage(100L);
+    final Message m = new UnknownMessage("B100");
     serializer.serialize("test", m);
     serializer.close();
   }

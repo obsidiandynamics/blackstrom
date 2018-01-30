@@ -35,7 +35,7 @@ public final class FallibleFactorTest {
     public void onProposal(MessageContext context, Proposal proposal) {
       proposals.add(proposal);
       try {
-        context.vote(proposal.getBallotId(), "test", Intent.ACCEPT, null);
+        context.publish(new Vote(proposal.getBallotId(), new Response("test", Intent.ACCEPT, null)));
       } catch (Exception e) {
         e.printStackTrace();
         throw new RuntimeException(e);
@@ -91,7 +91,7 @@ public final class FallibleFactorTest {
         .withFactors(fc, v)
         .build();
     
-    ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+    ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
     
     wait.until(() -> {
       assertEquals(1, c.proposals.size());
@@ -111,7 +111,7 @@ public final class FallibleFactorTest {
         .withFactors(fc)
         .build();
     
-    ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+    ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
     
     wait.until(() -> {
       assertEquals(1, c.proposals.size());
@@ -129,7 +129,7 @@ public final class FallibleFactorTest {
         .withFactors(fc)
         .build();
     
-    ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+    ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
     
     wait.until(() -> {
       assertEquals(2, c.proposals.size());
@@ -149,7 +149,7 @@ public final class FallibleFactorTest {
         .build();
     
     final long took = TestSupport.took(() -> {
-      ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+      ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(1, c.proposals.size());
       });
@@ -170,7 +170,7 @@ public final class FallibleFactorTest {
         .build();
     
     final long took = TestSupport.took(() -> {
-      ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+      ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(2, c.proposals.size());
       });
@@ -190,7 +190,7 @@ public final class FallibleFactorTest {
         .withFactors(fc, v)
         .build();
     
-    ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+    ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
     
     wait.until(() -> {
       assertEquals(2, v.votes.size());
@@ -211,7 +211,7 @@ public final class FallibleFactorTest {
         .build();
     
     final long took = TestSupport.took(() -> {
-      ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+      ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(1, v.votes.size());
       });
@@ -233,7 +233,7 @@ public final class FallibleFactorTest {
         .build();
     
     final long took = TestSupport.took(() -> {
-      ledger.append(new Proposal(UUID.randomUUID(), new String[] {"test"}, null, 1000));
+      ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(2, v.votes.size());
       });

@@ -15,11 +15,11 @@ public final class BlockingQueueUtilsTest {
     final BlockingQueue<Message> q = new LinkedBlockingQueue<>();
     final AppendCallback callback = mock(AppendCallback.class);
     
-    BlockingQueueUtils.put(q, new UnknownMessage(0L).withMessageId("id"), callback);
+    BlockingQueueUtils.put(q, new UnknownMessage("B0").withMessageId("id"), callback);
     verify(callback).onAppend(eq("id"), isNull());
     
     Thread.currentThread().interrupt();
-    BlockingQueueUtils.put(q, new UnknownMessage(0L), callback);
+    BlockingQueueUtils.put(q, new UnknownMessage("B0"), callback);
     verify(callback).onAppend(isNull(), isA(InterruptedException.class));
   }
 }

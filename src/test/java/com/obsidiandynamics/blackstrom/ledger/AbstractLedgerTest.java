@@ -30,7 +30,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       if (! shard.contains(message)) return;
       
       if (LOG) LOG_STREAM.format("Received %s\n", message);
-      final long ballotId = (long) message.getBallotId();
+      final long ballotId = Long.parseLong(message.getBallotId());
       if (lastBallotId == -1) {
         lastBallotId = ballotId;
       } else {
@@ -92,7 +92,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
           assertEquals(numMessages, handler.received.size());
           long index = 0;
           for (Message m  : handler.received) {
-            assertEquals(index, m.getBallotId());
+            assertEquals(String.valueOf(index), m.getBallotId());
             index++;
           }
         }
@@ -195,7 +195,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   }
   
   private void appendMessage(String source) {
-    ledger.append(new Proposal(messageId++, 0, TEST_COHORTS, null, 0)
+    ledger.append(new Proposal(String.valueOf(messageId++), 0, TEST_COHORTS, null, 0)
                   .withSource(source)
                   .withShardKey(shard.key()));
   }

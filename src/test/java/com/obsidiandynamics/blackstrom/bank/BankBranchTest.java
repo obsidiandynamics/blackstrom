@@ -206,11 +206,11 @@ public final class BankBranchTest {
   
   private void propose(long amount) {
     final BankSettlement settlement = new BankSettlement(Collections.singletonMap(BRANCH_ID, new BalanceTransfer(BRANCH_ID, amount)));
-    branch.onProposal(context, new Proposal(0, COHORTS, settlement, TTL));
+    branch.onProposal(context, new Proposal("B0", COHORTS, settlement, TTL));
   }
   
   private void outcome(Verdict verdict) {
     final AbortReason abortReason = verdict == Verdict.COMMIT ? null : AbortReason.REJECT;
-    branch.onOutcome(context, new Outcome(0, verdict, abortReason, new Response[0]));
+    branch.onOutcome(context, new Outcome("B0", verdict, abortReason, new Response[0]));
   }
 }

@@ -68,13 +68,13 @@ public final class MessageHandlerAdapterTest {
   @Test(expected=UnsupportedOperationException.class)
   public void testUnsupported() {
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NullGroupFactor() {});
-    adapter.onMessage(null, new UnknownMessage(0L));
+    adapter.onMessage(null, new UnknownMessage("B0"));
   }
   
   @Test(expected=NullPointerException.class)
   public void testNull() {
     final MessageHandlerAdapter adapter = new MessageHandlerAdapter(new NullGroupFactor() {});
-    adapter.onMessage(null, new Message(0, 0) {
+    adapter.onMessage(null, new Message("B0", 0) {
       @Override public MessageType getMessageType() {
         return null;
       }
@@ -88,14 +88,14 @@ public final class MessageHandlerAdapterTest {
   }
   
   private static Proposal newProposal() {
-    return new Proposal(0L, new String[0], null, 0);
+    return new Proposal("B0", new String[0], null, 0);
   }
   
   private static Vote newVote() {
-    return new Vote(0L, new Response("c", Intent.ACCEPT, null));
+    return new Vote("B0", new Response("c", Intent.ACCEPT, null));
   }
   
   private static Outcome newOutcome() {
-    return new Outcome(0L, Verdict.COMMIT, null, new Response[0]);
+    return new Outcome("B0", Verdict.COMMIT, null, new Response[0]);
   }
 }

@@ -35,7 +35,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     final JsonNode root = p.getCodec().readTree(p);
     final MessageType messageType = MessageType.valueOf(root.get("messageType").asText());
     final JsonNode ballotIdNode = root.get("ballotId");
-    final Object ballotId = ballotIdNode.isNumber() ? ballotIdNode.asLong() : ballotIdNode.asText();
+    final String ballotId = ballotIdNode.asText();
     final long timestamp = root.get("timestamp").asLong();
     final String source = JacksonUtils.readString("source", root);
     
@@ -56,7 +56,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     }
   }
   
-  private Message deserializeProposal(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeProposal(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
     final ArrayNode cohortsNode = (ArrayNode) root.get("cohorts");
     final String[] cohorts = new String[cohortsNode.size()];
     for (int i = 0; i < cohorts.length; i++) {
@@ -68,7 +68,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     return new Proposal(ballotId, timestamp, cohorts, objective, ttl).withSource(source);
   }
   
-  private Message deserializeVote(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeVote(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
     final JsonNode responseNode = root.get("response");
     final Response response = deserializeResponse(p, responseNode);
     return new Vote(ballotId, timestamp, response);
@@ -81,7 +81,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     return new Response(cohort, intent, metadata);
   }
   
-  private Message deserializeOutcome(JsonParser p, JsonNode root, Object ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeOutcome(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
     final Verdict verdict = Verdict.valueOf(root.get("verdict").asText());
     final String abortReasonStr = JacksonUtils.readString("abortReason", root);
     final AbortReason abortReason = abortReasonStr != null ? AbortReason.valueOf(abortReasonStr) : null;

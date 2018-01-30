@@ -26,25 +26,25 @@ public final class HashTest {
   public void testForShardKey() {
     final String key = "a";
     final int hash = key.hashCode();
-    final Message m = new UnknownMessage(0).withShardKey(key);
+    final Message m = new UnknownMessage("B0").withShardKey(key);
     assertEquals(hash, Hash.getShard(m, hash + 1));
     assertEquals(0, Hash.getShard(m, hash));
   }
   
   @Test
   public void testNullShardKey() {
-    assertEquals(0, Hash.getShard(new UnknownMessage(0), 1));
+    assertEquals(0, Hash.getShard(new UnknownMessage("B0"), 1));
   }
   
   @Test
   public void testAssignedShard() {
-    final Message m = new UnknownMessage(0).withShard(5);
+    final Message m = new UnknownMessage("B0").withShard(5);
     assertEquals(5, Hash.getShard(m, 6));
   }
   
   @Test(expected=IndexOutOfBoundsException.class)
   public void testAssignedShardOutOfBounds() {
-    final Message m = new UnknownMessage(0).withShard(5);
+    final Message m = new UnknownMessage("B0").withShard(5);
     assertEquals(5, Hash.getShard(m, 5));
   }
 }

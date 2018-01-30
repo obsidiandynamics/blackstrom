@@ -98,9 +98,9 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testProposalOutcome_oneCohort() {
-    UUID ballotId;
+    String ballotId;
     
-    ballotId = UUID.randomUUID();
+    ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
@@ -114,7 +114,7 @@ public final class DefaultMonitorTest {
     assertEquals("ACCEPT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID();
+    ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.REJECT);
 
@@ -131,9 +131,9 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testProposalOutcome_twoCohorts() {
-    UUID ballotId;
+    String ballotId;
     
-    ballotId = UUID.randomUUID();
+    ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     assertEquals(0, outcomes.size());
@@ -149,7 +149,7 @@ public final class DefaultMonitorTest {
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID();
+    ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     assertEquals(0, outcomes.size());
@@ -165,7 +165,7 @@ public final class DefaultMonitorTest {
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID();
+    ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Intent.REJECT);
 
@@ -179,7 +179,7 @@ public final class DefaultMonitorTest {
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "a").getIntent());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID();
+    ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Intent.REJECT);
 
@@ -196,7 +196,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testDuplicateProposal_twoCohorts() {
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
     nominate(ballotId, "a", "b", "c");
     vote(ballotId, "a", Intent.ACCEPT);
@@ -224,7 +224,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testDuplicateVote_twoCohorts() {
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     vote(ballotId, "a", Intent.REJECT);
@@ -249,7 +249,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testVoteWithoutBallot() {
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     vote(ballotId, "a", Intent.ACCEPT);
     
     TestSupport.sleep(10);
@@ -259,9 +259,9 @@ public final class DefaultMonitorTest {
   @Test
   public void testGCNoReap() {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
-                                       .withOutcomeLifetime(60_000)
-                                       .withGCInterval(1)));
-    final UUID ballotId = UUID.randomUUID();
+                                         .withOutcomeLifetime(60_000)
+                                         .withGCInterval(1)));
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
@@ -275,7 +275,7 @@ public final class DefaultMonitorTest {
   @Test
   public void testGCReap() {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withOutcomeLifetime(1).withGCInterval(1)));
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
@@ -297,7 +297,7 @@ public final class DefaultMonitorTest {
     ledger.init();
     context = new DefaultMessageContext(ledger, null);
     
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
 
@@ -309,7 +309,7 @@ public final class DefaultMonitorTest {
   public void testExplicitTimeout_twoCohorts() {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
     
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     final long startTimestamp = System.currentTimeMillis();
     nominate(ballotId, 0, "a", "b");
     vote(ballotId, startTimestamp, "a", Intent.ACCEPT);
@@ -341,7 +341,7 @@ public final class DefaultMonitorTest {
   public void testNoTimeout_twoCohorts() {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
     
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 10_000, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     
@@ -365,7 +365,7 @@ public final class DefaultMonitorTest {
   public void testImplicitTimeout_twoCohorts() {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(60_000)));
     
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 1, "a", "b");
     vote(ballotId, System.currentTimeMillis() + 1_000, "a", Intent.ACCEPT);
     
@@ -391,7 +391,7 @@ public final class DefaultMonitorTest {
       return null;
     }).when(ledger).append(any(), any());
     
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 0, "a");
     
     wait.untilTrue(responded::get);
@@ -411,7 +411,7 @@ public final class DefaultMonitorTest {
       return null;
     }).when(ledger).append(any(), any());
     
-    final UUID ballotId = UUID.randomUUID();
+    final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
@@ -430,19 +430,19 @@ public final class DefaultMonitorTest {
     return Arrays.stream(outcome.getResponses()).filter(r -> r.getCohort().equals(cohort)).findAny().get();
   }
 
-  private void nominate(UUID ballotId, String... cohorts) {
+  private void nominate(String ballotId, String... cohorts) {
     nominate(ballotId, Integer.MAX_VALUE, cohorts);
   }
 
-  private void nominate(UUID ballotId, int ttl, String... cohorts) {
-    monitor.onProposal(context, new Proposal(ballotId, cohorts, null, ttl));
+  private void nominate(String ballotId, int ttl, String... cohorts) {
+    monitor.onProposal(context, new Proposal(ballotId.toString(), cohorts, null, ttl));
   }
 
-  private void vote(UUID ballotId, String cohort, Intent intent) {
+  private void vote(String ballotId, String cohort, Intent intent) {
     vote(ballotId, 0, cohort, intent);
   }
 
-  private void vote(UUID ballotId, long timestamp, String cohort, Intent intent) {
-    monitor.onVote(context, new Vote(ballotId, timestamp, new Response(cohort, intent, intent.name())));
+  private void vote(String ballotId, long timestamp, String cohort, Intent intent) {
+    monitor.onVote(context, new Vote(ballotId.toString(), timestamp, new Response(cohort, intent, intent.name())));
   }
 }

@@ -35,7 +35,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
         .withAppendExceptionGenerator(ExceptionGenerator.never());
     final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
     try {
-      ledger.append(new Proposal(100, new String[0], null, 0));
+      ledger.append(new Proposal("B100", new String[0], null, 0));
       verify(log, never()).warn(isNotNull(), eq(exception));
     } finally {
       ledger.dispose();
@@ -50,7 +50,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
         .withAppendExceptionGenerator(ExceptionGenerator.once(exception));
     final KafkaLedger ledger = new KafkaLedger(kafka, "test", false).withLogger(log);
     try {
-      ledger.append(new Proposal(100, new String[0], null, 0));
+      ledger.append(new Proposal("B100", new String[0], null, 0));
       verify(log).warn(isNotNull(), eq(exception));
     } finally {
       ledger.dispose();
@@ -85,7 +85,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
           }
         }
       });
-      ledger.append(new Proposal(100, new String[0], null, 0));
+      ledger.append(new Proposal("B100", new String[0], null, 0));
   
       TestSupport.await(barrier);
       verify(log).warn(isNotNull(), eq(exception));

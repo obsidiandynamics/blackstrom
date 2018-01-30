@@ -20,7 +20,7 @@ final class LongList extends ArrayList<Long> {
   }
   
   List<Message> toMessages() {
-    return stream().map(i -> new UnknownMessage(i, 0)).collect(Collectors.toList());
+    return stream().map(i -> new UnknownMessage(String.valueOf(i), 0)).collect(Collectors.toList());
   }
   
   static LongList generate(long startInclusive, long endExclusive) {

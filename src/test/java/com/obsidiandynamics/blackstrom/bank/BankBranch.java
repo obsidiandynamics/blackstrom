@@ -127,7 +127,7 @@ public final class BankBranch implements Cohort {
       }
       
       try {
-        context.getLedger().append(new Vote(proposal.getBallotId(), new Response(branchId, intent, null)).inResponseTo(proposal));
+        context.publish(new Vote(proposal.getBallotId(), new Response(branchId, intent, null)).inResponseTo(proposal));
       } catch (Exception e) {
         e.printStackTrace();
       }

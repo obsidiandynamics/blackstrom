@@ -32,7 +32,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
       if (! shard.contains(message)) return;
       
       if (LOG) LOG_STREAM.format("Received %s\n", message);
-      final long ballotId = (long) message.getBallotId();
+      final long ballotId = Long.parseLong(message.getBallotId());
       if (ballotId > lastBallotId) {
         lastBallotId = ballotId;
       } else {
@@ -112,7 +112,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   }
   
   private void appendMessage(String source) {
-    ledger.append(new Proposal(messageId++, 0, TEST_COHORTS, null, 0)
+    ledger.append(new Proposal(String.valueOf(messageId++), 0, TEST_COHORTS, null, 0)
                   .withSource(source)
                   .withShardKey(shard.key()));
   }

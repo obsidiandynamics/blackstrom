@@ -190,8 +190,9 @@ public final class DefaultMonitor implements Monitor {
   private void decideBallot(PendingBallot ballot) {
     if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getProposal(), ballot.getVerdict());
     final Proposal proposal = ballot.getProposal();
-    final Object ballotId = proposal.getBallotId();
-    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses()).inResponseTo(proposal);
+    final String ballotId = proposal.getBallotId();
+    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses())
+        .inResponseTo(proposal);
     pending.remove(ballotId);
     decided.put(ballotId, outcome);
     ledger.append(outcome, (id, x) -> {

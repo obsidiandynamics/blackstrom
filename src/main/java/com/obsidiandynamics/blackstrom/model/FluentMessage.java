@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.model;
 import com.obsidiandynamics.blackstrom.util.*;
 
 public abstract class FluentMessage<M extends FluentMessage<?>> extends Message {
-  protected FluentMessage(Object ballotId, long timestamp) {
+  protected FluentMessage(String ballotId, long timestamp) {
     super(ballotId, timestamp);
   }
   

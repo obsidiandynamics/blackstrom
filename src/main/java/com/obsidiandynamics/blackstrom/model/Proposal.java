@@ -11,11 +11,11 @@ public final class Proposal extends FluentMessage<Proposal> {
   private final Object objective;
   private final int ttl;
 
-  public Proposal(Object ballotId, String[] cohorts, Object objective, int ttl) {
+  public Proposal(String ballotId, String[] cohorts, Object objective, int ttl) {
     this(ballotId, 0, cohorts, objective, ttl);
   }
 
-  public Proposal(Object ballotId, long timestamp, String[] cohorts, Object objective, int ttl) {
+  public Proposal(String ballotId, long timestamp, String[] cohorts, Object objective, int ttl) {
     super(ballotId, timestamp);
     this.cohorts = cohorts;
     this.objective = objective;

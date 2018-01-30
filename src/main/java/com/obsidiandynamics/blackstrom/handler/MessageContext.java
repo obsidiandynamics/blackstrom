@@ -8,8 +8,8 @@ public interface MessageContext {
   
   Object getHandlerId();
   
-  default void vote(Object ballotId, String cohort, Intent intent, Object metadata) {
-    getLedger().append(new Vote(ballotId, new Response(cohort, intent, metadata)));
+  default void publish(Message message) {
+    getLedger().append(message);
   }
   
   default void confirm(Object messageId) {

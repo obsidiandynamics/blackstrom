@@ -6,7 +6,7 @@ import org.junit.*;
 
 public final class MessageTest {
   private static final class UntypedMessage extends FluentMessage<UntypedMessage> {
-    UntypedMessage(Object ballotId, long timestamp) {
+    UntypedMessage(String ballotId, long timestamp) {
       super(ballotId, timestamp);
     }
 
@@ -22,13 +22,13 @@ public final class MessageTest {
   @Test
   public void testAttributes() {
     final long time = System.currentTimeMillis();
-    final Message m = new UntypedMessage(1, 0)
+    final Message m = new UntypedMessage("B0", 0)
         .withMessageId(100)
         .withSource("test")
         .withShardKey("key")
         .withShard(99);
 
-    assertEquals(1, m.getBallotId());
+    assertEquals("B0", m.getBallotId());
     assertEquals(100, m.getMessageId());
     assertEquals("test", m.getSource());
     assertEquals("key", m.getShardKey());
@@ -41,7 +41,7 @@ public final class MessageTest {
   @Test
   public void testShardUnassignedAndCustomTime() {
     final long time = 1000;
-    final Message m = new UntypedMessage(1, time)
+    final Message m = new UntypedMessage("B0", time)
         .withMessageId(100)
         .withSource("test")
         .withShardKey("key");
@@ -54,11 +54,11 @@ public final class MessageTest {
 
   @Test
   public void testEqualsHashcode() {
-    final Message m1 = new UntypedMessage(1, 1000)
+    final Message m1 = new UntypedMessage("B1", 1000)
         .withMessageId(1).withSource("source").withShardKey("key").withShard(10);
-    final Message m2 = new UntypedMessage(0, 1000)
+    final Message m2 = new UntypedMessage("B0", 1000)
         .withMessageId(1).withSource("source").withShardKey("key").withShard(10);
-    final Message m3 = new UntypedMessage(1, 1000)
+    final Message m3 = new UntypedMessage("B1", 1000)
         .withMessageId(1).withSource("source").withShardKey("key").withShard(10);
     final Message m4 = m1;
 

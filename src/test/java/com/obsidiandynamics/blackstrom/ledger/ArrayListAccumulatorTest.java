@@ -131,7 +131,12 @@ public final class ArrayListAccumulatorTest {
     
     @Override
     public String toString() {
-      return "[producer=" + producer + ", sequence=" + sequence + "]";
+      return producer + "_" + sequence;
+    }
+    
+    static ProducerBallotId fromString(String str) {
+      final String[] frags = str.split("_");
+      return new ProducerBallotId(Integer.parseInt(frags[0]), Long.parseLong(frags[1]));
     }
   }
   
@@ -150,7 +155,7 @@ public final class ArrayListAccumulatorTest {
 
     @Override
     public void onMessage(MessageContext context, Message message) {
-      final ProducerBallotId producerBallotId = (ProducerBallotId) message.getBallotId();
+      final ProducerBallotId producerBallotId = ProducerBallotId.fromString(message.getBallotId());
       received[producerBallotId.producer].add(producerBallotId.sequence);
     }
     
@@ -191,7 +196,7 @@ public final class ArrayListAccumulatorTest {
       final LongList expected = LongList.generate(0, messagesPerProducer);
       IntStream.range(0, numProducers).forEach(p -> {
         new Thread(() -> {
-          expected.forEach(i -> a.append(new UnknownMessage(new ProducerBallotId(p, i), 0).withShard(0)));
+          expected.forEach(i -> a.append(new UnknownMessage(new ProducerBallotId(p, i).toString(), 0).withShard(0)));
           TestSupport.await(barrier);
         }).start();
       });
@@ -246,7 +251,7 @@ public final class ArrayListAccumulatorTest {
       final LongList expected = LongList.generate(0, messagesPerProducer);
       IntStream.range(0, numProducers).forEach(p -> {
         new Thread(() -> {
-          expected.forEach(i -> a.append(new UnknownMessage(new ProducerBallotId(p, i), 0).withShard(0)));
+          expected.forEach(i -> a.append(new UnknownMessage(new ProducerBallotId(p, i).toString(), 0).withShard(0)));
           TestSupport.await(barrier);
         }).start();
       });
@@ -276,7 +281,7 @@ public final class ArrayListAccumulatorTest {
   
   private static List<Long> getItems(Accumulator a, long fromOffset) {
     return retrieve(a, fromOffset).stream()
-        .map(m -> (Long) m.getBallotId())
+        .map(m -> Long.parseLong(m.getBallotId()))
         .collect(Collectors.toList());
   }
   

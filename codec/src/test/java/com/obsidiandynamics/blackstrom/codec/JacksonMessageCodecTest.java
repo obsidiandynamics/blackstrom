@@ -70,29 +70,6 @@ public class JacksonMessageCodecTest implements TestSupport {
   }
   
   @Test
-  public void testProposalLongBallotId() throws Exception {
-    final Message m = new Proposal(101L, new String[] {"a", "b"}, null, 1000).withSource("test");
-    MessageCodec c;
-    
-    c = new JacksonMessageCodec(false);
-    final String encoded = c.encodeText(m);
-    logEncoded(encoded);
-
-    final Proposal d1 = (Proposal) c.decodeText(encoded);
-    logDecoded(d1, d1.getObjective());
-    assertEquals(m, d1);
-    
-    final String reencoded = c.encodeText(d1);
-    logReencoded(reencoded);
-    assertEquals(encoded, reencoded);
-
-    c = new JacksonMessageCodec(true);
-    final Proposal d2 = (Proposal) c.decodeText(reencoded);
-    logDecoded(d2, d2.getObjective());
-    assertEquals(m, d2);
-  }
-
-  @Test
   public void testProposalNonNullObjective() throws Exception {
     final Animal<?> a = new Dog().named("Rover").withFriend(new Cat().named("Misty"));
     final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);

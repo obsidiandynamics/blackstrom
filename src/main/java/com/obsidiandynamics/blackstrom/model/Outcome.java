@@ -9,11 +9,11 @@ public final class Outcome extends FluentMessage<Outcome> {
   private final AbortReason abortReason;
   private final Response[] responses;
 
-  public Outcome(Object ballotId, Verdict verdict, AbortReason abortReason, Response[] responses) {
+  public Outcome(String ballotId, Verdict verdict, AbortReason abortReason, Response[] responses) {
     this(ballotId, 0, verdict, abortReason, responses);
   }
   
-  public Outcome(Object ballotId, long timestamp, Verdict verdict, AbortReason abortReason, Response[] responses) {
+  public Outcome(String ballotId, long timestamp, Verdict verdict, AbortReason abortReason, Response[] responses) {
     super(ballotId, timestamp);
     this.verdict = verdict;
     this.abortReason = abortReason;
