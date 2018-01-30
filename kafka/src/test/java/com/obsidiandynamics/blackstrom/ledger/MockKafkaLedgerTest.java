@@ -23,8 +23,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   
   @Override
   protected Ledger createLedger() {
-    final Kafka<String, Message> kafka = new MockKafka<>();
-    return new KafkaLedger(kafka, "test", false);
+    return MockKafkaLedger.create();
   }
   
   @Test

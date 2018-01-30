@@ -6,9 +6,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -21,8 +19,7 @@ public final class MockKafkaLedgerBankTransferTest extends AbstractBankTransferT
   
   @Override
   protected Ledger createLedger() {
-    final Kafka<String, Message> kafka = new MockKafka<>();
-    return new KafkaLedger(kafka, "test", false);
+    return MockKafkaLedger.create();
   }
 
   @Override
