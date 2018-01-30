@@ -27,6 +27,10 @@ public final class KafkaLedger implements Ledger {
   
   private final Producer<String, Message> producer;
   
+  private final Object producerLock = new Object();
+  
+  private boolean producerDisposed;
+  
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
   private static class ConsumerOffsets {
@@ -39,8 +43,6 @@ public final class KafkaLedger implements Ledger {
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
   private final boolean mapPayload;
-  
-  private final AtomicBoolean disposed = new AtomicBoolean();
   
   public KafkaLedger(Kafka<String, Message> kafka, String topic, boolean mapPayload) {
     this.kafka = kafka;
@@ -143,18 +145,20 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void append(Message message, AppendCallback callback) {
-    if (! disposed.get()) {
-      final ProducerRecord<String, Message> record = 
-          new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
-      producer.send(record, 
-                    (metadata, exception) -> {
-                      if (exception == null) {
-                        callback.onAppend(new KafkaMessageId(topic, metadata.partition(), metadata.offset()), null);
-                      } else {
-                        callback.onAppend(null, exception);
-                        logException(exception, "Error publishing %s", record);
-                      }
-                    });
+    final ProducerRecord<String, Message> record = 
+        new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
+    synchronized (producerLock) {
+      if (! producerDisposed) {
+        producer.send(record, 
+                      (metadata, exception) -> {
+                        if (exception == null) {
+                          callback.onAppend(new KafkaMessageId(topic, metadata.partition(), metadata.offset()), null);
+                        } else {
+                          callback.onAppend(null, exception);
+                          logException(exception, "Error publishing %s", record);
+                        }
+                      });
+      }
     }
   }
 
@@ -176,10 +180,11 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void dispose() {
-    if (disposed.compareAndSet(false, true)) {
+    synchronized (producerLock) {
       producer.close();
-      receivers.forEach(t -> t.terminate());
-      receivers.forEach(t -> t.joinQuietly());
+      producerDisposed = true;
     }
+    receivers.forEach(t -> t.terminate());
+    receivers.forEach(t -> t.joinQuietly());
   }
 }
