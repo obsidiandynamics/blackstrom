@@ -4,10 +4,10 @@ import java.util.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
-public final class Shard {
+public final class Sandbox {
   private final String key;
   
-  private Shard(String key) {
+  private Sandbox(String key) {
     this.key = key;
   }
   
@@ -19,13 +19,13 @@ public final class Shard {
     return Objects.equals(key, message.getShardKey());
   }
   
-  public static Shard forTest(Object test) {
+  public static Sandbox forTest(Object test) {
     final String key = test.getClass().getSimpleName() + "-" + UUID.randomUUID();
-    return new Shard(key);
+    return new Sandbox(key);
   }
   
   @Override
   public String toString() {
-    return Shard.class.getSimpleName() + " [key=" + key + "]";
+    return Sandbox.class.getSimpleName() + " [key=" + key + "]";
   }
 }

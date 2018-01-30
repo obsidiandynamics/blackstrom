@@ -34,7 +34,7 @@ public final class KafkaLedgerBankTransferIT extends AbstractBankTransferTest {
 
   @Override
   protected Timesert getWait() {
-    return Wait.SHORT;
+    return Wait.MEDIUM;
   }
   
   public static void main(String[] args) {
