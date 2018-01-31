@@ -12,7 +12,7 @@ public interface MessageContext {
     getLedger().append(message);
   }
   
-  default void confirm(Object messageId) {
+  default void confirm(MessageId messageId) {
     getLedger().confirm(getHandlerId(), messageId);
   }
 }

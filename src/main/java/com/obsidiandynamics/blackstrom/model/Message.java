@@ -9,7 +9,7 @@ public abstract class Message {
   
   private final long timestamp;
   
-  private Object messageId;
+  private MessageId messageId;
   
   private String source;
   
@@ -26,11 +26,11 @@ public abstract class Message {
     return ballotId;
   }
 
-  public final Object getMessageId() {
+  public final MessageId getMessageId() {
     return messageId;
   }
   
-  public final void setMessageId(Object messageId) {
+  public final void setMessageId(MessageId messageId) {
     this.messageId = messageId;
   }
   

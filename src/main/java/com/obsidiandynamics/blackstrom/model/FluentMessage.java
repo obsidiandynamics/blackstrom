@@ -7,7 +7,7 @@ public abstract class FluentMessage<M extends FluentMessage<?>> extends Message 
     super(ballotId, timestamp);
   }
   
-  public final M withMessageId(Object messageId) {
+  public final M withMessageId(MessageId messageId) {
     setMessageId(messageId);
     return self();
   }

@@ -39,7 +39,7 @@ public final class DefaultMonitorTest {
       ledger.append(message, callback);
     }
     
-    @Override public void confirm(Object handlerId, Object messageId) {
+    @Override public void confirm(Object handlerId, MessageId messageId) {
       ledger.confirm(handlerId, messageId);
     }
     

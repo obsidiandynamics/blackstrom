@@ -65,7 +65,7 @@ public final class SingleNodeQueueLedger implements Ledger {
   }
   
   @Override
-  public void confirm(Object handlerId, Object messageId) {}
+  public void confirm(Object handlerId, MessageId messageId) {}
 
   @Override
   public void dispose() {

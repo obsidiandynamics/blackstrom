@@ -6,7 +6,9 @@ import org.apache.commons.lang3.builder.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 
-public final class KafkaMessageId {
+import com.obsidiandynamics.blackstrom.model.*;
+
+public final class KafkaMessageId implements MessageId {
   private final String topic;
   
   private final int partition;

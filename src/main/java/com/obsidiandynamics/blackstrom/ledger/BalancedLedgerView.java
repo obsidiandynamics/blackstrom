@@ -5,7 +5,6 @@ import java.util.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class BalancedLedgerView implements Ledger {
@@ -105,12 +104,12 @@ public final class BalancedLedgerView implements Ledger {
   }
 
   @Override
-  public void confirm(Object handlerId, Object messageId) {
+  public void confirm(Object handlerId, MessageId messageId) {
     final Consumer consumer = consumers.get(handlerId);
     if (consumer != null) {
       final ConsumerGroup group = consumer.group;
       if (group != null) {
-        final ShardMessageId shardMessageId = Cast.from(messageId);
+        final ShardMessageId shardMessageId = (ShardMessageId) messageId;
         group.confirm(shardMessageId.getShard(), shardMessageId.getOffset());
       }
     }

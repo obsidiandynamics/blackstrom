@@ -30,7 +30,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
     }
     
     @Override
-    public void confirm(Object handlerId, Object messageId) {
+    public void confirm(Object handlerId, MessageId messageId) {
       backingLedger.confirm(handlerId, messageId);
     }
   };

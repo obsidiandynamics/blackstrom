@@ -40,8 +40,8 @@ public class ShardedFlowTest {
         throw new UnsupportedOperationException();
       }
       
-      @Override public void confirm(Object messageId) {
-        confirmed.add(Cast.from(messageId));
+      @Override public void confirm(MessageId messageId) {
+        confirmed.add(((ShardMessageId) messageId).getOffset());
       }
     };
     
@@ -66,6 +66,8 @@ public class ShardedFlowTest {
   }
 
   private static Message message(long ballotId, int shard) {
-    return new Proposal(String.valueOf(ballotId), new String[0], null, 0).withShard(shard).withMessageId(ballotId);
+    return new Proposal(String.valueOf(ballotId), new String[0], null, 0)
+        .withShard(shard)
+        .withMessageId(new ShardMessageId(shard, ballotId));
   }
 }

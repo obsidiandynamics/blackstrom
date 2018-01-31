@@ -2,21 +2,27 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import org.apache.commons.lang3.builder.*;
 
-public final class ShardMessageId {
+import com.obsidiandynamics.blackstrom.model.*;
+
+public final class ShardMessageId implements MessageId {
   private final int shard;
   
   private final long offset;
+
+  public ShardMessageId(long offset) {
+    this(0, offset);
+  }
 
   public ShardMessageId(int shard, long offset) {
     this.shard = shard;
     this.offset = offset;
   }
   
-  int getShard() {
+  public int getShard() {
     return shard;
   }
 
-  long getOffset() {
+  public long getOffset() {
     return offset;
   }
   

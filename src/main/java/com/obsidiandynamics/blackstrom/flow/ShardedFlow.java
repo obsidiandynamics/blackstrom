@@ -10,9 +10,9 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class ShardedFlow implements Disposable {
   private static class ConfirmTask implements Runnable {
     private final MessageContext context;
-    private final Object messageId;
+    private final MessageId messageId;
     
-    ConfirmTask(MessageContext context, Object messageId) {
+    ConfirmTask(MessageContext context, MessageId messageId) {
       this.context = context;
       this.messageId = messageId;
     }

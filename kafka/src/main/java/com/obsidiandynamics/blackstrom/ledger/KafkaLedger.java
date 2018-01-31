@@ -164,7 +164,7 @@ public final class KafkaLedger implements Ledger {
   }
 
   @Override
-  public void confirm(Object handlerId, Object messageId) {
+  public void confirm(Object handlerId, MessageId messageId) {
     if (handlerId != null) {
       final ConsumerOffsets consumer = consumers.get(handlerId);
       final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
