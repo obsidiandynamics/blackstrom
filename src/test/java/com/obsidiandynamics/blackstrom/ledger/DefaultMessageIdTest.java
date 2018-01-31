@@ -6,20 +6,20 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
-public final class ShardMessageIdTest {
+public final class DefaultMessageIdTest {
   @Test
   public void testGetters() {
-    final ShardMessageId messageId = new ShardMessageId(2, 400);
+    final DefaultMessageId messageId = new DefaultMessageId(2, 400);
     assertEquals(2, messageId.getShard());
     assertEquals(400, messageId.getOffset());
   }
   
   @Test
   public void testEqualsHashCode() {
-    final ShardMessageId m1 = new ShardMessageId(2, 400);
-    final ShardMessageId m2 = new ShardMessageId(3, 400);
-    final ShardMessageId m3 = new ShardMessageId(2, 400);
-    final ShardMessageId m4 = m1;
+    final DefaultMessageId m1 = new DefaultMessageId(2, 400);
+    final DefaultMessageId m2 = new DefaultMessageId(3, 400);
+    final DefaultMessageId m3 = new DefaultMessageId(2, 400);
+    final DefaultMessageId m4 = m1;
     
     assertNotEquals(m1, m2);
     assertEquals(m1, m3);
@@ -32,6 +32,6 @@ public final class ShardMessageIdTest {
   
   @Test
   public void testToString() {
-    Assertions.assertToStringOverride(new ShardMessageId(2, 400));
+    Assertions.assertToStringOverride(new DefaultMessageId(2, 400));
   }
 }

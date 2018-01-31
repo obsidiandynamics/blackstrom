@@ -54,7 +54,7 @@ public final class BalancedLedgerView implements Ledger {
           
           final int retrieved = accumulator.retrieve(nextReadOffset, sink);
           if (retrieved != 0) {
-            nextReadOffsets[shard] = ((ShardMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset() + 1;
+            nextReadOffsets[shard] = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset() + 1;
           }
         }
       }
@@ -109,8 +109,8 @@ public final class BalancedLedgerView implements Ledger {
     if (consumer != null) {
       final ConsumerGroup group = consumer.group;
       if (group != null) {
-        final ShardMessageId shardMessageId = (ShardMessageId) messageId;
-        group.confirm(shardMessageId.getShard(), shardMessageId.getOffset());
+        final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
+        group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset());
       }
     }
   }

@@ -4,16 +4,16 @@ import org.apache.commons.lang3.builder.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 
-public final class ShardMessageId implements MessageId {
+public final class DefaultMessageId implements MessageId {
   private final int shard;
   
   private final long offset;
 
-  public ShardMessageId(long offset) {
+  public DefaultMessageId(long offset) {
     this(0, offset);
   }
 
-  public ShardMessageId(int shard, long offset) {
+  public DefaultMessageId(int shard, long offset) {
     this.shard = shard;
     this.offset = offset;
   }
@@ -38,8 +38,8 @@ public final class ShardMessageId implements MessageId {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof ShardMessageId) {
-      final ShardMessageId that = (ShardMessageId) obj;
+    } else if (obj instanceof DefaultMessageId) {
+      final DefaultMessageId that = (DefaultMessageId) obj;
       return new EqualsBuilder()
           .append(shard, that.shard)
           .append(offset, that.offset)

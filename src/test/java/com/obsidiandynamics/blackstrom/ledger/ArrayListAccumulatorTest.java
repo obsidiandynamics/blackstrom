@@ -287,7 +287,7 @@ public final class ArrayListAccumulatorTest {
   
   private static List<Long> getOffsets(Accumulator a, long fromOffset) {
     return retrieve(a, fromOffset).stream()
-        .map(m -> (ShardMessageId) m.getMessageId())
+        .map(m -> (DefaultMessageId) m.getMessageId())
         .map(id -> id.getOffset())
         .collect(Collectors.toList());
   }

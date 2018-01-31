@@ -33,7 +33,7 @@ final class AccumulatorConsumer implements Disposable {
       for (Message m : sink) {
         handler.onMessage(context, m);
       }
-      nextOffset = ((ShardMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset() + 1;
+      nextOffset = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset() + 1;
       sink.clear();
     } else {
       Thread.sleep(1);

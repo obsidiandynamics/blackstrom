@@ -41,7 +41,7 @@ public class ShardedFlowTest {
       }
       
       @Override public void confirm(MessageId messageId) {
-        confirmed.add(((ShardMessageId) messageId).getOffset());
+        confirmed.add(((DefaultMessageId) messageId).getOffset());
       }
     };
     
@@ -68,6 +68,6 @@ public class ShardedFlowTest {
   private static Message message(long ballotId, int shard) {
     return new Proposal(String.valueOf(ballotId), new String[0], null, 0)
         .withShard(shard)
-        .withMessageId(new ShardMessageId(shard, ballotId));
+        .withMessageId(new DefaultMessageId(shard, ballotId));
   }
 }
