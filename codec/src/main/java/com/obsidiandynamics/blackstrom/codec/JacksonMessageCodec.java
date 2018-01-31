@@ -22,7 +22,7 @@ public final class JacksonMessageCodec implements MessageCodec {
     module.addDeserializer(Payload.class, new JacksonPayloadDeserializer());
     mapper.registerModule(module);
   }
-
+  
   @Override
   public byte[] encode(Message message) throws JsonProcessingException {
     return mapper.writeValueAsBytes(message);
