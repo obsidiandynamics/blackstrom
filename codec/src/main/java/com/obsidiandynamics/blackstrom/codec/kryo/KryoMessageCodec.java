@@ -26,7 +26,7 @@ public final class KryoMessageCodec implements MessageCodec {
     try {
       final Output out = new Output(128, -1);
       kryo.writeObject(out, message, messageSerializer);
-      return out.getBuffer();
+      return out.toBytes();
     } finally {
       pool.release(kryo);
     }

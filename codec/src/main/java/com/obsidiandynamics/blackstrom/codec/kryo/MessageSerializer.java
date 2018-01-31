@@ -49,7 +49,23 @@ final class MessageSerializer extends Serializer<Message> {
   private static void serializeProposal(Kryo kryo, Output out, Proposal proposal) {
     KryoUtils.writeStringArray(out, proposal.getCohorts());
     out.writeVarInt(proposal.getTtl(), true);
-    kryo.writeClassAndObject(out, proposal.getObjective());
+    serializePayload(kryo, out, proposal.getObjective());
+  }
+  
+  private static void serializePayload(Kryo kryo, Output out, Object payload) {
+    if (payload == null) {
+      out.writeVarInt(0, true);
+    } else if (payload instanceof PayloadBuffer) {
+      final byte[] payloadBytes = ((PayloadBuffer) payload).getBytes();
+      out.writeVarInt(payloadBytes.length, true);
+      out.writeBytes(payloadBytes);
+    } else {
+      final Output buffer = new Output(64, -1);
+      kryo.writeClassAndObject(buffer, payload);
+      final int bufferSize = buffer.position();
+      out.writeVarInt(bufferSize, true);
+      out.writeBytes(buffer.getBuffer(), 0, bufferSize);
+    }
   }
   
   static final class MessageDeserializationException extends KryoException {
@@ -85,10 +101,25 @@ final class MessageSerializer extends Serializer<Message> {
     }
   }
   
-  private static Proposal deserializeProposal(Kryo kryo, Input in, String ballotId, long timestamp, String source) {
+  private Proposal deserializeProposal(Kryo kryo, Input in, String ballotId, long timestamp, String source) {
     final String[] cohorts = KryoUtils.readStringArray(in);
     final int ttl = in.readVarInt(true);
-    final Object objective = kryo.readClassAndObject(in);
+    final Object objective = deserializePayload(kryo, in);
     return new Proposal(ballotId, timestamp, cohorts, objective, ttl).withSource(source);
+  }
+  
+  private Object deserializePayload(Kryo kryo, Input in) {
+    final int bufferSize = in.readVarInt(true);
+    if (bufferSize != 0) {
+      final byte[] buffer = new byte[bufferSize];
+      in.readBytes(buffer);
+      if (mapPayload) {
+        return kryo.readClassAndObject(new Input(buffer));
+      } else {
+        return new PayloadBuffer(buffer);
+      }
+    } else {
+      return null;
+    }
   }
 }

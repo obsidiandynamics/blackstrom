@@ -16,11 +16,11 @@ import com.obsidiandynamics.indigo.util.*;
 
 public class KryoMessageCodecTest implements TestSupport {
   private static void logEncoded(byte[] encoded) {
-    if (LOG) LOG_STREAM.format("encoded:\n %s\n", BinaryUtils.dump(encoded));
+    if (LOG) LOG_STREAM.format("encoded:\n%s\n", BinaryUtils.dump(encoded));
   }
   
   private static void logReencoded(byte[] reencoded) {
-    if (LOG) LOG_STREAM.format("re-encoded:\n %s\n", BinaryUtils.dump(reencoded));
+    if (LOG) LOG_STREAM.format("re-encoded:\n%s\n", BinaryUtils.dump(reencoded));
   }
   
   private static void logDecoded(Message m, Object p) {
@@ -61,8 +61,8 @@ public class KryoMessageCodecTest implements TestSupport {
     
     final long took = TestSupport.tookThrowing(() -> {
       for (int i = 0; i < runs; i++) {
-        final String encoded = c.encodeText(m);
-        c.decodeText(encoded);
+        final byte[] encoded = c.encode(m);
+        c.decode(encoded);
       }
     });
     
@@ -70,30 +70,30 @@ public class KryoMessageCodecTest implements TestSupport {
                       runs, took, (float) runs / took * 1000);
   }
   
-//  @Test
-//  public void testProposalNonNullObjective() throws Exception {
-//    final Animal<?> a = new Dog().named("Rover").withFriend(new Cat().named("Misty"));
-//    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
-//    MessageCodec c;
-//
-//    c = new KryoMessageCodec(false);
-//    final byte[] encoded = c.encode(m);
-//    logEncoded(encoded);
-//    
-//    final Proposal d1 = (Proposal) c.decode(encoded);
-//    logDecoded(d1, d1.getObjective());
-//    assertNotNull(d1.getObjective());
-//    assertEquals(LinkedHashMap.class, d1.getObjective().getClass());
-//    
-//    final byte[] reencoded = c.encode(d1);
-//    logReencoded(reencoded);
-//    assertArrayEquals(encoded, reencoded);
-//    
-//    c = new KryoMessageCodec(true);
-//    final Proposal d2 = (Proposal) c.decode(reencoded);
-//    logDecoded(d2, d2.getObjective());
-//    assertEquals(m, d2);
-//  }
+  @Test
+  public void testProposalNonNullObjective() throws Exception {
+    final Animal<?> a = new Dog().named("Rover").withFriend(new Cat().named("Misty"));
+    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
+    MessageCodec c;
+
+    c = new KryoMessageCodec(false);
+    final byte[] encoded = c.encode(m);
+    logEncoded(encoded);
+    
+    final Proposal d1 = (Proposal) c.decode(encoded);
+    logDecoded(d1, d1.getObjective());
+    assertNotNull(d1.getObjective());
+    assertEquals(PayloadBuffer.class, d1.getObjective().getClass());
+    
+    final byte[] reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertArrayEquals(encoded, reencoded);
+    
+    c = new KryoMessageCodec(true);
+    final Proposal d2 = (Proposal) c.decode(reencoded);
+    logDecoded(d2, d2.getObjective());
+    assertEquals(m, d2);
+  }
 
 //  @Test
 //  public void testVoteNonNullMetadata() throws Exception {
