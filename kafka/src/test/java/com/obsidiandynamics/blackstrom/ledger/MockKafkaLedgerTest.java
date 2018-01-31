@@ -3,9 +3,12 @@ package com.obsidiandynamics.blackstrom.ledger;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.await.*;
@@ -14,8 +17,15 @@ import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public final class MockKafkaLedgerTest extends AbstractLedgerTest {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   @Override
   protected Timesert getWait() {
     return Wait.SHORT;
@@ -87,7 +97,9 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
       ledger.append(new Proposal("B100", new String[0], null, 0));
   
       TestSupport.await(barrier);
-      verify(log).warn(isNotNull(), eq(exception));
+      wait.until(() -> {
+        verify(log).warn(isNotNull(), eq(exception));
+      });
     } finally {
       ledger.dispose();
     }

@@ -53,7 +53,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private final Sandbox sandbox = Sandbox.forTest(this);
   
-  private final Timesert wait = getWait();
+  protected final Timesert wait = getWait();
   
   protected abstract Timesert getWait();
   
