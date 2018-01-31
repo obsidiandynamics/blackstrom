@@ -55,10 +55,10 @@ public final class KafkaLedger implements Ledger {
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
-        .with("batch.size", 16_384)
+        .with("batch.size", 1 << 16)
         .with("linger.ms", 0)
         .with("buffer.memory", 33_554_432)
-        .with("compression.type", "snappy")
+        .with("compression.type", "lz4")
         .build();
     producer = kafka.getProducer(props);
   }
@@ -100,6 +100,7 @@ public final class KafkaLedger implements Ledger {
       final List<TopicPartition> partitions = infos.stream()
           .map(i -> new TopicPartition(i.topic(), i.partition()))
           .collect(Collectors.toList());
+      log.debug("infos={}, partitions={}", infos, partitions);
       final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
       consumer.assign(partitions);
       for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {

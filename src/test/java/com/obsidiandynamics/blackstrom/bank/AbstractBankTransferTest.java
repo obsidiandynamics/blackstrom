@@ -321,6 +321,7 @@ public abstract class AbstractBankTransferTest {
   @Test
   public final void testRandomTransfersBenchmark() {
     if (PropertyUtils.get(AbstractBankTransferTest.class.getSimpleName() + ".benchmark", Boolean::valueOf, false)) {
+      System.out.println("Starting benchmark");
       testRandomTransfers(2, 4_000_000, false, false);
     }
   }
