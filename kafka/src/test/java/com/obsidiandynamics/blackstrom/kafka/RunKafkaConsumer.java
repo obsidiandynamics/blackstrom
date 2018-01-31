@@ -1,12 +1,12 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import static java.util.Collections.*;
+
 import java.util.*;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
-
-import com.obsidiandynamics.blackstrom.ledger.*;
 
 public final class RunKafkaConsumer {
   public static void main(String[] args) {
@@ -44,8 +44,8 @@ public final class RunKafkaConsumer {
               lastCommitTime = System.currentTimeMillis();
             }
             final ConsumerRecord<String, String> lastRecord = recordsList.get(recordsList.size() - 1);
-            final Map<TopicPartition, OffsetAndMetadata> offset = KafkaMessageId.fromRecord(lastRecord).toOffset();
-            offsetToCommit = offset;
+            offsetToCommit = singletonMap(new TopicPartition(lastRecord.topic(), lastRecord.partition()), 
+                                          new OffsetAndMetadata(lastRecord.offset()));
           }
         }
       }

@@ -123,7 +123,7 @@ public final class KafkaLedger implements Ledger {
     
     final RecordHandler<String, Message> recordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
-        final KafkaMessageId messageId = KafkaMessageId.fromRecord(record);
+        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
         final Message message = record.value();
         message.setMessageId(messageId);
         message.setShardKey(record.key());
@@ -153,7 +153,7 @@ public final class KafkaLedger implements Ledger {
         producer.send(record, 
                       (metadata, exception) -> {
                         if (exception == null) {
-                          callback.onAppend(new KafkaMessageId(topic, metadata.partition(), metadata.offset()), null);
+                          callback.onAppend(new DefaultMessageId(metadata.partition(), metadata.offset()), null);
                         } else {
                           callback.onAppend(null, exception);
                           logException(exception, "Error publishing %s", record);
@@ -167,9 +167,9 @@ public final class KafkaLedger implements Ledger {
   public void confirm(Object handlerId, MessageId messageId) {
     if (handlerId != null) {
       final ConsumerOffsets consumer = consumers.get(handlerId);
-      final KafkaMessageId kafkaMessageId = (KafkaMessageId) messageId;
-      consumer.offsets.put(new TopicPartition(topic, kafkaMessageId.getPartition()), 
-                           new OffsetAndMetadata(kafkaMessageId.getOffset()));
+      final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
+      consumer.offsets.put(new TopicPartition(topic, defaultMessageId.getShard()), 
+                           new OffsetAndMetadata(defaultMessageId.getOffset()));
     }
   }
   

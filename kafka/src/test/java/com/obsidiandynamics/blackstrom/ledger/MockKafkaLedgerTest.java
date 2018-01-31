@@ -76,7 +76,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
         @Override
         public void onMessage(MessageContext context, Message message) {
           try {
-            context.confirm(new KafkaMessageId("test", 0, 0));
+            context.confirm(new DefaultMessageId(0, 0));
           } catch (Throwable e) {
             e.printStackTrace();
           } finally {
