@@ -11,11 +11,11 @@ import com.obsidiandynamics.blackstrom.util.*;
   @JsonSubTypes.Type(name="Dog",value=Dog.class),
   @JsonSubTypes.Type(name="Cat",value=Cat.class)
 })
-abstract class Animal<A> {
+public abstract class Animal<A> {
   @JsonProperty
-  Animal<?> friend;
+  public Animal<?> friend;
   
-  A withFriend(Animal<?> friend) {
+  public A withFriend(Animal<?> friend) {
     this.friend = friend;
     return Cast.from(this);
   }

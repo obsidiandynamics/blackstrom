@@ -4,11 +4,11 @@ import org.apache.commons.lang3.builder.*;
 
 import com.fasterxml.jackson.annotation.*;
 
-final class Cat extends Animal<Cat> {
+public final class Cat extends Animal<Cat> {
   @JsonProperty
-  String name;
+  public String name;
   
-  Cat named(String name) {
+  public Cat named(String name) {
     this.name = name;
     return this;
   }
