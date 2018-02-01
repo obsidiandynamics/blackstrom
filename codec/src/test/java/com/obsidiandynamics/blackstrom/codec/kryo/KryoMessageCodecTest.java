@@ -59,21 +59,30 @@ public final class KryoMessageCodecTest implements TestSupport {
   
   @Test
   public void testCycle() throws Exception {
-    testCycle(100);
+    testCycle(1_000);
   }
   
   @Test
   public void testCycleBenchmark() throws Exception {
     if (TestBenchmark.isEnabled(KryoMessageCodecTest.class)) {
       System.out.println("Starting benchmark");
-      testCycle(10_000_000);
+      testCycle(20_000_000);
     }
   }
   
-  private void testCycle(int runs) throws Exception {
-    final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000);
+  private static void testCycle(int runs) throws Exception {
     final MessageCodec c = new KryoMessageCodec(false);
-    
+    cycle(runs, 
+          c, 
+          new Proposal("N100", new String[] {"a", "b"}, null, 1000), 
+          "hollow");
+    cycle(runs, 
+          c, 
+          new Proposal("N100", new String[] {"a", "b"}, new Dog().named("Rex").withFriend(new Cat().named("Tigger")), 1000), 
+          "filled");
+  }
+  
+  private static void cycle(int runs, MessageCodec c, Message m, String name) throws Exception {
     final long took = TestSupport.tookThrowing(() -> {
       for (int i = 0; i < runs; i++) {
         final byte[] encoded = c.encode(m);
@@ -81,8 +90,8 @@ public final class KryoMessageCodecTest implements TestSupport {
       }
     });
     
-    System.out.format("Codec: %,d took %,d ms, %,.0f msgs/sec\n", 
-                      runs, took, (double) runs / took * 1000);
+    System.out.format("%s: %,d took %,d ms, %,.0f msgs/sec\n", 
+                      name, runs, took, (double) runs / took * 1000);
   }
   
   @Test

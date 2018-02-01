@@ -65,23 +65,32 @@ public final class JacksonMessageCodecTest implements TestSupport {
   public void testCycleBenchmark() throws Exception {
     if (TestBenchmark.isEnabled(JacksonMessageCodecTest.class)) {
       System.out.println("Starting benchmark");
-      testCycle(2_000_000);
+      testCycle(4_000_000);
     }
   }
   
-  private void testCycle(int runs) throws Exception {
-    final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000);
+  private static void testCycle(int runs) throws Exception {
     final MessageCodec c = new JacksonMessageCodec(false);
-    
+    cycle(runs, 
+          c, 
+          new Proposal("N100", new String[] {"a", "b"}, null, 1000), 
+          "hollow");
+    cycle(runs, 
+          c, 
+          new Proposal("N100", new String[] {"a", "b"}, new Dog().named("Rex").withFriend(new Cat().named("Tigger")), 1000), 
+          "filled");
+  }
+  
+  private static void cycle(int runs, MessageCodec c, Message m, String name) throws Exception {
     final long took = TestSupport.tookThrowing(() -> {
       for (int i = 0; i < runs; i++) {
-        final String encoded = c.encodeText(m);
-        c.decodeText(encoded);
+        final byte[] encoded = c.encode(m);
+        c.decode(encoded);
       }
     });
     
-    System.out.format("Codec: %,d took %,d ms, %,.0f msgs/sec\n", 
-                      runs, took, (float) runs / took * 1000);
+    System.out.format("%s: %,d took %,d ms, %,.0f msgs/sec\n", 
+                      name, runs, took, (double) runs / took * 1000);
   }
   
   @Test

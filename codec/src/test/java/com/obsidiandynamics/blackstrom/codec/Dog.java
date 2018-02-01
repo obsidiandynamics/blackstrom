@@ -2,8 +2,11 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import org.apache.commons.lang3.builder.*;
 
+import com.esotericsoftware.kryo.*;
 import com.fasterxml.jackson.annotation.*;
+import com.obsidiandynamics.blackstrom.codec.kryo.*;
 
+@DefaultSerializer(KryoDogSerializer.class)
 public final class Dog extends Animal<Dog> {
   @JsonProperty
   public String name;
