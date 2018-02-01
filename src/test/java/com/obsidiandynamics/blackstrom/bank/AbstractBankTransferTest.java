@@ -26,7 +26,7 @@ import com.obsidiandynamics.indigo.util.*;
 public abstract class AbstractBankTransferTest {  
   private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
   private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
-  private static final int PROPOSAL_TIMEOUT = 10_000;
+  private static final int PROPOSAL_TIMEOUT = 30_000;
   private static final int FUTURE_GET_TIMEOUT = PROPOSAL_TIMEOUT * 2;
   
   private final Timesert wait = getWait();

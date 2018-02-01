@@ -132,6 +132,7 @@ public final class KafkaLedger implements Ledger {
       }
       
       if (consumerOffsets != null && ! consumerOffsets.offsets.isEmpty()) {
+        log.trace("Committing offsets {}", consumerOffsets.offsets);
         consumer.commitAsync(consumerOffsets.offsets, 
                              (offsets, exception) -> logException(exception, "Error committing offsets %s", consumerOffsets.offsets));
         consumerOffsets.offsets.clear();
