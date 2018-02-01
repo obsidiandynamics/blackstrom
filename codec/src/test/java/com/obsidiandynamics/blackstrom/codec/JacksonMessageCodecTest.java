@@ -7,13 +7,17 @@ import java.util.*;
 import org.hamcrest.core.*;
 import org.junit.*;
 import org.junit.rules.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.fasterxml.jackson.databind.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonMessageDeserializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public class JacksonMessageCodecTest implements TestSupport {
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public final class JacksonMessageCodecTest implements TestSupport {
   private static void logEncoded(String encoded) {
     if (LOG) LOG_STREAM.format("encoded %s\n", encoded);
   }
@@ -53,8 +57,19 @@ public class JacksonMessageCodecTest implements TestSupport {
   }
   
   @Test
-  public void testCodecBenchmark() throws Exception {
-    final int runs = 100;
+  public void testCycle() throws Exception {
+    testCycle(100);
+  }
+  
+  @Test
+  public void testCycleBenchmark() throws Exception {
+    if (TestBenchmark.isEnabled(JacksonMessageCodecTest.class)) {
+      System.out.println("Starting benchmark");
+      testCycle(2_000_000);
+    }
+  }
+  
+  private void testCycle(int runs) throws Exception {
     final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000);
     final MessageCodec c = new JacksonMessageCodec(false);
     
@@ -193,5 +208,10 @@ public class JacksonMessageCodecTest implements TestSupport {
     thrown.expect(MessageDeserializationException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
     c.decodeText(encoded);
+  }
+  
+  public static void main(String[] args) {
+    TestBenchmark.setEnabled(JacksonMessageCodecTest.class);
+    JUnitCore.runClasses(JacksonMessageCodecTest.class);
   }
 }

@@ -27,7 +27,7 @@ public final class KafkaLedgerIT extends AbstractLedgerTest {
   }
   
   public static void main(String[] args) {
-    AbstractLedgerTest.enableBenchmark();
+    TestBenchmark.setEnabled(AbstractLedgerTest.class);
     JUnitCore.runClasses(KafkaLedgerIT.class);
   }
 }

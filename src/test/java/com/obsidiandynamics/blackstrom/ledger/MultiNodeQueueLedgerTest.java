@@ -27,7 +27,7 @@ public final class MultiNodeQueueLedgerTest extends AbstractLedgerTest {
   }
   
   public static void main(String[] args) {
-    AbstractLedgerTest.enableBenchmark();
+    TestBenchmark.setEnabled(AbstractLedgerTest.class);
     JUnitCore.runClasses(MultiNodeQueueLedgerTest.class);
   }
 }

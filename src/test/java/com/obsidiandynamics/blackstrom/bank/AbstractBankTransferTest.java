@@ -309,10 +309,6 @@ public abstract class AbstractBankTransferTest {
     assertEquals(expectedAbortReason, o.getAbortReason());
   }
   
-  protected static void enableBenchmark() {
-    System.setProperty(AbstractBankTransferTest.class.getSimpleName() + ".benchmark", String.valueOf(true));
-  }
-
   @Test
   public final void testRandomTransfers() {
     testRandomTransfers(10, 100, true, true);
@@ -320,7 +316,7 @@ public abstract class AbstractBankTransferTest {
 
   @Test
   public final void testRandomTransfersBenchmark() {
-    if (PropertyUtils.get(AbstractBankTransferTest.class.getSimpleName() + ".benchmark", Boolean::valueOf, false)) {
+    if (TestBenchmark.isEnabled(AbstractBankTransferTest.class)) {
       System.out.println("Starting benchmark");
       testRandomTransfers(2, 4_000_000, false, false);
     }

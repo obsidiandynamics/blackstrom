@@ -5,15 +5,20 @@ import static org.junit.Assert.*;
 import org.hamcrest.core.*;
 import org.junit.*;
 import org.junit.rules.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.esotericsoftware.kryo.*;
 import com.esotericsoftware.kryo.io.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.codec.kryo.KryoMessageSerializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public class KryoMessageCodecTest implements TestSupport {
+
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public final class KryoMessageCodecTest implements TestSupport {
   private static void logEncoded(byte[] encoded) {
     if (LOG) LOG_STREAM.format("encoded:\n%s\n", BinaryUtils.dump(encoded));
   }
@@ -53,8 +58,19 @@ public class KryoMessageCodecTest implements TestSupport {
   }
   
   @Test
-  public void testCodecBenchmark() throws Exception {
-    final int runs = 100;
+  public void testCycle() throws Exception {
+    testCycle(100);
+  }
+  
+  @Test
+  public void testCycleBenchmark() throws Exception {
+    if (TestBenchmark.isEnabled(KryoMessageCodecTest.class)) {
+      System.out.println("Starting benchmark");
+      testCycle(10_000_000);
+    }
+  }
+  
+  private void testCycle(int runs) throws Exception {
     final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000);
     final MessageCodec c = new KryoMessageCodec(false);
     
@@ -66,7 +82,7 @@ public class KryoMessageCodecTest implements TestSupport {
     });
     
     System.out.format("Codec: %,d took %,d ms, %,.0f msgs/sec\n", 
-                      runs, took, (float) runs / took * 1000);
+                      runs, took, (double) runs / took * 1000);
   }
   
   @Test
@@ -203,5 +219,10 @@ public class KryoMessageCodecTest implements TestSupport {
     } finally {
       buffer.close();
     }
+  }
+  
+  public static void main(String[] args) {
+    TestBenchmark.setEnabled(KryoMessageCodecTest.class);
+    JUnitCore.runClasses(KryoMessageCodecTest.class);
   }
 }

@@ -112,10 +112,6 @@ public abstract class AbstractLedgerTest implements TestSupport {
     ledger.dispose();
   }
   
-  protected static void enableBenchmark() {
-    System.setProperty(AbstractLedgerTest.class.getSimpleName() + ".benchmark", String.valueOf(true));
-  }
-  
   @Test
   public final void testOneWay() {
     testOneWay(10_000);
@@ -123,7 +119,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testOneWayBenchmark() {
-    if (PropertyUtils.get(AbstractLedgerTest.class.getSimpleName() + ".benchmark", Boolean::parseBoolean, false)) {
+    if (TestBenchmark.isEnabled(AbstractLedgerTest.class)) {
+      System.out.println("Starting benchmark");
       testOneWay(10_000_000);
     }
   }
@@ -159,7 +156,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testTwoWayBenchmark() {
-    if (PropertyUtils.get(AbstractLedgerTest.class.getSimpleName() + ".benchmark", Boolean::parseBoolean, false)) {
+    if (TestBenchmark.isEnabled(AbstractLedgerTest.class)) {
+      System.out.println("Starting benchmark");
       testTwoWay(10_000_000);
     }
   }
