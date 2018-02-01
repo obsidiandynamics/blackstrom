@@ -55,7 +55,7 @@ public class JacksonMessageCodecTest implements TestSupport {
   @Test
   public void testCodecBenchmark() throws Exception {
     final int runs = 100;
-    final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
+    final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000);
     final MessageCodec c = new JacksonMessageCodec(false);
     
     final long took = TestSupport.tookThrowing(() -> {
@@ -97,7 +97,7 @@ public class JacksonMessageCodecTest implements TestSupport {
   @Test
   public void testVoteNonNullMetadata() throws Exception {
     final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
-    final Vote m = new Vote("V100", new Response("test-cohort", Intent.ACCEPT, a));
+    final Vote m = new Vote("V100", new Response("test-cohort", Intent.ACCEPT, a)).withSource("test");
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
@@ -124,7 +124,7 @@ public class JacksonMessageCodecTest implements TestSupport {
     final Animal<?> a = new Dog().named("Rex").withFriend(new Cat().named("Tigger"));
     final Response ra = new Response("test-cohort-a", Intent.ACCEPT, a);
     final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
-    final Outcome m = new Outcome("O100", Verdict.COMMIT, null, new Response[] {ra, rb});
+    final Outcome m = new Outcome("O100", Verdict.COMMIT, null, new Response[] {ra, rb}).withSource("test");
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);

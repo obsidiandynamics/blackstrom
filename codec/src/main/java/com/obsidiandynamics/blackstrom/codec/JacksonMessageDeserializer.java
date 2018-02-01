@@ -38,25 +38,32 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     final String ballotId = ballotIdNode.asText();
     final long timestamp = root.get("timestamp").asLong();
     final String source = JacksonUtils.readString("source", root);
+    final Message message;
     
     switch (messageType) {
       case PROPOSAL:
-        return deserializeProposal(p, root, ballotId, timestamp, source);
+        message = deserializeProposal(p, root, ballotId, timestamp);
+        break;
         
       case VOTE:
-        return deserializeVote(p, root, ballotId, timestamp, source);
+        message = deserializeVote(p, root, ballotId, timestamp);
+        break;
         
       case OUTCOME:
-        return deserializeOutcome(p, root, ballotId, timestamp, source);
+        message = deserializeOutcome(p, root, ballotId, timestamp);
+        break;
         
       case $UNKNOWN:
       default:
         final Throwable cause = new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
         throw new MessageDeserializationException(cause);
     }
+    
+    message.setSource(source);
+    return message;
   }
   
-  private Message deserializeProposal(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeProposal(JsonParser p, JsonNode root, String ballotId, long timestamp) throws JsonProcessingException {
     final ArrayNode cohortsNode = (ArrayNode) root.get("cohorts");
     final String[] cohorts = new String[cohortsNode.size()];
     for (int i = 0; i < cohorts.length; i++) {
@@ -65,10 +72,10 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     
     final int ttl = root.get("ttl").asInt();
     final Object objective = Payload.unpack(JacksonUtils.readObject("objective", root, p, getPayloadClass()));
-    return new Proposal(ballotId, timestamp, cohorts, objective, ttl).withSource(source);
+    return new Proposal(ballotId, timestamp, cohorts, objective, ttl);
   }
   
-  private Message deserializeVote(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeVote(JsonParser p, JsonNode root, String ballotId, long timestamp) throws JsonProcessingException {
     final JsonNode responseNode = root.get("response");
     final Response response = deserializeResponse(p, responseNode);
     return new Vote(ballotId, timestamp, response);
@@ -81,7 +88,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     return new Response(cohort, intent, metadata);
   }
   
-  private Message deserializeOutcome(JsonParser p, JsonNode root, String ballotId, long timestamp, String source) throws JsonProcessingException {
+  private Message deserializeOutcome(JsonParser p, JsonNode root, String ballotId, long timestamp) throws JsonProcessingException {
     final Verdict verdict = Verdict.valueOf(root.get("verdict").asText());
     final String abortReasonStr = JacksonUtils.readString("abortReason", root);
     final AbortReason abortReason = abortReasonStr != null ? AbortReason.valueOf(abortReasonStr) : null;
