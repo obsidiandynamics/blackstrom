@@ -67,7 +67,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   }
   
   private static void testCycle(int runs) throws Exception {
-    final MessageCodec c = new JacksonMessageCodec(false);
+    final MessageCodec c = new JacksonMessageCodec(true);
     cycle(runs, 
           c, 
           new Proposal("N100", new String[] {"a", "b"}, null, 1000), 

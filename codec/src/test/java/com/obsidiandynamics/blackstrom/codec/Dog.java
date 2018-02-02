@@ -4,9 +4,12 @@ import org.apache.commons.lang3.builder.*;
 
 import com.esotericsoftware.kryo.*;
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.*;
 import com.obsidiandynamics.blackstrom.codec.kryo.*;
 
 @DefaultSerializer(KryoDogSerializer.class)
+@JsonSerialize(using=JacksonDogSerializer.class)
+@JsonDeserialize(using=JacksonDogDeserializer.class)
 public final class Dog extends Animal<Dog> {
   @JsonProperty
   public String name;
