@@ -7,6 +7,7 @@ import com.obsidiandynamics.shell.*;
 public final class KafkaDocker {
   private static final String PROJECT = "blackstrom";
   private static final String PATH = "/usr/local/bin";
+  private static final int GRACE_PERIOD_MILLIS = 10_000;
   
   private static final DockerCompose COMPOSE = new DockerCompose()
       .withShell(new BourneShell().withPath(PATH))
@@ -31,10 +32,9 @@ public final class KafkaDocker {
     }
 
     COMPOSE.checkInstalled();
-    final long took = TestSupport.tookThrowing(() -> {
-      COMPOSE.up();
-    });
-    TestSupport.LOG_STREAM.format("took %,d ms\n", took);
+    final long took = TestSupport.tookThrowing(COMPOSE::up);
+    TestSupport.LOG_STREAM.format("took %,d ms (will wait a further %,d ms)\n", took, GRACE_PERIOD_MILLIS);
+    TestSupport.sleep(GRACE_PERIOD_MILLIS);
   }
   
   public static void stop() throws Exception {
