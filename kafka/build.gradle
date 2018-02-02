@@ -3,10 +3,13 @@ version = project(':').version
 
 dependencies {
   compile project(':')
+  compile 'org.apache.kafka:kafka-clients:0.11.0.2'
+  
   compile project(':blackstrom-codec-jackson')
   compile project(':blackstrom-codec-kryo')
-  compile 'com.obsidiandynamics.fulcrum:fulcrum-docker-compose:0.4.0'
-  compile 'org.apache.kafka:kafka-clients:0.11.0.2'
+  testCompile project(':blackstrom-sim')
+  testCompile project(':blackstrom-sim').sourceSets.test.output
+  testCompile 'com.obsidiandynamics.fulcrum:fulcrum-docker-compose:0.4.0'
 }
 
 task startKafka(type: JavaExec) {
