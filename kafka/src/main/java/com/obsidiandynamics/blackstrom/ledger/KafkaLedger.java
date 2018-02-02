@@ -11,6 +11,7 @@ import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
 import org.slf4j.*;
 
+import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
@@ -24,6 +25,8 @@ public final class KafkaLedger implements Ledger {
   private final Kafka<String, Message> kafka;
   
   private final String topic;
+  
+  private final String codecLocator;
   
   private final Producer<String, Message> producer;
   
@@ -42,16 +45,15 @@ public final class KafkaLedger implements Ledger {
   
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
-  private final boolean mapPayload;
-  
-  public KafkaLedger(Kafka<String, Message> kafka, String topic, boolean mapPayload) {
+  public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec) {
     this.kafka = kafka;
     this.topic = topic;
-    this.mapPayload = mapPayload;
+    this.codecLocator = CodecRegistry.register(codec);
     
     final Properties props = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
-        .with("value.serializer", KafkaJacksonMessageSerializer.class.getName())
+        .with("value.serializer", KafkaMessageSerializer.class.getName())
+        .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
@@ -89,8 +91,8 @@ public final class KafkaLedger implements Ledger {
         .with("session.timeout.ms", 6_000)
         .with("heartbeat.interval.ms", 2_000)
         .with("key.deserializer", StringDeserializer.class.getName())
-        .with("value.deserializer", KafkaJacksonMessageDeserializer.class.getName())
-        .with(KafkaJacksonMessageDeserializer.CONFIG_MAP_PAYLOAD, mapPayload)
+        .with("value.deserializer", KafkaMessageDeserializer.class.getName())
+        .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
     final Consumer<String, Message> consumer = kafka.getConsumer(props);
     if (groupId != null) {
@@ -183,6 +185,7 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void dispose() {
     receivers.forEach(t -> t.terminate());
+    CodecRegistry.deregister(codecLocator);
     synchronized (producerLock) {
       producer.close();
       producerDisposed = true;

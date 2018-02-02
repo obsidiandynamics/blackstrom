@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.kafka;
+package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 
@@ -9,8 +9,8 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-public final class KafkaJacksonMessageSerializer implements Serializer<Message> {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaJacksonMessageSerializer.class);
+public final class KafkaMessageSerializer implements Serializer<Message> {
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaMessageSerializer.class);
   
   static final class MessageSerializationException extends KafkaException {
     private static final long serialVersionUID = 1L;
@@ -24,7 +24,7 @@ public final class KafkaJacksonMessageSerializer implements Serializer<Message> 
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {
-    codec = new JacksonMessageCodec(false);
+    codec = CodecRegistry.forLocator((String) configs.get(CodecRegistry.CONFIG_CODEC_LOCATOR));
   }
 
   @Override
