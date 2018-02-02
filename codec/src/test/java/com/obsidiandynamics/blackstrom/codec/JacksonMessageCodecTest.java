@@ -63,7 +63,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   
   @Test
   public void testCycleBenchmark() throws Exception {
-    Testmark.ifEnabled(JacksonMessageCodecTest.class).thenRun(() -> testCycle(100_000_000));
+    Testmark.ifEnabled(() -> testCycle(100_000_000));
   }
   
   private static void testCycle(int runs) throws Exception {
@@ -224,7 +224,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(JacksonMessageCodecTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(JacksonMessageCodecTest.class);
   }
 }

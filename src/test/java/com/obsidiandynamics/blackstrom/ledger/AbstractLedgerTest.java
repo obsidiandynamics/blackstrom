@@ -119,10 +119,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testOneWayBenchmark() {
-    if (Testmark.isEnabled(AbstractLedgerTest.class)) {
-      System.out.println("Starting benchmark");
-      testOneWay(10_000_000);
-    }
+    Testmark.ifEnabled(() -> testOneWay(10_000_000));
   }
   
   private final void testOneWay(int numMessages) {
@@ -156,10 +153,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testTwoWayBenchmark() {
-    if (Testmark.isEnabled(AbstractLedgerTest.class)) {
-      System.out.println("Starting benchmark");
-      testTwoWay(10_000_000);
-    }
+    Testmark.ifEnabled(() -> testTwoWay(10_000_000));
   }
   
   private final void testTwoWay(int numMessages) {

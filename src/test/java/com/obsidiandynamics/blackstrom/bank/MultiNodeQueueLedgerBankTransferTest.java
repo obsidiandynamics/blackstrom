@@ -28,7 +28,7 @@ public final class MultiNodeQueueLedgerBankTransferTest extends AbstractBankTran
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(AbstractBankTransferTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(MultiNodeQueueLedgerBankTransferTest.class);
   }
 }

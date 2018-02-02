@@ -38,7 +38,7 @@ public final class KafkaLedgerBankTransferIT extends AbstractBankTransferTest {
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(AbstractBankTransferTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(KafkaLedgerBankTransferIT.class);
   }
 }

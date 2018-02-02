@@ -28,7 +28,7 @@ public final class MockKafkaLedgerBankTransferTest extends AbstractBankTransferT
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(AbstractBankTransferTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(MockKafkaLedgerBankTransferTest.class);
   }
 }

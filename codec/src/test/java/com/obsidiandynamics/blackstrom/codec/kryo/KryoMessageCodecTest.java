@@ -63,7 +63,7 @@ public final class KryoMessageCodecTest implements TestSupport {
   
   @Test
   public void testCycleBenchmark() throws Exception {
-    Testmark.ifEnabled(KryoMessageCodecTest.class).thenRun(() -> testCycle(100_000_000));
+    Testmark.ifEnabled(() -> testCycle(100_000_000));
   }
   
   private static void testCycle(int runs) throws Exception {
@@ -234,7 +234,7 @@ public final class KryoMessageCodecTest implements TestSupport {
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(KryoMessageCodecTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(KryoMessageCodecTest.class);
   }
 }

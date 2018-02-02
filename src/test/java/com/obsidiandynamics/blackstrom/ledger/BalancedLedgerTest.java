@@ -28,7 +28,7 @@ public final class BalancedLedgerTest extends AbstractLedgerTest {
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(AbstractLedgerTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(BalancedLedgerTest.class);
   }
 }

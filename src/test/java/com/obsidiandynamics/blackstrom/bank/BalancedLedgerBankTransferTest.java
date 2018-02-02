@@ -28,7 +28,7 @@ public final class BalancedLedgerBankTransferTest extends AbstractBankTransferTe
   }
   
   public static void main(String[] args) {
-    Testmark.setEnabled(AbstractBankTransferTest.class);
+    Testmark.enable();
     JUnitCore.runClasses(BalancedLedgerBankTransferTest.class);
   }
 }
