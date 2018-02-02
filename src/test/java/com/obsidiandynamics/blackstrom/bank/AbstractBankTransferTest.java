@@ -316,7 +316,7 @@ public abstract class AbstractBankTransferTest {
 
   @Test
   public final void testRandomTransfersBenchmark() {
-    if (TestBenchmark.isEnabled(AbstractBankTransferTest.class)) {
+    if (Testmark.isEnabled(AbstractBankTransferTest.class)) {
       System.out.println("Starting benchmark");
       testRandomTransfers(2, 4_000_000, false, false);
     }

@@ -16,7 +16,6 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
-
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class KryoMessageCodecTest implements TestSupport {
   private static void logEncoded(byte[] encoded) {
@@ -64,10 +63,7 @@ public final class KryoMessageCodecTest implements TestSupport {
   
   @Test
   public void testCycleBenchmark() throws Exception {
-    if (TestBenchmark.isEnabled(KryoMessageCodecTest.class)) {
-      System.out.println("Starting benchmark");
-      testCycle(20_000_000);
-    }
+    Testmark.ifEnabled(KryoMessageCodecTest.class).thenRun(() -> testCycle(100_000_000));
   }
   
   private static void testCycle(int runs) throws Exception {
@@ -83,15 +79,22 @@ public final class KryoMessageCodecTest implements TestSupport {
   }
   
   private static void cycle(int runs, MessageCodec c, Message m, String name) throws Exception {
-    final long took = TestSupport.tookThrowing(() -> {
+    final long tookSer = TestSupport.tookThrowing(() -> {
       for (int i = 0; i < runs; i++) {
         final byte[] encoded = c.encode(m);
-        c.decode(encoded);
+        if (encoded == null) throw new AssertionError();
       }
     });
+    System.out.format("%s ser'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookSer, (double) runs / tookSer * 1000);
     
-    System.out.format("%s: %,d took %,d ms, %,.0f msgs/sec\n", 
-                      name, runs, took, (double) runs / took * 1000);
+    final long tookDes = TestSupport.tookThrowing(() -> {
+      final byte[] encoded = c.encode(m);
+      for (int i = 0; i < runs; i++) {
+        final Message d = c.decode(encoded);
+        if (d == null) throw new AssertionError();
+      }
+    });
+    System.out.format("%s des'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookDes, (double) runs / tookDes * 1000);
   }
   
   @Test
@@ -231,7 +234,7 @@ public final class KryoMessageCodecTest implements TestSupport {
   }
   
   public static void main(String[] args) {
-    TestBenchmark.setEnabled(KryoMessageCodecTest.class);
+    Testmark.setEnabled(KryoMessageCodecTest.class);
     JUnitCore.runClasses(KryoMessageCodecTest.class);
   }
 }

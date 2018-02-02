@@ -63,10 +63,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   
   @Test
   public void testCycleBenchmark() throws Exception {
-    if (TestBenchmark.isEnabled(JacksonMessageCodecTest.class)) {
-      System.out.println("Starting benchmark");
-      testCycle(4_000_000);
-    }
+    Testmark.ifEnabled(JacksonMessageCodecTest.class).thenRun(() -> testCycle(100_000_000));
   }
   
   private static void testCycle(int runs) throws Exception {
@@ -82,15 +79,22 @@ public final class JacksonMessageCodecTest implements TestSupport {
   }
   
   private static void cycle(int runs, MessageCodec c, Message m, String name) throws Exception {
-    final long took = TestSupport.tookThrowing(() -> {
+    final long tookSer = TestSupport.tookThrowing(() -> {
       for (int i = 0; i < runs; i++) {
         final byte[] encoded = c.encode(m);
-        c.decode(encoded);
+        if (encoded == null) throw new AssertionError();
       }
     });
+    System.out.format("%s ser'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookSer, (double) runs / tookSer * 1000);
     
-    System.out.format("%s: %,d took %,d ms, %,.0f msgs/sec\n", 
-                      name, runs, took, (double) runs / took * 1000);
+    final long tookDes = TestSupport.tookThrowing(() -> {
+      final byte[] encoded = c.encode(m);
+      for (int i = 0; i < runs; i++) {
+        final Message d = c.decode(encoded);
+        if (d == null) throw new AssertionError();
+      }
+    });
+    System.out.format("%s des'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookDes, (double) runs / tookDes * 1000);
   }
   
   @Test
@@ -220,7 +224,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   }
   
   public static void main(String[] args) {
-    TestBenchmark.setEnabled(JacksonMessageCodecTest.class);
+    Testmark.setEnabled(JacksonMessageCodecTest.class);
     JUnitCore.runClasses(JacksonMessageCodecTest.class);
   }
 }

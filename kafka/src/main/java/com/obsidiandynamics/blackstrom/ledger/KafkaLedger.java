@@ -55,8 +55,8 @@ public final class KafkaLedger implements Ledger {
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
-        .with("batch.size", 1 << 16)
-        .with("linger.ms", 0)
+        .with("batch.size", 1 << 20)
+        .with("linger.ms", 30)
         .with("buffer.memory", 33_554_432)
         .with("compression.type", "lz4")
         .build();
