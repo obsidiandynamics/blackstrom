@@ -4,7 +4,8 @@ public abstract class FailureMode {
   public enum FailureType {
     DELAYED_DELIVERY,
     DUPLICATE_DELIVERY,
-    DELAYED_DUPLICATE_DELIVERY
+    DELAYED_DUPLICATE_DELIVERY,
+    $UNKNOWN
   }
   
   private final double probability;

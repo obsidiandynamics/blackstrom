@@ -109,6 +109,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
           onRxDelayedDuplicate((DelayedDuplicateDelivery) rxFailureMode, intercepedContext, message);
           break;
           
+        case $UNKNOWN:
         default:
           throw new UnsupportedOperationException("Unsupported failure mode " + rxFailureMode.getFailureType());
       }
@@ -149,7 +150,8 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
         case DELAYED_DUPLICATE_DELIVERY:
           onTxDelayedDuplicate((DelayedDuplicateDelivery) txFailureMode, message, callback);
           break;
-          
+
+        case $UNKNOWN:
         default:
           throw new UnsupportedOperationException("Unsupported failure mode " + txFailureMode.getFailureType());
       }

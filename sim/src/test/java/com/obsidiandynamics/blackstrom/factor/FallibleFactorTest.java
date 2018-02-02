@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 import org.junit.runner.*;
@@ -27,6 +28,18 @@ public final class FallibleFactorTest {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
+  
+  private static class UnknownFailureMode extends FailureMode {
+    UnknownFailureMode() {
+      super(1);
+    }
+
+    @Override
+    public FailureType getFailureType() {
+      return FailureType.$UNKNOWN;
+    }
+  }
+
   
   private static class TestCohort implements Cohort, Groupable.NullGroup {
     private final List<Proposal> proposals = new CopyOnWriteArrayList<>();
@@ -64,6 +77,32 @@ public final class FallibleFactorTest {
   @After
   public void after() {
     if (manifold != null) manifold.dispose();
+  }
+  
+  @Test
+  public void testAttachFailure() {
+    final Ledger ledger = new MultiNodeQueueLedger();
+    final AtomicReference<Exception> causeRef = new AtomicReference<>();
+    final Cohort cohort = LambdaCohort.builder()
+        .onProposal((c, m) -> {
+          try {
+            c.getLedger().attach(null);
+          } catch (Exception e) {
+            causeRef.set(e);
+          }
+        })
+        .onOutcome((c, m) -> {})
+        .build();
+    final Factor fc = new FallibleFactor(cohort);
+    manifold = Manifold.builder()
+        .withLedger(ledger)
+        .withFactors(fc)
+        .build();
+    
+    ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
+    wait.until(() -> {
+      assertTrue(causeRef.get() instanceof UnsupportedOperationException);
+    });
   }
   
   @Test
@@ -178,6 +217,15 @@ public final class FallibleFactorTest {
     assertTrue("took=" + took, took >= delay);
   }
   
+  @Test(expected=UnsupportedOperationException.class)
+  public void testRxUnknown() {
+    final TestCohort c = new TestCohort();
+    final FallibleFactor fc = new FallibleFactor(c)
+        .withRxFailureMode(new UnknownFailureMode());
+    
+    fc.onProposal(null, new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
+  }
+  
   @Test
   public void testTxDuplicate() {
     final Ledger ledger = new MultiNodeQueueLedger();
@@ -239,5 +287,32 @@ public final class FallibleFactorTest {
       });
     });
     assertTrue("took=" + took, took >= delay);
+  }
+  
+  @Test
+  public void testTxUnknown() {
+    final Ledger ledger = new MultiNodeQueueLedger();
+    final AtomicReference<Exception> causeRef = new AtomicReference<>();
+    final Cohort cohort = LambdaCohort.builder()
+        .onProposal((c, m) -> {
+          try {
+            c.publish(new Vote(UUID.randomUUID().toString(), new Response("test", Intent.ACCEPT, null)));
+          } catch (Exception e) {
+            causeRef.set(e);
+          }
+        })
+        .onOutcome((c, m) -> {})
+        .build();
+    final Factor fc = new FallibleFactor(cohort)
+        .withTxFailureMode(new UnknownFailureMode());
+    manifold = Manifold.builder()
+        .withLedger(ledger)
+        .withFactors(fc)
+        .build();
+    
+    ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
+    wait.until(() -> {
+      assertTrue(causeRef.get() instanceof UnsupportedOperationException);
+    });
   }
 }
