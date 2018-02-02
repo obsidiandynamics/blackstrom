@@ -1,22 +1,10 @@
-def packageName = 'blackstrom-kafka'
+def packageName = 'blackstrom-codec-jackson'
 version = project(':').version
 
 dependencies {
   compile project(':')
-  compile project(':blackstrom-codec-jackson')
-  compile project(':blackstrom-codec-kryo')
-  compile 'com.obsidiandynamics.fulcrum:fulcrum-docker-compose:0.4.0'
-  compile 'org.apache.kafka:kafka-clients:0.11.0.2'
-}
-
-task startKafka(type: JavaExec) {
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  main = 'com.obsidiandynamics.blackstrom.kafka.RunKafkaDocker$Start'
-}
-
-task stopKafka(type: JavaExec) {
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  main = 'com.obsidiandynamics.blackstrom.kafka.RunKafkaDocker$Stop'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.9.3'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 }
 
 jar {
@@ -61,7 +49,7 @@ publishing {
 
 def envUser = 'BINTRAY_USER'
 def envKey = 'BINTRAY_KEY'
-def packageDesc = 'Kafka-based ledger implementation'
+def packageDesc = 'Jackson (JSON) serialization support'
 def repoName = 'blackstrom'
 bintray {
   user = System.getenv(envUser)

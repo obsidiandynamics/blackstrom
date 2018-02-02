@@ -1,7 +1,14 @@
 rootProject.name = 'blackstrom'
 
-include 'blackstrom-codec'
-project(':blackstrom-codec').projectDir = new File(settingsDir, 'codec')
+include 'blackstrom-codec-jackson'
+project(':blackstrom-codec-jackson').projectDir = new File(settingsDir, 'codec-jackson')
+
+include 'blackstrom-codec-kryo'
+project(':blackstrom-codec-kryo').projectDir = new File(settingsDir, 'codec-kryo')
 
 include 'blackstrom-kafka'
 project(':blackstrom-kafka').projectDir = new File(settingsDir, 'kafka')
+
+include 'blackstrom-sim'
+project(':blackstrom-sim').projectDir = new File(settingsDir, 'sim')
+
