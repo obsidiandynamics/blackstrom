@@ -63,7 +63,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   
   @Test
   public void testCycleBenchmark() throws Exception {
-    Testmark.ifEnabled(() -> testCycle(100_000_000));
+    Testmark.ifEnabled(() -> testCycle(10_000_000));
   }
   
   private static void testCycle(int runs) throws Exception {
