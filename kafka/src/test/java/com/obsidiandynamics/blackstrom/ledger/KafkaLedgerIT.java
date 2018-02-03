@@ -24,7 +24,9 @@ public final class KafkaLedgerIT extends AbstractLedgerTest {
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    return new KafkaLedger(kafka, KafkaTopic.forTest(KafkaLedgerIT.class, "json"), new JacksonMessageCodec(false));
+    return new KafkaLedger(kafka, 
+                           KafkaTopic.forTest(KafkaLedgerIT.class, "json"), 
+                           new JacksonMessageCodec(false));
   }
   
   public static void main(String[] args) {

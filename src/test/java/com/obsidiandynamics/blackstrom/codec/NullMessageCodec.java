@@ -1,9 +1,8 @@
-package com.obsidiandynamics.blackstrom.ledger;
+package com.obsidiandynamics.blackstrom.codec;
 
-import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-final class NullMessageCodec implements MessageCodec {
+public final class NullMessageCodec implements MessageCodec {
   @Override
   public byte[] encode(Message message) throws Exception {
     throw new UnsupportedOperationException();

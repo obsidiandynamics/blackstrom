@@ -11,6 +11,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.fasterxml.jackson.databind.*;
+import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonMessageDeserializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
@@ -67,7 +68,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   }
   
   private static void testCycle(int runs) throws Exception {
-    final MessageCodec c = new JacksonMessageCodec(true);
+    final MessageCodec c = new JacksonMessageCodec(true, new JacksonBankExpansion());
     cycle(runs, 
           c, 
           new Proposal("N100", new String[] {"a", "b"}, null, 1000), 
@@ -77,7 +78,11 @@ public final class JacksonMessageCodecTest implements TestSupport {
           new Proposal("N100", new String[] {"a", "b"}, 
                        new JacksonDog().named("Rex").withFriend(new JacksonCat().named("Tigger")), 
                        1000), 
-          "filled");
+          "animal");
+    cycle(runs, 
+          c, 
+          new Proposal("N100", new String[] {"a", "b"}, createTestSettlement(), 1000), 
+          "branch");
   }
   
   private static void cycle(int runs, MessageCodec c, Message m, String name) throws Exception {
@@ -97,6 +102,13 @@ public final class JacksonMessageCodecTest implements TestSupport {
       }
     });
     System.out.format("%s des'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookDes, (double) runs / tookDes * 1000);
+  }
+  
+  private static BankSettlement createTestSettlement() {
+    final Map<String, BalanceTransfer> transfers = new HashMap<>();
+    transfers.put("branch-0", new BalanceTransfer("branch-0", -1000));
+    transfers.put("branch-1", new BalanceTransfer("branch-1", 1000));
+    return new BankSettlement(transfers);
   }
   
   @Test
@@ -223,6 +235,19 @@ public final class JacksonMessageCodecTest implements TestSupport {
     thrown.expect(MessageDeserializationException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
     c.decodeText(encoded);
+  }
+  
+  @Test
+  public void testExpansion() throws Exception {
+    final Message m = new Proposal("N100", new String[] {"a", "b"}, createTestSettlement(), 1000).withSource("test");
+    final MessageCodec c = new JacksonMessageCodec(true, new JacksonBankExpansion());
+    
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+
+    final Proposal d = (Proposal) c.decodeText(encoded);
+    logDecoded(d, d.getObjective());
+    assertEquals(m, d);
   }
   
   public static void main(String[] args) {

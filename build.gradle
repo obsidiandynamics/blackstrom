@@ -115,8 +115,6 @@ dependencies {
   compile 'org.slf4j:slf4j-api:1.7.25'
   compile 'com.obsidiandynamics.yconf:yconf-core:0.2.1'
   compile 'org.apache.commons:commons-lang3:3.7'
-  testCompile 'com.fasterxml.jackson.core:jackson-core:2.9.3'
-  testCompile 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 }
 
 jar {

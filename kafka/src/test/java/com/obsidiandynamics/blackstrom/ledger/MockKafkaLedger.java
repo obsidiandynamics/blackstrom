@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 
 public final class MockKafkaLedger {

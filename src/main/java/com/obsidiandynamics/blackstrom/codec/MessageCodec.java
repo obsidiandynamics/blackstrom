@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.codec;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public interface MessageCodec {
-  static int MAJOR_VERSION = 2;
+  static int MODEL_VERSION = 2;
   
   byte[] encode(Message message) throws Exception;
   

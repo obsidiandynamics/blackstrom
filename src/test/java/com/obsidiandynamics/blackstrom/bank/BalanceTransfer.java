@@ -1,17 +1,35 @@
 package com.obsidiandynamics.blackstrom.bank;
 
-import com.fasterxml.jackson.annotation.*;
+import org.apache.commons.lang3.builder.*;
 
 public final class BalanceTransfer {
   private final String branchId;
   
   private final long amount;
 
-  @JsonCreator
-  public BalanceTransfer(@JsonProperty(value="branchId") String branchId, 
-                         @JsonProperty(value="amount") long amount) {
+  public BalanceTransfer(String branchId, long amount) {
     this.branchId = branchId;
     this.amount = amount;
+  }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder().append(branchId).append(amount).toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof BalanceTransfer) {
+      final BalanceTransfer that = (BalanceTransfer) obj;
+      return new EqualsBuilder()
+          .append(branchId, that.branchId)
+          .append(amount, that.amount)
+          .isEquals();
+    } else {
+      return false;
+    }
   }
   
   public String getBranchId() {

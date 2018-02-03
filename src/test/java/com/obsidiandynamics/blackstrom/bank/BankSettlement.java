@@ -4,18 +4,34 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import com.fasterxml.jackson.annotation.*;
+import org.apache.commons.lang3.builder.*;
 
 public final class BankSettlement {
   private final Map<String, BalanceTransfer> transfers;
 
-  @JsonCreator
-  public BankSettlement(@JsonProperty(value="transfers") Map<String, BalanceTransfer> transfers) {
+  public BankSettlement(Map<String, BalanceTransfer> transfers) {
     this.transfers = transfers;
   }
 
   public Map<String, BalanceTransfer> getTransfers() {
     return transfers;
+  }
+  
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder().append(transfers).toHashCode();
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj instanceof BankSettlement) {
+      final BankSettlement that = (BankSettlement) obj;
+      return new EqualsBuilder().append(transfers, that.transfers).isEquals();
+    } else {
+      return false;
+    }
   }
 
   @Override

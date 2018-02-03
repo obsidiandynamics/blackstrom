@@ -12,6 +12,7 @@ import org.junit.runners.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;

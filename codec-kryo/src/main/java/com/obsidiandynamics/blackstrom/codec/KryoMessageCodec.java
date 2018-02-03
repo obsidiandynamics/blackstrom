@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.codec;
 
+import java.util.function.*;
+
 import com.esotericsoftware.kryo.*;
 import com.esotericsoftware.kryo.io.*;
 import com.esotericsoftware.kryo.pool.*;
@@ -8,13 +10,20 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class KryoMessageCodec implements MessageCodec {
   private static final int DEF_MESSAGE_BUFFER_SIZE = 128;
   
+  @FunctionalInterface
+  public interface KryoExpansion extends Consumer<Kryo> {}
+  
   private final KryoPool pool;
   
   private final KryoMessageSerializer messageSerializer;
   
-  public KryoMessageCodec(boolean mapPayload) {
+  public KryoMessageCodec(boolean mapPayload, KryoExpansion... expansions) {
     messageSerializer = new KryoMessageSerializer(mapPayload);
-    pool = new KryoPool.Builder(Kryo::new).softReferences().build();
+    pool = new KryoPool.Builder(() -> {
+      final Kryo kryo = new Kryo();
+      for (KryoExpansion expansion : expansions) expansion.accept(kryo);
+      return kryo;
+    }).softReferences().build();;
   }
   
   @Override
