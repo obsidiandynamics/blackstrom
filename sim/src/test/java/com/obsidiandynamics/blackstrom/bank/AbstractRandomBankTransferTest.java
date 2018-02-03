@@ -1,0 +1,94 @@
+package com.obsidiandynamics.blackstrom.bank;
+
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.*;
+import java.util.concurrent.atomic.*;
+
+import org.junit.*;
+import org.junit.runners.*;
+
+import com.obsidiandynamics.blackstrom.factor.*;
+import com.obsidiandynamics.blackstrom.initiator.*;
+import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.monitor.*;
+import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.indigo.util.*;
+
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public abstract class AbstractRandomBankTransferTest extends BaseBankTest {  
+  @Test
+  public final void testRandomTransfers() {
+    testRandomTransfers(10, 100, true, true);
+  }
+
+  @Test
+  public final void testRandomTransfersBenchmark() {
+    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000, false, false));
+  }
+
+  private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging) {
+    final long transferAmount = 1_000;
+    final long initialBalance = runs * transferAmount / (numBranches * numBranches);
+    final int backlogTarget = 10_000;
+    final boolean idempotencyEnabled = false;
+
+    final AtomicInteger commits = new AtomicInteger();
+    final AtomicInteger aborts = new AtomicInteger();
+    final Sandbox sandbox = Sandbox.forTest(this);
+    final Initiator initiator = (NullGroupInitiator) (c, o) -> {
+      if (sandbox.contains(o)) {
+        (o.getVerdict() == Verdict.COMMIT ? commits : aborts).incrementAndGet();
+      }
+    };
+    final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled, sandbox);
+    final Monitor monitor = new DefaultMonitor();
+    buildStandardManifold(initiator, monitor, branches);
+
+    final long took = TestSupport.took(() -> {
+      String[] branchIds = null;
+      BankSettlement settlement = null;
+      if (! randomiseRuns) {
+        branchIds = numBranches != TWO_BRANCHES ? generateBranches(numBranches) : TWO_BRANCH_IDS;
+        settlement = generateRandomSettlement(branchIds, transferAmount);
+      }
+      
+      final long ballotIdBase = System.currentTimeMillis() << 32;
+      for (int run = 0; run < runs; run++) {
+        if (randomiseRuns) {
+          branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
+          settlement = generateRandomSettlement(branchIds, transferAmount);
+        }
+        ledger.append(new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
+                      .withShardKey(sandbox.key()));
+
+        if (run % backlogTarget == 0) {
+          long lastLogTime = 0;
+          for (;;) {
+            final int backlog = (int) (run - commits.get() - aborts.get());
+            if (backlog > backlogTarget) {
+              TestSupport.sleep(1);
+              if (enableLogging && System.currentTimeMillis() - lastLogTime > 5_000) {
+                TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d txns)\n", backlog, run);
+                lastLogTime = System.currentTimeMillis();
+              }
+            } else {
+              break;
+            }
+          }
+        }
+      }
+
+      wait.until(() -> {
+        assertEquals(runs, commits.get() + aborts.get());
+        final long expectedBalance = numBranches * initialBalance;
+        assertEquals(expectedBalance, getTotalBalance(branches));
+        assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
+        assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
+      });
+    });
+    System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts)\n", 
+                      runs, took, (double) runs / took * 1000, commits.get(), aborts.get());
+  }
+}

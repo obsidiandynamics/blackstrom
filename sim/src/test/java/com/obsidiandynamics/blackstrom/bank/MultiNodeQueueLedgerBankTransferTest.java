@@ -26,9 +26,4 @@ public final class MultiNodeQueueLedgerBankTransferTest extends AbstractBankTran
   protected Timesert getWait() {
     return Wait.SHORT;
   }
-  
-  public static void main(String[] args) {
-    Testmark.enable();
-    JUnitCore.runClasses(MultiNodeQueueLedgerBankTransferTest.class);
-  }
 }

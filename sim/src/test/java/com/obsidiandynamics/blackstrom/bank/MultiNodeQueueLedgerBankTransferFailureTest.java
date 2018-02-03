@@ -11,7 +11,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class MockKafkaLedgerBankTransferTest extends AbstractBankTransferTest {
+public final class MultiNodeQueueLedgerBankTransferFailureTest extends AbstractBankTransferFailureTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -19,7 +19,7 @@ public final class MockKafkaLedgerBankTransferTest extends AbstractBankTransferT
   
   @Override
   protected Ledger createLedger() {
-    return MockKafkaLedger.create();
+    return new MultiNodeQueueLedger();
   }
 
   @Override

@@ -7,52 +7,18 @@ import static org.junit.Assert.assertTrue;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.stream.*;
 
 import org.junit.*;
-import org.junit.runners.*;
 
-import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
-import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public abstract class AbstractBankTransferTest {  
-  private static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
-  private static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
-  private static final int PROPOSAL_TIMEOUT = 30_000;
-  private static final int FUTURE_GET_TIMEOUT = PROPOSAL_TIMEOUT * 2;
-  
-  private final Timesert wait = getWait();
-  
-  private Ledger ledger;
-
-  private Manifold manifold;
-  
-  protected abstract Ledger createLedger();
-  
-  protected abstract Timesert getWait();
-
-  @After
-  public final void after() {
-    if (manifold != null) manifold.dispose();
-  }
-  
-  private void buildStandardManifold(Factor initiator, Factor monitor, Factor... branches) {
-    ledger = createLedger();
-    manifold = Manifold.builder()
-        .withLedger(ledger)
-        .withFactors(initiator, monitor)
-        .withFactors(branches)
-        .build();
-  }
-
+public abstract class AbstractBankTransferTest extends BaseBankTest {  
   @Test
   public final void testCommit() throws Exception {
     final int initialBalance = 1_000;
@@ -381,52 +347,5 @@ public abstract class AbstractBankTransferTest {
     });
     System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts)\n", 
                       runs, took, (double) runs / took * 1000, commits.get(), aborts.get());
-  }
-
-  private static long getTotalBalance(BankBranch[] branches) {
-    return Arrays.stream(branches).collect(Collectors.summarizingLong(b -> b.getBalance())).getSum();
-  }
-
-  private static boolean allZeroEscrow(BankBranch[] branches) {
-    return Arrays.stream(branches).allMatch(b -> b.getEscrow() == 0);
-  }
-
-  private static boolean nonZeroBalances(BankBranch[] branches) {
-    return Arrays.stream(branches).allMatch(b -> b.getBalance() >= 0);
-  }
-
-  private static BankSettlement generateRandomSettlement(String[] branchIds, long amount) {
-    final Map<String, BalanceTransfer> transfers = new HashMap<>(branchIds.length);
-    long sum = 0;
-    for (int i = 0; i < branchIds.length - 1; i++) {
-      final long randomAmount = amount - (long) (Math.random() * amount * 2);
-      sum += randomAmount;
-      final String branchId = branchIds[i];
-      transfers.put(branchId, new BalanceTransfer(branchId, randomAmount));
-    }
-    final String lastBranchId = branchIds[branchIds.length - 1];
-    transfers.put(lastBranchId, new BalanceTransfer(lastBranchId, -sum));
-    if (TestSupport.LOG) TestSupport.LOG_STREAM.format("xfers %s\n", transfers);
-    return new BankSettlement(transfers);
-  }
-
-  private static String[] generateBranches(int numBranches) {
-    final String[] branches = new String[numBranches];
-    for (int i = 0; i < numBranches; i++) {
-      branches[i] = getBranchId(i);
-    }
-    return branches;
-  }
-
-  private static String getBranchId(int branchIdx) {
-    return "branch-" + branchIdx;
-  }
-
-  private static BankBranch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled, Sandbox sandbox) {
-    final BankBranch[] branches = new BankBranch[numBranches];
-    for (int branchIdx = 0; branchIdx < numBranches; branchIdx++) {
-      branches[branchIdx] = new BankBranch(getBranchId(branchIdx), initialBalance, idempotencyEnabled, sandbox::contains);
-    }
-    return branches;
   }
 }
