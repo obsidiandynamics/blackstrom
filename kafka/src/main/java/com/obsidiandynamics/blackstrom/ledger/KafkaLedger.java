@@ -3,7 +3,6 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.*;
 import java.util.stream.*;
 
 import org.apache.kafka.clients.consumer.*;
@@ -31,9 +30,7 @@ public final class KafkaLedger implements Ledger {
   
   private final Producer<String, Message> producer;
   
-  private final ReentrantReadWriteLock producerLock = new ReentrantReadWriteLock();
-  
-  private boolean producerDisposed;
+  private volatile boolean producerDisposed;
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
@@ -167,13 +164,12 @@ public final class KafkaLedger implements Ledger {
       }
     };
     
-    producerLock.readLock().lock();
     try {
+      producer.send(record, sendCallback);
+    } catch (IllegalStateException e) {
       if (! producerDisposed) {
-        producer.send(record, sendCallback);
-      }      
-    } finally {
-      producerLock.readLock().unlock();
+        throw e;
+      }
     }
   }
 
@@ -199,13 +195,8 @@ public final class KafkaLedger implements Ledger {
   public void dispose() {
     receivers.forEach(t -> t.terminate());
     CodecRegistry.deregister(codecLocator);
-    producerLock.writeLock().lock();
-    try {
-      producer.close();
-      producerDisposed = true;
-    } finally {
-      producerLock.writeLock().unlock();
-    }
+    producerDisposed = true;
+    producer.close();
     receivers.forEach(t -> t.joinQuietly());
   }
 }
