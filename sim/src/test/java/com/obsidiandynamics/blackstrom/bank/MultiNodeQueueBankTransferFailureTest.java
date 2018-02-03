@@ -11,7 +11,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class MultiNodeQueueLedgerRandomBankTransferTest extends AbstractRandomBankTransferTest {
+public final class MultiNodeQueueBankTransferFailureTest extends AbstractBankTransferFailureTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -25,10 +25,5 @@ public final class MultiNodeQueueLedgerRandomBankTransferTest extends AbstractRa
   @Override
   protected Timesert getWait() {
     return Wait.SHORT;
-  }
-  
-  public static void main(String[] args) {
-    Testmark.enable();
-    JUnitCore.runClasses(MultiNodeQueueLedgerRandomBankTransferTest.class);
   }
 }

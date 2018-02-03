@@ -11,7 +11,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class MultiNodeQueueLedgerBankTransferTest extends AbstractBankTransferTest {
+public final class BalancedBankTransferTest extends AbstractBankTransferTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -19,7 +19,7 @@ public final class MultiNodeQueueLedgerBankTransferTest extends AbstractBankTran
   
   @Override
   protected Ledger createLedger() {
-    return new MultiNodeQueueLedger();
+    return new BalancedLedgerHub(1, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000)).connect();
   }
 
   @Override

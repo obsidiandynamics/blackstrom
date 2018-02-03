@@ -15,7 +15,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class KafkaLedgerBankTransferFailureIT extends AbstractBankTransferFailureTest {
+public final class KafkaBankTransferIT extends AbstractBankTransferTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -31,7 +31,7 @@ public final class KafkaLedgerBankTransferFailureIT extends AbstractBankTransfer
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
-                           KafkaTopic.forTest(KafkaLedgerBankTransferFailureIT.class, "json"), 
+                           KafkaTopic.forTest(KafkaBankTransferIT.class, "json"), 
                            new JacksonMessageCodec(true, new JacksonBankExpansion()));
   }
 
