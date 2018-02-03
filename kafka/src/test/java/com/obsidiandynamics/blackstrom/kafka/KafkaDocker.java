@@ -1,5 +1,8 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import java.io.*;
+import java.net.*;
+
 import com.obsidiandynamics.dockercompose.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.shell.*;
@@ -19,9 +22,15 @@ public final class KafkaDocker {
   private KafkaDocker() {}
   
   public static boolean isRunning() {
-    final StringBuilder sink = new StringBuilder();
-    BourneUtils.run("docker ps | grep \"kafka\" | wc -l", PATH, false, sink::append);
-    return Integer.parseInt(sink.toString().trim()) >= 1;
+    return isRemotePortListening("localhost", 9092);
+  }
+  
+  private static boolean isRemotePortListening(String host, int port) {
+    try (final Socket s = new Socket(host, port)) {
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
   }
   
   public static void start() throws Exception {
