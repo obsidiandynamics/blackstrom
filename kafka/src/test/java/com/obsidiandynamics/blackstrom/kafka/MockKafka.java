@@ -61,6 +61,8 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
           }
           
           @Override public Future<RecordMetadata> send(ProducerRecord<K, V> r, Callback callback) {
+            if (closed.get()) throw new IllegalStateException("Cannot send over a closed producer");
+            
             final Exception generated = sendExceptionGenerator.get(r);
             if (generated != null) {
               if (callback != null) callback.onCompletion(null, generated);

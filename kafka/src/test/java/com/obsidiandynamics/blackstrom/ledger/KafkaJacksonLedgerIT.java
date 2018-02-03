@@ -9,7 +9,7 @@ import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
-public final class KafkaLedgerIT extends AbstractLedgerTest {
+public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     KafkaDocker.start();
@@ -25,12 +25,12 @@ public final class KafkaLedgerIT extends AbstractLedgerTest {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
-                           KafkaTopic.forTest(KafkaLedgerIT.class, "json"), 
+                           KafkaTopic.forTest(KafkaJacksonLedgerIT.class, "json"), 
                            new JacksonMessageCodec(false));
   }
   
   public static void main(String[] args) {
     Testmark.enable();
-    JUnitCore.runClasses(KafkaLedgerIT.class);
+    JUnitCore.runClasses(KafkaJacksonLedgerIT.class);
   }
 }
