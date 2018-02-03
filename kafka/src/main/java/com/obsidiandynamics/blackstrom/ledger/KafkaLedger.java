@@ -3,6 +3,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.*;
 import java.util.stream.*;
 
 import org.apache.kafka.clients.consumer.*;
@@ -30,7 +31,7 @@ public final class KafkaLedger implements Ledger {
   
   private final Producer<String, Message> producer;
   
-  private final Object producerLock = new Object();
+  private final ReentrantReadWriteLock producerLock = new ReentrantReadWriteLock();
   
   private boolean producerDisposed;
   
@@ -157,18 +158,22 @@ public final class KafkaLedger implements Ledger {
   public void append(Message message, AppendCallback callback) {
     final ProducerRecord<String, Message> record = 
         new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
-    synchronized (producerLock) {
-      if (! producerDisposed) {
-        producer.send(record, 
-                      (metadata, exception) -> {
-                        if (exception == null) {
-                          callback.onAppend(new DefaultMessageId(metadata.partition(), metadata.offset()), null);
-                        } else {
-                          callback.onAppend(null, exception);
-                          logException(exception, "Error publishing %s", record);
-                        }
-                      });
+    final Callback sendCallback = (metadata, exception) -> {
+      if (exception == null) {
+        callback.onAppend(new DefaultMessageId(metadata.partition(), metadata.offset()), null);
+      } else {
+        callback.onAppend(null, exception);
+        logException(exception, "Error publishing %s", record);
       }
+    };
+    
+    producerLock.readLock().lock();
+    try {
+      if (! producerDisposed) {
+        producer.send(record, sendCallback);
+      }      
+    } finally {
+      producerLock.readLock().unlock();
     }
   }
 
@@ -194,9 +199,12 @@ public final class KafkaLedger implements Ledger {
   public void dispose() {
     receivers.forEach(t -> t.terminate());
     CodecRegistry.deregister(codecLocator);
-    synchronized (producerLock) {
+    producerLock.writeLock().lock();
+    try {
       producer.close();
       producerDisposed = true;
+    } finally {
+      producerLock.writeLock().unlock();
     }
     receivers.forEach(t -> t.joinQuietly());
   }
