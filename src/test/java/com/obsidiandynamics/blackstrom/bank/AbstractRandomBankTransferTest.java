@@ -20,7 +20,8 @@ import com.obsidiandynamics.indigo.util.*;
 public abstract class AbstractRandomBankTransferTest extends BaseBankTest {  
   @Test
   public final void testRandomTransfers() {
-    testRandomTransfers(10, 100, true, true);
+    final int branches = Testmark.isEnabled() ? 2 : 10;
+    testRandomTransfers(branches, 100, true, true);
   }
 
   @Test
@@ -36,10 +37,12 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
 
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
+    final AtomicInteger timeouts = new AtomicInteger();
     final Sandbox sandbox = Sandbox.forTest(this);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
-        (o.getVerdict() == Verdict.COMMIT ? commits : aborts).incrementAndGet();
+        (o.getVerdict() == Verdict.COMMIT ? commits : o.getAbortReason() == AbortReason.REJECT ? aborts : timeouts)
+        .incrementAndGet();
       }
     };
     final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled, sandbox);
@@ -60,8 +63,10 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
           settlement = generateRandomSettlement(branchIds, transferAmount);
         }
-        ledger.append(new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
-                      .withShardKey(sandbox.key()));
+        final Proposal p = new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
+            .withShardKey(sandbox.key());
+        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("proposing %s\n", p);
+        ledger.append(p);
 
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;
@@ -81,14 +86,14 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       }
 
       wait.until(() -> {
-        assertEquals(runs, commits.get() + aborts.get());
+        assertEquals(runs, commits.get() + aborts.get() + timeouts.get());
         final long expectedBalance = numBranches * initialBalance;
         assertEquals(expectedBalance, getTotalBalance(branches));
         assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
         assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
       });
     });
-    System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts)\n", 
-                      runs, took, (double) runs / took * 1000, commits.get(), aborts.get());
+    System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts | %,d timeouts)\n", 
+                      runs, took, (double) runs / took * 1000, commits.get(), aborts.get(), timeouts.get());
   }
 }

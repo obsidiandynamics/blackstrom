@@ -23,28 +23,36 @@ public final class KryoMessageCodec implements MessageCodec {
       final Kryo kryo = new Kryo();
       for (KryoExpansion expansion : expansions) expansion.accept(kryo);
       return kryo;
-    }).softReferences().build();;
+    }).softReferences().build();
+  }
+  
+  private Kryo acquire() {
+    return pool.borrow();
+  }
+  
+  private void release(Kryo kryo) {
+    pool.release(kryo);
   }
   
   @Override
   public byte[] encode(Message message) {
-    final Kryo kryo = pool.borrow();
+    final Kryo kryo = acquire();
     try {
       final Output out = new Output(DEF_MESSAGE_BUFFER_SIZE, -1);
       kryo.writeObject(out, message, messageSerializer);
       return out.toBytes();
     } finally {
-      pool.release(kryo);
+      release(kryo);
     }
   }
 
   @Override
   public Message decode(byte[] bytes) {
-    final Kryo kryo = pool.borrow();
+    final Kryo kryo = acquire();
     try {
       return kryo.readObject(new Input(bytes), Message.class, messageSerializer);
     } finally {
-      pool.release(kryo);
+      release(kryo);
     }
   }
 }

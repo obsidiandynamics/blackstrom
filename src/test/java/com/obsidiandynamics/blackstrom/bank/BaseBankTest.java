@@ -10,7 +10,6 @@ import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
 
 public abstract class BaseBankTest {  
   protected static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
@@ -65,7 +64,6 @@ public abstract class BaseBankTest {
     }
     final String lastBranchId = branchIds[branchIds.length - 1];
     transfers.put(lastBranchId, new BalanceTransfer(lastBranchId, -sum));
-    if (TestSupport.LOG) TestSupport.LOG_STREAM.format("xfers %s\n", transfers);
     return new BankSettlement(transfers);
   }
 

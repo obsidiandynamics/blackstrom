@@ -89,13 +89,13 @@ public final class BankBranch implements Cohort {
 
   @Override
   public void onProposal(MessageContext context, Proposal proposal) {
-    if (! messageFilter.test(proposal)) return;
-    
-    final BankSettlement settlement = proposal.getObjective();
-    final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
-    if (xfer == null) return; // settlement doesn't apply to this branch
-    
     try {
+      if (! messageFilter.test(proposal)) return;
+      
+      final BankSettlement settlement = proposal.getObjective();
+      final BalanceTransfer xfer = settlement.getTransfers().get(branchId);
+      if (xfer == null) return; // settlement doesn't apply to this branch
+    
       if (idempotencyEnabled) {
         if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, proposal);
         synchronized (lock) {
@@ -138,12 +138,12 @@ public final class BankBranch implements Cohort {
 
   @Override
   public void onOutcome(MessageContext context, Outcome outcome) {
-    if (! messageFilter.test(outcome)) return;
-    
-    final Proposal proposal = proposals.remove(outcome.getBallotId());
-    if (proposal == null) return; // outcome doesn't apply to this branch
-    
     try {
+      if (! messageFilter.test(outcome)) return;
+      
+      final Proposal proposal = proposals.remove(outcome.getBallotId());
+      if (proposal == null) return; // outcome doesn't apply to this branch
+      
       if (idempotencyEnabled) {
         synchronized (lock) {
           decided.put(outcome.getBallotId(), outcome);

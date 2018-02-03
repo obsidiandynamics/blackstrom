@@ -42,6 +42,6 @@ public final class BalanceTransfer {
 
   @Override
   public String toString() {
-    return BalanceTransfer.class.getSimpleName() + " [branchId=" + branchId + ", amount=" + amount + "]";
+    return "[branchId=" + branchId + ", amount=" + amount + "]";
   }
 }
