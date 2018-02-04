@@ -5,6 +5,7 @@ import static junit.framework.TestCase.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 
 import org.junit.*;
 import org.junit.runners.*;
@@ -66,9 +67,14 @@ public abstract class AbstractLedgerTest implements TestSupport {
     }
   }
   
+  private void useLedger(Ledger ledger) {
+    if (this.ledger != null) this.ledger.dispose();
+    this.ledger = ledger;
+  }
+  
   @Test
   public final void testPubSub() {
-    ledger = createLedger();
+    useLedger(createLedger());
     final int numHandlers = 3;
     final int numMessages = 5;
     final List<TestHandler> handlers = new ArrayList<>(numHandlers);
@@ -114,36 +120,54 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testOneWay() {
-    testOneWay(10_000);
+    testOneWay(2, 4, 10_000);
   }
   
   @Test
   public final void testOneWayBenchmark() {
-    Testmark.ifEnabled(() -> testOneWay(10_000_000));
+    Testmark.ifEnabled(() -> {
+      testOneWay(1, 1, 2_000_000);
+      testOneWay(1, 2, 2_000_000);
+      testOneWay(1, 4, 2_000_000);
+      testOneWay(2, 4, 1_000_000);
+      testOneWay(2, 8, 1_000_000);
+      testOneWay(4, 8, 500_000);
+      testOneWay(4, 16, 500_000);
+      testOneWay(4, 32, 500_000);
+    });
   }
   
-  private final void testOneWay(int numMessages) {
-    ledger = createLedger();
+  private final void testOneWay(int producers, int consumers, int messagesPerProducer) {
+    useLedger(createLedger());
     
-    final AtomicLong received = new AtomicLong();
-    ledger.attach((NullGroupMessageHandler) (c, m) -> {
-      if (sandbox.contains(m)) {
-        received.incrementAndGet();
-      }
-    });
+    final AtomicLong[] receivedArray = new AtomicLong[consumers];
+    for (int i = 0; i < consumers; i++) {
+      final AtomicLong received = new AtomicLong();
+      receivedArray[i] = received;
+      ledger.attach((NullGroupMessageHandler) (c, m) -> {
+        if (sandbox.contains(m)) {
+          received.incrementAndGet();
+        }
+      });
+    }
     ledger.init();
     
     final long took = TestSupport.took(() -> {
-      for (int i = 0; i < numMessages; i++) {
-        appendMessage("test");
-      }
+      ParallelJob.blocking(producers, threadNo -> {
+        for (int i = 0; i < messagesPerProducer; i++) {
+          appendMessage("test");
+        }
+      }).run();
+
       wait.until(() -> {
-        assertEquals(numMessages, received.get());
+        final long received = Arrays.stream(receivedArray).collect(Collectors.summingLong(r -> r.get()));
+        assertEquals(producers * messagesPerProducer * consumers, received);
       });
     });
                                      
-    System.out.format("One-way: %,d took %,d ms, %,.0f msgs/sec\n", 
-                      numMessages, took, (float) numMessages / took * 1000);
+    final long totalMessages = (long) producers * messagesPerProducer * consumers;
+    System.out.format("One-way: %d/%d prd/cns, %,d msgs took %,d ms, %,.0f msgs/sec\n", 
+                      producers, consumers, totalMessages, took, (double) totalMessages / took * 1000);
   }
   
   @Test
@@ -153,11 +177,11 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testTwoWayBenchmark() {
-    Testmark.ifEnabled(() -> testTwoWay(10_000_000));
+    Testmark.ifEnabled(() -> testTwoWay(2_000_000));
   }
   
   private final void testTwoWay(int numMessages) {
-    ledger = createLedger();
+    useLedger(createLedger());
     
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {

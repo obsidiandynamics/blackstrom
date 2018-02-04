@@ -59,7 +59,7 @@ public final class KafkaLedger implements Ledger {
         .with("batch.size", 1 << 18)
         .with("linger.ms", 0)
         .with("buffer.memory", 33_554_432)
-        .with("compression.type", "lz4")
+        .with("compression.type", "snappy")
         .build();
     producer = kafka.getProducer(props);
   }
