@@ -57,7 +57,7 @@ public final class KafkaLedger implements Ledger {
         .with("max.in.flight.requests.per.connection", 1)
         .with("retries", Integer.MAX_VALUE)
         .with("batch.size", 1 << 18)
-        .with("linger.ms", 0)
+        .with("linger.ms", 1)
         .with("buffer.memory", 33_554_432)
         .with("compression.type", "snappy")
         .build();
@@ -137,7 +137,7 @@ public final class KafkaLedger implements Ledger {
         synchronized (consumerOffsets.lock) {
           if (! consumerOffsets.offsets.isEmpty()) {
             log.trace("Committing offsets {}", consumerOffsets.offsets);
-            consumer.commitAsync(consumerOffsets.offsets, 
+            consumer.commitAsync(new HashMap<>(consumerOffsets.offsets), 
                                  (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
             consumerOffsets.offsets.clear();
           }
