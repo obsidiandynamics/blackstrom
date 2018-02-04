@@ -136,7 +136,6 @@ public abstract class AbstractLedgerTest implements TestSupport {
       testOneWay(2, 8, 1_000_000);
       testOneWay(4, 8, 500_000);
       testOneWay(4, 16, 500_000);
-      testOneWay(4, 32, 500_000);
     });
   }
   
