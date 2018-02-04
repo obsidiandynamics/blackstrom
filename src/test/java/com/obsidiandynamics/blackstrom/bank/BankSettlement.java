@@ -39,6 +39,12 @@ public final class BankSettlement {
     return BankSettlement.class.getSimpleName() + " [xfers=" + transfers.values() + "]";
   }
   
+  public static BankSettlement forTwo(long amount) {
+   return builder()
+       .withTransfers(new BalanceTransfer("branch-0", -amount), new BalanceTransfer("branch-1", amount))
+       .build();
+  }
+  
   public static BankSettlementBuilder builder() {
     return new BankSettlementBuilder();
   }

@@ -26,7 +26,7 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
                            KafkaTopic.forTest(KafkaKryoLedgerIT.class, "kryo"), 
-                           new KryoMessageCodec(false));
+                           new KryoMessageCodec(true, new KryoBankExpansion()));
   }
   
   public static void main(String[] args) {

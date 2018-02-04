@@ -2,8 +2,6 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import static org.junit.Assert.*;
 
-import java.util.*;
-
 import org.hamcrest.core.*;
 import org.junit.*;
 import org.junit.rules.*;
@@ -82,7 +80,7 @@ public final class KryoMessageCodecTest implements TestSupport {
           "animal");
     cycle(runs, 
           c, 
-          new Proposal("N100", new String[] {"a", "b"}, createTestSettlement(), 1000), 
+          new Proposal("N100", new String[] {"a", "b"}, BankSettlement.forTwo(1000), 1000), 
           "branch");
   }
   
@@ -103,13 +101,6 @@ public final class KryoMessageCodecTest implements TestSupport {
       }
     });
     System.out.format("%s des'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookDes, (double) runs / tookDes * 1000);
-  }
-  
-  private static BankSettlement createTestSettlement() {
-    final Map<String, BalanceTransfer> transfers = new HashMap<>();
-    transfers.put("branch-0", new BalanceTransfer("branch-0", -1000));
-    transfers.put("branch-1", new BalanceTransfer("branch-1", 1000));
-    return new BankSettlement(transfers);
   }
   
   @Test
@@ -250,7 +241,7 @@ public final class KryoMessageCodecTest implements TestSupport {
   
   @Test
   public void testExpansion() throws Exception {
-    final Message m = new Proposal("N100", new String[] {"a", "b"}, createTestSettlement(), 1000).withSource("test");
+    final Message m = new Proposal("N100", new String[] {"a", "b"}, BankSettlement.forTwo(1000), 1000).withSource("test");
     final MessageCodec c = new KryoMessageCodec(true, new KryoBankExpansion());
     
     final byte[] encoded = c.encode(m);

@@ -11,6 +11,7 @@ import org.junit.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
@@ -19,6 +20,8 @@ import com.obsidiandynamics.indigo.util.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractLedgerTest implements TestSupport {
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
+  
+  private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1000);
   
   private class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -87,7 +90,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     ledger.init();
     
     for (int i = 0; i < numMessages; i++) {
-      appendMessage("test");
+      appendMessage("test", TEST_OBJECTIVE);
     }
     
     boolean success = false;
@@ -151,11 +154,11 @@ public abstract class AbstractLedgerTest implements TestSupport {
       });
     }
     ledger.init();
-    
+
     final long took = TestSupport.took(() -> {
       ParallelJob.blocking(producers, threadNo -> {
         for (int i = 0; i < messagesPerProducer; i++) {
-          appendMessage("test");
+          appendMessage("test", TEST_OBJECTIVE);
         }
       }).run();
 
@@ -200,7 +203,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     
     final long took = TestSupport.took(() -> {
       for (int i = 0; i < numMessages; i++) {
-        appendMessage("source");
+        appendMessage("source", TEST_OBJECTIVE);
       }
       wait.until(() -> {
         assertEquals(numMessages, received.get());
@@ -210,8 +213,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
     System.out.format("Two-way: %,d took %,d ms, %,d msgs/sec\n", numMessages, took, numMessages / took * 1000);
   }
   
-  private void appendMessage(String source) {
-    ledger.append(new Proposal(String.valueOf(messageId++), 0, TEST_COHORTS, null, 0)
+  private void appendMessage(String source, Object objective) {
+    ledger.append(new Proposal(String.valueOf(messageId++), 0, TEST_COHORTS, objective, 0)
                   .withSource(source)
                   .withShardKey(sandbox.key()));
   }

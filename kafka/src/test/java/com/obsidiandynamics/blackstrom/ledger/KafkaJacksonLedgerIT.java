@@ -26,7 +26,7 @@ public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
                            KafkaTopic.forTest(KafkaJacksonLedgerIT.class, "json"), 
-                           new JacksonMessageCodec(false));
+                           new JacksonMessageCodec(true, new JacksonBankExpansion()));
   }
   
   public static void main(String[] args) {
