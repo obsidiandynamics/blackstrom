@@ -51,8 +51,10 @@ public final class KafkaReceiver<K, V> implements Joinable {
       if (! records.isEmpty()) {
         recordHandler.onReceive(records);
       }
+    } catch (InterruptedException e) {
+      throw e;
     } catch (org.apache.kafka.common.errors.InterruptException e) {
-      throw new InterruptedException();
+      throw new InterruptedException("Converted from " + org.apache.kafka.common.errors.InterruptException.class.getName());
     } catch (Throwable e) {
       errorHandler.onError(e);
       return;
