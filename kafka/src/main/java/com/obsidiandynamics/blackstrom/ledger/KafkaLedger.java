@@ -125,7 +125,7 @@ public final class KafkaLedger implements Ledger {
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
     
-    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, 10, String.valueOf(handlerId));
+    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, 50, String.valueOf(handlerId));
     processors.add(processor);
     final RecordHandler<String, Message> recordHandler = records -> {
 //      for (ConsumerRecord<String, Message> record : records) {
@@ -140,20 +140,27 @@ public final class KafkaLedger implements Ledger {
         final boolean enqueued = processor.enqueue(records);
 
         if (consumerOffsets != null) {
+          final Map<TopicPartition, OffsetAndMetadata> offsetsCopy;
           synchronized (consumerOffsets.lock) {
             if (! consumerOffsets.offsets.isEmpty()) {
-              log.trace("Committing offsets {}", consumerOffsets.offsets);
-              consumer.commitAsync(new HashMap<>(consumerOffsets.offsets), 
-                                   (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
+              offsetsCopy = new HashMap<>(consumerOffsets.offsets);
               consumerOffsets.offsets.clear();
+            } else {
+              offsetsCopy = null;
             }
+          }
+          
+          if (offsetsCopy != null) {
+            log.trace("Committing offsets {}", offsetsCopy);
+            consumer.commitAsync(offsetsCopy, 
+                                 (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
           }
         }
         
         if (enqueued) {
           break;
         } else {
-          Thread.sleep(1);
+          Thread.sleep(10);
         }
       }
     };
