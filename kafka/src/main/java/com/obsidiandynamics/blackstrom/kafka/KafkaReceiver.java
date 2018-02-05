@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class KafkaReceiver<K, V> implements Joinable {
   @FunctionalInterface
   public interface RecordHandler<K, V> {
-    void onReceive(ConsumerRecords<K, V> records);
+    void onReceive(ConsumerRecords<K, V> records) throws InterruptedException;
   }
   
   @FunctionalInterface

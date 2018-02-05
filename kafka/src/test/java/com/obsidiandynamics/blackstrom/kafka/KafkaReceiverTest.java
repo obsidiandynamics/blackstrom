@@ -79,13 +79,17 @@ public final class KafkaReceiverTest {
                                               () -> new ConsumerRecords<>(Collections.emptyMap())));
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
     wait.until(() -> {
-      verify(recordHandler, times(1)).onReceive(eq(records));
+      try {
+        verify(recordHandler, times(1)).onReceive(eq(records));
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
       verify(errorHandler, never()).onError(any());
     });
   }
   
   @Test
-  public void testNoRecords() {
+  public void testNoRecords() throws InterruptedException {
     final Map<TopicPartition, List<ConsumerRecord<String, String>>> recordsMap = 
         Collections.emptyMap();
     final ConsumerRecords<String, String> records = new ConsumerRecords<>(recordsMap);
@@ -113,7 +117,11 @@ public final class KafkaReceiverTest {
     when(consumer.poll(anyLong())).then(split(() -> { throw new RuntimeException("boom"); }));
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
     wait.until(() -> {
-      verify(recordHandler, never()).onReceive(any());
+      try {
+        verify(recordHandler, never()).onReceive(any());
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
       verify(errorHandler, atLeastOnce()).onError(any(RuntimeException.class));
     });
     receiver.terminate().join();
@@ -126,7 +134,11 @@ public final class KafkaReceiverTest {
     final Logger logger = mock(Logger.class);
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, KafkaReceiver.genericErrorLogger(logger));
     wait.until(() -> {
-      verify(recordHandler, never()).onReceive(any());
+      try {
+        verify(recordHandler, never()).onReceive(any());
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
       verify(logger, atLeastOnce()).warn(anyString(), any(RuntimeException.class));
     });
   }

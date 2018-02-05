@@ -34,6 +34,8 @@ public final class KafkaLedger implements Ledger {
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
+  private final List<PipelinedProcessor> processors = new CopyOnWriteArrayList<>();
+  
   private static class ConsumerOffsets {
     final Object lock = new Object();
     final Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
@@ -123,24 +125,35 @@ public final class KafkaLedger implements Ledger {
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
     
+    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, 10, String.valueOf(handlerId));
+    processors.add(processor);
     final RecordHandler<String, Message> recordHandler = records -> {
-      for (ConsumerRecord<String, Message> record : records) {
-        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
-        final Message message = record.value();
-        message.setMessageId(messageId);
-        message.setShardKey(record.key());
-        message.setShard(record.partition());
-        handler.onMessage(context, message);
-      }
-      
-      if (consumerOffsets != null) {
-        synchronized (consumerOffsets.lock) {
-          if (! consumerOffsets.offsets.isEmpty()) {
-            log.trace("Committing offsets {}", consumerOffsets.offsets);
-            consumer.commitAsync(new HashMap<>(consumerOffsets.offsets), 
-                                 (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
-            consumerOffsets.offsets.clear();
+//      for (ConsumerRecord<String, Message> record : records) {
+//        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
+//        final Message message = record.value();
+//        message.setMessageId(messageId);
+//        message.setShardKey(record.key());
+//        message.setShard(record.partition());
+//        handler.onMessage(context, message);
+//      }
+      for (;;) {
+        final boolean enqueued = processor.enqueue(records);
+
+        if (consumerOffsets != null) {
+          synchronized (consumerOffsets.lock) {
+            if (! consumerOffsets.offsets.isEmpty()) {
+              log.trace("Committing offsets {}", consumerOffsets.offsets);
+              consumer.commitAsync(new HashMap<>(consumerOffsets.offsets), 
+                                   (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
+              consumerOffsets.offsets.clear();
+            }
           }
+        }
+        
+        if (enqueued) {
+          break;
+        } else {
+          Thread.sleep(1);
         }
       }
     };
@@ -194,9 +207,11 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void dispose() {
     receivers.forEach(t -> t.terminate());
+    processors.forEach(t -> t.terminate());
     CodecRegistry.deregister(codecLocator);
     producerDisposed = true;
     producer.close();
     receivers.forEach(t -> t.joinQuietly());
+    processors.forEach(t -> t.joinQuietly());
   }
 }

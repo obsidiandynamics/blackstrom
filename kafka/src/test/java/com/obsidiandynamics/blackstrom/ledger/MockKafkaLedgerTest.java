@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import org.junit.*;
 import org.junit.runner.*;
@@ -81,7 +80,6 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     try {
       final String groupId = "test";
       
-      final CyclicBarrier barrier = new CyclicBarrier(2);
       ledger.attach(new MessageHandler() {
         @Override
         public String getGroupId() {
@@ -94,16 +92,13 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
             context.confirm(new DefaultMessageId(0, 0));
           } catch (Throwable e) {
             e.printStackTrace();
-          } finally {
-            TestSupport.await(barrier);
           }
         }
       });
-      ledger.append(new Proposal("B100", new String[0], null, 0));
-  
-      TestSupport.await(barrier);
+      
       wait.until(() -> {
-        verify(log).warn(isNotNull(), eq(exception));
+        ledger.append(new Proposal("B100", new String[0], null, 0));
+        verify(log, atLeastOnce()).warn(isNotNull(), eq(exception));
       });
     } finally {
       ledger.dispose();
