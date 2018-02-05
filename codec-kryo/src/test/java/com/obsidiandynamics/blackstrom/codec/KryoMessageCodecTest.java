@@ -222,10 +222,11 @@ public final class KryoMessageCodecTest implements TestSupport {
   
   @Test
   public void testUnknownDeserialize() throws Exception {
+    final boolean WRITE_REFERENCES = false;
     final MessageCodec c = new KryoMessageCodec(false);
     final Output buffer = new Output(16, -1);
     try {
-      buffer.writeVarInt(Kryo.NOT_NULL, true);
+      if (WRITE_REFERENCES) buffer.writeVarInt(Kryo.NOT_NULL, true);
       buffer.writeByte(MessageType.$UNKNOWN.ordinal());
       buffer.writeString(null);
       buffer.writeLong(0);

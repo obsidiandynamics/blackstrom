@@ -26,7 +26,8 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
     KafkaDocker.start();
   }
   
-  private static String TOPIC_NAME = KafkaTopic.forTest(KafkaKryoRandomBankTransferIT.class, "kryo");
+  private static String TOPIC_NAME = KafkaTopic.forTest(KafkaKryoRandomBankTransferIT.class, 
+                                                        "kryo-" + KryoMessageCodec.ENCODING_VERSION);
   
   @Override
   protected Ledger createLedger() {

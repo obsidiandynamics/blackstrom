@@ -6,6 +6,6 @@ public final class KafkaTopic {
   private KafkaTopic() {}
   
   public static String forTest(Class<?> testClass, String codecName) {
-    return testClass.getSimpleName() + "." + codecName + ".v" + MessageCodec.MODEL_VERSION;
+    return testClass.getSimpleName() + "." + codecName + ".v" + MessageCodec.SCHEMA_VERSION;
   }
 }

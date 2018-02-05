@@ -8,6 +8,8 @@ import com.esotericsoftware.kryo.pool.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KryoMessageCodec implements MessageCodec {
+  public static final int ENCODING_VERSION = 2;
+  
   private static final int DEF_MESSAGE_BUFFER_SIZE = 128;
   
   @FunctionalInterface
@@ -22,6 +24,7 @@ public final class KryoMessageCodec implements MessageCodec {
     pool = new KryoPool.Builder(() -> {
       final Kryo kryo = new Kryo();
       for (KryoExpansion expansion : expansions) expansion.accept(kryo);
+      kryo.setReferences(false);
       return kryo;
     }).softReferences().build();
   }
