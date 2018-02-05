@@ -19,8 +19,8 @@ import com.obsidiandynamics.indigo.util.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractLedgerTest implements TestSupport {
+  private static final int SCALE = 1;
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
-  
   private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1000);
   
   private class TestHandler implements MessageHandler, Groupable.NullGroup {
@@ -123,19 +123,19 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testOneWay() {
-    testOneWay(2, 4, 10_000);
+    testOneWay(2, 4, 10_000 * SCALE);
   }
   
   @Test
   public final void testOneWayBenchmark() {
     Testmark.ifEnabled(() -> {
-      testOneWay(1, 1, 2_000_000);
-      testOneWay(1, 2, 2_000_000);
-      testOneWay(1, 4, 2_000_000);
-      testOneWay(2, 4, 1_000_000);
-      testOneWay(2, 8, 1_000_000);
-      testOneWay(4, 8, 500_000);
-      testOneWay(4, 16, 500_000);
+      testOneWay(1, 1, 2_000_000 * SCALE);
+      testOneWay(1, 2, 2_000_000 * SCALE);
+      testOneWay(1, 4, 2_000_000 * SCALE);
+      testOneWay(2, 4, 1_000_000 * SCALE);
+      testOneWay(2, 8, 1_000_000 * SCALE);
+      testOneWay(4, 8, 500_000 * SCALE);
+      testOneWay(4, 16, 500_000 * SCALE);
     });
   }
   
@@ -174,12 +174,12 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   @Test
   public final void testTwoWay() {
-    testTwoWay(10_000);
+    testTwoWay(10_000 * SCALE);
   }
   
   @Test
   public final void testTwoWayBenchmark() {
-    Testmark.ifEnabled(() -> testTwoWay(2_000_000));
+    Testmark.ifEnabled(() -> testTwoWay(2_000_000 * SCALE));
   }
   
   private final void testTwoWay(int numMessages) {
