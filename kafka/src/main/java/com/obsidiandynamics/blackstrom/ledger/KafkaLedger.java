@@ -65,8 +65,7 @@ public final class KafkaLedger implements Ledger {
         .with("retries", Integer.MAX_VALUE)
         .with("batch.size", 1 << 18)
         .with("linger.ms", 1)
-        .with("buffer.memory", 33_554_432)
-        .with("compression.type", "snappy")
+        .with("compression.type", "lz4")
         .build();
     producer = kafka.getProducer(props);
   }
