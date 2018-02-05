@@ -1,17 +1,17 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
 @FunctionalInterface
-public interface ExceptionGenerator<T> {
-  Exception get(T obj);
+public interface ExceptionGenerator<T, X> {
+  X get(T obj);
   
-  static <T> ExceptionGenerator<T> never() {
+  static <T, X> ExceptionGenerator<T, X> never() {
     return record -> null;
   }
   
-  static <T> ExceptionGenerator<T> once(Exception exception) {
-    return new ExceptionGenerator<T>() {
-      private Exception ex = exception;
-      @Override public Exception get(T obj) {
+  static <T, X> ExceptionGenerator<T, X> once(X exception) {
+    return new ExceptionGenerator<T, X>() {
+      private X ex = exception;
+      @Override public X get(T obj) {
         try {
           return ex;
         } finally {

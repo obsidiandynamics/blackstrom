@@ -20,8 +20,6 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
   
-  private static final int PIPELINE_SIZE_BATCHES = 10;
-  
   private static final int PIPELINE_BACKOFF_MILLIS = 10;
   
   private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
@@ -29,6 +27,8 @@ public final class KafkaLedger implements Ledger {
   private final Kafka<String, Message> kafka;
   
   private final String topic;
+  
+  private final int pipelineSizeBatches;
   
   private final String codecLocator;
   
@@ -50,10 +50,11 @@ public final class KafkaLedger implements Ledger {
   
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
-  public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec) {
+  public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec, int pipelineSizeBatches) {
     this.kafka = kafka;
     this.topic = topic;
-    this.codecLocator = CodecRegistry.register(codec);
+    this.pipelineSizeBatches = pipelineSizeBatches;
+    codecLocator = CodecRegistry.register(codec);
     
     final Properties props = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
@@ -129,7 +130,7 @@ public final class KafkaLedger implements Ledger {
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
     final String processorThreadName = PipelinedProcessor.class.getSimpleName() + "-" + groupId;
-    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, PIPELINE_SIZE_BATCHES, 
+    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, pipelineSizeBatches, 
                                                                 processorThreadName);
     processors.add(processor);
     final RecordHandler<String, Message> recordHandler = records -> {

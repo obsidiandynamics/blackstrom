@@ -26,9 +26,9 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();
   
-  private ExceptionGenerator<ProducerRecord<K, V>> appendExceptionGenerator = ExceptionGenerator.never();
-  
-  private ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>> confirmExceptionGenerator = ExceptionGenerator.never();
+  private ExceptionGenerator<ProducerRecord<K, V>, Exception> sendCallbackExceptionGenerator = ExceptionGenerator.never();
+  private ExceptionGenerator<ProducerRecord<K, V>, RuntimeException> sendRuntimeExceptionGenerator = ExceptionGenerator.never();
+  private ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>, Exception> commitExceptionGenerator = ExceptionGenerator.never();
   
   public MockKafka() {
     this(10, 100_000);
@@ -39,13 +39,18 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
     this.maxHistory = maxHistory;
   }
   
-  public MockKafka<K, V> withAppendExceptionGenerator(ExceptionGenerator<ProducerRecord<K, V>> appendExceptionGenerator) {
-    this.appendExceptionGenerator = appendExceptionGenerator;
+  public MockKafka<K, V> withSendCallbackExceptionGenerator(ExceptionGenerator<ProducerRecord<K, V>, Exception> sendCallbackExceptionGenerator) {
+    this.sendCallbackExceptionGenerator = sendCallbackExceptionGenerator;
+    return this;
+  }
+  
+  public MockKafka<K, V> withSendRuntimeExceptionGenerator(ExceptionGenerator<ProducerRecord<K, V>, RuntimeException> sendRuntimeExceptionGenerator) {
+    this.sendRuntimeExceptionGenerator = sendRuntimeExceptionGenerator;
     return this;
   }
 
-  public MockKafka<K, V> withConfirmExceptionGenerator(ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>> confirmExceptionGenerator) {
-    this.confirmExceptionGenerator = confirmExceptionGenerator;
+  public MockKafka<K, V> withConfirmExceptionGenerator(ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>, Exception> confirmExceptionGenerator) {
+    this.commitExceptionGenerator = confirmExceptionGenerator;
     return this;
   }
 
@@ -57,17 +62,20 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
         final String valueSerializer = props.getProperty("value.serializer");
         producer = new FallibleMockProducer<K, V>(true, instantiate(keySerializer), instantiate(valueSerializer)) {
           {
-            this.sendExceptionGenerator = MockKafka.this.appendExceptionGenerator;
+            this.sendCallbackExceptionGenerator = MockKafka.this.sendCallbackExceptionGenerator;
+            this.sendRuntimeExceptionGenerator = MockKafka.this.sendRuntimeExceptionGenerator;
           }
           
           @Override public Future<RecordMetadata> send(ProducerRecord<K, V> r, Callback callback) {
             if (closed.get()) throw new IllegalStateException("Cannot send over a closed producer");
+            final RuntimeException generatedRuntime = sendRuntimeExceptionGenerator.get(r);
+            if (generatedRuntime != null) throw generatedRuntime;
             
-            final Exception generated = sendExceptionGenerator.get(r);
-            if (generated != null) {
-              if (callback != null) callback.onCompletion(null, generated);
+            final Exception generatedCallback = sendCallbackExceptionGenerator.get(r);
+            if (generatedCallback != null) {
+              if (callback != null) callback.onCompletion(null, generatedCallback);
               final CompletableFuture<RecordMetadata> f = new CompletableFuture<>();
-              f.completeExceptionally(generated);
+              f.completeExceptionally(generatedCallback);
               return f;
             } else {
               final Future<RecordMetadata> f = super.send(r, (metadata, exception) -> {
@@ -147,7 +155,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   private FallibleMockConsumer<K, V> createConsumer(Object lock, List<FallibleMockConsumer<K, V>> consumers) {
     final FallibleMockConsumer<K, V> consumer = new FallibleMockConsumer<K, V>(OffsetResetStrategy.EARLIEST) {
       {
-        this.commitExceptionGenerator = MockKafka.this.confirmExceptionGenerator;
+        this.commitExceptionGenerator = MockKafka.this.commitExceptionGenerator;
       }
       
       @Override public void commitAsync(Map<TopicPartition, OffsetAndMetadata> offsets, OffsetCommitCallback callback) {

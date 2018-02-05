@@ -34,7 +34,7 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
                            TOPIC_NAME, 
-                           new JacksonMessageCodec(true, new JacksonBankExpansion()));
+                           new JacksonMessageCodec(true, new JacksonBankExpansion()), 10);
   }
 
   @Override

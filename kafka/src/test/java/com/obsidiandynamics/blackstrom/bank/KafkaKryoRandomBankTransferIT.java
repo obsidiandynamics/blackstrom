@@ -35,7 +35,7 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
                            TOPIC_NAME, 
-                           new KryoMessageCodec(true, new KryoBankExpansion()));
+                           new KryoMessageCodec(true, new KryoBankExpansion()), 10);
   }
 
   @Override

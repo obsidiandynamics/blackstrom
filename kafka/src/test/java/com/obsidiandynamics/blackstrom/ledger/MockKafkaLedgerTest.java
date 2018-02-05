@@ -1,9 +1,12 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 import org.junit.runner.*;
@@ -36,8 +39,34 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     return MockKafkaLedger.create();
   }
   
-  private static KafkaLedger createLedger(Kafka<String, Message> kafka) {
-    return new KafkaLedger(kafka, "test", new NullMessageCodec()); 
+  private static KafkaLedger createLedger(Kafka<String, Message> kafka, int pipelineSizeBatches) {
+    return new KafkaLedger(kafka, "test", new NullMessageCodec(), pipelineSizeBatches); 
+  }
+  
+  @Test
+  public void testPipelineBackoff() {
+    final Kafka<String, Message> kafka = new MockKafka<>();
+    final KafkaLedger ledger = createLedger(kafka, 1);
+    final CyclicBarrier barrierA = new CyclicBarrier(2);
+    final CyclicBarrier barrierB = new CyclicBarrier(2);
+    final AtomicInteger received = new AtomicInteger();
+    ledger.attach(new NullGroupMessageHandler() {
+      @Override
+      public void onMessage(MessageContext context, Message message) {
+        if (received.get() == 0) {
+          TestSupport.await(barrierA);
+          TestSupport.await(barrierB);
+        }
+        received.incrementAndGet();
+      }
+    });
+    
+    ledger.append(new Proposal("B100", new String[0], null, 0));
+    TestSupport.await(barrierA);
+    ledger.append(new Proposal("B200", new String[0], null, 0));
+    TestSupport.sleep(10);
+    TestSupport.await(barrierB);
+    wait.until(() -> assertEquals(2, received.get()));
   }
   
   @Test
@@ -45,8 +74,8 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("testSendExceptionLoggerPass");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
-        .withAppendExceptionGenerator(ExceptionGenerator.never());
-    final KafkaLedger ledger = createLedger(kafka).withLogger(log);
+        .withSendCallbackExceptionGenerator(ExceptionGenerator.never());
+    final KafkaLedger ledger = createLedger(kafka, 10).withLogger(log);
     try {
       ledger.append(new Proposal("B100", new String[0], null, 0));
       verify(log, never()).warn(isNotNull(), eq(exception));
@@ -60,11 +89,25 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("testSendExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
-        .withAppendExceptionGenerator(ExceptionGenerator.once(exception));
-    final KafkaLedger ledger = createLedger(kafka).withLogger(log);
+        .withSendCallbackExceptionGenerator(ExceptionGenerator.once(exception));
+    final KafkaLedger ledger = createLedger(kafka, 10).withLogger(log);
     try {
       ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
       verify(log).warn(isNotNull(), eq(exception));
+    } finally {
+      ledger.dispose();
+    }
+  }
+  
+  @Test(expected=IllegalStateException.class)
+  public void testSendRuntimeException() {
+    final Logger log = mock(Logger.class);
+    final IllegalStateException exception = new IllegalStateException("testSendRuntimeException");
+    final Kafka<String, Message> kafka = new MockKafka<String, Message>()
+        .withSendRuntimeExceptionGenerator(ExceptionGenerator.once(exception));
+    final KafkaLedger ledger = createLedger(kafka, 10).withLogger(log);
+    try {
+      ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
     } finally {
       ledger.dispose();
     }
@@ -76,7 +119,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     final Exception exception = new Exception("testCommitExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withConfirmExceptionGenerator(ExceptionGenerator.once(exception));
-    final KafkaLedger ledger = createLedger(kafka).withLogger(log);
+    final KafkaLedger ledger = createLedger(kafka, 10).withLogger(log);
     try {
       final String groupId = "test";
       

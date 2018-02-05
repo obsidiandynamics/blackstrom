@@ -32,7 +32,7 @@ public final class KafkaBankTransferIT extends AbstractBankTransferTest {
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
                            KafkaTopic.forTest(KafkaBankTransferIT.class, "json"), 
-                           new JacksonMessageCodec(true, new JacksonBankExpansion()));
+                           new JacksonMessageCodec(true, new JacksonBankExpansion()), 10);
   }
 
   @Override

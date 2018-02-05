@@ -27,7 +27,7 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
     return new KafkaLedger(kafka, 
                            KafkaTopic.forTest(KafkaKryoLedgerIT.class, 
                                               "kryo-" + KryoMessageCodec.ENCODING_VERSION), 
-                           new KryoMessageCodec(true, new KryoBankExpansion()));
+                           new KryoMessageCodec(true, new KryoBankExpansion()), 10);
   }
   
   public static void main(String[] args) {
