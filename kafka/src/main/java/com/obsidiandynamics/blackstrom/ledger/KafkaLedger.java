@@ -18,7 +18,11 @@ import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KafkaLedger implements Ledger {
-  private static final long POLL_TIMEOUT_MILLIS = 1_000;
+  private static final int POLL_TIMEOUT_MILLIS = 1_000;
+  
+  private static final int PIPELINE_SIZE_BATCHES = 10;
+  
+  private static final int PIPELINE_BACKOFF_MILLIS = 10;
   
   private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
   
@@ -38,7 +42,7 @@ public final class KafkaLedger implements Ledger {
   
   private static class ConsumerOffsets {
     final Object lock = new Object();
-    final Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
   }
   
   /** Maps handler IDs to consumer offsets. */
@@ -124,35 +128,28 @@ public final class KafkaLedger implements Ledger {
     }
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
-    
-    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, 50, String.valueOf(handlerId));
+    final String processorThreadName = PipelinedProcessor.class.getSimpleName() + "-" + groupId;
+    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, PIPELINE_SIZE_BATCHES, 
+                                                                processorThreadName);
     processors.add(processor);
     final RecordHandler<String, Message> recordHandler = records -> {
-//      for (ConsumerRecord<String, Message> record : records) {
-//        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
-//        final Message message = record.value();
-//        message.setMessageId(messageId);
-//        message.setShardKey(record.key());
-//        message.setShard(record.partition());
-//        handler.onMessage(context, message);
-//      }
       for (;;) {
         final boolean enqueued = processor.enqueue(records);
 
         if (consumerOffsets != null) {
-          final Map<TopicPartition, OffsetAndMetadata> offsetsCopy;
+          final Map<TopicPartition, OffsetAndMetadata> offsetsSnapshot;
           synchronized (consumerOffsets.lock) {
             if (! consumerOffsets.offsets.isEmpty()) {
-              offsetsCopy = new HashMap<>(consumerOffsets.offsets);
-              consumerOffsets.offsets.clear();
+              offsetsSnapshot = consumerOffsets.offsets;
+              consumerOffsets.offsets = new HashMap<>(offsetsSnapshot.size());
             } else {
-              offsetsCopy = null;
+              offsetsSnapshot = null;
             }
           }
           
-          if (offsetsCopy != null) {
-            log.trace("Committing offsets {}", offsetsCopy);
-            consumer.commitAsync(offsetsCopy, 
+          if (offsetsSnapshot != null) {
+            log.trace("Committing offsets {}", offsetsSnapshot);
+            consumer.commitAsync(offsetsSnapshot, 
                                  (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
           }
         }
@@ -160,7 +157,7 @@ public final class KafkaLedger implements Ledger {
         if (enqueued) {
           break;
         } else {
-          Thread.sleep(10);
+          Thread.sleep(PIPELINE_BACKOFF_MILLIS);
         }
       }
     };
