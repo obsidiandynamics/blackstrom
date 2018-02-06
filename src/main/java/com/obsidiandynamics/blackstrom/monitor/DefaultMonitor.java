@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import org.slf4j.*;
 
@@ -19,7 +20,8 @@ public final class DefaultMonitor implements Monitor {
   
   private final Map<Object, PendingBallot> pending = new HashMap<>();
   
-  private final Map<Object, Outcome> decided = new HashMap<>();
+  private final Map<Object, Outcome> decided = new ConcurrentHashMap<>();
+  private final BlockingQueue<Outcome> additions = new LinkedBlockingQueue<>();
   
   private final String groupId;
   
@@ -76,30 +78,33 @@ public final class DefaultMonitor implements Monitor {
   private void gcCycle(WorkerThread thread) throws InterruptedException {
     Thread.sleep(gcIntervalMillis);
     
-    final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
-    final List<Outcome> deathRow = new ArrayList<>();
-    
-    final List<Outcome> decidedCopy;
-    synchronized (lock) {
-      decidedCopy = new ArrayList<>(decided.values());
-    }
-    
-    for (Outcome oucome : decidedCopy) {
-      if (oucome.getTimestamp() < collectThreshold) {
-        deathRow.add(oucome);
+    long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+    int reaped = 0;
+    for (Outcome outcome : decided.values()) {
+      if (outcome.getTimestamp() < collectThreshold) {
+        decided.remove(outcome.getBallotId());
+        reaped++;
       }
     }
     
-    if (! deathRow.isEmpty()) {
-      for (Outcome outcome : deathRow) {
-        synchronized (lock) {
-          decided.remove(outcome.getBallotId());
+    collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+    for (;;) {
+      final Outcome addition = additions.poll();
+      if (addition != null) {
+        if (addition.getTimestamp() >= collectThreshold) {
+          decided.put(addition.getBallotId(), addition);
+        } else {
+          reaped++;  
         }
+      } else {
+        break;
       }
-      reapedSoFar += deathRow.size();
+    }
+    reapedSoFar += reaped;
       
+    if (reaped != 0) {
       LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
-                deathRow.size(), reapedSoFar, pending.size(), decided.size());
+                reaped, reapedSoFar, pending.size(), decided.size());
     }
   }
   
@@ -149,12 +154,12 @@ public final class DefaultMonitor implements Monitor {
   
   @Override
   public void onProposal(MessageContext context, Proposal proposal) {
+    if (decided.containsKey(proposal.getBallotId())) {
+      if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", proposal);
+      return;
+    }
+    
     synchronized (lock) {
-      if (decided.containsKey(proposal.getBallotId())) {
-        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", proposal);
-        return;
-      }
-      
       final PendingBallot newBallot = new PendingBallot(proposal);
       final PendingBallot existingBallot = pending.put(proposal.getBallotId(), newBallot);
       if (existingBallot != null) {
@@ -194,7 +199,7 @@ public final class DefaultMonitor implements Monitor {
     final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses())
         .inResponseTo(proposal);
     pending.remove(ballotId);
-    decided.put(ballotId, outcome);
+    enqueue(outcome);
     ledger.append(outcome, (id, x) -> {
       if (x == null) {
         ballot.getConfirmation().confirm();
@@ -202,6 +207,10 @@ public final class DefaultMonitor implements Monitor {
         LOG.warn("Error appending to ledger [message: " + outcome + "]", x);
       }
     });
+  }
+  
+  private void enqueue(Outcome outcome) {
+    additions.offer(outcome);
   }
   
   @Override
