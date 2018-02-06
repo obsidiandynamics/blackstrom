@@ -65,8 +65,10 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     TestSupport.await(barrierA);
     ledger.append(new Proposal("B200", new String[0], null, 0));
     TestSupport.sleep(10);
+    ledger.append(new Proposal("B300", new String[0], null, 0));
+    TestSupport.sleep(10);
     TestSupport.await(barrierB);
-    wait.until(() -> assertEquals(2, received.get()));
+    wait.until(() -> assertEquals(3, received.get()));
   }
   
   @Test

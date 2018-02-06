@@ -8,6 +8,7 @@ import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultMonitor implements Monitor {
@@ -19,11 +20,16 @@ public final class DefaultMonitor implements Monitor {
   
   private final Map<Object, PendingBallot> pending = new HashMap<>();
   
-  private final Map<Object, Outcome> decided = new HashMap<>();
+  private final Object trackerLock = new Object();
+  private final List<Outcome> decided = new LinkedList<>();
+  private final NodeQueue<Outcome> additions = new NodeQueue<>();
+  private final QueueConsumer<Outcome> additionsConsumer = additions.consumer();
   
   private final String groupId;
   
   private final WorkerThread gcThread;
+  
+  private final boolean trackingEnabled;
   
   private final int gcIntervalMillis;
   
@@ -35,7 +41,7 @@ public final class DefaultMonitor implements Monitor {
   
   private final int timeoutIntervalMillis;
   
-  private final Object lock = new Object();
+  private final Object messageLock = new Object();
   
   private final ShardedFlow flow = new ShardedFlow();
   
@@ -45,16 +51,21 @@ public final class DefaultMonitor implements Monitor {
   
   public DefaultMonitor(DefaultMonitorOptions options) {
     this.groupId = options.getGroupId();
+    this.trackingEnabled = options.isTrackingEnabled();
     this.gcIntervalMillis = options.getGCInterval();
     this.outcomeLifetimeMillis = options.getOutcomeLifetime();
     this.timeoutIntervalMillis = options.getTimeoutInterval();
     
-    gcThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withName(nameThread("gc"))
-                     .withDaemon(true))
-        .onCycle(this::gcCycle)
-        .buildAndStart();
+    if (trackingEnabled) {
+      gcThread = WorkerThread.builder()
+          .withOptions(new WorkerOptions()
+                       .withName(nameThread("gc"))
+                       .withDaemon(true))
+          .onCycle(this::gcCycle)
+          .buildAndStart();
+    } else {
+      gcThread = null;
+    }
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
@@ -77,29 +88,30 @@ public final class DefaultMonitor implements Monitor {
     Thread.sleep(gcIntervalMillis);
     
     final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
-    final List<Outcome> deathRow = new ArrayList<>();
-    
-    final List<Outcome> decidedCopy;
-    synchronized (lock) {
-      decidedCopy = new ArrayList<>(decided.values());
-    }
-    
-    for (Outcome outcome : decidedCopy) {
-      if (outcome.getTimestamp() < collectThreshold) {
-        deathRow.add(outcome);
-      }
-    }
-    
-    if (! deathRow.isEmpty()) {
-      for (Outcome outcome : deathRow) {
-        synchronized (lock) {
-          decided.remove(outcome.getBallotId());
+    int reaped = 0;
+    synchronized (trackerLock) {
+      for (Iterator<Outcome> outcomesIt = decided.iterator(); outcomesIt.hasNext();) {
+        final Outcome outcome = outcomesIt.next();
+        if (outcome.getTimestamp() < collectThreshold) {
+          outcomesIt.remove();
+          reaped++;
         }
       }
-      reapedSoFar += deathRow.size();
       
+      for (;;) {
+        final Outcome addition = additionsConsumer.poll();
+        if (addition != null) {
+          decided.add(addition);
+        } else {
+          break;
+        }
+      }
+    }
+    
+    if (reaped != 0) {
+      reapedSoFar += reaped;
       LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
-                deathRow.size(), reapedSoFar, pending.size(), decided.size());
+                reaped, reapedSoFar, pending.size(), decided.size());
     }
   }
   
@@ -107,7 +119,7 @@ public final class DefaultMonitor implements Monitor {
     Thread.sleep(timeoutIntervalMillis);
     
     final List<PendingBallot> pendingCopy;
-    synchronized (lock) {
+    synchronized (messageLock) {
       pendingCopy = new ArrayList<>(pending.values());
     }
     
@@ -116,7 +128,7 @@ public final class DefaultMonitor implements Monitor {
       if (proposal.getTimestamp() + proposal.getTtl() < System.currentTimeMillis()) {
         for (String cohort : proposal.getCohorts()) {
           final boolean cohortResponded;
-          synchronized (lock) {
+          synchronized (messageLock) {
             cohortResponded = pending.hasResponded(cohort);
           }
           
@@ -139,22 +151,19 @@ public final class DefaultMonitor implements Monitor {
     });
   }
   
-  public Map<Object, Outcome> getOutcomes() {
-    final Map<Object, Outcome> decidedCopy;
-    synchronized (lock) {
-      decidedCopy = new HashMap<>(decided);
+  public List<Outcome> getOutcomes() {
+    if (! trackingEnabled) throw new IllegalStateException("Tracking is not enabled");
+    
+    final List<Outcome> decidedCopy;
+    synchronized (trackerLock) {
+      decidedCopy = new ArrayList<>(decided);
     }
-    return Collections.unmodifiableMap(decidedCopy);
+    return Collections.unmodifiableList(decidedCopy);
   }
   
   @Override
   public void onProposal(MessageContext context, Proposal proposal) {
-    synchronized (lock) {
-      if (decided.containsKey(proposal.getBallotId())) {
-        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", proposal);
-        return;
-      }
-      
+    synchronized (messageLock) {
       final PendingBallot newBallot = new PendingBallot(proposal);
       final PendingBallot existingBallot = pending.put(proposal.getBallotId(), newBallot);
       if (existingBallot != null) {
@@ -171,7 +180,7 @@ public final class DefaultMonitor implements Monitor {
 
   @Override
   public void onVote(MessageContext context, Vote vote) {
-    synchronized (lock) {
+    synchronized (messageLock) {
       final PendingBallot ballot = pending.get(vote.getBallotId());
       if (ballot != null) {
         if (DEBUG) LOG.trace("Received {}", vote);
@@ -179,8 +188,6 @@ public final class DefaultMonitor implements Monitor {
         if (decided) {
           decideBallot(ballot);
         }
-      } else if (decided.containsKey(vote.getBallotId())) {
-        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already decided)", vote);
       } else {
         if (DEBUG) LOG.trace("Missing pending ballot for vote {}", vote);
       }
@@ -194,7 +201,9 @@ public final class DefaultMonitor implements Monitor {
     final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses())
         .inResponseTo(proposal);
     pending.remove(ballotId);
-    decided.put(ballotId, outcome);
+    if (trackingEnabled) {
+      additions.add(outcome);
+    }
     ledger.append(outcome, (id, x) -> {
       if (x == null) {
         ballot.getConfirmation().confirm();
@@ -211,9 +220,9 @@ public final class DefaultMonitor implements Monitor {
   
   @Override
   public void dispose() {
-    gcThread.terminate();
+    if (trackingEnabled) gcThread.terminate();
     timeoutThread.terminate();
-    gcThread.joinQuietly();
+    if (trackingEnabled) gcThread.joinQuietly();
     timeoutThread.joinQuietly();
     flow.dispose();
   }

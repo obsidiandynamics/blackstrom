@@ -9,12 +9,23 @@ public final class DefaultMonitorOptions {
   
   private int timeoutIntervalMillis = 1_000;
   
+  private boolean trackingEnabled = true;
+  
   String getGroupId() {
     return groupId;
   }
 
   public DefaultMonitorOptions withGroupId(String groupId) {
     this.groupId = groupId;
+    return this;
+  }
+  
+  boolean isTrackingEnabled() {
+    return trackingEnabled;
+  }
+  
+  public DefaultMonitorOptions withTrackingEnabled(boolean trackingEnabled) {
+    this.trackingEnabled = trackingEnabled;
     return this;
   }
   
