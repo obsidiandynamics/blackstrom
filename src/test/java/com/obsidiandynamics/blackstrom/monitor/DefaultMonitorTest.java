@@ -272,10 +272,7 @@ public final class DefaultMonitorTest {
     vote(ballotId, "a", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
-    assertEquals(1, outcomes.size());
-    
-    TestSupport.sleep(10);
-    assertEquals(1, monitor.getOutcomes().size());
+    wait.until(numTrackedOutcomesIs(1));
   }
   
   @Test
@@ -288,7 +285,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     
-    wait.untilTrue(() -> monitor.getOutcomes().isEmpty());
+    wait.until(numTrackedOutcomesIs(0));
   }
   
   private static class TestLedgerException extends Exception {
@@ -369,7 +366,8 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testImplicitTimeout_twoCohorts() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(60_000)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
+                                         .withTimeoutInterval(60_000)));
     
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 1, "a", "b");
@@ -380,6 +378,20 @@ public final class DefaultMonitorTest {
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
+  }
+  
+  @Test(expected=IllegalStateException.class)
+  public void testNoTracking() {
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
+                                         .withTrackingEnabled(false)));
+    
+    final String ballotId = UUID.randomUUID().toString();
+    nominate(ballotId, "a", "b");
+    vote(ballotId, "a", Intent.ACCEPT);
+    vote(ballotId, "b", Intent.ACCEPT);
+    
+    wait.until(numOutcomesIs(1));
+    monitor.getOutcomes();
   }
   
   @Test

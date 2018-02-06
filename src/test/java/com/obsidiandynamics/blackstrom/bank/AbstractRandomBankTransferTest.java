@@ -21,15 +21,16 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
   @Test
   public final void testRandomTransfers() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
-    testRandomTransfers(branches, 100, true, true);
+    testRandomTransfers(branches, 100, true, true, true);
   }
 
   @Test
   public final void testRandomTransfersBenchmark() {
-    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000, false, false));
+    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000, false, false, false));
   }
 
-  private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging) {
+  private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging, 
+                                   boolean enableTracking) {
     final long transferAmount = 1_000;
     final long initialBalance = runs * transferAmount / (numBranches * numBranches);
     final int backlogTarget = 10_000;
@@ -46,7 +47,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       }
     };
     final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled, sandbox);
-    final Monitor monitor = new DefaultMonitor();
+    final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTrackingEnabled(enableTracking));
     buildStandardManifold(initiator, monitor, branches);
 
     final long took = TestSupport.took(() -> {

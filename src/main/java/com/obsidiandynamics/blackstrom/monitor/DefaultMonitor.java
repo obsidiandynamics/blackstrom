@@ -29,6 +29,8 @@ public final class DefaultMonitor implements Monitor {
   
   private final WorkerThread gcThread;
   
+  private final boolean trackingEnabled;
+  
   private final int gcIntervalMillis;
   
   private final int outcomeLifetimeMillis;
@@ -49,16 +51,21 @@ public final class DefaultMonitor implements Monitor {
   
   public DefaultMonitor(DefaultMonitorOptions options) {
     this.groupId = options.getGroupId();
+    this.trackingEnabled = options.isTrackingEnabled();
     this.gcIntervalMillis = options.getGCInterval();
     this.outcomeLifetimeMillis = options.getOutcomeLifetime();
     this.timeoutIntervalMillis = options.getTimeoutInterval();
     
-    gcThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withName(nameThread("gc"))
-                     .withDaemon(true))
-        .onCycle(this::gcCycle)
-        .buildAndStart();
+    if (trackingEnabled) {
+      gcThread = WorkerThread.builder()
+          .withOptions(new WorkerOptions()
+                       .withName(nameThread("gc"))
+                       .withDaemon(true))
+          .onCycle(this::gcCycle)
+          .buildAndStart();
+    } else {
+      gcThread = null;
+    }
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
@@ -145,6 +152,8 @@ public final class DefaultMonitor implements Monitor {
   }
   
   public Map<Object, Outcome> getOutcomes() {
+    if (! trackingEnabled) throw new IllegalStateException("Tracking is not enabled");
+    
     final Map<Object, Outcome> decidedCopy;
     synchronized (trackerLock) {
       decidedCopy = new HashMap<>(decided);
@@ -192,7 +201,9 @@ public final class DefaultMonitor implements Monitor {
     final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses())
         .inResponseTo(proposal);
     pending.remove(ballotId);
-    additions.add(outcome);
+    if (trackingEnabled) {
+      additions.add(outcome);
+    }
     ledger.append(outcome, (id, x) -> {
       if (x == null) {
         ballot.getConfirmation().confirm();
@@ -209,9 +220,9 @@ public final class DefaultMonitor implements Monitor {
   
   @Override
   public void dispose() {
-    gcThread.terminate();
+    if (trackingEnabled) gcThread.terminate();
     timeoutThread.terminate();
-    gcThread.joinQuietly();
+    if (trackingEnabled) gcThread.joinQuietly();
     timeoutThread.joinQuietly();
     flow.dispose();
   }
