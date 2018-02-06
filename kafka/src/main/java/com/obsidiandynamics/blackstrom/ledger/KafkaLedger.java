@@ -20,7 +20,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
   
-  private static final int PIPELINE_BACKOFF_MILLIS = 10;
+  private static final int PIPELINE_BACKOFF_MILLIS = 1;
   
   private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
   
