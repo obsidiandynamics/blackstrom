@@ -1,10 +1,11 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.nodequeue.NodeQueue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
@@ -14,6 +15,8 @@ import com.obsidiandynamics.blackstrom.worker.*;
  *  @see <a href="https://github.com/obsidiandynamics/indigo/blob/4b13815d1aefb0e5a5a45ad89444ced9f6584e20/src/main/java/com/obsidiandynamics/indigo/NodeQueueActivation.java">NodeQueueActivation</a>
  */
 public final class SingleNodeQueueLedger implements Ledger {
+  private static final int POLL_BACKOFF_MILLIS = 1;
+  
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();
   
@@ -23,9 +26,9 @@ public final class SingleNodeQueueLedger implements Ledger {
   
   private final WorkerThread thread;
   
-  private final AtomicReference<QueueNode> tail = new AtomicReference<>(QueueNode.anchor());
-
-  private AtomicReference<QueueNode> head = tail.get();
+  private final NodeQueue<Message> queue = new NodeQueue<>();
+  
+  private final Consumer<Message> consumer = queue.consumer();
   
   public SingleNodeQueueLedger() {
     thread = WorkerThread.builder()
@@ -37,15 +40,13 @@ public final class SingleNodeQueueLedger implements Ledger {
   }
   
   private void cycle(WorkerThread thread) throws InterruptedException {
-    final QueueNode n = head.get();
-    if (n != null) {
-      final Message m = n.m;
+    final Message m = consumer.poll();
+    if (m != null) {
       for (MessageHandler handler : handlers) {
         handler.onMessage(context, m);
       }
-      head = n;
     } else {
-      Thread.sleep(1);
+      Thread.sleep(POLL_BACKOFF_MILLIS);
     }
   }
   
@@ -60,7 +61,7 @@ public final class SingleNodeQueueLedger implements Ledger {
 
   @Override
   public void append(Message message, AppendCallback callback) {
-    new QueueNode(message).appendTo(tail);
+    queue.add(message);
     callback.onAppend(message.getMessageId(), null);
   }
   

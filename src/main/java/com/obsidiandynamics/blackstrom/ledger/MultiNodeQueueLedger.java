@@ -2,10 +2,11 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.nodequeue.NodeQueue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
@@ -15,32 +16,33 @@ import com.obsidiandynamics.blackstrom.worker.*;
  *  @see <a href="https://github.com/obsidiandynamics/indigo/blob/4b13815d1aefb0e5a5a45ad89444ced9f6584e20/src/main/java/com/obsidiandynamics/indigo/NodeQueueActivation.java">NodeQueueActivation</a>
  */
 public final class MultiNodeQueueLedger implements Ledger {
+  private static final int POLL_BACKOFF_MILLIS = 1;
+  
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();
   
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   
   private final MessageContext context = new DefaultMessageContext(this, null);
-  
-  private final AtomicReference<QueueNode> tail = new AtomicReference<>(QueueNode.anchor());
+
+  private final NodeQueue<Message> queue = new NodeQueue<>();
   
   private class NodeWorker implements WorkerCycle {
     private final MessageHandler handler;
-    private AtomicReference<QueueNode> head;
+    private final Consumer<Message> consumer;
     
-    NodeWorker(MessageHandler handler, AtomicReference<QueueNode> head) {
+    NodeWorker(MessageHandler handler, Consumer<Message> consumer) {
       this.handler = handler;
-      this.head = head;
+      this.consumer = consumer;
     }
     
     @Override
     public void cycle(WorkerThread thread) throws InterruptedException {
-      final QueueNode n = head.get();
-      if (n != null) {
-        handler.onMessage(context, n.m);
-        head = n;
+      final Message m = consumer.poll();
+      if (m != null) {
+        handler.onMessage(context, m);
       } else {
-        Thread.sleep(1);
+        Thread.sleep(POLL_BACKOFF_MILLIS);
       }
     }
   }
@@ -53,14 +55,14 @@ public final class MultiNodeQueueLedger implements Ledger {
         .withOptions(new WorkerOptions()
                      .withName(MultiNodeQueueLedger.class.getSimpleName() + "-" + handler.getGroupId())
                      .withDaemon(true))
-        .onCycle(new NodeWorker(handler, tail.get()))
+        .onCycle(new NodeWorker(handler, queue.consumer()))
         .buildAndStart();
     threads.add(thread);
   }
   
   @Override
   public void append(Message message, AppendCallback callback) {
-    new QueueNode(message).appendTo(tail);
+    queue.add(message);
     callback.onAppend(message.getMessageId(), null);
   }
   
