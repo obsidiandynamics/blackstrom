@@ -26,7 +26,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
 
   @Test
   public final void testRandomTransfersBenchmark() {
-    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000, false, false, false));
+    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000, false, false, true));
   }
 
   private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging, 

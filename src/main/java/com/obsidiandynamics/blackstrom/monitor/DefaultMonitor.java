@@ -21,7 +21,7 @@ public final class DefaultMonitor implements Monitor {
   private final Map<Object, PendingBallot> pending = new HashMap<>();
   
   private final Object trackerLock = new Object();
-  private final Map<Object, Outcome> decided = new HashMap<>();
+  private final List<Outcome> decided = new LinkedList<>();
   private final NodeQueue<Outcome> additions = new NodeQueue<>();
   private final QueueConsumer<Outcome> additionsConsumer = additions.consumer();
   
@@ -90,7 +90,7 @@ public final class DefaultMonitor implements Monitor {
     final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
     int reaped = 0;
     synchronized (trackerLock) {
-      for (Iterator<Outcome> outcomesIt = decided.values().iterator(); outcomesIt.hasNext();) {
+      for (Iterator<Outcome> outcomesIt = decided.iterator(); outcomesIt.hasNext();) {
         final Outcome outcome = outcomesIt.next();
         if (outcome.getTimestamp() < collectThreshold) {
           outcomesIt.remove();
@@ -101,7 +101,7 @@ public final class DefaultMonitor implements Monitor {
       for (;;) {
         final Outcome addition = additionsConsumer.poll();
         if (addition != null) {
-          decided.put(addition.getBallotId(), addition);
+          decided.add(addition);
         } else {
           break;
         }
@@ -151,14 +151,14 @@ public final class DefaultMonitor implements Monitor {
     });
   }
   
-  public Map<Object, Outcome> getOutcomes() {
+  public List<Outcome> getOutcomes() {
     if (! trackingEnabled) throw new IllegalStateException("Tracking is not enabled");
     
-    final Map<Object, Outcome> decidedCopy;
+    final List<Outcome> decidedCopy;
     synchronized (trackerLock) {
-      decidedCopy = new HashMap<>(decided);
+      decidedCopy = new ArrayList<>(decided);
     }
-    return Collections.unmodifiableMap(decidedCopy);
+    return Collections.unmodifiableList(decidedCopy);
   }
   
   @Override
