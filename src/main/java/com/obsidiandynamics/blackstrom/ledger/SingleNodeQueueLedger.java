@@ -28,7 +28,7 @@ public final class SingleNodeQueueLedger implements Ledger {
   
   private final NodeQueue<Message> queue = new NodeQueue<>();
   
-  private final Consumer<Message> consumer = queue.consumer();
+  private final QueueConsumer<Message> consumer = queue.consumer();
   
   public SingleNodeQueueLedger() {
     thread = WorkerThread.builder()

@@ -29,9 +29,9 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   private class NodeWorker implements WorkerCycle {
     private final MessageHandler handler;
-    private final Consumer<Message> consumer;
+    private final QueueConsumer<Message> consumer;
     
-    NodeWorker(MessageHandler handler, Consumer<Message> consumer) {
+    NodeWorker(MessageHandler handler, QueueConsumer<Message> consumer) {
       this.handler = handler;
       this.consumer = consumer;
     }

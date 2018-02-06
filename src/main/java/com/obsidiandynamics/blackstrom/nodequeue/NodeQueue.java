@@ -11,29 +11,11 @@ import java.util.concurrent.atomic.*;
 public final class NodeQueue<T> {
   private final AtomicReference<LinkedNode<T>> tail = new AtomicReference<>(LinkedNode.anchor());
   
-  public static final class Consumer<T> {
-    private AtomicReference<LinkedNode<T>> head;
-    
-    Consumer(AtomicReference<LinkedNode<T>> head) {
-      this.head = head;
-    }
-    
-    public T poll() {
-      final LinkedNode<T> n = head.get();
-      if (n != null) {
-        head = n;
-        return n.item;
-      } else {
-        return null;
-      }
-    }
-  }
-  
   public void add(T item) {
     new LinkedNode<>(item).appendTo(tail);
   }
   
-  public Consumer<T> consumer() {
-    return new Consumer<>(tail.get());
+  public QueueConsumer<T> consumer() {
+    return new QueueConsumer<>(tail.get());
   }
 }
