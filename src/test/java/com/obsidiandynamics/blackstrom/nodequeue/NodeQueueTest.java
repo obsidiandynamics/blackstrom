@@ -36,7 +36,8 @@ public final class NodeQueueTest {
   
   private static List<Long> consumeByDrain(QueueConsumer<Long> consumer) {
     final List<Long> items = new ArrayList<>();
-    consumer.drain(items);
+    final int drained = consumer.drain(items);
+    assertEquals(drained, items.size());
     return items;
   }
   
