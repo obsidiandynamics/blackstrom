@@ -78,7 +78,7 @@ public final class DefaultMonitor implements Monitor {
   private void gcCycle(WorkerThread thread) throws InterruptedException {
     Thread.sleep(gcIntervalMillis);
     
-    long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+    final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
     int reaped = 0;
     for (Outcome outcome : decided.values()) {
       if (outcome.getTimestamp() < collectThreshold) {
@@ -87,22 +87,17 @@ public final class DefaultMonitor implements Monitor {
       }
     }
     
-    collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
     for (;;) {
       final Outcome addition = additions.poll();
       if (addition != null) {
-        if (addition.getTimestamp() >= collectThreshold) {
-          decided.put(addition.getBallotId(), addition);
-        } else {
-          reaped++;  
-        }
+        decided.put(addition.getBallotId(), addition);
       } else {
         break;
       }
     }
-    reapedSoFar += reaped;
       
     if (reaped != 0) {
+      reapedSoFar += reaped;
       LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
                 reaped, reapedSoFar, pending.size(), decided.size());
     }
