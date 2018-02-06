@@ -195,9 +195,10 @@ public final class KafkaLedger implements Ledger {
     if (handlerId != null) {
       final ConsumerOffsets consumer = consumers.get(handlerId);
       final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
+      final TopicPartition tp = new TopicPartition(topic, defaultMessageId.getShard());
+      final OffsetAndMetadata om = new OffsetAndMetadata(defaultMessageId.getOffset());
       synchronized (consumer.lock) {
-        consumer.offsets.put(new TopicPartition(topic, defaultMessageId.getShard()), 
-                             new OffsetAndMetadata(defaultMessageId.getOffset()));
+        consumer.offsets.put(tp, om);
       }
     }
   }
