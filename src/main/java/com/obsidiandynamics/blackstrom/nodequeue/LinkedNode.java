@@ -2,19 +2,19 @@ package com.obsidiandynamics.blackstrom.nodequeue;
 
 import java.util.concurrent.atomic.*;
 
-public final class LinkedNode<T> extends AtomicReference<LinkedNode<T>> {
+public final class LinkedNode<E> extends AtomicReference<LinkedNode<E>> {
   private static final long serialVersionUID = 1L;
 
-  public final T item;
+  public final E element;
 
-  public LinkedNode(T item) { this.item = item; }
+  public LinkedNode(E element) { this.element = element; }
   
   public static <T> LinkedNode<T> anchor() {
     return new LinkedNode<>(null);
   }
   
-  public void appendTo(AtomicReference<LinkedNode<T>> tail) {
-    final LinkedNode<T> t1 = tail.getAndSet(this);
+  public void appendTo(AtomicReference<LinkedNode<E>> tail) {
+    final LinkedNode<E> t1 = tail.getAndSet(this);
     t1.lazySet(this);
   }
 }

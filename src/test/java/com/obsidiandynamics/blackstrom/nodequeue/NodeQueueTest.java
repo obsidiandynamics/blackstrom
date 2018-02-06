@@ -13,23 +13,36 @@ public final class NodeQueueTest {
     final int messages = 100;
     final NodeQueue<Long> q = new NodeQueue<>();
     LongStream.range(0, messages).forEach(q::add);
-    final List<Long> consumed = consume(q.consumer());
+    final QueueConsumer<Long> consumer = q.consumer();
+    assertNull(consumer.peek());
+    final List<Long> consumed = consumeByDrain(consumer);
     assertEquals(0, consumed.size());
   }
 
   @Test
-  public void testEarlyConsumer() {
+  public void testTwoEarlyConsumers() {
     final int messages = 100;
     final NodeQueue<Long> q = new NodeQueue<>();
-    final QueueConsumer<Long> c = q.consumer();
+    final QueueConsumer<Long> c0 = q.consumer();
+    final QueueConsumer<Long> c1 = q.consumer();
     LongStream.range(0, messages).forEach(q::add);
-    final List<Long> consumed = consume(c);
-    assertEquals(messages, consumed.size());
+    assertNotNull(c0.peek());
+    assertNotNull(c1.peek());
+    final List<Long> consumed0 = consumeByDrain(c0);
+    final List<Long> consumed1 = consumeByIterator(c1);
+    assertEquals(messages, consumed0.size());
+    assertEquals(messages, consumed1.size());
   }
   
-  private static List<Long> consume(QueueConsumer<Long> consumer) {
+  private static List<Long> consumeByDrain(QueueConsumer<Long> consumer) {
     final List<Long> items = new ArrayList<>();
-    for (Long item; (item = consumer.poll()) != null; items.add(item));
+    consumer.drain(items);
+    return items;
+  }
+  
+  private static List<Long> consumeByIterator(QueueConsumer<Long> consumer) {
+    final List<Long> items = new ArrayList<>();
+    consumer.forEach(items::add);
     return items;
   }
 }

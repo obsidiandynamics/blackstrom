@@ -131,10 +131,6 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testProposalOutcome_twoCohorts() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
-                                         .withOutcomeLifetime(60_000)
-                                         .withGCInterval(1)));
-    
     String ballotId;
     
     ballotId = UUID.randomUUID().toString();
@@ -218,7 +214,6 @@ public final class DefaultMonitorTest {
     vote(ballotId, "b", Intent.ACCEPT);
 
     wait.until(numOutcomesIs(1));
-    wait.until(numTrackedOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
@@ -229,6 +224,8 @@ public final class DefaultMonitorTest {
     outcomes.clear();
     nominate(ballotId, "a", "b", "c");
     assertEquals(0, outcomes.size());
+
+    wait.until(numTrackedOutcomesIs(1));
   }
   
   @Test
@@ -244,7 +241,6 @@ public final class DefaultMonitorTest {
     vote(ballotId, "b", Intent.TIMEOUT);
 
     wait.until(numOutcomesIs(1));
-    wait.until(numTrackedOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());

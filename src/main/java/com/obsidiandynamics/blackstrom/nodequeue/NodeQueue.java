@@ -7,15 +7,17 @@ import java.util.concurrent.atomic.*;
  *  implementation, adapted from Indigo's scheduler.<p>
  *  
  *  @see <a href="https://github.com/obsidiandynamics/indigo/blob/4b13815d1aefb0e5a5a45ad89444ced9f6584e20/src/main/java/com/obsidiandynamics/indigo/NodeQueueActivation.java">NodeQueueActivation</a>
+ *  
+ *  @param <E> Element type.
  */
-public final class NodeQueue<T> {
-  private final AtomicReference<LinkedNode<T>> tail = new AtomicReference<>(LinkedNode.anchor());
+public final class NodeQueue<E> {
+  private final AtomicReference<LinkedNode<E>> tail = new AtomicReference<>(LinkedNode.anchor());
   
-  public void add(T item) {
+  public void add(E item) {
     new LinkedNode<>(item).appendTo(tail);
   }
   
-  public QueueConsumer<T> consumer() {
+  public QueueConsumer<E> consumer() {
     return new QueueConsumer<>(tail.get());
   }
 }
