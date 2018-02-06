@@ -6,7 +6,6 @@ import java.util.concurrent.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
-import com.obsidiandynamics.blackstrom.nodequeue.NodeQueue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
