@@ -40,7 +40,7 @@ public final class MessageHandlerAdapter implements MessageHandler {
         
       case $UNKNOWN:
       default:
-        throw new UnsupportedOperationException("Unsupported message of type " + message.getMessageType().name());
+        throw new UnsupportedOperationException("Unsupported message of type " + message.getMessageType());
     }
   }
 
