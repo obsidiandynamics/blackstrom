@@ -112,8 +112,9 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
         .build();
 
     testSingleTransfer(initialBalance + 1, Verdict.ABORT, AbortReason.REJECT, initiator, sandbox);
-    testSingleTransfer(initialBalance, Verdict.COMMIT, null, initiator, sandbox);
+    testSingleTransfer(10, Verdict.COMMIT, null, initiator, sandbox);
 
+    Thread.sleep(10);
     wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
@@ -127,10 +128,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     final String ballotId = UUID.randomUUID().toString();
     final Outcome o = initiator.initiate(new Proposal(ballotId, 
                                                       TWO_BRANCH_IDS, 
-                                                      BankSettlement.builder()
-                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
-                                                      .build(),
+                                                      BankSettlement.forTwo(transferAmount),
                                                       PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(expectedVerdict, o.getVerdict());

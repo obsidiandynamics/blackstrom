@@ -29,17 +29,14 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
 
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
                                                       TWO_BRANCH_IDS,
-                                                      BankSettlement.builder()
-                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
-                                                      .build(),
+                                                      BankSettlement.forTwo(transferAmount),
                                                       PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.COMMIT, o.getVerdict());
     assertNull(o.getAbortReason());
     assertEquals(2, o.getResponses().length);
-    assertEquals(Intent.ACCEPT, o.getResponse(getBranchId(0)).getIntent());
-    assertEquals(Intent.ACCEPT, o.getResponse(getBranchId(1)).getIntent());
+    assertEquals(Intent.ACCEPT, o.getResponse(BankBranch.getId(0)).getIntent());
+    assertEquals(Intent.ACCEPT, o.getResponse(BankBranch.getId(1)).getIntent());
     wait.until(() -> {
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
@@ -61,17 +58,14 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
 
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
                                                       TWO_BRANCH_IDS, 
-                                                      BankSettlement.builder()
-                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
-                                                      .build(),
+                                                      BankSettlement.forTwo(transferAmount),
                                                       PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
     assertEquals(AbortReason.REJECT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
-    assertEquals(Intent.REJECT, o.getResponse(getBranchId(0)).getIntent());
-    final Response acceptResponse = o.getResponse(getBranchId(1));
+    assertEquals(Intent.REJECT, o.getResponse(BankBranch.getId(0)).getIntent());
+    final Response acceptResponse = o.getResponse(BankBranch.getId(1));
     if (acceptResponse != null) {
       assertEquals(Intent.ACCEPT, acceptResponse.getIntent());  
     }
@@ -100,10 +94,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
 
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(),
                                                       TWO_BRANCH_IDS, 
-                                                      BankSettlement.builder()
-                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
-                                                      .build(),
+                                                      BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());
@@ -135,10 +126,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
 
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(),
                                                       TWO_BRANCH_IDS, 
-                                                      BankSettlement.builder()
-                                                      .withTransfers(new BalanceTransfer(getBranchId(0), -transferAmount),
-                                                                     new BalanceTransfer(getBranchId(1), transferAmount))
-                                                      .build(),
+                                                      BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
     assertEquals(Verdict.ABORT, o.getVerdict());

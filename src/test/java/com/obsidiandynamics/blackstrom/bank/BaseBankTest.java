@@ -12,7 +12,7 @@ import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
 public abstract class BaseBankTest {  
-  protected static final String[] TWO_BRANCH_IDS = new String[] { getBranchId(0), getBranchId(1) };
+  protected static final String[] TWO_BRANCH_IDS = new String[] { BankBranch.getId(0), BankBranch.getId(1) };
   protected static final int TWO_BRANCHES = TWO_BRANCH_IDS.length;
   protected static final int PROPOSAL_TIMEOUT = 30_000;
   protected static final int FUTURE_GET_TIMEOUT = PROPOSAL_TIMEOUT * 2;
@@ -68,22 +68,13 @@ public abstract class BaseBankTest {
   }
 
   protected static final String[] generateBranches(int numBranches) {
-    final String[] branches = new String[numBranches];
-    for (int i = 0; i < numBranches; i++) {
-      branches[i] = getBranchId(i);
-    }
-    return branches;
-  }
-
-  protected static final String getBranchId(int branchIdx) {
-    return "branch-" + branchIdx;
+    return IntStream.range(0, numBranches).boxed()
+        .map(BankBranch::getId).collect(Collectors.toList()).toArray(new String[numBranches]);
   }
 
   protected static final BankBranch[] createBranches(int numBranches, long initialBalance, boolean idempotencyEnabled, Sandbox sandbox) {
-    final BankBranch[] branches = new BankBranch[numBranches];
-    for (int branchIdx = 0; branchIdx < numBranches; branchIdx++) {
-      branches[branchIdx] = new BankBranch(getBranchId(branchIdx), initialBalance, idempotencyEnabled, sandbox::contains);
-    }
-    return branches;
+    return IntStream.range(0, numBranches).boxed()
+        .map(i -> new BankBranch(BankBranch.getId(i), initialBalance, idempotencyEnabled, sandbox::contains))
+        .collect(Collectors.toList()).toArray(new BankBranch[numBranches]);
   }
 }

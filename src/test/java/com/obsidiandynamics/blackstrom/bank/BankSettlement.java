@@ -40,9 +40,10 @@ public final class BankSettlement {
   }
   
   public static BankSettlement forTwo(long amount) {
-   return builder()
-       .withTransfers(new BalanceTransfer("branch-0", -amount), new BalanceTransfer("branch-1", amount))
-       .build();
+    return builder()
+        .withTransfers(new BalanceTransfer(BankBranch.getId(0), -amount), 
+                       new BalanceTransfer(BankBranch.getId(1), amount))
+        .build();
   }
   
   public static BankSettlementBuilder builder() {
