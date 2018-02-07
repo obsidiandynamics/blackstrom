@@ -20,6 +20,8 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   
   private final TaskScheduler scheduler = new TaskScheduler();
   
+  private final Object backingHandlerLock = new Object();
+  
   private final Ledger interceptedLedger = new Ledger() {
     @Override public void attach(MessageHandler handler) {
       throw new UnsupportedOperationException();
@@ -114,25 +116,31 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
           throw new UnsupportedOperationException("Unsupported failure mode " + rxFailureMode.getFailureType());
       }
     } else {
-      backingHandler.onMessage(intercepedContext, message);
+      forwardToHandler(intercepedContext, message);
+    }
+  }
+  
+  private void forwardToHandler(MessageContext context, Message message) {
+    synchronized (backingHandlerLock) {
+      backingHandler.onMessage(context, message);
     }
   }
   
   private void onRxDuplicate(MessageContext context, Message message) {
-    backingHandler.onMessage(context, message);
-    backingHandler.onMessage(context, message);
+    forwardToHandler(context, message);
+    forwardToHandler(context, message);
   }
   
   private void onRxDelayed(DelayedDelivery mode, MessageContext context, Message message) {
     runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
-      backingHandler.onMessage(context, message);
+      forwardToHandler(context, message);
     });
   }
   
   private void onRxDelayedDuplicate(DelayedDuplicateDelivery mode, MessageContext context, Message message) {
-    backingHandler.onMessage(context, message);
+    forwardToHandler(context, message);
     runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
-      backingHandler.onMessage(context, message);
+      forwardToHandler(context, message);
     });
   }
   
