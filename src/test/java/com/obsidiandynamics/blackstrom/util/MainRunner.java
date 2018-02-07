@@ -4,14 +4,16 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.obsidiandynamics.indigo.util.*;
+
 public final class MainRunner {
-  private static final String PACKAGE_PREFIX = "com.obsidiandynamics.blackstrom";
-  
   public static void main(String[] args) throws IOException {
+    final int packageCompressLevel = PropertyUtils.get(MainRunner.class.getSimpleName() + ".packageCompressLevel", Integer::parseInt, 0);
+    
     System.out.println("Select class to run");
     Arrays.sort(args);
     for (int i = 0; i < args.length; i++) {
-      System.out.format("[%2d] %s\n", i + 1, args[i].substring(PACKAGE_PREFIX.length() + 1));
+      System.out.format("[%2d] %s\n", i + 1, formatClass(args[i], packageCompressLevel));
     }
     
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
@@ -22,7 +24,7 @@ public final class MainRunner {
           try {
             run(args[index]);
           } catch (Exception e) {
-            System.err.println("Error running " + args[index] + ": " + e);
+            System.err.println("Error: " + e);
           }
         } catch (NumberFormatException e) {
           System.err.println(e.getMessage());
@@ -31,6 +33,20 @@ public final class MainRunner {
         System.out.format("Exiting\n");
       }
     }
+  }
+  
+  private static CharSequence formatClass(String className, int packageCompressLevel) {
+    final String[] frags = className.split("\\.");
+    final StringBuilder formatted = new StringBuilder();
+    for (int i = 0; i < frags.length; i++) {
+      if (formatted.length() != 0) formatted.append('.');
+      if (i < packageCompressLevel && i < frags.length - 1) {
+        formatted.append(frags[i].charAt(0));
+      } else {
+        formatted.append(frags[i]);
+      }
+    }
+    return formatted;
   }
   
   private static void run(String className) throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
