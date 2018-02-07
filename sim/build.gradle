@@ -5,6 +5,12 @@ dependencies {
   compile project(':')
 }
 
+task addBenchmarks() {
+  project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.BalancedRandomBankTransferTest'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.BalancedLedgerTest'
+}
+
 jar {
   baseName packageName
 }

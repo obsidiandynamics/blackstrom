@@ -19,7 +19,7 @@ public final class BalancedRandomBankTransferTest extends AbstractRandomBankTran
   
   @Override
   protected Ledger createLedger() {
-    return new BalancedLedgerHub(1, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000)).connect();
+    return new BalancedLedgerHub(1, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000, 100)).connect();
   }
 
   @Override

@@ -6,6 +6,11 @@ dependencies {
   compile 'com.esotericsoftware:kryo:4.0.1'
 }
 
+task addBenchmarks() {
+  project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.codec.KryoMessageCodecTest'
+}
+
 jar {
   baseName packageName
 }

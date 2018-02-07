@@ -117,6 +117,29 @@ dependencies {
   compile 'org.apache.commons:commons-lang3:3.7'
 }
 
+project.ext.set('benchmarkClasspath', new org.gradle.api.internal.file.UnionFileCollection())
+project.ext.set('benchmarkClasses', new ArrayList())
+
+task addBenchmarks() {
+  project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.MultiNodeQueueRandomBankTransferTest'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedgerTest'
+}
+
+task benchmark() {
+  dependsOn allprojects*.tasks*.findByName('testClasses')
+  doLast {
+    def perfJvmArgs = '-XX:-MaxFDLimit -XX:+TieredCompilation -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -Xms2G -Xmx2G -Xss1M -XX:+UseParallelGC'
+    javaexec {
+      classpath = project(':').benchmarkClasspath
+      main = 'com.obsidiandynamics.blackstrom.util.MainRunner'
+      args = project(':').benchmarkClasses
+      jvmArgs = Arrays.asList perfJvmArgs.split(' ')
+      standardInput = System.in
+    }
+  }
+}
+
 jar {
   baseName packageName
   finalizedBy jacocoRootReport
