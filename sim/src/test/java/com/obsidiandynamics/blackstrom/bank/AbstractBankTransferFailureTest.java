@@ -94,7 +94,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
     final Sandbox sandbox = Sandbox.forTest(this);
-    final BankBranch[] branches = createBranches(2, initialBalance, true, sandbox);
+    final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
 
     ledger = createLedger();
     manifold = Manifold.builder()

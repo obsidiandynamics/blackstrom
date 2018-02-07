@@ -2,10 +2,12 @@ package com.obsidiandynamics.blackstrom.bank;
 
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.indigo.util.*;
 
@@ -184,5 +186,16 @@ public final class BankBranch implements Cohort {
 
   public static final String getId(int branchIdx) {
     return "branch-" + branchIdx;
+  }
+
+  public static final String[] generateIds(int numBranches) {
+    return IntStream.range(0, numBranches).boxed()
+        .map(BankBranch::getId).collect(Collectors.toList()).toArray(new String[numBranches]);
+  }
+
+  public static final BankBranch[] create(int numBranches, long initialBalance, boolean idempotencyEnabled, Sandbox sandbox) {
+    return IntStream.range(0, numBranches).boxed()
+        .map(i -> new BankBranch(BankBranch.getId(i), initialBalance, idempotencyEnabled, sandbox::contains))
+        .collect(Collectors.toList()).toArray(new BankBranch[numBranches]);
   }
 }

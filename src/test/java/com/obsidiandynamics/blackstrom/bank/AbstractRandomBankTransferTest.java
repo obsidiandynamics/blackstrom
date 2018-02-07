@@ -46,7 +46,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         .incrementAndGet();
       }
     };
-    final BankBranch[] branches = createBranches(numBranches, initialBalance, idempotencyEnabled, sandbox);
+    final BankBranch[] branches = BankBranch.create(numBranches, initialBalance, idempotencyEnabled, sandbox);
     final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTrackingEnabled(enableTracking));
     buildStandardManifold(initiator, monitor, branches);
 
@@ -54,15 +54,15 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       String[] branchIds = null;
       BankSettlement settlement = null;
       if (! randomiseRuns) {
-        branchIds = numBranches != TWO_BRANCHES ? generateBranches(numBranches) : TWO_BRANCH_IDS;
-        settlement = generateRandomSettlement(branchIds, transferAmount);
+        branchIds = numBranches != 2 ? BankBranch.generateIds(numBranches) : TWO_BRANCH_IDS;
+        settlement = BankSettlement.randomise(branchIds, transferAmount);
       }
       
       final long ballotIdBase = System.currentTimeMillis() << 32;
       for (int run = 0; run < runs; run++) {
         if (randomiseRuns) {
-          branchIds = numBranches != TWO_BRANCHES ? generateBranches(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
-          settlement = generateRandomSettlement(branchIds, transferAmount);
+          branchIds = numBranches != 2 ? BankBranch.generateIds(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
+          settlement = BankSettlement.randomise(branchIds, transferAmount);
         }
         final Proposal p = new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
             .withShardKey(sandbox.key());

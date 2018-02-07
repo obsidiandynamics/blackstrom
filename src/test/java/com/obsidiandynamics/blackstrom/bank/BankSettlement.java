@@ -66,4 +66,18 @@ public final class BankSettlement {
       return new BankSettlement(transfers.stream().collect(Collectors.toMap(t -> t.getBranchId(), Function.identity())));
     }
   }
+
+  public static final BankSettlement randomise(String[] branchIds, long maxAbsoluteAmount) {
+    final Map<String, BalanceTransfer> transfers = new HashMap<>(branchIds.length);
+    long sum = 0;
+    for (int i = 0; i < branchIds.length - 1; i++) {
+      final long randomAmount = maxAbsoluteAmount - (long) (Math.random() * maxAbsoluteAmount * 2);
+      sum += randomAmount;
+      final String branchId = branchIds[i];
+      transfers.put(branchId, new BalanceTransfer(branchId, randomAmount));
+    }
+    final String lastBranchId = branchIds[branchIds.length - 1];
+    transfers.put(lastBranchId, new BalanceTransfer(lastBranchId, -sum));
+    return new BankSettlement(transfers);
+  }
 }
