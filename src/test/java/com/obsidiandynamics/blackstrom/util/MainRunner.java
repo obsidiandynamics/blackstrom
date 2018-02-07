@@ -5,18 +5,20 @@ import java.lang.reflect.*;
 import java.util.*;
 
 public final class MainRunner {
+  private static final String PACKAGE_PREFIX = "com.obsidiandynamics.blackstrom";
+  
   public static void main(String[] args) throws IOException {
     System.out.println("Select class to run");
     Arrays.sort(args);
     for (int i = 0; i < args.length; i++) {
-      System.out.format("[%2d] %s\n", i, args[i]);
+      System.out.format("[%2d] %s\n", i + 1, args[i].substring(PACKAGE_PREFIX.length() + 1));
     }
     
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
       final String read = reader.readLine();
       if (read != null && ! read.trim().isEmpty()) {
         try {
-          final int index = Integer.parseInt(read.trim());
+          final int index = Integer.parseInt(read.trim()) - 1;
           try {
             run(args[index]);
           } catch (Exception e) {
@@ -26,7 +28,7 @@ public final class MainRunner {
           System.err.println(e.getMessage());
         }
       } else {
-        System.out.format("Existing\n");
+        System.out.format("Exiting\n");
       }
     }
   }
