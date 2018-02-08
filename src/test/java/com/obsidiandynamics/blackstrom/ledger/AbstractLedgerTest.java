@@ -143,7 +143,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   private final void testOneWay(int producers, int consumers, int messagesPerProducer) {
     useLedger(createLedger());
     
-    final LongAdder totalSent = new LongAdder();
+    final AtomicLong totalSent = new AtomicLong();
     final long backlogTarget = 100_000;
     final int modCheck = 1_000;
     final AtomicLong[] receivedArray = new AtomicLong[consumers];
@@ -172,8 +172,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
           appendMessage("test", TEST_OBJECTIVE);
           
           if (i % modCheck == 0) {
-            totalSent.add(modCheck);
-            final long expectedReceived = totalSent.sum() * consumers;
+            final long expectedReceived = totalSent.addAndGet(modCheck) * consumers;
             while (expectedReceived - totalReceived.getAsLong() > backlogTarget) {
               TestSupport.sleep(1);
             }
@@ -204,7 +203,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   private final void testTwoWay(int numMessages) {
     useLedger(createLedger());
 
-    final LongAdder totalSent = new LongAdder();
+    final AtomicLong totalSent = new AtomicLong();
     final long backlogTarget = 10_000;
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
@@ -226,8 +225,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
         appendMessage("source", TEST_OBJECTIVE);
         
         if (i % 1000 == 0) {
-          totalSent.add(1000);
-          final long totalSentSum = totalSent.sum();
+          final long totalSentSum = totalSent.addAndGet(1000);
           while (totalSentSum - received.get() > backlogTarget) {
             TestSupport.sleep(1);
           }
