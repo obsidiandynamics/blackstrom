@@ -26,14 +26,13 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
     KafkaDocker.start();
   }
   
-  private static String TOPIC_NAME = KafkaTopic.forTest(KafkaJacksonRandomBankTransferIT.class, "kryo");
-  
   @Override
   protected Ledger createLedger() {
+    final String topicName = KafkaTopic.forTest(KafkaJacksonRandomBankTransferIT.class, "kryo");
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
-                           TOPIC_NAME, 
+                           topicName + (Testmark.isEnabled() ? ".bench" : ""), 
                            new JacksonMessageCodec(true, new JacksonBankExpansion()), 10);
   }
 
@@ -44,7 +43,6 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
   
   public static void main(String[] args) {
     Testmark.enable();
-    TOPIC_NAME += ".bench";
     JUnitCore.runClasses(KafkaJacksonRandomBankTransferIT.class);
   }
 }

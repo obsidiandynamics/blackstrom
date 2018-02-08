@@ -6,31 +6,40 @@ import java.util.*;
 
 import com.obsidiandynamics.indigo.util.*;
 
-public final class MainRunner {
+public final class Runner {
   public static void main(String[] args) throws IOException {
-    final int packageCompressLevel = PropertyUtils.get(MainRunner.class.getSimpleName() + ".packageCompressLevel", Integer::parseInt, 0);
+    final int packageCompressLevel = PropertyUtils.get("runner.packageCompressLevel", Integer::parseInt, 0);
     
-    System.out.println("Select class to run");
     Arrays.sort(args);
-    for (int i = 0; i < args.length; i++) {
-      System.out.format("[%2d] %s\n", i + 1, formatClass(args[i], packageCompressLevel));
-    }
-    
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-      final String read = reader.readLine();
-      if (read != null && ! read.trim().isEmpty()) {
-        try {
-          final int index = Integer.parseInt(read.trim()) - 1;
+    final int selection = PropertyUtils.get("runner.selection", Integer::parseInt, 0);
+    if (selection != 0) {
+      try {
+        run(args[selection - 1]);
+      } catch (Exception e) {
+        System.err.println("Error: " + e);
+      }
+    } else {
+      System.out.println("Select class to run");
+      for (int i = 0; i < args.length; i++) {
+        System.out.format("[%2d] %s\n", i + 1, formatClass(args[i], packageCompressLevel));
+      }
+      
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+        final String read = reader.readLine();
+        if (read != null && ! read.trim().isEmpty()) {
           try {
-            run(args[index]);
-          } catch (Exception e) {
-            System.err.println("Error: " + e);
+            final int index = Integer.parseInt(read.trim()) - 1;
+            try {
+              run(args[index]);
+            } catch (Exception e) {
+              System.err.println("Error: " + e);
+            }
+          } catch (NumberFormatException e) {
+            System.err.println(e.getMessage());
           }
-        } catch (NumberFormatException e) {
-          System.err.println(e.getMessage());
+        } else {
+          System.out.format("Exiting\n");
         }
-      } else {
-        System.out.format("Exiting\n");
       }
     }
   }

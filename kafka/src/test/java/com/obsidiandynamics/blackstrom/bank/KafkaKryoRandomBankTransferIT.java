@@ -26,15 +26,14 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
     KafkaDocker.start();
   }
   
-  private static String TOPIC_NAME = KafkaTopic.forTest(KafkaKryoRandomBankTransferIT.class, 
-                                                        "kryo-" + KryoMessageCodec.ENCODING_VERSION);
-  
   @Override
   protected Ledger createLedger() {
+    final String topicName = KafkaTopic.forTest(KafkaKryoRandomBankTransferIT.class, 
+                                                "kryo-" + KryoMessageCodec.ENCODING_VERSION);
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
-                           TOPIC_NAME, 
+                           topicName + (Testmark.isEnabled() ? ".bench" : ""), 
                            new KryoMessageCodec(true, new KryoBankExpansion()), 10);
   }
 
@@ -45,7 +44,6 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
   
   public static void main(String[] args) {
     Testmark.enable();
-    TOPIC_NAME += ".bench";
     JUnitCore.runClasses(KafkaKryoRandomBankTransferIT.class);
   }
 }
