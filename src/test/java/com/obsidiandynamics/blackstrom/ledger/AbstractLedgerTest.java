@@ -144,8 +144,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
     useLedger(createLedger());
     
     final AtomicLong totalSent = new AtomicLong();
-    final long backlogTarget = 100_000;
-    final int modCheck = 1_000;
+    final int backlogTarget = 10_000;
+    final int checkInterval = backlogTarget;
     final AtomicLong[] receivedArray = new AtomicLong[consumers];
     for (int i = 0; i < consumers; i++) {
       final AtomicLong received = new AtomicLong();
@@ -165,15 +165,26 @@ public abstract class AbstractLedgerTest implements TestSupport {
       }
       return total;
     };
+    
+    final LongSupplier smallestReceived = () -> {
+      long smallest = Long.MAX_VALUE;
+      for (AtomicLong received : receivedArray) {
+        final long r = received.get();
+        if (r < smallest) {
+          smallest = r;
+        }
+      }
+      return smallest;
+    };
 
     final long took = TestSupport.took(() -> {
       ParallelJob.blocking(producers, threadNo -> {
         for (int i = 0; i < messagesPerProducer; i++) {
           appendMessage("test", TEST_OBJECTIVE);
           
-          if (i % modCheck == 0) {
-            final long expectedReceived = totalSent.addAndGet(modCheck) * consumers;
-            while (expectedReceived - totalReceived.getAsLong() > backlogTarget) {
+          if (i != 0 && i % checkInterval == 0) {
+            final long sent = totalSent.addAndGet(checkInterval);
+            while (sent - smallestReceived.getAsLong() > backlogTarget) {
               TestSupport.sleep(1);
             }
           }
@@ -204,7 +215,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
     useLedger(createLedger());
 
     final AtomicLong totalSent = new AtomicLong();
-    final long backlogTarget = 10_000;
+    final int backlogTarget = 10_000;
+    final int checkInterval = backlogTarget;
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (sandbox.contains(m) && m.getSource().equals("source")) {
@@ -224,9 +236,9 @@ public abstract class AbstractLedgerTest implements TestSupport {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("source", TEST_OBJECTIVE);
         
-        if (i % 1000 == 0) {
-          final long totalSentSum = totalSent.addAndGet(1000);
-          while (totalSentSum - received.get() > backlogTarget) {
+        if (i != 0 && i % checkInterval == 0) {
+          final long sent = totalSent.addAndGet(checkInterval);
+          while (sent - received.get() > backlogTarget) {
             TestSupport.sleep(1);
           }
         }
