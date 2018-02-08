@@ -7,14 +7,14 @@ import org.apache.kafka.clients.consumer.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class PipelinedConsumer<K, V> implements Joinable {
+public final class ConsumerPipe<K, V> implements Joinable {
   private final BlockingQueue<ConsumerRecords<K, V>> queue;
   
   private final RecordHandler<K, V> handler;
   
   private final WorkerThread thread;
   
-  public PipelinedConsumer(RecordHandler<K, V> handler, int backlogSize, String threadName) {
+  public ConsumerPipe(RecordHandler<K, V> handler, int backlogSize, String threadName) {
     this.handler = handler;
     queue = new LinkedBlockingQueue<>(backlogSize);
     thread = WorkerThread.builder()
@@ -23,7 +23,7 @@ public final class PipelinedConsumer<K, V> implements Joinable {
         .buildAndStart();
   }
   
-  public boolean enqueue(ConsumerRecords<K, V> records) {
+  public boolean receive(ConsumerRecords<K, V> records) {
     return queue.offer(records);
   }
   

@@ -6,7 +6,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class PipelinedProducer<K, V> implements Joinable {
+public final class ProducerPipe<K, V> implements Joinable {
   private static final int QUEUE_BACKOFF_MILLIS = 1;
   
   private static class AsyncRecord<K, V> {
@@ -31,7 +31,7 @@ public final class PipelinedProducer<K, V> implements Joinable {
   
   private volatile boolean producerDisposed;
   
-  public PipelinedProducer(Producer<K, V> producer, String threadName, Logger log) {
+  public ProducerPipe(Producer<K, V> producer, String threadName, Logger log) {
     this.producer = producer;
     this.log = log;
     thread = WorkerThread.builder()
@@ -40,7 +40,7 @@ public final class PipelinedProducer<K, V> implements Joinable {
         .buildAndStart();
   }
   
-  public void enqueue(ProducerRecord<K, V> record, Callback callback) {
+  public void send(ProducerRecord<K, V> record, Callback callback) {
     queue.add(new AsyncRecord<>(record, callback));
   }
   

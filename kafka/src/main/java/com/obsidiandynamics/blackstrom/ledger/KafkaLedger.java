@@ -34,11 +34,11 @@ public final class KafkaLedger implements Ledger {
   
   private final Producer<String, Message> producer;
   
-  private final PipelinedProducer<String, Message> pipelinedProducer;
+  private final ProducerPipe<String, Message> producerPipe;
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
-  private final List<PipelinedConsumer<String, Message>> pipelinedConsumers = new CopyOnWriteArrayList<>();
+  private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
   
   private static class ConsumerOffsets {
     final Object lock = new Object();
@@ -74,8 +74,8 @@ public final class KafkaLedger implements Ledger {
         .with("compression.type", "lz4")
         .build();
     producer = kafka.getProducer(props);
-    pipelinedProducer = new PipelinedProducer<>(producer, 
-        PipelinedProducer.class.getSimpleName() + "-" + topic, log);
+    producerPipe = new ProducerPipe<>(producer, 
+        ProducerPipe.class.getSimpleName() + "-" + topic, log);
   }
   
   @Override
@@ -131,7 +131,7 @@ public final class KafkaLedger implements Ledger {
     }
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
-    final String pipelinedConsumerThreadName = PipelinedConsumer.class.getSimpleName() + "-" + groupId;
+    final String pipelinedConsumerThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
         final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
@@ -142,12 +142,12 @@ public final class KafkaLedger implements Ledger {
         handler.onMessage(context, message);
       }
     };
-    final PipelinedConsumer<String, Message> pipelinedConsumer = 
-        new PipelinedConsumer<>(pipelinedRecordHandler, pipelineSizeBatches, pipelinedConsumerThreadName);
-    pipelinedConsumers.add(pipelinedConsumer);
+    final ConsumerPipe<String, Message> consumerPipe = 
+        new ConsumerPipe<>(pipelinedRecordHandler, pipelineSizeBatches, pipelinedConsumerThreadName);
+    consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
       for (;;) {
-        final boolean enqueued = pipelinedConsumer.enqueue(records);
+        final boolean enqueued = consumerPipe.receive(records);
 
         if (consumerOffsets != null) {
           final Map<TopicPartition, OffsetAndMetadata> offsetsSnapshot;
@@ -194,7 +194,7 @@ public final class KafkaLedger implements Ledger {
       }
     };
     
-    pipelinedProducer.enqueue(record, sendCallback);
+    producerPipe.send(record, sendCallback);
   }
 
   @Override
@@ -219,11 +219,11 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void dispose() {
     receivers.forEach(t -> t.terminate());
-    pipelinedConsumers.forEach(t -> t.terminate());
-    pipelinedProducer.terminate();
+    consumerPipes.forEach(t -> t.terminate());
+    producerPipe.terminate();
     receivers.forEach(t -> t.joinQuietly());
-    pipelinedConsumers.forEach(t -> t.joinQuietly());
-    pipelinedProducer.joinQuietly();
+    consumerPipes.forEach(t -> t.joinQuietly());
+    producerPipe.joinQuietly();
     CodecRegistry.deregister(codecLocator);
   }
 }

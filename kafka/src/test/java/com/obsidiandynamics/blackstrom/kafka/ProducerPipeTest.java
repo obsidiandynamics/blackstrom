@@ -13,7 +13,7 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 
-public final class PipelinedProducerTest {
+public final class ProducerPipeTest {
   @Test
   public void testSendDisposed() {
     final Logger log = mock(Logger.class);
@@ -23,14 +23,14 @@ public final class PipelinedProducerTest {
         .with("value.serializer", KafkaMessageSerializer.class.getName())
         .build();
     final Producer<String, Message> producer = kafka.getProducer(props);
-    final PipelinedProducer<String, Message> pp = 
-        new PipelinedProducer<>(producer, PipelinedProducer.class.getSimpleName(), log);
+    final ProducerPipe<String, Message> pp = 
+        new ProducerPipe<>(producer, ProducerPipe.class.getSimpleName(), log);
 
     try {
       pp.closeProducer();
       final Proposal proposal = new Proposal("B100", new String[0], null, 0);
       final ProducerRecord<String, Message> rec = new  ProducerRecord<>("test", proposal);
-      pp.enqueue(rec, null);
+      pp.send(rec, null);
       
       TestSupport.sleep(10);
       verifyNoMoreInteractions(log);
