@@ -144,7 +144,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
     useLedger(createLedger());
     
     final LongAdder totalSent = new LongAdder();
-    final long backlogTarget = 10_000;
+    final long backlogTarget = 100_000;
+    final int modCheck = 1_000;
     final AtomicLong[] receivedArray = new AtomicLong[consumers];
     for (int i = 0; i < consumers; i++) {
       final AtomicLong received = new AtomicLong();
@@ -170,10 +171,10 @@ public abstract class AbstractLedgerTest implements TestSupport {
         for (int i = 0; i < messagesPerProducer; i++) {
           appendMessage("test", TEST_OBJECTIVE);
           
-          if (i % 1000 == 0) {
-            totalSent.add(1000);
-            final long totalSentSum = totalSent.sum();
-            while (totalSentSum - totalReceived.getAsLong() > backlogTarget) {
+          if (i % modCheck == 0) {
+            totalSent.add(modCheck);
+            final long expectedReceived = totalSent.sum() * consumers;
+            while (expectedReceived - totalReceived.getAsLong() > backlogTarget) {
               TestSupport.sleep(1);
             }
           }
@@ -181,7 +182,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       }).run();
 
       wait.until(() -> {
-        assertEquals(producers * messagesPerProducer * consumers, totalReceived.getAsLong());
+        assertEquals(producers * messagesPerProducer * (long) consumers, totalReceived.getAsLong());
       });
     });
                                      
