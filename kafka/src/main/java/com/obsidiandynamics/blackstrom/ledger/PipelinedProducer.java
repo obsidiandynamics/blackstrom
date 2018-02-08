@@ -59,7 +59,12 @@ final class PipelinedProducer<K, V> implements Joinable {
     }
   }
   
-  void close() {
+  public void dispose() {
+    thread.terminate();
+    closeProducer();
+  }
+  
+  void closeProducer() {
     producerDisposed = true;
     producer.close();
   }
@@ -67,10 +72,5 @@ final class PipelinedProducer<K, V> implements Joinable {
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
     return thread.join(timeoutMillis);
-  }
-  
-  Joinable terminate() {
-    thread.terminate();
-    return this;
   }
 }

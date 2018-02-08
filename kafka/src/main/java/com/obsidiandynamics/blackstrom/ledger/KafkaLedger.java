@@ -210,9 +210,8 @@ public final class KafkaLedger implements Ledger {
   public void dispose() {
     receivers.forEach(t -> t.terminate());
     pipelinedConsumers.forEach(t -> t.terminate());
-    pipelinedProducer.terminate();
     CodecRegistry.deregister(codecLocator);
-    pipelinedProducer.close();
+    pipelinedProducer.dispose();
     receivers.forEach(t -> t.joinQuietly());
     pipelinedConsumers.forEach(t -> t.joinQuietly());
     pipelinedProducer.joinQuietly();
