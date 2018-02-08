@@ -50,7 +50,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
           throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
         } finally {
           if (! success) System.out.format("Failure for target=%s, failureModes=%s\n", target, failureModes);
-          manifold.dispose();
+          if (manifold != null) manifold.dispose();
         }
       }
     }
