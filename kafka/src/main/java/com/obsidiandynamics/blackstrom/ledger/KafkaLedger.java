@@ -38,7 +38,7 @@ public final class KafkaLedger implements Ledger {
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
-  private final List<PipelinedProcessor> processors = new CopyOnWriteArrayList<>();
+  private final List<PipelinedConsumer> pipelinedConsumers = new CopyOnWriteArrayList<>();
   
   private static class ConsumerOffsets {
     final Object lock = new Object();
@@ -128,13 +128,13 @@ public final class KafkaLedger implements Ledger {
     }
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
-    final String processorThreadName = PipelinedProcessor.class.getSimpleName() + "-" + groupId;
-    final PipelinedProcessor processor = new PipelinedProcessor(context, handler, pipelineSizeBatches, 
-                                                                processorThreadName);
-    processors.add(processor);
+    final String processorThreadName = PipelinedConsumer.class.getSimpleName() + "-" + groupId;
+    final PipelinedConsumer pipelinedConsumer = new PipelinedConsumer(context, handler, pipelineSizeBatches, 
+                                                                      processorThreadName);
+    pipelinedConsumers.add(pipelinedConsumer);
     final RecordHandler<String, Message> recordHandler = records -> {
       for (;;) {
-        final boolean enqueued = processor.enqueue(records);
+        final boolean enqueued = pipelinedConsumer.enqueue(records);
 
         if (consumerOffsets != null) {
           final Map<TopicPartition, OffsetAndMetadata> offsetsSnapshot;
@@ -212,11 +212,11 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void dispose() {
     receivers.forEach(t -> t.terminate());
-    processors.forEach(t -> t.terminate());
+    pipelinedConsumers.forEach(t -> t.terminate());
     CodecRegistry.deregister(codecLocator);
     producerDisposed = true;
     producer.close();
     receivers.forEach(t -> t.joinQuietly());
-    processors.forEach(t -> t.joinQuietly());
+    pipelinedConsumers.forEach(t -> t.joinQuietly());
   }
 }

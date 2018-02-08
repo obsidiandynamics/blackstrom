@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-final class PipelinedProcessor implements Joinable {
+final class PipelinedConsumer implements Joinable {
   private final BlockingQueue<ConsumerRecords<String, Message>> queue;
   
   private final MessageContext context;
@@ -17,7 +17,7 @@ final class PipelinedProcessor implements Joinable {
   
   private final WorkerThread thread;
   
-  PipelinedProcessor(MessageContext context, MessageHandler handler, int backlogSize, String threadName) {
+  PipelinedConsumer(MessageContext context, MessageHandler handler, int backlogSize, String threadName) {
     this.context = context;
     this.handler = handler;
     queue = new LinkedBlockingQueue<>(backlogSize);
