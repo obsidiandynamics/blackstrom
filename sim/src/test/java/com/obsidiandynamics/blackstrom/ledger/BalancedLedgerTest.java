@@ -23,12 +23,12 @@ public final class BalancedLedgerTest extends AbstractLedgerTest {
   
   @Override
   protected Ledger createLedger() {
-    return new BalancedLedgerHub(2, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000, 10_000))
+    return new BalancedLedgerHub(2, StickyShardAssignment::new, ArrayListAccumulator.factory(1_000, 1_000))
         .connectDetached();
   }
   
   public static void main(String[] args) {
-    Testmark.enable();
+    Testmark.enable().withOptions(Scale.by(4));
     JUnitCore.runClasses(BalancedLedgerTest.class);
   }
 }

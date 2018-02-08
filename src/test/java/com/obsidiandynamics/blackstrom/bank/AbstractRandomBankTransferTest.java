@@ -17,16 +17,18 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public abstract class AbstractRandomBankTransferTest extends BaseBankTest {  
+public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
+  
   @Test
   public final void testRandomTransfers() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
-    testRandomTransfers(branches, 100, true, true, true);
+    testRandomTransfers(branches, 100 * SCALE, true, true, true);
   }
 
   @Test
   public final void testRandomTransfersBenchmark() {
-    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000, false, false, false));
+    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000 * SCALE, false, false, false));
   }
 
   private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging, 

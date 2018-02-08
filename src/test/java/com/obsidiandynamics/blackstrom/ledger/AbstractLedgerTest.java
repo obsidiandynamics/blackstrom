@@ -5,7 +5,7 @@ import static junit.framework.TestCase.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.stream.*;
+import java.util.function.*;
 
 import org.junit.*;
 import org.junit.runners.*;
@@ -19,9 +19,10 @@ import com.obsidiandynamics.indigo.util.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractLedgerTest implements TestSupport {
-  private static final int SCALE = 1;
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1000);
+
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
   
   private class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -142,6 +143,8 @@ public abstract class AbstractLedgerTest implements TestSupport {
   private final void testOneWay(int producers, int consumers, int messagesPerProducer) {
     useLedger(createLedger());
     
+    final LongAdder totalSent = new LongAdder();
+    final long backlogTarget = 10_000;
     final AtomicLong[] receivedArray = new AtomicLong[consumers];
     for (int i = 0; i < consumers; i++) {
       final AtomicLong received = new AtomicLong();
@@ -153,17 +156,32 @@ public abstract class AbstractLedgerTest implements TestSupport {
       });
     }
     ledger.init();
+    
+    final LongSupplier totalReceived = () -> {
+      long total = 0;
+      for (AtomicLong received : receivedArray) {
+        total += received.get();
+      }
+      return total;
+    };
 
     final long took = TestSupport.took(() -> {
       ParallelJob.blocking(producers, threadNo -> {
         for (int i = 0; i < messagesPerProducer; i++) {
           appendMessage("test", TEST_OBJECTIVE);
+          
+          if (i % 1000 == 0) {
+            totalSent.add(1000);
+            final long totalSentSum = totalSent.sum();
+            while (totalSentSum - totalReceived.getAsLong() > backlogTarget) {
+              TestSupport.sleep(1);
+            }
+          }
         }
       }).run();
 
       wait.until(() -> {
-        final long received = Arrays.stream(receivedArray).collect(Collectors.summingLong(r -> r.get()));
-        assertEquals(producers * messagesPerProducer * consumers, received);
+        assertEquals(producers * messagesPerProducer * consumers, totalReceived.getAsLong());
       });
     });
                                      
@@ -184,7 +202,9 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private final void testTwoWay(int numMessages) {
     useLedger(createLedger());
-    
+
+    final LongAdder totalSent = new LongAdder();
+    final long backlogTarget = 10_000;
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (sandbox.contains(m) && m.getSource().equals("source")) {
@@ -203,6 +223,14 @@ public abstract class AbstractLedgerTest implements TestSupport {
     final long took = TestSupport.took(() -> {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("source", TEST_OBJECTIVE);
+        
+        if (i % 1000 == 0) {
+          totalSent.add(1000);
+          final long totalSentSum = totalSent.sum();
+          while (totalSentSum - received.get() > backlogTarget) {
+            TestSupport.sleep(1);
+          }
+        }
       }
       wait.until(() -> {
         assertEquals(numMessages, received.get());

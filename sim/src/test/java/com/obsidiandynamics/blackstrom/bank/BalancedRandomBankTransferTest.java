@@ -28,7 +28,7 @@ public final class BalancedRandomBankTransferTest extends AbstractRandomBankTran
   }
   
   public static void main(String[] args) {
-    Testmark.enable();
+    Testmark.enable().withOptions(Scale.by(4));
     JUnitCore.runClasses(BalancedRandomBankTransferTest.class);
   }
 }
