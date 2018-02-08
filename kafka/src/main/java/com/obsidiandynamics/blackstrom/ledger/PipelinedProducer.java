@@ -1,51 +1,67 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import org.apache.kafka.clients.producer.*;
+import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-final class PipelinedProducer implements Joinable {
+final class PipelinedProducer<K, V> implements Joinable {
   private static final int QUEUE_BACKOFF_MILLIS = 1;
   
-  private static class AsyncRecord {
-    final ProducerRecord<String, Message> record;
+  private static class AsyncRecord<K, V> {
+    final ProducerRecord<K, V> record;
     final Callback callback;
     
-    AsyncRecord(ProducerRecord<String, Message> record, Callback callback) {
+    AsyncRecord(ProducerRecord<K, V> record, Callback callback) {
       this.record = record;
       this.callback = callback;
     }
   }
   
-  private final NodeQueue<AsyncRecord> queue = new NodeQueue<>();
+  private final NodeQueue<AsyncRecord<K, V>> queue = new NodeQueue<>();
   
-  private final QueueConsumer<AsyncRecord> queueConsumer = queue.consumer();
+  private final QueueConsumer<AsyncRecord<K, V>> queueConsumer = queue.consumer();
   
-  private final Producer<String, Message> producer;
+  private final Producer<K, V> producer;
   
   private final WorkerThread thread;
   
-  PipelinedProducer(Producer<String, Message> producer, String threadName) {
+  private final Logger log;
+  
+  private volatile boolean producerDisposed;
+  
+  PipelinedProducer(Producer<K, V> producer, String threadName, Logger log) {
     this.producer = producer;
+    this.log = log;
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
         .onCycle(this::cycle)
         .buildAndStart();
   }
   
-  void enqueue(ProducerRecord<String, Message> record, Callback callback) {
-    queue.add(new AsyncRecord(record, callback));
+  void enqueue(ProducerRecord<K, V> record, Callback callback) {
+    queue.add(new AsyncRecord<>(record, callback));
   }
   
   private void cycle(WorkerThread t) throws InterruptedException {
-    final AsyncRecord rec = queueConsumer.poll();
+    final AsyncRecord<K, V> rec = queueConsumer.poll();
     if (rec != null) {
-      producer.send(rec.record, rec.callback);
+      try {
+        producer.send(rec.record, rec.callback);
+      } catch (Throwable e) {
+        if (! producerDisposed) {
+          log.error(String.format("Error sending %s", rec.record), e);
+        }
+      }
     } else {
       Thread.sleep(QUEUE_BACKOFF_MILLIS);
     }
+  }
+  
+  void close() {
+    producerDisposed = true;
+    producer.close();
   }
 
   @Override

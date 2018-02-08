@@ -22,19 +22,19 @@ public final class KafkaLedger implements Ledger {
   
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
   
-  private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
-  
   private final Kafka<String, Message> kafka;
   
   private final String topic;
   
   private final int pipelineSizeBatches;
   
+  private final Logger log;
+  
   private final String codecLocator;
   
   private final Producer<String, Message> producer;
   
-  private volatile boolean producerDisposed;
+  private final PipelinedProducer<String, Message> pipelinedProducer;
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
@@ -51,8 +51,14 @@ public final class KafkaLedger implements Ledger {
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
   public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec, int pipelineSizeBatches) {
+    this(kafka, topic, codec, pipelineSizeBatches, LoggerFactory.getLogger(KafkaLedger.class));
+  }
+  
+  public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec, 
+                     int pipelineSizeBatches, Logger log) {
     this.kafka = kafka;
     this.topic = topic;
+    this.log = log;
     this.pipelineSizeBatches = pipelineSizeBatches;
     codecLocator = CodecRegistry.register(codec);
     
@@ -68,13 +74,10 @@ public final class KafkaLedger implements Ledger {
         .with("compression.type", "lz4")
         .build();
     producer = kafka.getProducer(props);
+    pipelinedProducer = new PipelinedProducer<>(producer, 
+        PipelinedProducer.class.getSimpleName() + "-" + topic, log);
   }
   
-  public KafkaLedger withLogger(Logger log) {
-    this.log = log;
-    return this;
-  }
-
   @Override
   public void attach(MessageHandler handler) {
     final String groupId = handler.getGroupId();
@@ -181,13 +184,7 @@ public final class KafkaLedger implements Ledger {
       }
     };
     
-    try {
-      producer.send(record, sendCallback);
-    } catch (IllegalStateException e) {
-      if (! producerDisposed) {
-        throw e;
-      }
-    }
+    pipelinedProducer.enqueue(record, sendCallback);
   }
 
   @Override
@@ -213,10 +210,11 @@ public final class KafkaLedger implements Ledger {
   public void dispose() {
     receivers.forEach(t -> t.terminate());
     pipelinedConsumers.forEach(t -> t.terminate());
+    pipelinedProducer.terminate();
     CodecRegistry.deregister(codecLocator);
-    producerDisposed = true;
-    producer.close();
+    pipelinedProducer.close();
     receivers.forEach(t -> t.joinQuietly());
     pipelinedConsumers.forEach(t -> t.joinQuietly());
+    pipelinedProducer.joinQuietly();
   }
 }

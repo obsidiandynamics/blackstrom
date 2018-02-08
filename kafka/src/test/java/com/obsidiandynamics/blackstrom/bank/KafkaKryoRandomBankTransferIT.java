@@ -28,12 +28,12 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
   
   @Override
   protected Ledger createLedger() {
-    final String topicName = KafkaTopic.forTest(KafkaKryoRandomBankTransferIT.class, 
-                                                "kryo-" + KryoMessageCodec.ENCODING_VERSION);
+    final String topicBaseName = KafkaTopic.forTest(KafkaKryoRandomBankTransferIT.class, 
+                                                    "kryo-" + KryoMessageCodec.ENCODING_VERSION);
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
-                           topicName + (Testmark.isEnabled() ? ".bench" : ""), 
+                           topicBaseName + (Testmark.isEnabled() ? ".bench" : ""), 
                            new KryoMessageCodec(true, new KryoBankExpansion()), 10);
   }
 

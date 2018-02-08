@@ -28,11 +28,11 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
   
   @Override
   protected Ledger createLedger() {
-    final String topicName = KafkaTopic.forTest(KafkaJacksonRandomBankTransferIT.class, "kryo");
+    final String topicBaseName = KafkaTopic.forTest(KafkaJacksonRandomBankTransferIT.class, "json");
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
     return new KafkaLedger(kafka, 
-                           topicName + (Testmark.isEnabled() ? ".bench" : ""), 
+                           topicBaseName + (Testmark.isEnabled() ? ".bench" : ""), 
                            new JacksonMessageCodec(true, new JacksonBankExpansion()), 10);
   }
 
