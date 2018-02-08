@@ -72,7 +72,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;
           for (;;) {
-            final int backlog = (int) (run - commits.get() - aborts.get());
+            final int backlog = (int) (run - commits.get() - aborts.get() - timeouts.get());
             if (backlog > backlogTarget) {
               TestSupport.sleep(1);
               if (enableLogging && System.currentTimeMillis() - lastLogTime > 5_000) {
