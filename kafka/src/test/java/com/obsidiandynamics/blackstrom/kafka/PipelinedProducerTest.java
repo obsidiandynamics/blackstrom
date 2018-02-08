@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.ledger;
+package com.obsidiandynamics.blackstrom.kafka;
 
 import static org.mockito.Mockito.*;
 
@@ -9,7 +9,7 @@ import org.apache.kafka.common.serialization.*;
 import org.junit.*;
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.kafka.*;
+import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.indigo.util.*;
 

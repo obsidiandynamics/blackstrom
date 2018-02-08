@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.ledger;
+package com.obsidiandynamics.blackstrom.kafka;
 
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.*;
@@ -6,7 +6,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-final class PipelinedProducer<K, V> implements Joinable {
+public final class PipelinedProducer<K, V> implements Joinable {
   private static final int QUEUE_BACKOFF_MILLIS = 1;
   
   private static class AsyncRecord<K, V> {
@@ -31,7 +31,7 @@ final class PipelinedProducer<K, V> implements Joinable {
   
   private volatile boolean producerDisposed;
   
-  PipelinedProducer(Producer<K, V> producer, String threadName, Logger log) {
+  public PipelinedProducer(Producer<K, V> producer, String threadName, Logger log) {
     this.producer = producer;
     this.log = log;
     thread = WorkerThread.builder()
@@ -40,7 +40,7 @@ final class PipelinedProducer<K, V> implements Joinable {
         .buildAndStart();
   }
   
-  void enqueue(ProducerRecord<K, V> record, Callback callback) {
+  public void enqueue(ProducerRecord<K, V> record, Callback callback) {
     queue.add(new AsyncRecord<>(record, callback));
   }
   
