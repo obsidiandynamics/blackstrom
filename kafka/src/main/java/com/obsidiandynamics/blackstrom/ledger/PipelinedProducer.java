@@ -59,9 +59,10 @@ final class PipelinedProducer<K, V> implements Joinable {
     }
   }
   
-  public void dispose() {
+  public Joinable terminate() {
     thread.terminate();
     closeProducer();
+    return this;
   }
   
   void closeProducer() {

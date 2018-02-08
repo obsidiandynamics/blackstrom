@@ -38,7 +38,7 @@ public final class KafkaLedger implements Ledger {
   
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
   
-  private final List<PipelinedConsumer> pipelinedConsumers = new CopyOnWriteArrayList<>();
+  private final List<PipelinedConsumer<String, Message>> pipelinedConsumers = new CopyOnWriteArrayList<>();
   
   private static class ConsumerOffsets {
     final Object lock = new Object();
@@ -131,9 +131,19 @@ public final class KafkaLedger implements Ledger {
     }
     
     final MessageContext context = new DefaultMessageContext(this, handlerId);
-    final String processorThreadName = PipelinedConsumer.class.getSimpleName() + "-" + groupId;
-    final PipelinedConsumer pipelinedConsumer = new PipelinedConsumer(context, handler, pipelineSizeBatches, 
-                                                                      processorThreadName);
+    final String pipelinedConsumerThreadName = PipelinedConsumer.class.getSimpleName() + "-" + groupId;
+    final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
+      for (ConsumerRecord<String, Message> record : records) {
+        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
+        final Message message = record.value();
+        message.setMessageId(messageId);
+        message.setShardKey(record.key());
+        message.setShard(record.partition());
+        handler.onMessage(context, message);
+      }
+    };
+    final PipelinedConsumer<String, Message> pipelinedConsumer = 
+        new PipelinedConsumer<>(pipelinedRecordHandler, pipelineSizeBatches, pipelinedConsumerThreadName);
     pipelinedConsumers.add(pipelinedConsumer);
     final RecordHandler<String, Message> recordHandler = records -> {
       for (;;) {
@@ -210,10 +220,10 @@ public final class KafkaLedger implements Ledger {
   public void dispose() {
     receivers.forEach(t -> t.terminate());
     pipelinedConsumers.forEach(t -> t.terminate());
-    CodecRegistry.deregister(codecLocator);
-    pipelinedProducer.dispose();
+    pipelinedProducer.terminate();
     receivers.forEach(t -> t.joinQuietly());
     pipelinedConsumers.forEach(t -> t.joinQuietly());
     pipelinedProducer.joinQuietly();
+    CodecRegistry.deregister(codecLocator);
   }
 }

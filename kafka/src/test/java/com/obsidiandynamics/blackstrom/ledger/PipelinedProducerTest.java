@@ -35,7 +35,7 @@ public final class PipelinedProducerTest {
       TestSupport.sleep(10);
       verifyNoMoreInteractions(log);
     } finally {
-      pp.dispose();
+      pp.terminate().joinQuietly();
     }
   }
 }

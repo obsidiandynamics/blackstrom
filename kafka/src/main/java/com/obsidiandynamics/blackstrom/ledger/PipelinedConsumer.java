@@ -4,21 +4,17 @@ import java.util.concurrent.*;
 
 import org.apache.kafka.clients.consumer.*;
 
-import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-final class PipelinedConsumer implements Joinable {
-  private final BlockingQueue<ConsumerRecords<String, Message>> queue;
+final class PipelinedConsumer<K, V> implements Joinable {
+  private final BlockingQueue<ConsumerRecords<K, V>> queue;
   
-  private final MessageContext context;
-  
-  private final MessageHandler handler;
+  private final RecordHandler<K, V> handler;
   
   private final WorkerThread thread;
   
-  PipelinedConsumer(MessageContext context, MessageHandler handler, int backlogSize, String threadName) {
-    this.context = context;
+  PipelinedConsumer(RecordHandler<K, V> handler, int backlogSize, String threadName) {
     this.handler = handler;
     queue = new LinkedBlockingQueue<>(backlogSize);
     thread = WorkerThread.builder()
@@ -27,21 +23,14 @@ final class PipelinedConsumer implements Joinable {
         .buildAndStart();
   }
   
-  boolean enqueue(ConsumerRecords<String, Message> records) {
+  boolean enqueue(ConsumerRecords<K, V> records) {
     return queue.offer(records);
   }
   
   private void cycle(WorkerThread t) throws InterruptedException {
     for (;;) {
-      final ConsumerRecords<String, Message> records = queue.take();
-      for (ConsumerRecord<String, Message> record : records) {
-        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
-        final Message message = record.value();
-        message.setMessageId(messageId);
-        message.setShardKey(record.key());
-        message.setShard(record.partition());
-        handler.onMessage(context, message);
-      }
+      final ConsumerRecords<K, V> records = queue.take();
+      handler.onReceive(records);
     }
   }
 
