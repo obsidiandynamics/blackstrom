@@ -6,7 +6,9 @@ import com.esotericsoftware.kryo.*;
 import com.esotericsoftware.kryo.io.*;
 import com.esotericsoftware.kryo.pool.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.yconf.*;
 
+@Y
 public final class KryoMessageCodec implements MessageCodec {
   public static final int ENCODING_VERSION = 2;
   
@@ -19,7 +21,8 @@ public final class KryoMessageCodec implements MessageCodec {
   
   private final KryoMessageSerializer messageSerializer;
   
-  public KryoMessageCodec(boolean mapPayload, KryoExpansion... expansions) {
+  public KryoMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
+                          @YInject(name="expansions") KryoExpansion... expansions) {
     messageSerializer = new KryoMessageSerializer(mapPayload);
     pool = new KryoPool.Builder(() -> {
       final Kryo kryo = new Kryo();

@@ -5,18 +5,26 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.yconf.*;
 
+@Y
 public final class KafkaLedgerConfig {
+  @YInject
   private Kafka<String, Message> kafka;
   
+  @YInject
   private String topic; 
   
+  @YInject
   private MessageCodec codec;
   
+  @YInject
   private ProducerPipeConfig producerPipeConfig = new ProducerPipeConfig();
   
+  @YInject
   private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig();
   
+  @YInject
   private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
 
   Kafka<String, Message> getKafka() {

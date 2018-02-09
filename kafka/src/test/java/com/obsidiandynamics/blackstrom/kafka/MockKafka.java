@@ -9,7 +9,9 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
 
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.yconf.*;
 
+@Y
 public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   private final int maxPartitions;
   

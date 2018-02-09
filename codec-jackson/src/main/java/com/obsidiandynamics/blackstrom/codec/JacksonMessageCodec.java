@@ -8,14 +8,17 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.yconf.*;
 
+@Y
 public final class JacksonMessageCodec implements MessageCodec {  
   @FunctionalInterface
   public interface JacksonExpansion extends Consumer<SimpleModule> {}
 
   private final ObjectMapper mapper;
   
-  public JacksonMessageCodec(boolean mapPayload, JacksonExpansion... expansions) {
+  public JacksonMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
+                             @YInject(name="expansions") JacksonExpansion... expansions) {
     mapper = new ObjectMapper();
     mapper.setSerializationInclusion(Include.NON_NULL);
     
