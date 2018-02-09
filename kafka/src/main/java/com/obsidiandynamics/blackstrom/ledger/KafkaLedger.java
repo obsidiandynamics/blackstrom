@@ -11,7 +11,6 @@ import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
@@ -26,11 +25,11 @@ public final class KafkaLedger implements Ledger {
   
   private final String topic;
   
-  private final int pipelineSizeBatches;
-  
   private final Logger log;
   
   private final String codecLocator;
+  
+  private final ConsumerPipeOptions consumerPipeOptions;
   
   private final Producer<String, Message> producer;
   
@@ -50,17 +49,12 @@ public final class KafkaLedger implements Ledger {
   
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
-  public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec, int pipelineSizeBatches) {
-    this(kafka, topic, codec, pipelineSizeBatches, LoggerFactory.getLogger(KafkaLedger.class));
-  }
-  
-  public KafkaLedger(Kafka<String, Message> kafka, String topic, MessageCodec codec, 
-                     int pipelineSizeBatches, Logger log) {
-    this.kafka = kafka;
-    this.topic = topic;
-    this.log = log;
-    this.pipelineSizeBatches = pipelineSizeBatches;
-    codecLocator = CodecRegistry.register(codec);
+  public KafkaLedger(KafkaLedgerOptions options) {
+    this.kafka = options.getKafka();
+    this.topic = options.getTopic();
+    this.log = options.getLog();
+    this.consumerPipeOptions = options.getConsumerPipeOptions();
+    codecLocator = CodecRegistry.register(options.getCodec());
     
     final Properties props = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
@@ -74,8 +68,8 @@ public final class KafkaLedger implements Ledger {
         .with("compression.type", "lz4")
         .build();
     producer = kafka.getProducer(props);
-    producerPipe = new ProducerPipe<>(producer, 
-        ProducerPipe.class.getSimpleName() + "-" + topic, log);
+    producerPipe = 
+        new ProducerPipe<>(options.getProducerPipeOptions(), producer, ProducerPipe.class.getSimpleName() + "-" + topic, log);
   }
   
   @Override
@@ -143,7 +137,7 @@ public final class KafkaLedger implements Ledger {
       }
     };
     final ConsumerPipe<String, Message> consumerPipe = 
-        new ConsumerPipe<>(pipelinedRecordHandler, pipelineSizeBatches, pipelinedConsumerThreadName);
+        new ConsumerPipe<>(consumerPipeOptions, pipelinedRecordHandler, pipelinedConsumerThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
       for (;;) {

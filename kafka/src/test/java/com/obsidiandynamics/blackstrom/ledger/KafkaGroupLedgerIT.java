@@ -23,8 +23,9 @@ public final class KafkaGroupLedgerIT extends AbstractGroupLedgerTest {
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    return new KafkaLedger(kafka, 
-                           KafkaTopic.forTest(KafkaGroupLedgerIT.class, "json"), 
-                           new JacksonMessageCodec(false), 10);
+    return new KafkaLedger(new KafkaLedgerOptions()
+                           .withKafka(kafka)
+                           .withTopic(KafkaTopic.forTest(KafkaGroupLedgerIT.class, "json"))
+                           .withCodec(new JacksonMessageCodec(false)));
   }
 }

@@ -15,7 +15,7 @@ import com.obsidiandynamics.indigo.util.*;
 
 public final class ProducerPipeTest {
   @Test
-  public void testSendDisposed() {
+  public void testSendDisposedAsync() {
     final Logger log = mock(Logger.class);
     final Kafka<String, Message> kafka = new MockKafka<>();
     final Properties props = new PropertiesBuilder()
@@ -24,7 +24,7 @@ public final class ProducerPipeTest {
         .build();
     final Producer<String, Message> producer = kafka.getProducer(props);
     final ProducerPipe<String, Message> pp = 
-        new ProducerPipe<>(producer, ProducerPipe.class.getSimpleName(), log);
+        new ProducerPipe<>(new ProducerPipeOptions().withAsync(true), producer, ProducerPipe.class.getSimpleName(), log);
 
     try {
       pp.closeProducer();

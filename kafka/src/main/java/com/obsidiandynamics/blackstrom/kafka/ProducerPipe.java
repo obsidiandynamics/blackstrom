@@ -31,36 +31,48 @@ public final class ProducerPipe<K, V> implements Joinable {
   
   private volatile boolean producerDisposed;
   
-  public ProducerPipe(Producer<K, V> producer, String threadName, Logger log) {
+  public ProducerPipe(ProducerPipeOptions options, Producer<K, V> producer, String threadName, Logger log) {
     this.producer = producer;
     this.log = log;
-    thread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
-        .onCycle(this::cycle)
-        .buildAndStart();
+    if (options.isAsync()) {
+      thread = WorkerThread.builder()
+          .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
+          .onCycle(this::cycle)
+          .buildAndStart();
+    } else {
+      thread = null;
+    }
   }
   
   public void send(ProducerRecord<K, V> record, Callback callback) {
-    queue.add(new AsyncRecord<>(record, callback));
+    if (thread != null) {
+      queue.add(new AsyncRecord<>(record, callback));
+    } else {
+      sendNow(record, callback);
+    }
   }
   
   private void cycle(WorkerThread t) throws InterruptedException {
     final AsyncRecord<K, V> rec = queueConsumer.poll();
     if (rec != null) {
-      try {
-        producer.send(rec.record, rec.callback);
-      } catch (Throwable e) {
-        if (! producerDisposed) {
-          log.error(String.format("Error sending %s", rec.record), e);
-        }
-      }
+      sendNow(rec.record, rec.callback);
     } else {
       Thread.sleep(QUEUE_BACKOFF_MILLIS);
     }
   }
   
+  private void sendNow(ProducerRecord<K, V> record, Callback callback) {
+    try {
+      producer.send(record, callback);
+    } catch (Throwable e) {
+      if (! producerDisposed) {
+        log.error(String.format("Error sending %s", record), e);
+      }
+    }
+  }
+  
   public Joinable terminate() {
-    thread.terminate();
+    if (thread != null) thread.terminate();
     closeProducer();
     return this;
   }
@@ -72,6 +84,6 @@ public final class ProducerPipe<K, V> implements Joinable {
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return thread.join(timeoutMillis);
+    return thread != null ? thread.join(timeoutMillis) : true;
   }
 }

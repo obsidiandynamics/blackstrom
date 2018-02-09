@@ -30,9 +30,10 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    return new KafkaLedger(kafka, 
-                           KafkaTopic.forTest(KafkaBankTransferFailureIT.class, "json"), 
-                           new JacksonMessageCodec(true, new JacksonBankExpansion()), 10);
+    return new KafkaLedger(new KafkaLedgerOptions()
+                           .withKafka(kafka)
+                           .withTopic(KafkaTopic.forTest(KafkaBankTransferFailureIT.class, "json"))
+                           .withCodec(new JacksonMessageCodec(true, new JacksonBankExpansion())));
   }
 
   @Override

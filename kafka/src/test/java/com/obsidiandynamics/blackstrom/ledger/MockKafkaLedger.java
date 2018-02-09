@@ -7,6 +7,9 @@ public final class MockKafkaLedger {
   private MockKafkaLedger() {}
   
   public static KafkaLedger create() {
-    return new KafkaLedger(new MockKafka<>(), "mock", new NullMessageCodec(), 10);
+    return new KafkaLedger(new KafkaLedgerOptions()
+                           .withKafka(new MockKafka<>())
+                           .withTopic("mock")
+                           .withCodec(new NullMessageCodec()));
   }
 }
