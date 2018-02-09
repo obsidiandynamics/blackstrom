@@ -12,6 +12,8 @@ import com.obsidiandynamics.yconf.*;
 
 @Y
 public final class JacksonMessageCodec implements MessageCodec {  
+  public static final int ENCODING_VERSION = 0;
+  
   @FunctionalInterface
   public interface JacksonExpansion extends Consumer<SimpleModule> {}
 

@@ -24,11 +24,10 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
   protected Ledger createLedger() {
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    final String topicName = KafkaTopic.forTest(KafkaKryoLedgerIT.class, 
-                                                "kryo-" + KryoMessageCodec.ENCODING_VERSION);
+    final String topic = TestTopic.of(KafkaKryoLedgerIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
     return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(kafka)
-                           .withTopic(topicName)
+                           .withTopic(topic)
                            .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));
   }
   
