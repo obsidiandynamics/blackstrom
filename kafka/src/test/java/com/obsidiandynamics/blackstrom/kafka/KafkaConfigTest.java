@@ -15,7 +15,7 @@ public final class KafkaConfigTest {
   public void testConfig() throws IOException {
     final Kafka<?, ?> kafka = new MappingContext()
         .withParser(new SnakeyamlParser())
-        .fromStream(KafkaConfigTest.class.getClassLoader().getResourceAsStream("kafka-config.yaml"))
+        .fromStream(KafkaConfigTest.class.getClassLoader().getResourceAsStream("kafka.conf"))
         .map(Kafka.class);
     assertNotNull(kafka);
     assertEquals(KafkaCluster.class, kafka.getClass());

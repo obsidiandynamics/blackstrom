@@ -26,7 +26,7 @@ public final class PropertiesBuilderTest {
   public void testConfig() throws IOException {
     final PropertiesBuilder builder = new MappingContext()
         .withParser(new SnakeyamlParser())
-        .fromStream(PropertiesBuilderTest.class.getClassLoader().getResourceAsStream("propertiesbuilder-config.yaml"))
+        .fromStream(PropertiesBuilderTest.class.getClassLoader().getResourceAsStream("propertiesbuilder.conf"))
         .map(PropertiesBuilder.class);
     assertNotNull(builder);
     assertEquals(new PropertiesBuilder()
