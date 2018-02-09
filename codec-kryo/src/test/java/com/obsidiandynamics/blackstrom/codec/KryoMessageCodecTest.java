@@ -15,6 +15,7 @@ import com.obsidiandynamics.blackstrom.codec.KryoMessageSerializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.yconf.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class KryoMessageCodecTest implements TestSupport {
@@ -67,7 +68,10 @@ public final class KryoMessageCodecTest implements TestSupport {
   }
   
   private static void testCycle(int runs) throws Exception {
-    final MessageCodec c = new KryoMessageCodec(true, new KryoBankExpansion());
+    final MessageCodec c = new MappingContext()
+        .withParser(new SnakeyamlParser())
+        .fromStream(KryoMessageCodecTest.class.getClassLoader().getResourceAsStream("kryo.conf"))
+        .map(MessageCodec.class);
     cycle(runs, 
           c, 
           new Proposal("N100", new String[] {"a", "b"}, null, 1000), 

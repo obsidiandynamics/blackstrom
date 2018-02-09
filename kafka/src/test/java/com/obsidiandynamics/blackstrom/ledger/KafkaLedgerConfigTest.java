@@ -15,9 +15,9 @@ public final class KafkaLedgerConfigTest {
   @Test
   public void testConfig() throws IOException {
     final KafkaLedgerConfig config = new MappingContext()
-    .withParser(new SnakeyamlParser())
-    .fromStream(KafkaLedgerConfigTest.class.getClassLoader().getResourceAsStream("kafkaledger.conf"))
-    .map(KafkaLedgerConfig.class);
+        .withParser(new SnakeyamlParser())
+        .fromStream(KafkaLedgerConfigTest.class.getClassLoader().getResourceAsStream("kafkaledger.conf"))
+        .map(KafkaLedgerConfig.class);
     
     assertNotNull(config.getKafka());
     assertEquals(MockKafka.class, config.getKafka().getClass());

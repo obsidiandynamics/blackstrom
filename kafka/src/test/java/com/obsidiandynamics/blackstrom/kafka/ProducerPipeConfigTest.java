@@ -13,9 +13,9 @@ public final class ProducerPipeConfigTest {
   @Test
   public void testConfig() throws IOException {
     final ProducerPipeConfig config = new MappingContext()
-    .withParser(new SnakeyamlParser())
-    .fromStream(ProducerPipeConfigTest.class.getClassLoader().getResourceAsStream("producerpipe.conf"))
-    .map(ProducerPipeConfig.class);
+        .withParser(new SnakeyamlParser())
+        .fromStream(ProducerPipeConfigTest.class.getClassLoader().getResourceAsStream("producerpipe.conf"))
+        .map(ProducerPipeConfig.class);
     
     assertEquals(true, config.isAsync());
     Assertions.assertToStringOverride(config);

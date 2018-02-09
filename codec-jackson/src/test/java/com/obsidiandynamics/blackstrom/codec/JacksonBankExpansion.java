@@ -3,7 +3,9 @@ package com.obsidiandynamics.blackstrom.codec;
 import com.fasterxml.jackson.databind.module.*;
 import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonMessageCodec.*;
+import com.obsidiandynamics.yconf.*;
 
+@Y
 public final class JacksonBankExpansion implements JacksonExpansion {
   @Override
   public void accept(SimpleModule module) {

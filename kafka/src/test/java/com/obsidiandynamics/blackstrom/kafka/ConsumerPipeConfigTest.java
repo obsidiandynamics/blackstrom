@@ -13,9 +13,9 @@ public final class ConsumerPipeConfigTest {
   @Test
   public void testConfig() throws IOException {
     final ConsumerPipeConfig config = new MappingContext()
-    .withParser(new SnakeyamlParser())
-    .fromStream(ConsumerPipeConfigTest.class.getClassLoader().getResourceAsStream("consumerpipe.conf"))
-    .map(ConsumerPipeConfig.class);
+        .withParser(new SnakeyamlParser())
+        .fromStream(ConsumerPipeConfigTest.class.getClassLoader().getResourceAsStream("consumerpipe.conf"))
+        .map(ConsumerPipeConfig.class);
     
     assertEquals(false, config.isAsync());
     assertEquals(16, config.getBacklogBatches());
