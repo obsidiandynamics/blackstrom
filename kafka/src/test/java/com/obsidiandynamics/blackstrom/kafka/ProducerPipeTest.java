@@ -24,7 +24,7 @@ public final class ProducerPipeTest {
         .build();
     final Producer<String, Message> producer = kafka.getProducer(props);
     final ProducerPipe<String, Message> pp = 
-        new ProducerPipe<>(new ProducerPipeOptions().withAsync(true), producer, ProducerPipe.class.getSimpleName(), log);
+        new ProducerPipe<>(new ProducerPipeConfig().withAsync(true), producer, ProducerPipe.class.getSimpleName(), log);
 
     try {
       pp.closeProducer();

@@ -14,9 +14,9 @@ public final class ConsumerPipe<K, V> implements Joinable {
   
   private final WorkerThread thread;
   
-  public ConsumerPipe(ConsumerPipeOptions options, RecordHandler<K, V> handler, String threadName) {
+  public ConsumerPipe(ConsumerPipeConfig config, RecordHandler<K, V> handler, String threadName) {
     this.handler = handler;
-    queue = new LinkedBlockingQueue<>(options.getBacklogBatches());
+    queue = new LinkedBlockingQueue<>(config.getBacklogBatches());
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
         .onCycle(this::cycle)

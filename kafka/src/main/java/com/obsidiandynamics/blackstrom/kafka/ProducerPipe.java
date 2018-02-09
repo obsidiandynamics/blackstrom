@@ -31,10 +31,10 @@ public final class ProducerPipe<K, V> implements Joinable {
   
   private volatile boolean producerDisposed;
   
-  public ProducerPipe(ProducerPipeOptions options, Producer<K, V> producer, String threadName, Logger log) {
+  public ProducerPipe(ProducerPipeConfig config, Producer<K, V> producer, String threadName, Logger log) {
     this.producer = producer;
     this.log = log;
-    if (options.isAsync()) {
+    if (config.isAsync()) {
       thread = WorkerThread.builder()
           .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
           .onCycle(this::cycle)

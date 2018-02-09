@@ -32,7 +32,7 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
                                                     "kryo-" + KryoMessageCodec.ENCODING_VERSION);
     final Kafka<String, Message> kafka = 
         new KafkaCluster<>(new KafkaClusterConfig().withBootstrapServers("localhost:9092"));
-    return new KafkaLedger(new KafkaLedgerOptions()
+    return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(kafka)
                            .withTopic(topicBaseName + (Testmark.isEnabled() ? ".bench" : ""))
                            .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));

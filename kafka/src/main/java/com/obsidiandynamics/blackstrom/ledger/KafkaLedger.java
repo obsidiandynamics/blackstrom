@@ -18,44 +18,44 @@ import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
-  
+
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
-  
+
   private final Kafka<String, Message> kafka;
-  
+
   private final String topic;
-  
+
   private final Logger log;
-  
+
   private final String codecLocator;
-  
-  private final ConsumerPipeOptions consumerPipeOptions;
-  
+
+  private final ConsumerPipeConfig consumerPipeConfig;
+
   private final Producer<String, Message> producer;
-  
+
   private final ProducerPipe<String, Message> producerPipe;
-  
+
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
-  
+
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
-  
+
   private static class ConsumerOffsets {
     final Object lock = new Object();
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
   }
-  
+
   /** Maps handler IDs to consumer offsets. */
   private final Map<Integer, ConsumerOffsets> consumers = new ConcurrentHashMap<>();
-  
+
   private final AtomicInteger nextHandlerId = new AtomicInteger();
-  
-  public KafkaLedger(KafkaLedgerOptions options) {
-    this.kafka = options.getKafka();
-    this.topic = options.getTopic();
-    this.log = options.getLog();
-    this.consumerPipeOptions = options.getConsumerPipeOptions();
-    codecLocator = CodecRegistry.register(options.getCodec());
-    
+
+  public KafkaLedger(KafkaLedgerConfig config) {
+    this.kafka = config.getKafka();
+    this.topic = config.getTopic();
+    this.log = config.getLog();
+    this.consumerPipeConfig = config.getConsumerPipeConfig();
+    codecLocator = CodecRegistry.register(config.getCodec());
+
     final Properties props = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
         .with("value.serializer", KafkaMessageSerializer.class.getName())
@@ -69,9 +69,9 @@ public final class KafkaLedger implements Ledger {
         .build();
     producer = kafka.getProducer(props);
     producerPipe = 
-        new ProducerPipe<>(options.getProducerPipeOptions(), producer, ProducerPipe.class.getSimpleName() + "-" + topic, log);
+        new ProducerPipe<>(config.getProducerPipeConfig(), producer, ProducerPipe.class.getSimpleName() + "-" + topic, log);
   }
-  
+
   @Override
   public void attach(MessageHandler handler) {
     final String groupId = handler.getGroupId();
@@ -84,7 +84,7 @@ public final class KafkaLedger implements Ledger {
       consumerGroupId = null;
       autoOffsetReset = OffsetResetStrategy.LATEST.name().toLowerCase();
     }
-    
+
     final Properties props = new PropertiesBuilder()
         .with("group.id", consumerGroupId)
         .with("auto.offset.reset", autoOffsetReset)
@@ -112,7 +112,7 @@ public final class KafkaLedger implements Ledger {
         consumer.seek(entry.getKey(), entry.getValue());
       }
     }
-    
+
     final Integer handlerId;
     final ConsumerOffsets consumerOffsets;
     if (groupId != null) {
@@ -123,7 +123,7 @@ public final class KafkaLedger implements Ledger {
       handlerId = null;
       consumerOffsets = null;
     }
-    
+
     final MessageContext context = new DefaultMessageContext(this, handlerId);
     final String pipelinedConsumerThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
@@ -137,7 +137,7 @@ public final class KafkaLedger implements Ledger {
       }
     };
     final ConsumerPipe<String, Message> consumerPipe = 
-        new ConsumerPipe<>(consumerPipeOptions, pipelinedRecordHandler, pipelinedConsumerThreadName);
+        new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, pipelinedConsumerThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
       for (;;) {
@@ -153,14 +153,14 @@ public final class KafkaLedger implements Ledger {
               offsetsSnapshot = null;
             }
           }
-          
+
           if (offsetsSnapshot != null) {
             log.trace("Committing offsets {}", offsetsSnapshot);
             consumer.commitAsync(offsetsSnapshot, 
                                  (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
           }
         }
-        
+
         if (enqueued) {
           break;
         } else {
@@ -168,7 +168,7 @@ public final class KafkaLedger implements Ledger {
         }
       }
     };
-    
+
     final String threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
     final KafkaReceiver<String, Message> receiver = new KafkaReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, KafkaReceiver.genericErrorLogger(log));
@@ -187,7 +187,7 @@ public final class KafkaLedger implements Ledger {
         logException(exception, "Error publishing %s", record);
       }
     };
-    
+
     producerPipe.send(record, sendCallback);
   }
 
@@ -203,7 +203,7 @@ public final class KafkaLedger implements Ledger {
       }
     }
   }
-  
+
   private void logException(Exception cause, String messageFormat, Object... messageArgs) {
     if (cause != null) {
       log.warn(String.format(messageFormat, messageArgs), cause);

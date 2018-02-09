@@ -1,11 +1,11 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
-public final class ConsumerPipeOptions {
+public final class ConsumerPipeConfig {
   private boolean async = true;
   
   private int backlogBatches = 10;
   
-  public ConsumerPipeOptions withAsync(boolean async) {
+  public ConsumerPipeConfig withAsync(boolean async) {
     this.async = async;
     return this;
   }
@@ -14,7 +14,7 @@ public final class ConsumerPipeOptions {
     return async;
   }
   
-  public ConsumerPipeOptions withBacklogBatches(int backlogBatches) {
+  public ConsumerPipeConfig withBacklogBatches(int backlogBatches) {
     this.backlogBatches = backlogBatches;
     return this;
   }
@@ -25,6 +25,6 @@ public final class ConsumerPipeOptions {
   
   @Override
   public String toString() {
-    return ConsumerPipeOptions.class.getSimpleName() + " [async=" + async + ", backlogBatches=" + backlogBatches + "]";
+    return ConsumerPipeConfig.class.getSimpleName() + " [async=" + async + ", backlogBatches=" + backlogBatches + "]";
   }
 }

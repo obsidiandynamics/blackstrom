@@ -1,9 +1,9 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
-public final class ProducerPipeOptions {
+public final class ProducerPipeConfig {
   private boolean async;
   
-  public ProducerPipeOptions withAsync(boolean async) {
+  public ProducerPipeConfig withAsync(boolean async) {
     this.async = async;
     return this;
   }
@@ -14,6 +14,6 @@ public final class ProducerPipeOptions {
   
   @Override
   public String toString() {
-    return ProducerPipeOptions.class.getSimpleName() + " [async=" + async + "]";
+    return ProducerPipeConfig.class.getSimpleName() + " [async=" + async + "]";
   }
 }

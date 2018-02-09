@@ -44,12 +44,12 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   }
   
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, int pipelineSizeBatches, Logger log) {
-    return new KafkaLedger(new KafkaLedgerOptions()
+    return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(kafka)
                            .withTopic("test")
                            .withCodec(new NullMessageCodec())
                            .withLog(log)
-                           .withConsumerPipeOptions(new ConsumerPipeOptions()
+                           .withConsumerPipeConfig(new ConsumerPipeConfig()
                                                     .withBacklogBatches(pipelineSizeBatches)));
   }
   
