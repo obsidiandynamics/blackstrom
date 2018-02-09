@@ -49,7 +49,10 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
                            .withTopic("test")
                            .withCodec(new NullMessageCodec())
                            .withLog(log)
+                           .withProducerPipeConfig(new ProducerPipeConfig()
+                                                   .withAsync(false))
                            .withConsumerPipeConfig(new ConsumerPipeConfig()
+                                                   .withAsync(true)
                                                    .withBacklogBatches(pipelineSizeBatches)));
   }
   

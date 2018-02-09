@@ -68,8 +68,9 @@ public final class KafkaLedger implements Ledger {
         .with("compression.type", "lz4")
         .build();
     producer = kafka.getProducer(props);
+    final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
-        new ProducerPipe<>(config.getProducerPipeConfig(), producer, ProducerPipe.class.getSimpleName() + "-" + topic, log);
+        new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log);
   }
 
   @Override
@@ -125,7 +126,7 @@ public final class KafkaLedger implements Ledger {
     }
 
     final MessageContext context = new DefaultMessageContext(this, handlerId);
-    final String pipelinedConsumerThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
+    final String consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
         final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
@@ -137,7 +138,7 @@ public final class KafkaLedger implements Ledger {
       }
     };
     final ConsumerPipe<String, Message> consumerPipe = 
-        new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, pipelinedConsumerThreadName);
+        new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
       for (;;) {

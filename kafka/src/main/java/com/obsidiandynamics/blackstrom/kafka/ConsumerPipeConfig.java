@@ -1,9 +1,14 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import com.obsidiandynamics.yconf.*;
+
+@Y
 public final class ConsumerPipeConfig {
+  @YInject
   private boolean async = true;
   
-  private int backlogBatches = 10;
+  @YInject
+  private int backlogBatches = 128;
   
   public ConsumerPipeConfig withAsync(boolean async) {
     this.async = async;

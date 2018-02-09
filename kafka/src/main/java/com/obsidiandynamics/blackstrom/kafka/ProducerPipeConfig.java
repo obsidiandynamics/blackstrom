@@ -1,6 +1,10 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import com.obsidiandynamics.yconf.*;
+
+@Y
 public final class ProducerPipeConfig {
+  @YInject
   private boolean async = false;
   
   public ProducerPipeConfig withAsync(boolean async) {
