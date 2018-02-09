@@ -1,7 +1,7 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
 public final class ProducerPipeConfig {
-  private boolean async;
+  private boolean async = false;
   
   public ProducerPipeConfig withAsync(boolean async) {
     this.async = async;

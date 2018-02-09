@@ -17,14 +17,23 @@ public final class ConsumerPipe<K, V> implements Joinable {
   public ConsumerPipe(ConsumerPipeConfig config, RecordHandler<K, V> handler, String threadName) {
     this.handler = handler;
     queue = new LinkedBlockingQueue<>(config.getBacklogBatches());
-    thread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
-        .onCycle(this::cycle)
-        .buildAndStart();
+    if (config.isAsync()) {
+      thread = WorkerThread.builder()
+          .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
+          .onCycle(this::cycle)
+          .buildAndStart();
+    } else {
+      thread = null;
+    }
   }
   
-  public boolean receive(ConsumerRecords<K, V> records) {
-    return queue.offer(records);
+  public boolean receive(ConsumerRecords<K, V> records) throws InterruptedException {
+    if (thread != null) {
+      return queue.offer(records);
+    } else {
+      handler.onReceive(records);
+      return true;
+    }
   }
   
   private void cycle(WorkerThread t) throws InterruptedException {
@@ -36,11 +45,11 @@ public final class ConsumerPipe<K, V> implements Joinable {
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return thread.join(timeoutMillis);
+    return thread != null ? thread.join(timeoutMillis) : true;
   }
   
   public Joinable terminate() {
-    thread.terminate();
+    if (thread != null) thread.terminate();
     return this;
   }
 }

@@ -50,7 +50,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
                            .withCodec(new NullMessageCodec())
                            .withLog(log)
                            .withConsumerPipeConfig(new ConsumerPipeConfig()
-                                                    .withBacklogBatches(pipelineSizeBatches)));
+                                                   .withBacklogBatches(pipelineSizeBatches)));
   }
   
   @Test
@@ -74,9 +74,9 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
     ledger.append(new Proposal("B100", new String[0], null, 0));
     TestSupport.await(barrierA);
     ledger.append(new Proposal("B200", new String[0], null, 0));
-    TestSupport.sleep(10);
+    TestSupport.sleep(50);
     ledger.append(new Proposal("B300", new String[0], null, 0));
-    TestSupport.sleep(10);
+    TestSupport.sleep(50);
     TestSupport.await(barrierB);
     wait.until(() -> assertEquals(3, received.get()));
   }

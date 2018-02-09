@@ -72,6 +72,10 @@ public final class KafkaLedgerConfig {
     this.log = log;
     return this;
   }
-  
-  //TODO add toString
+
+  @Override
+  public String toString() {
+    return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
+        ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + ", log=" + log + "]";
+  }
 }
