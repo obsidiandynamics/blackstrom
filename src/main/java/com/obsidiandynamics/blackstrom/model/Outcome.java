@@ -5,23 +5,23 @@ import java.util.*;
 import org.apache.commons.lang3.builder.*;
 
 public final class Outcome extends FluentMessage<Outcome> {
-  private final Verdict verdict;
+  private final Resolution resolution;
   private final AbortReason abortReason;
   private final Response[] responses;
 
-  public Outcome(String ballotId, Verdict verdict, AbortReason abortReason, Response[] responses) {
-    this(ballotId, 0, verdict, abortReason, responses);
+  public Outcome(String ballotId, Resolution resolution, AbortReason abortReason, Response[] responses) {
+    this(ballotId, 0, resolution, abortReason, responses);
   }
   
-  public Outcome(String ballotId, long timestamp, Verdict verdict, AbortReason abortReason, Response[] responses) {
+  public Outcome(String ballotId, long timestamp, Resolution resolution, AbortReason abortReason, Response[] responses) {
     super(ballotId, timestamp);
-    this.verdict = verdict;
+    this.resolution = resolution;
     this.abortReason = abortReason;
     this.responses = responses;
   }
   
-  public Verdict getVerdict() {
-    return verdict;
+  public Resolution getResolution() {
+    return resolution;
   }
   
   public AbortReason getAbortReason() {
@@ -49,7 +49,7 @@ public final class Outcome extends FluentMessage<Outcome> {
   @Override
   public int hashCode() {
     return new HashCodeBuilder()
-        .append(verdict)
+        .append(resolution)
         .append(abortReason)
         .append(responses)
         .toHashCode();
@@ -63,7 +63,7 @@ public final class Outcome extends FluentMessage<Outcome> {
       final Outcome that = (Outcome) obj;
       return new EqualsBuilder()
           .appendSuper(super.equals(obj))
-          .append(verdict, that.verdict)
+          .append(resolution, that.resolution)
           .append(abortReason, that.abortReason)
           .append(responses, that.responses)
           .isEquals();
@@ -74,7 +74,7 @@ public final class Outcome extends FluentMessage<Outcome> {
 
   @Override
   public String toString() {
-    return Outcome.class.getSimpleName() + " [" + baseToString() + ", verdict=" + verdict + ", abortReason=" + abortReason + 
-        ", responses=" + Arrays.toString(responses) + "]";
+    return Outcome.class.getSimpleName() + " [" + baseToString() + ", resolution=" + resolution + 
+        ", abortReason=" + abortReason + ", responses=" + Arrays.toString(responses) + "]";
   }
 }

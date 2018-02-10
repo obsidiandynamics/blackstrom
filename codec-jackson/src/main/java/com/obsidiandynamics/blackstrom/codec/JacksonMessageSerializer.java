@@ -74,7 +74,7 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
   }
   
   private void serializeOutcome(Outcome o, JsonGenerator gen) throws IOException {
-    gen.writeStringField("verdict", o.getVerdict().name());
+    gen.writeStringField("resolution", o.getResolution().name());
     final AbortReason abortReason = o.getAbortReason();
     if (abortReason != null) {
       gen.writeStringField("abortReason", abortReason.name());      

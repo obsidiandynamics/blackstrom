@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.model;
 
-public enum Verdict {
+public enum Resolution {
   COMMIT,
   ABORT
 }

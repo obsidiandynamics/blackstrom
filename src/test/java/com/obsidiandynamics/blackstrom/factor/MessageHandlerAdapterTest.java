@@ -96,6 +96,6 @@ public final class MessageHandlerAdapterTest {
   }
   
   private static Outcome newOutcome() {
-    return new Outcome("B0", Verdict.COMMIT, null, new Response[0]);
+    return new Outcome("B0", Resolution.COMMIT, null, new Response[0]);
   }
 }

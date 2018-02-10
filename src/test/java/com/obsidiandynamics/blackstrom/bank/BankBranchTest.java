@@ -63,13 +63,13 @@ public final class BankBranchTest {
     assertEquals(amount, branch.getEscrow());
     assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    outcome(Verdict.COMMIT);
+    outcome(Resolution.COMMIT);
 
     assertEquals(INITIAL_BALANCE + amount, branch.getBalance());
     assertEquals(0, branch.getEscrow());
     
     // second outcome should have no effect on the state
-    outcome(Verdict.COMMIT);
+    outcome(Resolution.COMMIT);
     
     assertEquals(INITIAL_BALANCE + amount, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -93,13 +93,13 @@ public final class BankBranchTest {
     assertEquals(amount, branch.getEscrow());
     assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    outcome(Verdict.ABORT);
+    outcome(Resolution.ABORT);
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
     
     // second outcome should have no effect on the state
-    outcome(Verdict.ABORT);
+    outcome(Resolution.ABORT);
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -123,13 +123,13 @@ public final class BankBranchTest {
     assertEquals(0, branch.getEscrow());
     assertEquals(Intent.REJECT, voteAt(0).getResponse().getIntent());
     
-    outcome(Verdict.ABORT);
+    outcome(Resolution.ABORT);
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
     
     // second outcome should have no effect on the state
-    outcome(Verdict.ABORT);
+    outcome(Resolution.ABORT);
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -154,13 +154,13 @@ public final class BankBranchTest {
     assertEquals(0, branch.getEscrow());
     assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    outcome(Verdict.COMMIT);
+    outcome(Resolution.COMMIT);
 
     assertEquals(INITIAL_BALANCE + amount, branch.getBalance());
     assertEquals(0, branch.getEscrow());
     
     // second outcome should have no effect on the state
-    outcome(Verdict.COMMIT);
+    outcome(Resolution.COMMIT);
     
     assertEquals(INITIAL_BALANCE + amount, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -184,13 +184,13 @@ public final class BankBranchTest {
     assertEquals(0, branch.getEscrow());
     assertEquals(Intent.ACCEPT, voteAt(0).getResponse().getIntent());
     
-    outcome(Verdict.ABORT);
+    outcome(Resolution.ABORT);
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
     
     // second outcome should have no effect on the state
-    outcome(Verdict.ABORT);
+    outcome(Resolution.ABORT);
     
     assertEquals(INITIAL_BALANCE, branch.getBalance());
     assertEquals(0, branch.getEscrow());
@@ -209,8 +209,8 @@ public final class BankBranchTest {
     branch.onProposal(context, new Proposal("B0", COHORTS, settlement, TTL));
   }
   
-  private void outcome(Verdict verdict) {
-    final AbortReason abortReason = verdict == Verdict.COMMIT ? null : AbortReason.REJECT;
-    branch.onOutcome(context, new Outcome("B0", verdict, abortReason, new Response[0]));
+  private void outcome(Resolution resolution) {
+    final AbortReason abortReason = resolution == Resolution.COMMIT ? null : AbortReason.REJECT;
+    branch.onOutcome(context, new Outcome("B0", resolution, abortReason, new Response[0]));
   }
 }

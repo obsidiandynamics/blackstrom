@@ -195,10 +195,10 @@ public final class DefaultMonitor implements Monitor {
   }
   
   private void decideBallot(PendingBallot ballot) {
-    if (DEBUG) LOG.trace("Decided ballot for {}: verdict: {}", ballot.getProposal(), ballot.getVerdict());
+    if (DEBUG) LOG.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
-    final Outcome outcome = new Outcome(ballotId, ballot.getVerdict(), ballot.getAbortReason(), ballot.getResponses())
+    final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses())
         .inResponseTo(proposal);
     pending.remove(ballotId);
     if (trackingEnabled) {

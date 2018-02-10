@@ -162,7 +162,7 @@ public final class KryoMessageCodecTest implements TestSupport {
     final KryoAnimal<?> a = new KryoDog().named("Rex").withFriend(new KryoCat().named("Tigger"));
     final Response ra = new Response("test-cohort-a", Intent.ACCEPT, a);
     final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
-    final Outcome m = new Outcome("O100", Verdict.COMMIT, null, new Response[] {ra, rb}).withSource("test");
+    final Outcome m = new Outcome("O100", Resolution.COMMIT, null, new Response[] {ra, rb}).withSource("test");
     MessageCodec c;
 
     c = new KryoMessageCodec(false);
@@ -191,7 +191,7 @@ public final class KryoMessageCodecTest implements TestSupport {
     final KryoAnimal<?> a = new KryoDog().named("Rex").withFriend(new KryoCat().named("Tigger"));
     final Response ra = new Response("test-cohort-a", Intent.REJECT, a);
     final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
-    final Outcome m = new Outcome("O100", Verdict.ABORT, AbortReason.REJECT, new Response[] {ra, rb});
+    final Outcome m = new Outcome("O100", Resolution.ABORT, AbortReason.REJECT, new Response[] {ra, rb});
     MessageCodec c;
 
     c = new KryoMessageCodec(false);

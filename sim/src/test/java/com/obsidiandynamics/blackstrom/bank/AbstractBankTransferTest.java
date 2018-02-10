@@ -32,7 +32,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       BankSettlement.forTwo(transferAmount),
                                                       PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(Verdict.COMMIT, o.getVerdict());
+    assertEquals(Resolution.COMMIT, o.getResolution());
     assertNull(o.getAbortReason());
     assertEquals(2, o.getResponses().length);
     assertEquals(Intent.ACCEPT, o.getResponse(BankBranch.getId(0)).getIntent());
@@ -61,7 +61,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       BankSettlement.forTwo(transferAmount),
                                                       PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(Verdict.ABORT, o.getVerdict());
+    assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.REJECT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
     assertEquals(Intent.REJECT, o.getResponse(BankBranch.getId(0)).getIntent());
@@ -97,7 +97,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(Verdict.ABORT, o.getVerdict());
+    assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1);
     wait.until(() -> {
@@ -129,7 +129,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(Verdict.ABORT, o.getVerdict());
+    assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, o.getAbortReason());
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());

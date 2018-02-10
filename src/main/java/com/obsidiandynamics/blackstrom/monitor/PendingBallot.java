@@ -12,7 +12,7 @@ final class PendingBallot {
   
   private final Map<String, Response> responses;
   
-  private Verdict verdict = Verdict.COMMIT;
+  private Resolution resolution = Resolution.COMMIT;
   
   private AbortReason abortReason;
   
@@ -27,8 +27,8 @@ final class PendingBallot {
     return proposal;
   }
   
-  Verdict getVerdict() {
-    return verdict;
+  Resolution getResolution() {
+    return resolution;
   }
   
   AbortReason getAbortReason() {
@@ -60,15 +60,15 @@ final class PendingBallot {
     
     final Intent intent = response.getIntent();
     if (intent == Intent.REJECT) {
-      verdict = Verdict.ABORT;
+      resolution = Resolution.ABORT;
       abortReason = AbortReason.REJECT;
       return true;
     } else if (intent == Intent.TIMEOUT) {
-      verdict = Verdict.ABORT;
+      resolution = Resolution.ABORT;
       abortReason = AbortReason.EXPLICIT_TIMEOUT;
       return true;
     } else if (hasLapsed(vote)) {
-      verdict = Verdict.ABORT;
+      resolution = Resolution.ABORT;
       abortReason = AbortReason.IMPLICIT_TIMEOUT;
       return true;
     }

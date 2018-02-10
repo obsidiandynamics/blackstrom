@@ -89,7 +89,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
   }
   
   private Message deserializeOutcome(JsonParser p, JsonNode root, String ballotId, long timestamp) throws JsonProcessingException {
-    final Verdict verdict = Verdict.valueOf(root.get("verdict").asText());
+    final Resolution resolution = Resolution.valueOf(root.get("resolution").asText());
     final String abortReasonStr = JacksonUtils.readString("abortReason", root);
     final AbortReason abortReason = abortReasonStr != null ? AbortReason.valueOf(abortReasonStr) : null;
     final ArrayNode responsesNode = (ArrayNode) root.get("responses");
@@ -97,6 +97,6 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     for (int i = 0; i < responses.length; i++) {
       responses[i] = deserializeResponse(p, responsesNode.get(i));
     }
-    return new Outcome(ballotId, timestamp, verdict, abortReason, responses);
+    return new Outcome(ballotId, timestamp, resolution, abortReason, responses);
   }
 }

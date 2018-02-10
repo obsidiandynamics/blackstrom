@@ -67,7 +67,7 @@ final class KryoMessageSerializer extends Serializer<Message> {
   }
   
   private static void serializeOutcome(Kryo kryo, Output out, Outcome outcome) {
-    out.writeByte(outcome.getVerdict().ordinal());
+    out.writeByte(outcome.getResolution().ordinal());
     final AbortReason abortReason = outcome.getAbortReason();
     out.writeByte(abortReason != null ? abortReason.ordinal() : -1);
     final Response[] responses = outcome.getResponses();
@@ -144,8 +144,8 @@ final class KryoMessageSerializer extends Serializer<Message> {
   }
   
   private Outcome deserializeOutcome(Kryo kryo, Input in, String ballotId, long timestamp) {
-    final byte verdictOrdinal = in.readByte();
-    final Verdict verdict = Verdict.values()[verdictOrdinal];
+    final byte resolutionOrdinal = in.readByte();
+    final Resolution resolution = Resolution.values()[resolutionOrdinal];
     final byte abortReasonOrdinal = in.readByte();
     final AbortReason abortReason = abortReasonOrdinal != -1 ? AbortReason.values()[abortReasonOrdinal] : null;
     final int responsesLength = in.readVarInt(true);
@@ -153,7 +153,7 @@ final class KryoMessageSerializer extends Serializer<Message> {
     for (int i = 0; i < responsesLength; i++) {
       responses[i] = deserializeResponse(kryo, in);
     }
-    return new Outcome(ballotId, timestamp, verdict, abortReason, responses);
+    return new Outcome(ballotId, timestamp, resolution, abortReason, responses);
   }
   
   private Response deserializeResponse(Kryo kryo, Input in) {

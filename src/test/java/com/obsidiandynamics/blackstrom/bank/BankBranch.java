@@ -159,7 +159,7 @@ public final class BankBranch implements Cohort {
         escrow -= xferAmount;
       }
       
-      if (outcome.getVerdict() == Verdict.COMMIT) {
+      if (outcome.getResolution() == Resolution.COMMIT) {
         balance += xferAmount;
       }
       

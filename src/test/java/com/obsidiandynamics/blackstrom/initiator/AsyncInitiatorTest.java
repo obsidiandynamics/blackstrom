@@ -36,10 +36,10 @@ public final class AsyncInitiatorTest {
       if (m.getMessageType() == MessageType.PROPOSAL) {
         called.incrementAndGet();
         try {
-          c.getLedger().append(new Outcome(m.getBallotId(), Verdict.COMMIT, null, new Response[0]));
+          c.getLedger().append(new Outcome(m.getBallotId(), Resolution.COMMIT, null, new Response[0]));
           
           // second append should do nothing
-          c.getLedger().append(new Outcome(m.getBallotId(), Verdict.ABORT, AbortReason.REJECT, new Response[0]));
+          c.getLedger().append(new Outcome(m.getBallotId(), Resolution.ABORT, AbortReason.REJECT, new Response[0]));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -49,7 +49,7 @@ public final class AsyncInitiatorTest {
     final CompletableFuture<Outcome> f = initiator.initiate(new Proposal("B0", new String[0], null, 0));
     final Outcome outcome = f.get();
     assertNotNull(outcome);
-    assertEquals(Verdict.COMMIT, outcome.getVerdict());
+    assertEquals(Resolution.COMMIT, outcome.getResolution());
     assertEquals(1, called.get());
   }
 }

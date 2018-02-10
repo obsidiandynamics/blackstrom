@@ -107,7 +107,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -121,7 +121,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -142,7 +142,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -158,7 +158,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -173,7 +173,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     vote(ballotId, "b", Intent.ACCEPT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -187,7 +187,7 @@ public final class DefaultMonitorTest {
     assertEquals(1, outcomes.size());
     vote(ballotId, "b", Intent.REJECT);
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -216,7 +216,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -243,7 +243,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -327,7 +327,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -357,7 +357,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.COMMIT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
@@ -376,7 +376,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
-    assertEquals(Verdict.ABORT, outcomes.get(0).getVerdict());
+    assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
   }
   

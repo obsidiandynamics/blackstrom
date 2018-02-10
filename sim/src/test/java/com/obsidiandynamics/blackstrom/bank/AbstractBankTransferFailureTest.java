@@ -111,8 +111,8 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
                      branches[1])
         .build();
 
-    testSingleTransfer(initialBalance + 1, Verdict.ABORT, AbortReason.REJECT, initiator, sandbox);
-    testSingleTransfer(10, Verdict.COMMIT, null, initiator, sandbox);
+    testSingleTransfer(initialBalance + 1, Resolution.ABORT, AbortReason.REJECT, initiator, sandbox);
+    testSingleTransfer(10, Resolution.COMMIT, null, initiator, sandbox);
 
     Thread.sleep(10);
     wait.until(() -> {
@@ -122,16 +122,16 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     });
   }
 
-  private void testSingleTransfer(int transferAmount, Verdict expectedVerdict, AbortReason expectedAbortReason,
+  private void testSingleTransfer(int transferAmount, Resolution expectedVerdict, AbortReason expectedAbortReason,
                                   AsyncInitiator initiator, Sandbox sandbox) throws InterruptedException, ExecutionException, Exception {
-    assert expectedVerdict == Verdict.COMMIT ^ expectedAbortReason != null;
+    assert expectedVerdict == Resolution.COMMIT ^ expectedAbortReason != null;
     final String ballotId = UUID.randomUUID().toString();
     final Outcome o = initiator.initiate(new Proposal(ballotId, 
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
                                                       PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
         .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(expectedVerdict, o.getVerdict());
+    assertEquals(expectedVerdict, o.getResolution());
     assertEquals(expectedAbortReason, o.getAbortReason());
   }
 }
