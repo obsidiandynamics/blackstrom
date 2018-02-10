@@ -149,7 +149,8 @@ public final class DefaultMonitor implements Monitor {
   
   private void timeoutCohort(Proposal proposal, String cohort) {
     LOG.debug("Timed out {} for cohort {}", proposal, cohort);
-    append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null)).inResponseTo(proposal));
+    append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null))
+           .inResponseTo(proposal).withSource(groupId));
   }
   
   private void append(Message message) {
@@ -206,7 +207,7 @@ public final class DefaultMonitor implements Monitor {
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
     final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses())
-        .inResponseTo(proposal);
+        .inResponseTo(proposal).withSource(groupId);
     pending.remove(ballotId);
     if (trackingEnabled) {
       additions.add(outcome);
