@@ -33,6 +33,8 @@ public final class DefaultMonitor implements Monitor {
   
   private final int gcIntervalMillis;
   
+  private final Object gcLock = new Object();
+  
   private final int outcomeLifetimeMillis;
   
   private long reapedSoFar;
@@ -86,32 +88,37 @@ public final class DefaultMonitor implements Monitor {
   
   private void gcCycle(WorkerThread thread) throws InterruptedException {
     Thread.sleep(gcIntervalMillis);
-    
-    final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
-    int reaped = 0;
-    synchronized (trackerLock) {
-      for (Iterator<Outcome> outcomesIt = decided.iterator(); outcomesIt.hasNext();) {
-        final Outcome outcome = outcomesIt.next();
-        if (outcome.getTimestamp() < collectThreshold) {
-          outcomesIt.remove();
-          reaped++;
+    gc();
+  }
+  
+  void gc() {
+    synchronized (gcLock) {
+      final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+      int reaped = 0;
+      synchronized (trackerLock) {
+        for (Iterator<Outcome> outcomesIt = decided.iterator(); outcomesIt.hasNext();) {
+          final Outcome outcome = outcomesIt.next();
+          if (outcome.getTimestamp() < collectThreshold) {
+            outcomesIt.remove();
+            reaped++;
+          }
+        }
+        
+        for (;;) {
+          final Outcome addition = additionsConsumer.poll();
+          if (addition != null) {
+            decided.add(addition);
+          } else {
+            break;
+          }
         }
       }
       
-      for (;;) {
-        final Outcome addition = additionsConsumer.poll();
-        if (addition != null) {
-          decided.add(addition);
-        } else {
-          break;
-        }
+      if (reaped != 0) {
+        reapedSoFar += reaped;
+        LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
+                  reaped, reapedSoFar, pending.size(), decided.size());
       }
-    }
-    
-    if (reaped != 0) {
-      reapedSoFar += reaped;
-      LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
-                reaped, reapedSoFar, pending.size(), decided.size());
     }
   }
   

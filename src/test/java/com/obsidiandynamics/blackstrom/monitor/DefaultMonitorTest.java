@@ -271,7 +271,7 @@ public final class DefaultMonitorTest {
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    monitor.gc();
     wait.until(numOutcomesIs(1));
     wait.until(numTrackedOutcomesIs(1));
   }
