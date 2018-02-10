@@ -55,7 +55,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testPipelineBackoff() {
     final Kafka<String, Message> kafka = new MockKafka<>();
-    ledger = createLedger(kafka, true, false, 1, LoggerFactory.getLogger(KafkaLedger.class));
+    ledger = createLedger(kafka, false, true, 1, LoggerFactory.getLogger(KafkaLedger.class));
     final CyclicBarrier barrierA = new CyclicBarrier(2);
     final CyclicBarrier barrierB = new CyclicBarrier(2);
     final AtomicInteger received = new AtomicInteger();
