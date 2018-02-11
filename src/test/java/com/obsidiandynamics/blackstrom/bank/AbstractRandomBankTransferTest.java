@@ -35,7 +35,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
                                    boolean enableTracking) {
     final long transferAmount = 1_000;
     final long initialBalance = runs * transferAmount / (numBranches * numBranches);
-    final int backlogTarget = 10_000;
+    final int backlogTarget = Math.min(runs / 10, 10_000);
     final boolean idempotencyEnabled = false;
 
     final AtomicInteger commits = new AtomicInteger();
