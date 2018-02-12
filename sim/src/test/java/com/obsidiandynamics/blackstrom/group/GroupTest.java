@@ -15,6 +15,13 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
 public final class GroupTest {
+  @FunctionalInterface
+  private interface ChannelFactory {
+    JChannel create() throws Exception;
+  }
+  
+  private static final ChannelFactory CHANNEL_FACTORY = () -> Group.newChannel(Util.getLocalhost());
+  
   private final Set<Group> groups = new HashSet<>();
   
   private final Timesert wait = Wait.SHORT;
@@ -25,8 +32,12 @@ public final class GroupTest {
     groups.clear();
   }
   
-  private Group create(JChannel channel) throws Exception {
-    final Group g = new Group(channel);
+  private Group create() throws Exception {
+    return create(CHANNEL_FACTORY);
+  }
+  
+  private Group create(ChannelFactory factory) throws Exception {
+    final Group g = new Group(factory.create());
     groups.add(g);
     return g;
   }
@@ -52,8 +63,8 @@ public final class GroupTest {
       g1Received.set(m);
     };
     
-    final Group g0 = create(Group.newChannel(Util.getLocalhost())).withHandler(g0Handler).connect(cluster);
-    final Group g1 = create(Group.newChannel(Util.getLocalhost())).withHandler(g1Handler).connect(cluster);
+    final Group g0 = create().withHandler(g0Handler).connect(cluster);
+    final Group g1 = create().withHandler(g1Handler).connect(cluster);
     
     assertEquals(1, g0.numHandlers());
     assertEquals(1, g1.numHandlers());
