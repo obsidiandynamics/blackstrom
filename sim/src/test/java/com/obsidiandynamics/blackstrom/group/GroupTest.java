@@ -15,11 +15,6 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
 public final class GroupTest {
-  @FunctionalInterface
-  private interface ChannelFactory {
-    JChannel create() throws Exception;
-  }
-  
   private static final ChannelFactory CHANNEL_FACTORY = () -> Group.newChannel(Util.getLocalhost());
   
   private final Set<Group> groups = new HashSet<>();
