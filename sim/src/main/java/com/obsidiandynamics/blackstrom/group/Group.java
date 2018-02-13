@@ -9,6 +9,7 @@ import org.jgroups.*;
 import org.jgroups.protocols.*;
 import org.jgroups.protocols.pbcast.*;
 import org.jgroups.util.Util.*;
+import org.slf4j.*;
 
 public final class Group implements AutoCloseable {
   private final JChannel channel;
@@ -16,28 +17,39 @@ public final class Group implements AutoCloseable {
   private final Set<HostMessageHandler> generalHandlers = new CopyOnWriteArraySet<>();
   
   private final ConcurrentMap<Serializable, Set<HostMessageHandler>> idHandlers = new ConcurrentHashMap<>();
+  
+  private Logger log = LoggerFactory.getLogger(Group.class);
       
   public Group(JChannel channel) throws Exception {
     this.channel = channel;
     channel.setDiscardOwnMessages(true);
     channel.setReceiver(new ReceiverAdapter() {
       @Override public void receive(Message msg) {
-        for (HostMessageHandler onMessage : generalHandlers) {
-          onMessage.handle(channel, msg);
-        }
-        
-        final Object payload = msg.getObject();
-        if (payload instanceof SyncMessage) {
-          final SyncMessage syncMessage = (SyncMessage) payload;
-          final Set<HostMessageHandler> handlers = idHandlers.get(syncMessage.getId());
-          if (handlers != null) {
-            for (HostMessageHandler handler : handlers) {
-              handler.handle(channel, msg);
+        try {
+          for (HostMessageHandler onMessage : generalHandlers) {
+            onMessage.handle(channel, msg);
+          }
+          
+          final Object payload = msg.getObject();
+          if (payload instanceof SyncMessage) {
+            final SyncMessage syncMessage = (SyncMessage) payload;
+            final Set<HostMessageHandler> handlers = idHandlers.get(syncMessage.getId());
+            if (handlers != null) {
+              for (HostMessageHandler handler : handlers) {
+                handler.handle(channel, msg);
+              }
             }
           }
+        } catch (Throwable e) {
+          log.warn(String.format("Exception processing message %s", msg), e);
         }
       }
     });
+  }
+  
+  public Group withLogger(Logger log) {
+    this.log = log;
+    return this;
   }
   
   public Group withHandler(HostMessageHandler handler) {
@@ -57,6 +69,10 @@ public final class Group implements AutoCloseable {
     idHandlers.computeIfAbsent(id, key -> new CopyOnWriteArraySet<>()).add(handler);
     return this;
   }  
+  
+  public void send(Message message) throws Exception {
+    channel.send(message);
+  }
   
   public int numHandlers(Serializable id) {
     return idHandlers.getOrDefault(id, Collections.emptySet()).size();
@@ -85,7 +101,7 @@ public final class Group implements AutoCloseable {
   public ResponseSync request(Address address, SyncMessage syncMessage, HostMessageHandler handler) throws Exception {
     final Serializable id = syncMessage.getId();
     final HostMessageHandler idHandler = new HostMessageHandler() {
-      @Override public void handle(JChannel channel, Message resp) {
+      @Override public void handle(JChannel channel, Message resp) throws Exception {
         if (resp.getSrc().equals(address)) {
           removeHandler(id, this);
           handler.handle(channel, resp);
@@ -105,7 +121,7 @@ public final class Group implements AutoCloseable {
     final Map<Address, Message> responses = new HashMap<>();
     final Serializable id = syncMessage.getId();
     final HostMessageHandler idHandler = new HostMessageHandler() {
-      @Override public void handle(JChannel channel, Message resp) {
+      @Override public void handle(JChannel channel, Message resp) throws Exception {
         responses.put(resp.getSrc(), resp);
         if (responses.size() == respondents) {
           removeHandler(id, this);

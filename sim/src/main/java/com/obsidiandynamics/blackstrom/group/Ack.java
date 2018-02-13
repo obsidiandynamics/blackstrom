@@ -12,6 +12,10 @@ public final class Ack extends SyncMessage {
   public static Ack of(SyncMessage message) {
     return new Ack(message.getId());
   }
+
+  public static Ack forId(Serializable id) {
+    return new Ack(id);
+  }
   
   @Override
   public String toString() {
