@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import org.jgroups.*;
+import org.jgroups.Message.*;
 import org.jgroups.protocols.*;
 import org.jgroups.protocols.pbcast.*;
 import org.jgroups.util.Util.*;
@@ -86,11 +87,11 @@ public final class Group implements AutoCloseable {
     });
   }
   
-  public CompletableFuture<Message> request(Address address, SyncMessage syncMessage) throws Exception {
+  public CompletableFuture<Message> request(Address address, SyncMessage syncMessage, Flag... flags) throws Exception {
     final CompletableFuture<Message> f = new CompletableFuture<>();
     final ResponseSync rs = request(address, syncMessage, (channel, message) -> {
       f.complete(message);
-    });
+    }, flags);
     f.whenComplete((message, throwable) -> {
       if (f.isCancelled()) {
         rs.cancel();
@@ -99,7 +100,7 @@ public final class Group implements AutoCloseable {
     return f;
   }
   
-  public ResponseSync request(Address address, SyncMessage syncMessage, HostMessageHandler handler) throws Exception {
+  public ResponseSync request(Address address, SyncMessage syncMessage, HostMessageHandler handler, Flag... flags) throws Exception {
     final Serializable id = syncMessage.getId();
     final HostMessageHandler idHandler = new HostMessageHandler() {
       @Override public void handle(JChannel channel, Message resp) throws Exception {
@@ -108,19 +109,19 @@ public final class Group implements AutoCloseable {
       }
     };
     withHandler(id, idHandler);
-    channel.send(new Message(null, syncMessage));
+    channel.send(new Message(null, syncMessage).setFlag(flags));
     return new ResponseSync(this, id, idHandler);
   }
   
-  public CompletableFuture<Map<Address, Message>> gather(SyncMessage syncMessage) throws Exception {
-    return gather(channel.getView().size() - 1, syncMessage);
+  public CompletableFuture<Map<Address, Message>> gather(SyncMessage syncMessage, Flag... flags) throws Exception {
+    return gather(channel.getView().size() - 1, syncMessage, flags);
   }
   
-  public CompletableFuture<Map<Address, Message>> gather(int respondents, SyncMessage syncMessage) throws Exception {
+  public CompletableFuture<Map<Address, Message>> gather(int respondents, SyncMessage syncMessage, Flag... flags) throws Exception {
     final CompletableFuture<Map<Address, Message>> f = new CompletableFuture<>();
     final ResponseSync rs = gather(respondents, syncMessage, (channel, messages) -> {
       f.complete(messages);
-    });
+    }, flags);
     f.whenComplete((message, throwable) -> {
       if (f.isCancelled()) {
         rs.cancel();
@@ -129,11 +130,11 @@ public final class Group implements AutoCloseable {
     return f;
   }
   
-  public ResponseSync gather(SyncMessage syncMessage, GroupMessageHandler handler) throws Exception {
-    return gather(channel.getView().size() - 1, syncMessage, handler);
+  public ResponseSync gather(SyncMessage syncMessage, GroupMessageHandler handler, Flag... flags) throws Exception {
+    return gather(channel.getView().size() - 1, syncMessage, handler, flags);
   }
   
-  public ResponseSync gather(int respondents, SyncMessage syncMessage, GroupMessageHandler handler) throws Exception {
+  public ResponseSync gather(int respondents, SyncMessage syncMessage, GroupMessageHandler handler, Flag... flags) throws Exception {
     final Map<Address, Message> responses = new HashMap<>();
     final Serializable id = syncMessage.getId();
     final HostMessageHandler idHandler = new HostMessageHandler() {
@@ -146,7 +147,7 @@ public final class Group implements AutoCloseable {
       }
     };
     withHandler(id, idHandler);
-    channel.send(new Message(null, syncMessage));
+    channel.send(new Message(null, syncMessage).setFlag(flags));
     return new ResponseSync(this, id, idHandler);
   }
   
