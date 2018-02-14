@@ -25,6 +25,7 @@ public final class Group implements AutoCloseable {
     channel.setDiscardOwnMessages(true);
     channel.setReceiver(new ReceiverAdapter() {
       @Override public void receive(Message msg) {
+        if (log.isDebugEnabled()) log.debug("Received {}", msg);
         try {
           for (HostMessageHandler onMessage : generalHandlers) {
             onMessage.handle(channel, msg);
@@ -113,6 +114,23 @@ public final class Group implements AutoCloseable {
     return new ResponseSync(this, id, idHandler);
   }
   
+  public CompletableFuture<Map<Address, Message>> gather(SyncMessage syncMessage) throws Exception {
+    return gather(channel.getView().size() - 1, syncMessage);
+  }
+  
+  public CompletableFuture<Map<Address, Message>> gather(int respondents, SyncMessage syncMessage) throws Exception {
+    final CompletableFuture<Map<Address, Message>> f = new CompletableFuture<>();
+    final ResponseSync rs = gather(respondents, syncMessage, (channel, messages) -> {
+      f.complete(messages);
+    });
+    f.whenComplete((message, throwable) -> {
+      if (f.isCancelled()) {
+        rs.cancel();
+      }
+    });
+    return f;
+  }
+  
   public ResponseSync gather(SyncMessage syncMessage, GroupMessageHandler handler) throws Exception {
     return gather(channel.getView().size() - 1, syncMessage, handler);
   }
@@ -141,6 +159,21 @@ public final class Group implements AutoCloseable {
   
   public JChannel channel() {
     return channel;
+  }
+  
+  public View view() {
+    return channel.view();
+  }
+  
+  public Set<Address> peers() {
+    final Address current = channel.getAddress();
+    final Set<Address> addresses = new HashSet<>(channel.view().getMembers());
+    addresses.remove(current);
+    return addresses;
+  }
+  
+  public Address peer() {
+    return peers().iterator().next();
   }
   
   /**

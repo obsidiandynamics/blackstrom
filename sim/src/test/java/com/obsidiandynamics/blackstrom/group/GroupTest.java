@@ -9,6 +9,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import org.jgroups.*;
+import org.jgroups.Message.*;
 import org.jgroups.util.*;
 import org.junit.*;
 
@@ -38,8 +39,8 @@ public final class GroupTest {
     return g;
   }
   
-  private static Runnable viewSize(int size, JChannel channel) {
-    return () -> assertEquals(size, channel.getView().size());
+  private static Runnable viewSize(int size, Group group) {
+    return () -> assertEquals(size, group.view().size());
   }
   
   private static <T> Runnable received(T expected, AtomicReference<T> ref) {
@@ -54,17 +55,17 @@ public final class GroupTest {
     final AtomicReference<String> g1Received = new AtomicReference<>();
     final HostMessageHandler g0Handler = (chan, m) -> g0Received.set(m.getObject());
     final HostMessageHandler g1Handler = (chan, m) -> g1Received.set(m.getObject());
-    
     final Group g0 = create().withHandler(g0Handler).connect(cluster);
     final Group g1 = create().withHandler(g1Handler).connect(cluster);
     assertEquals(1, g0.numHandlers());
     assertEquals(1, g1.numHandlers());
     
-    wait.until(viewSize(2, g0.channel()));
-    wait.until(viewSize(2, g1.channel()));
+    wait.until(viewSize(2, g0));
+    wait.until(viewSize(2, g1));
     
-    g0.send(new Message(null, "test"));
+    g0.send(new Message(null, "test").setFlag(Flag.DONT_BUNDLE));
     wait.until(received("test", g1Received));
+    assertNotNull(g1Received.get());
     assertNull(g0Received.get());
     
     g0.removeHandler(g0Handler);
@@ -98,8 +99,8 @@ public final class GroupTest {
     assertEquals(1, g0.numHandlers(handledId));
     assertEquals(1, g1.numHandlers(handledId));
     
-    wait.until(viewSize(2, g0.channel()));
-    wait.until(viewSize(2, g1.channel()));
+    wait.until(viewSize(2, g0));
+    wait.until(viewSize(2, g1));
 
     final TestMessage unhandledMessage = new TestMessage(unhandledId);
     final TestMessage handledMessage = new TestMessage(handledId);
@@ -116,34 +117,168 @@ public final class GroupTest {
   }
   
   @Test
-  public void testRequest() throws Exception {
+  public void testRequestResponseFuture() throws Exception {
     final String cluster = UUID.randomUUID().toString();
     final Group g0 = create().connect(cluster);
     final Group g1 = create().connect(cluster);
     
-    wait.until(viewSize(2, g0.channel()));
-    wait.until(viewSize(2, g1.channel()));
+    wait.until(viewSize(2, g0));
+    wait.until(viewSize(2, g1));
     
-    g1.withHandler((chan, m) -> {
+    final HostMessageHandler handler = (chan, m) -> {
       final Object obj = m.getObject();
-      if (obj instanceof SyncMessage) {
+      if (obj instanceof TestMessage) {
         chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))));
       }
-    });
+    };
+    g0.withHandler(handler);
+    g1.withHandler(handler);
     
-    final Address address = peer(g0.channel());
+    final Address address = g0.peer();
     final UUID messageId = UUID.randomUUID();
     final Future<Message> f = g0.request(address, new TestMessage(messageId));
-    final Message response = f.get();
+    final Message response;
+    try {
+      response = f.get();
+    } finally {
+      assertEquals(0, g0.numHandlers(messageId));
+      f.cancel(false);
+    }
     assertEquals(Ack.forId(messageId), response.getObject());
   }
   
-  private static Address peer(JChannel channel) {
-    final Address current = channel.getAddress();
-    final Set<Address> addresses = new HashSet<>(channel.getView().getMembers());
-    assertEquals("addresses=" + addresses, 2, addresses.size());
-    final boolean removed = addresses.remove(current);
-    assertTrue(removed);
-    return addresses.iterator().next();
+  @Test
+  public void testRequestResponseCallback() throws Exception {
+    final String cluster = UUID.randomUUID().toString();
+    final Group g0 = create().connect(cluster);
+    final Group g1 = create().connect(cluster);
+    
+    wait.until(viewSize(2, g0));
+    wait.until(viewSize(2, g1));
+    
+    final HostMessageHandler handler = (chan, m) -> {
+      final Object obj = m.getObject();
+      if (obj instanceof TestMessage) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))));
+      }
+    };
+    g0.withHandler(handler);
+    g1.withHandler(handler);
+    
+    final Address address = g0.peer();
+    final UUID messageId = UUID.randomUUID();
+    final AtomicReference<Message> callbackRef = new AtomicReference<>();
+    g0.request(address, new TestMessage(messageId), (chan, resp) -> callbackRef.set(resp));
+    wait.untilTrue(() -> callbackRef.get() != null);
+    assertEquals(0, g0.numHandlers(messageId));
+    assertNotNull(callbackRef.get());
+    assertEquals(Ack.forId(messageId), callbackRef.get().getObject());
+  }
+  
+  @Test(expected=TimeoutException.class)
+  public void testRequestFutureTimeout() throws Exception {
+    final String cluster = UUID.randomUUID().toString();
+    final Group g0 = create().connect(cluster);
+    final Group g1 = create().connect(cluster);
+    
+    wait.until(viewSize(2, g0));
+    wait.until(viewSize(2, g1));
+    
+    final Address address = g0.peer();
+    final UUID messageId = UUID.randomUUID();
+    final Future<Message> f = g0.request(address, new TestMessage(messageId));
+    try {
+      f.get(1, TimeUnit.MILLISECONDS);
+    } finally {
+      assertEquals(1, g0.numHandlers(messageId));
+      f.cancel(false);
+      assertEquals(0, g0.numHandlers(messageId));
+    }
+  }
+  
+  @Test
+  public void testGatherResponseFuture() throws Exception {
+    final String cluster = UUID.randomUUID().toString();
+    final Group g0 = create().connect(cluster);
+    final Group g1 = create().connect(cluster);
+    final Group g2 = create().connect(cluster);
+    
+    wait.until(viewSize(3, g0));
+    wait.until(viewSize(3, g1));
+    wait.until(viewSize(3, g2));
+    
+    final HostMessageHandler handler = (chan, m) -> {
+      final Object obj = m.getObject();
+      if (obj instanceof TestMessage) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))));
+      }
+    };
+    g0.withHandler(handler);
+    g1.withHandler(handler);
+    g2.withHandler(handler);
+    
+    final UUID messageId = UUID.randomUUID();
+    final Future<Map<Address, Message>> f = g0.gather(new TestMessage(messageId));
+    final Map<Address, Message> responses;
+    try {
+      responses = f.get();
+    } finally {
+      assertEquals(0, g0.numHandlers(messageId));
+      f.cancel(false);
+    }
+    assertEquals(2, responses.size());
+    assertEquals(g0.peers(), responses.keySet());
+  }
+  
+  @Test
+  public void testGatherResponseCallback() throws Exception {
+    final String cluster = UUID.randomUUID().toString();
+    final Group g0 = create().connect(cluster);
+    final Group g1 = create().connect(cluster);
+    final Group g2 = create().connect(cluster);
+    
+    wait.until(viewSize(3, g0));
+    wait.until(viewSize(3, g1));
+    wait.until(viewSize(3, g2));
+    
+    final HostMessageHandler handler = (chan, m) -> {
+      final Object obj = m.getObject();
+      if (obj instanceof TestMessage) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))));
+      }
+    };
+    g0.withHandler(handler);
+    g1.withHandler(handler);
+    g2.withHandler(handler);
+    
+    final UUID messageId = UUID.randomUUID();
+    final AtomicReference<Map<Address, Message>> callbackRef = new AtomicReference<>();
+    g0.gather(new TestMessage(messageId), (chan, messages) -> callbackRef.set(messages));
+    wait.untilTrue(() -> callbackRef.get() != null);
+    assertEquals(0, g0.numHandlers(messageId));
+    assertEquals(2, callbackRef.get().size());
+    assertEquals(g0.peers(), callbackRef.get().keySet());
+  }
+  
+  @Test(expected=TimeoutException.class)
+  public void testGatherResponseFutureTimeout() throws Exception {
+    final String cluster = UUID.randomUUID().toString();
+    final Group g0 = create().connect(cluster);
+    final Group g1 = create().connect(cluster);
+    final Group g2 = create().connect(cluster);
+    
+    wait.until(viewSize(3, g0));
+    wait.until(viewSize(3, g1));
+    wait.until(viewSize(3, g2));
+    
+    final UUID messageId = UUID.randomUUID();
+    final Future<Map<Address, Message>> f = g0.gather(new TestMessage(messageId));
+    try {
+      f.get(1, TimeUnit.MILLISECONDS);
+    } finally {
+      assertEquals(1, g0.numHandlers(messageId));
+      f.cancel(false);
+      assertEquals(0, g0.numHandlers(messageId));
+    }
   }
 }
