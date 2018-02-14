@@ -4,12 +4,12 @@ import java.io.*;
 
 import org.apache.commons.lang3.builder.*;
 
-public abstract class SyncMessage implements Serializable {
+public abstract class SyncPacket implements Serializable {
   private static final long serialVersionUID = 1L;
   
   private final Serializable id;
   
-  protected SyncMessage(Serializable id) {
+  protected SyncPacket(Serializable id) {
     this.id = id;
   }
   
@@ -30,8 +30,8 @@ public abstract class SyncMessage implements Serializable {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof SyncMessage) {
-      final SyncMessage that = (SyncMessage) obj;
+    } else if (obj instanceof SyncPacket) {
+      final SyncPacket that = (SyncPacket) obj;
       return new EqualsBuilder().append(id, that.id).isEquals();
     } else {
       return false;

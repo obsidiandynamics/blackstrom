@@ -2,14 +2,14 @@ package com.obsidiandynamics.blackstrom.group;
 
 import java.io.*;
 
-public final class Ack extends SyncMessage {
+public final class Ack extends SyncPacket {
   private static final long serialVersionUID = 1L;
   
   private Ack(Serializable id) {
     super(id);
   }
 
-  public static Ack of(SyncMessage message) {
+  public static Ack of(SyncPacket message) {
     return new Ack(message.getId());
   }
 

@@ -18,6 +18,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 import org.slf4j.*;
 
+import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
@@ -35,6 +36,14 @@ public final class GroupTest {
   private static final boolean MOCK = true;
   
   private static final ChannelFactory CHANNEL_FACTORY = MOCK ? MOCK_FACTORY : UDP_FACTORY;
+  
+  private static class TestPacket extends SyncPacket {
+    private static final long serialVersionUID = 1L;
+    
+    TestPacket(Serializable id) {
+      super(id);
+    }
+  }
   
   private final Set<Group> groups = new HashSet<>();
   
@@ -127,20 +136,12 @@ public final class GroupTest {
     });
   }
   
-  private static class TestMessage extends SyncMessage {
-    private static final long serialVersionUID = 1L;
-    
-    TestMessage(Serializable id) {
-      super(id);
-    }
-  }
-  
   @Test
   public void testIdHandler() throws Exception {
     final String cluster = UUID.randomUUID().toString();
     
-    final AtomicReference<SyncMessage> g0Received = new AtomicReference<>();
-    final AtomicReference<SyncMessage> g1Received = new AtomicReference<>();
+    final AtomicReference<SyncPacket> g0Received = new AtomicReference<>();
+    final AtomicReference<SyncPacket> g1Received = new AtomicReference<>();
     final HostMessageHandler g0Handler = (chan, m) -> g0Received.set(m.getObject());
     final HostMessageHandler g1HandlerA = (chan, m) -> g1Received.set(m.getObject());
     final HostMessageHandler g1HandlerB = (chan, m) -> g1Received.set(m.getObject());
@@ -155,11 +156,11 @@ public final class GroupTest {
     wait.until(viewSize(2, g0));
     wait.until(viewSize(2, g1));
 
-    final TestMessage unhandledMessage = new TestMessage(unhandledId);
-    final TestMessage handledMessage = new TestMessage(handledId);
-    g0.send(new Message(null, handledMessage).setFlag(DONT_BUNDLE));
-    g0.send(new Message(null, unhandledMessage).setFlag(DONT_BUNDLE));
-    wait.until(received(handledMessage, g1Received));
+    final TestPacket unhandledPacket = new TestPacket(unhandledId);
+    final TestPacket handledPacket = new TestPacket(handledId);
+    g0.send(new Message(null, handledPacket).setFlag(DONT_BUNDLE));
+    g0.send(new Message(null, unhandledPacket).setFlag(DONT_BUNDLE));
+    wait.until(received(handledPacket, g1Received));
     assertNull(g0Received.get());
     
     g0.removeHandler(handledId, g0Handler);
@@ -183,24 +184,24 @@ public final class GroupTest {
     
     final HostMessageHandler handler = (chan, m) -> {
       final Object obj = m.getObject();
-      if (obj instanceof TestMessage) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))).setFlag(DONT_BUNDLE));
+      if (obj instanceof TestPacket) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
       }
     };
     g0.withHandler(handler);
     g1.withHandler(handler);
     
     final Address address = g0.peer();
-    final UUID messageId = UUID.randomUUID();
-    final Future<Message> f = g0.request(address, new TestMessage(messageId), DONT_BUNDLE);
+    final UUID packetId = UUID.randomUUID();
+    final Future<Message> f = g0.request(address, new TestPacket(packetId), DONT_BUNDLE);
     final Message response;
     try {
       response = f.get();
     } finally {
-      assertEquals(0, g0.numHandlers(messageId));
+      assertEquals(0, g0.numHandlers(packetId));
       f.cancel(false);
     }
-    assertEquals(Ack.forId(messageId), response.getObject());
+    assertEquals(Ack.forId(packetId), response.getObject());
   }
   
   @Test
@@ -214,21 +215,22 @@ public final class GroupTest {
     
     final HostMessageHandler handler = (chan, m) -> {
       final Object obj = m.getObject();
-      if (obj instanceof TestMessage) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))).setFlag(DONT_BUNDLE));
+      if (obj instanceof TestPacket) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
       }
     };
     g0.withHandler(handler);
     g1.withHandler(handler);
     
     final Address address = g0.peer();
-    final UUID messageId = UUID.randomUUID();
+    final UUID packetId = UUID.randomUUID();
     final AtomicReference<Message> callbackRef = new AtomicReference<>();
-    g0.request(address, new TestMessage(messageId), (chan, resp) -> callbackRef.set(resp), DONT_BUNDLE);
+    final ResponseSync responseSync = g0.request(address, new TestPacket(packetId), (chan, resp) -> callbackRef.set(resp), DONT_BUNDLE);
     wait.untilTrue(() -> callbackRef.get() != null);
-    assertEquals(0, g0.numHandlers(messageId));
+    assertEquals(0, g0.numHandlers(packetId));
     assertNotNull(callbackRef.get());
-    assertEquals(Ack.forId(messageId), callbackRef.get().getObject());
+    assertEquals(Ack.forId(packetId), callbackRef.get().getObject());
+    responseSync.cancel();
   }
   
   @Test(expected=TimeoutException.class)
@@ -241,14 +243,14 @@ public final class GroupTest {
     wait.until(viewSize(2, g1));
     
     final Address address = g0.peer();
-    final UUID messageId = UUID.randomUUID();
-    final Future<Message> f = g0.request(address, new TestMessage(messageId), DONT_BUNDLE);
+    final UUID packetId = UUID.randomUUID();
+    final Future<Message> f = g0.request(address, new TestPacket(packetId), DONT_BUNDLE);
     try {
       f.get(1, TimeUnit.MILLISECONDS);
     } finally {
-      assertEquals(1, g0.numHandlers(messageId));
+      assertEquals(1, g0.numHandlers(packetId));
       f.cancel(false);
-      assertEquals(0, g0.numHandlers(messageId));
+      assertEquals(0, g0.numHandlers(packetId));
     }
   }
   
@@ -265,21 +267,21 @@ public final class GroupTest {
     
     final HostMessageHandler handler = (chan, m) -> {
       final Object obj = m.getObject();
-      if (obj instanceof TestMessage) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))).setFlag(DONT_BUNDLE));
+      if (obj instanceof TestPacket) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
       }
     };
     g0.withHandler(handler);
     g1.withHandler(handler);
     g2.withHandler(handler);
     
-    final UUID messageId = UUID.randomUUID();
-    final Future<Map<Address, Message>> f = g0.gather(new TestMessage(messageId), DONT_BUNDLE);
+    final UUID packetId = UUID.randomUUID();
+    final Future<Map<Address, Message>> f = g0.gather(new TestPacket(packetId), DONT_BUNDLE);
     final Map<Address, Message> responses;
     try {
       responses = f.get();
     } finally {
-      assertEquals(0, g0.numHandlers(messageId));
+      assertEquals(0, g0.numHandlers(packetId));
       f.cancel(false);
     }
     assertEquals(2, responses.size());
@@ -299,19 +301,21 @@ public final class GroupTest {
     
     final HostMessageHandler handler = (chan, m) -> {
       final Object obj = m.getObject();
-      if (obj instanceof TestMessage) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncMessage) obj))).setFlag(DONT_BUNDLE));
+      if (obj instanceof TestPacket) {
+        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
       }
     };
     g0.withHandler(handler);
     g1.withHandler(handler);
     g2.withHandler(handler);
     
-    final UUID messageId = UUID.randomUUID();
+    final UUID packetId = UUID.randomUUID();
     final AtomicReference<Map<Address, Message>> callbackRef = new AtomicReference<>();
-    g0.gather(new TestMessage(messageId), (chan, messages) -> callbackRef.set(messages), DONT_BUNDLE);
+    final ResponseSync responseSync = g0.gather(new TestPacket(packetId), (chan, messages) -> callbackRef.set(messages), DONT_BUNDLE);
     wait.untilTrue(() -> callbackRef.get() != null);
-    assertEquals(0, g0.numHandlers(messageId));
+    responseSync.cancel();
+    Assertions.assertToStringOverride(responseSync);
+    assertEquals(0, g0.numHandlers(packetId));
     assertEquals(2, callbackRef.get().size());
     assertEquals(g0.peers(), callbackRef.get().keySet());
   }
@@ -327,14 +331,14 @@ public final class GroupTest {
     wait.until(viewSize(3, g1));
     wait.until(viewSize(3, g2));
     
-    final UUID messageId = UUID.randomUUID();
-    final Future<Map<Address, Message>> f = g0.gather(new TestMessage(messageId), DONT_BUNDLE);
+    final UUID packetId = UUID.randomUUID();
+    final Future<Map<Address, Message>> f = g0.gather(new TestPacket(packetId), DONT_BUNDLE);
     try {
       f.get(1, TimeUnit.MILLISECONDS);
     } finally {
-      assertEquals(1, g0.numHandlers(messageId));
+      assertEquals(1, g0.numHandlers(packetId));
       f.cancel(false);
-      assertEquals(0, g0.numHandlers(messageId));
+      assertEquals(0, g0.numHandlers(packetId));
     }
   }
 }
