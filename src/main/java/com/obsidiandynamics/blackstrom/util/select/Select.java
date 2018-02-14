@@ -12,7 +12,12 @@ public abstract class Select<T> {
   }
   
   protected final boolean test(Predicate<? super T> predicate) {
-    return ! consumed && predicate.test(value);
+    if (consumed) {
+      return false;
+    } else {
+      consumed = predicate.test(value);
+      return consumed;
+    }
   }
   
   @SuppressWarnings("unchecked")
