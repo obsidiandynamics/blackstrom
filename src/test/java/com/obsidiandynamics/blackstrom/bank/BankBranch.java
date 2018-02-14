@@ -60,9 +60,9 @@ public final class BankBranch implements Cohort {
       decidedCopy = new ArrayList<>(decided.values());
     }
     
-    for (Outcome oucome : decidedCopy) {
-      if (oucome.getTimestamp() < collectThreshold) {
-        deathRow.add(oucome);
+    for (Outcome outcome : decidedCopy) {
+      if (outcome.getTimestamp() < collectThreshold) {
+        deathRow.add(outcome);
       }
     }
     
