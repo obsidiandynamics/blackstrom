@@ -103,10 +103,8 @@ public final class Group implements AutoCloseable {
     final Serializable id = syncMessage.getId();
     final HostMessageHandler idHandler = new HostMessageHandler() {
       @Override public void handle(JChannel channel, Message resp) throws Exception {
-        if (resp.getSrc().equals(address)) {
-          removeHandler(id, this);
-          handler.handle(channel, resp);
-        }
+        removeHandler(id, this);
+        handler.handle(channel, resp);
       }
     };
     withHandler(id, idHandler);
@@ -185,7 +183,7 @@ public final class Group implements AutoCloseable {
   }
   
   /**
-   *  Creates a new {@link JChannel}.
+   *  Creates a new UDP-based {@link JChannel}.
    *  
    *  @param bindAddress The address to bind to, or {@code null} to bind to the default external interface.
    *                     Note: you may consider setting {@code -Djava.net.preferIPv4Stack=true} if binding
@@ -193,12 +191,35 @@ public final class Group implements AutoCloseable {
    *  @return A new channel.
    *  @throws Exception If an error occurs.
    *  
-   *  @see {@link org.jgroups.util.Util#getAddress(AddressScope)} for specifying one of the predefined
-   *       address scopes {@code [GLOBAL, SITE_LOCAL, LINK_LOCAL, NON_LOOPBACK]}.
+   *  @see org.jgroups.util.Util#getAddress(AddressScope) for specifying one of the predefined
+   *  address scopes {@code [GLOBAL, SITE_LOCAL, LINK_LOCAL, NON_LOOPBACK]}.
    */
-  public static JChannel newChannel(InetAddress bindAddress) throws Exception {
+  public static JChannel newUdpChannel(InetAddress bindAddress) throws Exception {
     return new JChannel(new UDP().setValue("bind_addr", bindAddress),
                         new PING(),
+                        new MERGE3(),
+                        new FD_SOCK(),
+                        new FD_ALL(),
+                        new VERIFY_SUSPECT(),
+                        new BARRIER(),
+                        new NAKACK2(),
+                        new UNICAST3(),
+                        new STABLE(),
+                        new GMS(),
+                        new UFC(),
+                        new MFC(),
+                        new FRAG2());
+  }
+  
+  /**
+   *  Creates a new VM-local loopback channel.
+   *  
+   *  @return A new channel.
+   *  @throws Exception Exception If an error occurs.
+   */
+  public static JChannel newLoopbackChannel() throws Exception {
+    return new JChannel(new SHARED_LOOPBACK(),
+                        new SHARED_LOOPBACK_PING(),
                         new MERGE3(),
                         new FD_SOCK(),
                         new FD_ALL(),

@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.group;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.io.*;
 import java.util.*;
@@ -12,12 +13,28 @@ import org.jgroups.*;
 import org.jgroups.Message.*;
 import org.jgroups.util.*;
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
+import org.mockito.*;
+import org.slf4j.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public final class GroupTest {
-  private static final ChannelFactory CHANNEL_FACTORY = () -> Group.newChannel(Util.getLocalhost());
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
+  private static final ChannelFactory UDP_FACTORY = () -> Group.newUdpChannel(Util.getLocalhost());
+  private static final ChannelFactory MOCK_FACTORY = () -> Group.newLoopbackChannel();
+  
+  private static final boolean MOCK = true;
+  
+  private static final ChannelFactory CHANNEL_FACTORY = MOCK ? MOCK_FACTORY : UDP_FACTORY;
   
   private final Set<Group> groups = new HashSet<>();
   
@@ -59,6 +76,14 @@ public final class GroupTest {
     final Group g1 = create().withHandler(g1Handler).connect(cluster);
     assertEquals(1, g0.numHandlers());
     assertEquals(1, g1.numHandlers());
+    assertNotNull(g0.channel());
+    
+    final Logger l0 = mock(Logger.class);
+    final Logger l1 = mock(Logger.class);
+    when(l0.isDebugEnabled()).thenReturn(true);
+    when(l0.isDebugEnabled()).thenReturn(false);
+    g0.withLogger(l0);
+    g1.withLogger(l1);
     
     wait.until(viewSize(2, g0));
     wait.until(viewSize(2, g1));
@@ -90,14 +115,15 @@ public final class GroupTest {
     final AtomicReference<SyncMessage> g0Received = new AtomicReference<>();
     final AtomicReference<SyncMessage> g1Received = new AtomicReference<>();
     final HostMessageHandler g0Handler = (chan, m) -> g0Received.set(m.getObject());
-    final HostMessageHandler g1Handler = (chan, m) -> g1Received.set(m.getObject());
+    final HostMessageHandler g1HandlerA = (chan, m) -> g1Received.set(m.getObject());
+    final HostMessageHandler g1HandlerB = (chan, m) -> g1Received.set(m.getObject());
     
     final UUID handledId = UUID.randomUUID();
     final UUID unhandledId = UUID.randomUUID();
     final Group g0 = create().withHandler(handledId, g0Handler).connect(cluster);
-    final Group g1 = create().withHandler(handledId, g1Handler).connect(cluster);
+    final Group g1 = create().withHandler(handledId, g1HandlerA).withHandler(handledId, g1HandlerB).connect(cluster);
     assertEquals(1, g0.numHandlers(handledId));
-    assertEquals(1, g1.numHandlers(handledId));
+    assertEquals(2, g1.numHandlers(handledId));
     
     wait.until(viewSize(2, g0));
     wait.until(viewSize(2, g1));
@@ -110,9 +136,12 @@ public final class GroupTest {
     assertNull(g0Received.get());
     
     g0.removeHandler(handledId, g0Handler);
-    g1.removeHandler(handledId, g1Handler);
+    g1.removeHandler(handledId, g1HandlerA);
     
     assertEquals(0, g0.numHandlers(handledId));
+    assertEquals(1, g1.numHandlers(handledId));
+    
+    g1.removeHandler(handledId, g1HandlerB);
     assertEquals(0, g1.numHandlers(handledId));
   }
   
