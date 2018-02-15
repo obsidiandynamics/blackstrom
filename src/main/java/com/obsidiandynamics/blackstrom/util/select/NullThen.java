@@ -4,23 +4,23 @@ import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 
-public final class NullThen<T, R> {
-  private final Select<T, R> select;
+public final class NullThen<S extends SelectRoot<R>, R> {
+  private final S select;
   private final boolean fire;
 
-  NullThen(Select<T, R> select, boolean fire) {
+  NullThen(S select, boolean fire) {
     this.select = select;
     this.fire = fire;
   }
   
-  public Select<T, R> then(Runnable action) {
+  public S then(Runnable action) {
     return thenReturn(() -> {
       action.run();
       return null;
     });
   }
   
-  public Select<T, R> thenReturn(Supplier<R> action) {
+  public S thenReturn(Supplier<R> action) {
     if (fire) {
       select.setReturn(action.get());
     }
@@ -30,14 +30,14 @@ public final class NullThen<T, R> {
   public final class Checked {
     Checked() {}
     
-    public Select<T, R> then(ThrowingRunnable action) throws Exception {
+    public S then(ThrowingRunnable action) throws Exception {
       return thenReturn(() -> {
         action.run();
         return null;
       });
     }
     
-    public Select<T, R> thenReturn(ThrowingSupplier<R> action) throws Exception {
+    public S thenReturn(ThrowingSupplier<R> action) throws Exception {
       if (fire) {
         select.setReturn(action.get());
       }
@@ -45,7 +45,7 @@ public final class NullThen<T, R> {
     }
   }
   
-  public Checked checked() {
+  Checked checked() {
     return new Checked();
   }
 }

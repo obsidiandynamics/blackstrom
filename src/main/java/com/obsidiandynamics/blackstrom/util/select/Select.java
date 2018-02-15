@@ -2,7 +2,9 @@ package com.obsidiandynamics.blackstrom.util.select;
 
 import java.util.function.*;
 
-public final class Select<T, R> {
+import com.obsidiandynamics.blackstrom.util.throwing.*;
+
+public final class Select<T, R> implements SelectRoot<R> {
   private final T value;
   
   private boolean consumed;
@@ -13,15 +15,15 @@ public final class Select<T, R> {
     this.value = value;
   }
   
-  public ValueThen<T, T, R> when(Predicate<? super T> predicate) {
+  public ValueThen<Select<T, R>, T, T, R> when(Predicate<? super T> predicate) {
     return new ValueThen<>(this, value, test(predicate));
   }
   
-  public NullThen<T, R> whenNull() {
+  public NullThen<Select<T, R>, R> whenNull() {
     return new NullThen<>(this, test(isNull()));
   }
   
-  public <E> ValueThen<T, E, R> whenInstanceOf(Class<E> type) {
+  public <E> ValueThen<Select<T, R>, T, E, R> whenInstanceOf(Class<E> type) {
     return when(instanceOf(type)).transform(obj -> type.cast(obj));
   }
   
@@ -33,8 +35,49 @@ public final class Select<T, R> {
     return otherwise().thenReturn(action);
   }
   
-  public ValueThen<T, T, R> otherwise() {
+  public ValueThen<Select<T, R>, T, T, R> otherwise() {
     return when(alwaysTrue());
+  }
+  
+  public final class Checked implements SelectRoot<R> {
+    Checked() {}
+    
+    public ValueThen<Select<T, R>.Checked, T, T, R>.Checked when(Predicate<? super T> predicate) {
+      return new ValueThen<Select<T, R>.Checked, T, T, R>(this, value, test(predicate)).checked();
+    }
+    
+    public NullThen<Select<T, R>.Checked, R>.Checked whenNull() {
+      return new NullThen<>(this, test(isNull())).checked();
+    }
+    
+    public <E> ValueThen<Select<T, R>.Checked, T, E, R>.Checked whenInstanceOf(Class<E> type) throws Exception {
+      return when(instanceOf(type)).transform(obj -> type.cast(obj));
+    }
+    
+    public Select<T, R>.Checked otherwise(ThrowingConsumer<T> action) throws Exception {
+      return otherwise().then(action);
+    }
+    
+    public Select<T, R>.Checked otherwiseReturn(ThrowingFunction<T, R> action) throws Exception {
+      return otherwise().thenReturn(action);
+    }
+    
+    public ValueThen<Select<T, R>.Checked, T, T, R>.Checked otherwise() {
+      return when(alwaysTrue());
+    }
+
+    @Override
+    public void setReturn(R returnValue) {
+      Select.this.setReturn(returnValue);
+    }
+    
+    public R getReturn() {
+      return Select.this.getReturn();
+    }
+  }
+  
+  public Checked checked() {
+    return new Checked();
   }
   
   private final boolean test(Predicate<? super T> predicate) {
@@ -46,7 +89,8 @@ public final class Select<T, R> {
     }
   }
   
-  final void setReturn(R returnValue) {
+  @Override
+  public final void setReturn(R returnValue) {
     this.returnValue = returnValue;
   }
   
