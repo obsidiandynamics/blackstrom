@@ -4,65 +4,65 @@ import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 
-public final class Select<T, R> implements SelectRoot<R> {
-  private final T value;
+public final class Select<V, R> implements SelectRoot<R> {
+  private final V value;
   
   private boolean consumed;
   
   private R returnValue;
   
-  private Select(T value) {
+  private Select(V value) {
     this.value = value;
   }
   
-  public ValueThen<Select<T, R>, T, T, R> when(Predicate<? super T> predicate) {
+  public ValueThen<Select<V, R>, V, R> when(Predicate<? super V> predicate) {
     return new ValueThen<>(this, value, test(predicate));
   }
   
-  public NullThen<Select<T, R>, R> whenNull() {
+  public NullThen<Select<V, R>, R> whenNull() {
     return new NullThen<>(this, test(isNull()));
   }
   
-  public <E> ValueThen<Select<T, R>, T, E, R> whenInstanceOf(Class<E> type) {
+  public <C> ValueThen<Select<V, R>, C, R> whenInstanceOf(Class<C> type) {
     return when(instanceOf(type)).transform(obj -> type.cast(obj));
   }
   
-  public Select<T, R> otherwise(Consumer<T> action) {
+  public Select<V, R> otherwise(Consumer<V> action) {
     return otherwise().then(action);
   }
   
-  public Select<T, R> otherwiseReturn(Function<T, R> action) {
+  public Select<V, R> otherwiseReturn(Function<V, R> action) {
     return otherwise().thenReturn(action);
   }
   
-  public ValueThen<Select<T, R>, T, T, R> otherwise() {
+  public ValueThen<Select<V, R>, V, R> otherwise() {
     return when(alwaysTrue());
   }
   
   public final class Checked implements SelectRoot<R> {
     Checked() {}
     
-    public ValueThen<Select<T, R>.Checked, T, T, R>.Checked when(Predicate<? super T> predicate) {
-      return new ValueThen<Select<T, R>.Checked, T, T, R>(this, value, test(predicate)).checked();
+    public ValueThen<Select<V, R>.Checked, V, R>.Checked when(Predicate<? super V> predicate) {
+      return new ValueThen<>(this, value, test(predicate)).checked();
     }
     
-    public NullThen<Select<T, R>.Checked, R>.Checked whenNull() {
+    public NullThen<Select<V, R>.Checked, R>.Checked whenNull() {
       return new NullThen<>(this, test(isNull())).checked();
     }
     
-    public <E> ValueThen<Select<T, R>.Checked, T, E, R>.Checked whenInstanceOf(Class<E> type) throws Exception {
+    public <C> ValueThen<Select<V, R>.Checked, C, R>.Checked whenInstanceOf(Class<C> type) throws Exception {
       return when(instanceOf(type)).transform(obj -> type.cast(obj));
     }
     
-    public Select<T, R>.Checked otherwise(ThrowingConsumer<T> action) throws Exception {
+    public Select<V, R>.Checked otherwise(ThrowingConsumer<V> action) throws Exception {
       return otherwise().then(action);
     }
     
-    public Select<T, R>.Checked otherwiseReturn(ThrowingFunction<T, R> action) throws Exception {
+    public Select<V, R>.Checked otherwiseReturn(ThrowingFunction<V, R> action) throws Exception {
       return otherwise().thenReturn(action);
     }
     
-    public ValueThen<Select<T, R>.Checked, T, T, R>.Checked otherwise() {
+    public ValueThen<Select<V, R>.Checked, V, R>.Checked otherwise() {
       return when(alwaysTrue());
     }
 
@@ -80,7 +80,7 @@ public final class Select<T, R> implements SelectRoot<R> {
     return new Checked();
   }
   
-  private final boolean test(Predicate<? super T> predicate) {
+  private final boolean test(Predicate<? super V> predicate) {
     if (consumed) {
       return false;
     } else {
@@ -98,28 +98,28 @@ public final class Select<T, R> implements SelectRoot<R> {
     return returnValue;
   }
   
-  public static final <T> Predicate<T> isNull() {
+  public static final <V> Predicate<V> isNull() {
     return v -> v == null;
   }
   
-  public static final <T> Predicate<T> isNotNull() {
+  public static final <V> Predicate<V> isNotNull() {
     return not(isNull());
   }
   
-  public static final <T> Predicate<T> not(Predicate<T> positive) {
+  public static final <V> Predicate<V> not(Predicate<V> positive) {
     return v -> ! positive.test(v);
   }
   
-  public static final <T> Predicate<T> instanceOf(Class<?> type) {
+  public static final <V> Predicate<V> instanceOf(Class<?> type) {
     return v -> type.isInstance(v);
   }
   
-  public static final <T> Predicate<T> alwaysTrue() {
+  public static final <V> Predicate<V> alwaysTrue() {
     return v -> true;
   }
   
   public static final class WithReturn<R> {
-    public <T> Select<T, R> from(T value) {
+    public <V> Select<V, R> from(V value) {
       return new Select<>(value);
     }
   }
@@ -132,7 +132,7 @@ public final class Select<T, R> implements SelectRoot<R> {
     return new WithReturn<>();
   }
   
-  public static final <T, R> Select<T, R> from(T value) {
+  public static final <V, R> Select<V, R> from(V value) {
     return new Select<>(value);
   }
 }
