@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.util.select;
 
+import java.util.function.*;
+
 import com.obsidiandynamics.indigo.util.*;
 
 public final class ThenThrowing<T, E> {
@@ -18,5 +20,10 @@ public final class ThenThrowing<T, E> {
       action.accept(value);
     }
     return select;
+  }
+  
+  public <U> ThenThrowing<T, U> transform(Function<E, U> transform) {
+    final U newValue = fire ? transform.apply(value) : null;
+    return new ThenThrowing<>(select, newValue, fire);
   }
 }

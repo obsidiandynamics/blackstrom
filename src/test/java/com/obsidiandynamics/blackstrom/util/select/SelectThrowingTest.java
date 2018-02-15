@@ -93,4 +93,19 @@ public final class SelectThrowingTest {
     
     assertEquals("Long", branch.get());
   }
+  
+  @Test
+  public void testTransform() throws Exception {
+    final Once<String> branch = new Once<>();
+    Select.fromThrowing("5")
+    .whenNull().then(() -> branch.assign("null"))
+    .when(isEqual("4")).transform(Integer::parseInt).then(obj -> branch.assign("4"))
+    .when(isEqual("5")).transform(Integer::parseInt).then(obj -> {
+      assertEquals(Integer.class, obj.getClass());
+      branch.assign("5");
+    })
+    .otherwise(obj -> branch.assign("otherwise"));
+    
+    assertEquals("5", branch.get());
+  }
 }
