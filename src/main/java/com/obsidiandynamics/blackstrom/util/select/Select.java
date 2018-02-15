@@ -2,18 +2,42 @@ package com.obsidiandynamics.blackstrom.util.select;
 
 import java.util.function.*;
 
-public abstract class Select<T, R> {
-  protected final T value;
+public final class Select<T, R> {
+  private final T value;
   
-  protected boolean consumed;
+  private boolean consumed;
   
   private R returnValue;
   
-  protected Select(T value) {
+  private Select(T value) {
     this.value = value;
   }
   
-  protected final boolean test(Predicate<? super T> predicate) {
+  public ValueThen<T, T, R> when(Predicate<? super T> predicate) {
+    return new ValueThen<>(this, value, test(predicate));
+  }
+  
+  public NullThen<T, R> whenNull() {
+    return new NullThen<>(this, test(isNull()));
+  }
+  
+  public <E> ValueThen<T, E, R> whenInstanceOf(Class<E> type) {
+    return when(instanceOf(type)).transform(obj -> type.cast(obj));
+  }
+  
+  public Select<T, R> otherwise(Consumer<T> action) {
+    return otherwise().then(action);
+  }
+  
+  public Select<T, R> otherwiseReturn(Function<T, R> action) {
+    return otherwise().thenReturn(action);
+  }
+  
+  public ValueThen<T, T, R> otherwise() {
+    return when(alwaysTrue());
+  }
+  
+  private final boolean test(Predicate<? super T> predicate) {
     if (consumed) {
       return false;
     } else {
@@ -22,17 +46,12 @@ public abstract class Select<T, R> {
     }
   }
   
-  protected final void setReturn(R returnValue) {
+  final void setReturn(R returnValue) {
     this.returnValue = returnValue;
   }
   
   public final R getReturn() {
     return returnValue;
-  }
-  
-  @SuppressWarnings("unchecked")
-  protected static final <T> T cast(Object obj) {
-    return (T) obj;
   }
   
   public static final <T> Predicate<T> isNull() {
@@ -55,21 +74,21 @@ public abstract class Select<T, R> {
     return v -> true;
   }
   
-  public static final class WithReturnBuilder<R> {
-    public <T> SelectThrowing<T, R> fromThrowing(T value) {
-      return new SelectThrowing<>(value);
+  public static final class WithReturn<R> {
+    public <T> Select<T, R> from(T value) {
+      return new Select<>(value);
     }
   }
   
-  public static final <R> WithReturnBuilder<R> withReturn() {
+  public static final <R> WithReturn<R> withReturn() {
     return withReturn(null);
   }
   
-  public static final <R> WithReturnBuilder<R> withReturn(Class<R> type) {
-    return new WithReturnBuilder<>();
+  public static final <R> WithReturn<R> withReturn(Class<R> type) {
+    return new WithReturn<>();
   }
   
-  public static final <T, R> SelectThrowing<T, R> fromThrowing(T value) {
-    return new SelectThrowing<>(value);
+  public static final <T, R> Select<T, R> from(T value) {
+    return new Select<>(value);
   }
 }

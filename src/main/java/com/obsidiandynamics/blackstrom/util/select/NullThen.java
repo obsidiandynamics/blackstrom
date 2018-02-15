@@ -4,40 +4,40 @@ import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 
-public final class NullThenThrowing<T, R> {
-  private final SelectThrowing<T, R> select;
+public final class NullThen<T, R> {
+  private final Select<T, R> select;
   private final boolean fire;
 
-  NullThenThrowing(SelectThrowing<T, R> select, boolean fire) {
+  NullThen(Select<T, R> select, boolean fire) {
     this.select = select;
     this.fire = fire;
   }
   
-  public SelectThrowing<T, R> then(Runnable action) {
+  public Select<T, R> then(Runnable action) {
     return thenReturn(() -> {
       action.run();
       return null;
     });
   }
   
-  public SelectThrowing<T, R> thenReturn(Supplier<R> action) {
+  public Select<T, R> thenReturn(Supplier<R> action) {
     if (fire) {
       select.setReturn(action.get());
     }
     return select;
   }
   
-  public final class ThrowingBuilder {
-    ThrowingBuilder() {}
+  public final class Checked {
+    Checked() {}
     
-    public SelectThrowing<T, R> then(ThrowingRunnable action) throws Exception {
+    public Select<T, R> then(ThrowingRunnable action) throws Exception {
       return thenReturn(() -> {
         action.run();
         return null;
       });
     }
     
-    public SelectThrowing<T, R> thenReturn(ThrowingSupplier<R> action) throws Exception {
+    public Select<T, R> thenReturn(ThrowingSupplier<R> action) throws Exception {
       if (fire) {
         select.setReturn(action.get());
       }
@@ -45,7 +45,7 @@ public final class NullThenThrowing<T, R> {
     }
   }
   
-  public ThrowingBuilder checked() {
-    return new ThrowingBuilder();
+  public Checked checked() {
+    return new Checked();
   }
 }
