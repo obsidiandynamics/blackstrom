@@ -2,8 +2,6 @@ package com.obsidiandynamics.blackstrom.util.select;
 
 import java.util.function.*;
 
-import com.obsidiandynamics.blackstrom.util.throwing.*;
-
 public final class SelectThrowing<T, R> extends Select<T, R> {
   SelectThrowing(T value) {
     super(value);
@@ -21,11 +19,11 @@ public final class SelectThrowing<T, R> extends Select<T, R> {
     return new ThenThrowing<>(this, cast(value), test(instanceOf(type)));
   }
   
-  public SelectThrowing<T, R> otherwise(ThrowingConsumer<T> action) throws Exception {
+  public SelectThrowing<T, R> otherwise(Consumer<T> action) {
     return otherwise().then(action);
   }
   
-  public SelectThrowing<T, R> otherwiseReturn(ThrowingFunction<T, R> action) throws Exception {
+  public SelectThrowing<T, R> otherwiseReturn(Function<T, R> action) {
     return otherwise().thenReturn(action);
   }
   

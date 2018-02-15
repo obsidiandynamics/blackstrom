@@ -15,14 +15,14 @@ public final class ThenThrowing<T, E, R> {
     this.fire = fire;
   }
   
-  public SelectThrowing<T, R> then(ThrowingConsumer<E> action) throws Exception {
+  public SelectThrowing<T, R> then(Consumer<E> action) {
     return thenReturn(value -> {
       action.accept(value);
       return null;
     });
   }
   
-  public SelectThrowing<T, R> thenReturn(ThrowingFunction<E, R> action) throws Exception {
+  public SelectThrowing<T, R> thenReturn(Function<E, R> action) {
     if (fire) {
       select.setReturn(action.apply(value));
     }
@@ -32,5 +32,32 @@ public final class ThenThrowing<T, E, R> {
   public <U> ThenThrowing<T, U, R> transform(Function<E, U> transform) {
     final U newValue = fire ? transform.apply(value) : null;
     return new ThenThrowing<>(select, newValue, fire);
+  }
+  
+  public final class ThrowingBuilder {
+    ThrowingBuilder() {}
+    
+    public SelectThrowing<T, R> then(ThrowingConsumer<E> action) throws Exception {
+      return thenReturn(value -> {
+        action.accept(value);
+        return null;
+      });
+    }
+    
+    public SelectThrowing<T, R> thenReturn(ThrowingFunction<E, R> action) throws Exception {
+      if (fire) {
+        select.setReturn(action.apply(value));
+      }
+      return select;
+    }
+    
+    public <U> ThenThrowing<T, U, R> transform(ThrowingFunction<E, U> transform) throws Exception {
+      final U newValue = fire ? transform.apply(value) : null;
+      return new ThenThrowing<>(select, newValue, fire);
+    }
+  }
+  
+  public <U> ThrowingBuilder checked() {
+    return new ThrowingBuilder();
   }
 }

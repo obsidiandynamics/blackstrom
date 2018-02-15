@@ -189,7 +189,7 @@ public final class GroupTest {
     wait.until(viewSize(2, g1));
     
     final HostMessageHandler handler = 
-        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).checked().then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     
@@ -216,7 +216,7 @@ public final class GroupTest {
     wait.until(viewSize(2, g1));
     
     final HostMessageHandler handler = 
-        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).checked().then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     
@@ -264,7 +264,7 @@ public final class GroupTest {
     wait.until(viewSize(3, g2));
     
     final HostMessageHandler handler = 
-        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).checked().then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     g2.withHandler(handler);
@@ -294,7 +294,7 @@ public final class GroupTest {
     wait.until(viewSize(3, g2));
     
     final HostMessageHandler handler = 
-        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).checked().then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     g2.withHandler(handler);
