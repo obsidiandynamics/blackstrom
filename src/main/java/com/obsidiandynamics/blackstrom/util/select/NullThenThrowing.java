@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.util.select;
 
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class NullThenThrowing<T, R> {
   private final SelectThrowing<T, R> select;
@@ -12,15 +12,15 @@ public final class NullThenThrowing<T, R> {
   }
   
   public SelectThrowing<T, R> then(ThrowingRunnable action) throws Exception {
-    return then(() -> {
+    return thenReturn(() -> {
       action.run();
       return null;
     });
   }
   
-  public SelectThrowing<T, R> then(ThrowingSupplier<R> action) throws Exception {
+  public SelectThrowing<T, R> thenReturn(ThrowingSupplier<R> action) throws Exception {
     if (fire) {
-      select.setReturn(action.create());
+      select.setReturn(action.get());
     }
     return select;
   }

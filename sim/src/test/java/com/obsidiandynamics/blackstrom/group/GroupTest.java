@@ -21,6 +21,8 @@ import org.slf4j.*;
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.util.select.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
@@ -71,6 +73,10 @@ public final class GroupTest {
   
   private static <T> Runnable received(T expected, AtomicReference<T> ref) {
     return () -> assertEquals(expected, ref.get());
+  }
+  
+  private static <P extends SyncPacket> ThrowingConsumer<P> ack(JChannel chan, Message m) {
+    return p -> chan.send(new Message(m.getSrc(), Ack.of(p)).setFlag(DONT_BUNDLE));
   }
   
   @Test
@@ -182,12 +188,8 @@ public final class GroupTest {
     wait.until(viewSize(2, g0));
     wait.until(viewSize(2, g1));
     
-    final HostMessageHandler handler = (chan, m) -> {
-      final Object obj = m.getObject();
-      if (obj instanceof TestPacket) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
-      }
-    };
+    final HostMessageHandler handler = 
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     
@@ -213,12 +215,8 @@ public final class GroupTest {
     wait.until(viewSize(2, g0));
     wait.until(viewSize(2, g1));
     
-    final HostMessageHandler handler = (chan, m) -> {
-      final Object obj = m.getObject();
-      if (obj instanceof TestPacket) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
-      }
-    };
+    final HostMessageHandler handler = 
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     
@@ -265,12 +263,8 @@ public final class GroupTest {
     wait.until(viewSize(3, g1));
     wait.until(viewSize(3, g2));
     
-    final HostMessageHandler handler = (chan, m) -> {
-      final Object obj = m.getObject();
-      if (obj instanceof TestPacket) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
-      }
-    };
+    final HostMessageHandler handler = 
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     g2.withHandler(handler);
@@ -299,12 +293,8 @@ public final class GroupTest {
     wait.until(viewSize(3, g1));
     wait.until(viewSize(3, g2));
     
-    final HostMessageHandler handler = (chan, m) -> {
-      final Object obj = m.getObject();
-      if (obj instanceof TestPacket) {
-        chan.send(new Message(m.getSrc(), Ack.of(((SyncPacket) obj))).setFlag(DONT_BUNDLE));
-      }
-    };
+    final HostMessageHandler handler = 
+        (chan, m) -> Select.fromThrowing(m.getObject()).whenInstanceOf(TestPacket.class).then(ack(chan, m));
     g0.withHandler(handler);
     g1.withHandler(handler);
     g2.withHandler(handler);

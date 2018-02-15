@@ -112,10 +112,10 @@ public final class SelectThrowingTest {
   @Test
   public void testReturn() throws Exception {
     final String retVal = Select.withReturn(String.class).fromThrowing(5L)
-        .whenNull().then(() -> "was null")
-        .when(isEqual(1L)).then(obj -> "was one")
-        .when(isEqual(5L)).then(obj -> "was five")
-        .otherwise(obj -> "was something else")
+        .whenNull().thenReturn(() -> "was null")
+        .when(isEqual(1L)).thenReturn(obj -> "was one")
+        .when(isEqual(5L)).thenReturn(obj -> "was five")
+        .otherwiseReturn(obj -> "was something else")
         .getReturn();
 
     assertEquals("was five", retVal);
@@ -124,9 +124,9 @@ public final class SelectThrowingTest {
   @Test
   public void testReturnNull() throws Exception {
     final String retVal = Select.<String>withReturn().fromThrowing(10L)
-        .whenNull().then(() -> "was null")
-        .when(isEqual(1L)).then(obj -> "was one")
-        .when(isEqual(5L)).then(obj -> "was five")
+        .whenNull().thenReturn(() -> "was null")
+        .when(isEqual(1L)).thenReturn(obj -> "was one")
+        .when(isEqual(5L)).thenReturn(obj -> "was five")
         .getReturn();
 
     assertNull(retVal);

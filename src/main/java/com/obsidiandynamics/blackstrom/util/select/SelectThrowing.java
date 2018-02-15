@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.util.select;
 
 import java.util.function.*;
 
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class SelectThrowing<T, R> extends Select<T, R> {
   SelectThrowing(T value) {
@@ -25,8 +25,8 @@ public final class SelectThrowing<T, R> extends Select<T, R> {
     return otherwise().then(action);
   }
   
-  public SelectThrowing<T, R> otherwise(ThrowingFunction<T, R> action) throws Exception {
-    return otherwise().then(action);
+  public SelectThrowing<T, R> otherwiseReturn(ThrowingFunction<T, R> action) throws Exception {
+    return otherwise().thenReturn(action);
   }
   
   public ThenThrowing<T, T, R> otherwise() {
