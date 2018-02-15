@@ -26,6 +26,9 @@ public final class KafkaLedgerConfig {
   
   @YInject
   private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
+  
+  @YInject
+  private int attachRetries = 10;
 
   Kafka<String, Message> getKafka() {
     return kafka;
@@ -81,9 +84,19 @@ public final class KafkaLedgerConfig {
     return this;
   }
 
+  int getAttachRetries() {
+    return attachRetries;
+  }
+  
+  public KafkaLedgerConfig withAttachRetries(int attachRetries) {
+    this.attachRetries = attachRetries;
+    return this;
+  }
+
   @Override
   public String toString() {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
-        ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + ", log=" + log + "]";
+        ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + ", log=" + log + 
+        ", attachRetries=" + attachRetries + "]";
   }
 }

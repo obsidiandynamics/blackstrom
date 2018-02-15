@@ -38,6 +38,8 @@ public final class KafkaLedger implements Ledger {
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
 
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
+  
+  private final int attachRetries;
 
   private static class ConsumerOffsets {
     final Object lock = new Object();
@@ -50,10 +52,11 @@ public final class KafkaLedger implements Ledger {
   private final AtomicInteger nextHandlerId = new AtomicInteger();
 
   public KafkaLedger(KafkaLedgerConfig config) {
-    this.kafka = config.getKafka();
-    this.topic = config.getTopic();
-    this.log = config.getLog();
-    this.consumerPipeConfig = config.getConsumerPipeConfig();
+    kafka = config.getKafka();
+    topic = config.getTopic();
+    log = config.getLog();
+    consumerPipeConfig = config.getConsumerPipeConfig();
+    attachRetries = config.getAttachRetries();
     codecLocator = CodecRegistry.register(config.getCodec());
 
     final Properties props = new PropertiesBuilder()
@@ -99,18 +102,29 @@ public final class KafkaLedger implements Ledger {
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
     final Consumer<String, Message> consumer = kafka.getConsumer(props);
-    if (groupId != null) {
-      consumer.subscribe(Collections.singletonList(topic));
-    } else {
-      final List<PartitionInfo> infos = consumer.partitionsFor(topic);
-      final List<TopicPartition> partitions = infos.stream()
-          .map(i -> new TopicPartition(i.topic(), i.partition()))
-          .collect(Collectors.toList());
-      log.debug("infos={}, partitions={}", infos, partitions);
-      final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
-      consumer.assign(partitions);
-      for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
-        consumer.seek(entry.getKey(), entry.getValue());
+    for (int triesLeft = attachRetries; triesLeft > 0; triesLeft--) {
+      try {
+        if (groupId != null) {
+          consumer.subscribe(Collections.singletonList(topic));
+        } else {
+          final List<PartitionInfo> infos = consumer.partitionsFor(topic);
+          final List<TopicPartition> partitions = infos.stream()
+              .map(i -> new TopicPartition(i.topic(), i.partition()))
+              .collect(Collectors.toList());
+          log.debug("infos={}, partitions={}", infos, partitions);
+          final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
+          consumer.assign(partitions);
+          for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
+            consumer.seek(entry.getKey(), entry.getValue());
+          }
+        }
+        break;
+      } catch (KafkaException e) {
+        if (triesLeft == 1) {
+          log.error("Error", e);
+        } else {
+          log.warn("Error: {} ({} tries remaining)", e, triesLeft);
+        }
       }
     }
 
