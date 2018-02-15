@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.util;
 import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.resolver.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class Testmark {
   private static class TestmarkConfig {
