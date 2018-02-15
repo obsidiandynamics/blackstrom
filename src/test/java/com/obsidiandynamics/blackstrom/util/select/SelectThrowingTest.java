@@ -11,13 +11,13 @@ import org.junit.*;
 public final class SelectThrowingTest {
   private static class Once<T> extends AtomicReference<T> {
     private static final long serialVersionUID = 1L;
-    
+
     void assign(T newValue) {
       assertNull(get());
       super.set(newValue);
     }
   }
-  
+
   @Test
   public void testWhen() throws Exception {
     final Once<String> branch = new Once<>();
@@ -26,10 +26,10 @@ public final class SelectThrowingTest {
     .when(isEqual("foo")).then(obj -> branch.assign("foo"))
     .when(isEqual("bar")).then(obj -> branch.assign("bar"))
     .otherwise(obj -> branch.assign("otherwise"));
-    
+
     assertEquals("bar", branch.get());
   }
-  
+
   @Test
   public void testOtherwise() throws Exception {
     final Once<String> branch = new Once<>();
@@ -38,22 +38,22 @@ public final class SelectThrowingTest {
     .when(isEqual("bar")).then(obj -> branch.assign("bar"))
     .otherwise(obj -> branch.assign("otherwise"))
     .otherwise(obj -> branch.assign("otherwise_2"));
-    
+
     assertEquals("otherwise", branch.get());
   }
-  
+
   @Test
   public void testNotEquals() throws Exception {
     final Once<String> branch = new Once<>();
     Select.fromThrowing("bar")
     .whenNull().then(() -> branch.assign("null"))
-    .when(isEqual("foo")).then(obj -> branch.assign("foo"))
-    .when(not(isEqual("crow"))).then(obj -> branch.assign("not_crow"))
+    .when(not(isEqual("bar"))).then(obj -> branch.assign("not_bar"))
+    .when(not(isEqual("foo"))).then(obj -> branch.assign("not_foo"))
     .otherwise(obj -> branch.assign("otherwise"));
-    
-    assertEquals("not_crow", branch.get());
+
+    assertEquals("not_foo", branch.get());
   }
-  
+
   @Test
   public void testNotNull() throws Exception {
     final Once<String> branch = new Once<>();
@@ -62,10 +62,10 @@ public final class SelectThrowingTest {
     .when(isEqual("foo")).then(obj -> branch.assign("foo"))
     .when(isNotNull()).then(obj -> branch.assign("not_null"))
     .otherwise(obj -> branch.assign("otherwise"));
-    
+
     assertEquals("not_null", branch.get());
   }
-  
+
   @Test
   public void testNull() throws Exception {
     final Once<String> branch = new Once<>();
@@ -74,10 +74,10 @@ public final class SelectThrowingTest {
     .when(isEqual("bar")).then(obj -> branch.assign("bar"))
     .whenNull().then(() -> branch.assign("null"))
     .otherwise(obj -> branch.assign("otherwise"));
-    
+
     assertEquals("null", branch.get());
   }
-  
+
   @Test
   public void testInstanceOf() throws Exception {
     final Once<String> branch = new Once<>();
@@ -90,10 +90,10 @@ public final class SelectThrowingTest {
     .whenInstanceOf(Long.class).then(obj -> branch.assign("Long"))
     .whenInstanceOf(Number.class).then(obj -> branch.assign("Number"))
     .otherwise(obj -> branch.assign("otherwise"));
-    
+
     assertEquals("Long", branch.get());
   }
-  
+
   @Test
   public void testTransform() throws Exception {
     final Once<String> branch = new Once<>();
@@ -105,7 +105,30 @@ public final class SelectThrowingTest {
       branch.assign("5");
     })
     .otherwise(obj -> branch.assign("otherwise"));
-    
+
     assertEquals("5", branch.get());
+  }
+
+  @Test
+  public void testReturn() throws Exception {
+    final String retVal = Select.withReturn(String.class).fromThrowing(5L)
+        .whenNull().then(() -> "was null")
+        .when(isEqual(1L)).then(obj -> "was one")
+        .when(isEqual(5L)).then(obj -> "was five")
+        .otherwise(obj -> "was something else")
+        .getReturn();
+
+    assertEquals("was five", retVal);
+  }
+
+  @Test
+  public void testReturnNull() throws Exception {
+    final String retVal = Select.<String>withReturn().fromThrowing(10L)
+        .whenNull().then(() -> "was null")
+        .when(isEqual(1L)).then(obj -> "was one")
+        .when(isEqual(5L)).then(obj -> "was five")
+        .getReturn();
+
+    assertNull(retVal);
   }
 }
