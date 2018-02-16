@@ -122,8 +122,9 @@ public final class KafkaLedger implements Ledger {
       } catch (KafkaException e) {
         if (triesLeft == 1) {
           log.error("Error", e);
+          throw e;
         } else {
-          log.warn("Error: {} ({} tries remaining)", e, triesLeft);
+          log.warn("Error: {} ({} tries remaining)", e, triesLeft - 1);
         }
       }
     }
