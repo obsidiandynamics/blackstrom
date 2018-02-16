@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.util.throwing;
 
 import java.util.*;
+import java.util.function.*;
 
 @FunctionalInterface
 public interface CheckedConsumer<T, X extends Exception> {
@@ -19,4 +20,8 @@ public interface CheckedConsumer<T, X extends Exception> {
    *  @param <T> Parameter type.
    */
   static <T> void nop(T t) {}
+  
+  static <T> CheckedConsumer<T, RuntimeException> wrap(Consumer<? super T> consumer) {
+    return consumer::accept;
+  }
 }

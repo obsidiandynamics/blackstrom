@@ -118,18 +118,18 @@ public final class Select<V, R> implements SelectRoot<R> {
     return v -> true;
   }
   
-  public static final class WithReturn<R> {
+  public static final class Returning<R> {
     public <V> Select<V, R> from(V value) {
       return new Select<>(value);
     }
   }
   
-  public static final <R> WithReturn<R> returning() {
+  public static final <R> Returning<R> returning() {
     return returning(null);
   }
   
-  public static final <R> WithReturn<R> returning(Class<R> type) {
-    return new WithReturn<>();
+  public static final <R> Returning<R> returning(Class<R> type) {
+    return new Returning<>();
   }
   
   public static final <V, R> Select<V, R> from(V value) {

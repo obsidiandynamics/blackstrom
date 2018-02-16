@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.util.throwing;
 
 import java.util.*;
+import java.util.function.*;
 
 @FunctionalInterface
 public interface CheckedFunction<T, R, X extends Exception> {
@@ -14,5 +15,9 @@ public interface CheckedFunction<T, R, X extends Exception> {
   default <V> CheckedFunction<T, V, X> andThen(CheckedFunction<? super R, ? extends V, ? extends X> after) {
     Objects.requireNonNull(after);
     return t -> after.apply(apply(t));
+  }
+  
+  static <T, R> CheckedFunction<T, R, RuntimeException> wrap(Function<? super T, ? extends R> function) {
+    return function::apply;
   }
 }

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 
-public final class ThrowingConsumerTest {
+public final class CheckedConsumerTest {
   @Test
   public void testAccept() throws Exception {
     final AtomicReference<String> consumed0 = new AtomicReference<>();
@@ -17,5 +17,18 @@ public final class ThrowingConsumerTest {
     
     assertEquals("test", consumed0.get());
     assertEquals("test", consumed1.get());
+  }
+  
+  @Test
+  public void testNop() {
+    CheckedConsumer.nop(null);
+  }
+  
+  @Test
+  public void testWrap() {
+    final AtomicReference<String> consumed = new AtomicReference<>();
+    final CheckedConsumer<String, RuntimeException> c = CheckedConsumer.wrap(consumed::set);
+    c.accept("test");
+    assertEquals("test", consumed.get());
   }
 }
