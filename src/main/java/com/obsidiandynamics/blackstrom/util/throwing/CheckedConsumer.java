@@ -17,7 +17,8 @@ public interface CheckedConsumer<T, X extends Exception> {
   /**
    *  A no-op.
    *  
-   *  @param <T> Parameter type.
+   *  @param <T> Input argument type.
+   *  @param t Input argument.
    */
   static <T> void nop(T t) {}
   

@@ -27,11 +27,11 @@ public final class Select<V, R> implements SelectRoot<R> {
     return when(instanceOf(type)).transform(obj -> type.cast(obj));
   }
   
-  public Select<V, R> otherwise(Consumer<V> action) {
+  public Select<V, R> otherwise(Consumer<? super V> action) {
     return otherwise().then(action);
   }
   
-  public Select<V, R> otherwiseReturn(Function<V, R> action) {
+  public Select<V, R> otherwiseReturn(Function<? super V, ? extends R> action) {
     return otherwise().thenReturn(action);
   }
   
@@ -54,11 +54,11 @@ public final class Select<V, R> implements SelectRoot<R> {
       return when(instanceOf(type)).transform(obj -> type.cast(obj));
     }
     
-    public <X extends Exception> Select<V, R>.Checked otherwise(CheckedConsumer<V, X> action) throws X {
+    public <X extends Exception> Select<V, R>.Checked otherwise(CheckedConsumer<? super V, X> action) throws X {
       return otherwise().then(action);
     }
     
-    public <X extends Exception> Select<V, R>.Checked otherwiseReturn(CheckedFunction<V, R, X> action) throws X {
+    public <X extends Exception> Select<V, R>.Checked otherwiseReturn(CheckedFunction<? super V, ? extends R, X> action) throws X {
       return otherwise().thenReturn(action);
     }
     

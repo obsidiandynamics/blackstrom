@@ -20,7 +20,7 @@ public final class NullThen<S extends SelectRoot<R>, R> {
     });
   }
   
-  public S thenReturn(Supplier<R> action) {
+  public S thenReturn(Supplier<? extends R> action) {
     if (fire) {
       select.setReturn(action.get());
     }
@@ -37,7 +37,7 @@ public final class NullThen<S extends SelectRoot<R>, R> {
       });
     }
     
-    public <X extends Exception> S thenReturn(CheckedSupplier<R, X> action) throws X {
+    public <X extends Exception> S thenReturn(CheckedSupplier<? extends R, X> action) throws X {
       if (fire) {
         select.setReturn(action.get());
       }
