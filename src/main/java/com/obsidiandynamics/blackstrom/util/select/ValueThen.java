@@ -37,21 +37,21 @@ public final class ValueThen<S extends SelectRoot<R>, V, R> {
   public final class Checked {
     Checked() {}
     
-    public S then(ThrowingConsumer<V> action) throws Exception {
+    public <X extends Exception> S then(CheckedConsumer<V, X> action) throws X {
       return thenReturn(value -> {
         action.accept(value);
         return null;
       });
     }
     
-    public S thenReturn(ThrowingFunction<V, R> action) throws Exception {
+    public <X extends Exception> S thenReturn(CheckedFunction<V, R, X> action) throws X {
       if (fire) {
         select.setReturn(action.apply(value));
       }
       return select;
     }
     
-    public <W> ValueThen<S, W, R>.Checked transform(ThrowingFunction<V, W> transform) throws Exception {
+    public <W, X extends Exception> ValueThen<S, W, R>.Checked transform(CheckedFunction<V, W, X> transform) throws X {
       final W newValue = fire ? transform.apply(value) : null;
       return new ValueThen<>(select, newValue, fire).checked();
     }

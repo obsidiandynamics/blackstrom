@@ -5,10 +5,13 @@ import static java.util.function.Predicate.*;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.*;
+import java.util.function.*;
 
 import org.junit.*;
 
-public final class SelectThrowingTest {
+import com.obsidiandynamics.blackstrom.util.throwing.*;
+
+public final class SelectTest {
   private static class Once<T> extends AtomicReference<T> {
     private static final long serialVersionUID = 1L;
 
@@ -31,7 +34,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testWhenChecked() throws Exception {
+  public void testWhenChecked() {
     final Once<String> branch = new Once<>();
     Select.from("bar").checked()
     .whenNull().then(() -> branch.assign("null"))
@@ -40,6 +43,28 @@ public final class SelectThrowingTest {
     .otherwise(obj -> branch.assign("otherwise"));
 
     assertEquals("bar", branch.get());
+  }
+  
+  private static class TestCheckedExceptionFoo extends Exception {
+    private static final long serialVersionUID = 1L;
+  }
+  
+  private static class TestCheckedExceptionBar extends Exception {
+    private static final long serialVersionUID = 1L;
+  }
+  
+  private static <T, X extends Exception> CheckedConsumer<T, X> doThrow(Supplier<X> generator) {
+    return t -> {throw generator.get();};
+  }
+
+  @Test(expected=TestCheckedExceptionBar.class)
+  public void testWhenCheckedWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
+    Select.from("bar").checked()
+    .whenNull().then(CheckedRunnable::nop)
+    .when(isEqual("foo")).then(doThrow(TestCheckedExceptionFoo::new))
+    .when(isEqual("bar")).then(doThrow(TestCheckedExceptionBar::new))
+    .when(isEqual("baz")).then(CheckedConsumer::nop)
+    .otherwise(obj -> {});
   }
 
   @Test
@@ -55,7 +80,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testOtherwiseChecked() throws Exception {
+  public void testOtherwiseChecked() {
     final Once<String> branch = new Once<>();
     Select.from("something_else").checked()
     .when(isEqual("foo")).then(obj -> branch.assign("foo"))
@@ -79,7 +104,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testNotEqualsChecked() throws Exception {
+  public void testNotEqualsChecked() {
     final Once<String> branch = new Once<>();
     Select.from("bar").checked()
     .whenNull().then(() -> branch.assign("null"))
@@ -103,7 +128,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testNotNullChecked() throws Exception {
+  public void testNotNullChecked() {
     final Once<String> branch = new Once<>();
     Select.from("bar").checked()
     .whenNull().then(() -> branch.assign("null"))
@@ -127,7 +152,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testNullChecked() throws Exception {
+  public void testNullChecked() {
     final Once<String> branch = new Once<>();
     Select.from(null).checked()
     .when(isEqual("foo")).then(obj -> branch.assign("foo"))
@@ -155,7 +180,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testInstanceOfChecked() throws Exception {
+  public void testInstanceOfChecked() {
     final Once<String> branch = new Once<>();
     Select.from(5L).checked()
     .whenNull().then(() -> branch.assign("null"))
@@ -186,7 +211,7 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testTransformChecked() throws Exception {
+  public void testTransformChecked() {
     final Once<String> branch = new Once<>();
     Select.from("5").checked()
     .whenNull().then(() -> branch.assign("null"))
@@ -202,7 +227,7 @@ public final class SelectThrowingTest {
 
   @Test
   public void testReturn() {
-    final String retVal = Select.withReturn(String.class).from(5L)
+    final String retVal = Select.returning(String.class).from(5L)
         .whenNull().thenReturn(() -> "was null")
         .when(isEqual(1L)).thenReturn(obj -> "was one")
         .when(isEqual(5L)).thenReturn(obj -> "was five")
@@ -213,8 +238,8 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testReturnChecked() throws Exception {
-    final String retVal = Select.withReturn(String.class).from(5L).checked()
+  public void testReturnChecked() {
+    final String retVal = Select.returning(String.class).from(5L).checked()
         .whenNull().thenReturn(() -> "was null")
         .when(isEqual(1L)).thenReturn(obj -> "was one")
         .when(isEqual(5L)).thenReturn(obj -> "was five")
@@ -226,7 +251,7 @@ public final class SelectThrowingTest {
 
   @Test
   public void testReturnNull() {
-    final String retVal = Select.<String>withReturn().from(10L)
+    final String retVal = Select.<String>returning().from(10L)
         .whenNull().thenReturn(() -> "was null")
         .when(isEqual(1L)).thenReturn(obj -> "was one")
         .when(isEqual(5L)).thenReturn(obj -> "was five")
@@ -236,8 +261,8 @@ public final class SelectThrowingTest {
   }
 
   @Test
-  public void testReturnNullChecked() throws Exception {
-    final String retVal = Select.<String>withReturn().from(10L).checked()
+  public void testReturnNullChecked() {
+    final String retVal = Select.<String>returning().from(10L).checked()
         .whenNull().thenReturn(() -> "was null")
         .when(isEqual(1L)).thenReturn(obj -> "was one")
         .when(isEqual(5L)).thenReturn(obj -> "was five")

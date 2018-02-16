@@ -51,7 +51,7 @@ public final class Testmark {
     Resolver.assign(optionsType, Singleton.of(options));
   }
   
-  public static void ifEnabled(ThrowingRunnable r) {
+  public static void ifEnabled(CheckedRunnable<Exception> r) {
     if (isEnabled()) {
       System.out.println("Starting benchmark...");
       try {

@@ -5,7 +5,7 @@ import org.junit.*;
 public final class ThrowingRunnableTest {
   @Test
   public void testRun() throws Exception {
-    final ThrowingRunnable r = ThrowingRunnable::noOp;
+    final CheckedRunnable<Exception> r = CheckedRunnable::nop;
     r.run();
   }
 }

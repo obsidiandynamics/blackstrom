@@ -30,14 +30,14 @@ public final class NullThen<S extends SelectRoot<R>, R> {
   public final class Checked {
     Checked() {}
     
-    public S then(ThrowingRunnable action) throws Exception {
+    public <X extends Exception> S then(CheckedRunnable<X> action) throws X {
       return thenReturn(() -> {
         action.run();
         return null;
       });
     }
     
-    public S thenReturn(ThrowingSupplier<R> action) throws Exception {
+    public <X extends Exception> S thenReturn(CheckedSupplier<R, X> action) throws X {
       if (fire) {
         select.setReturn(action.get());
       }

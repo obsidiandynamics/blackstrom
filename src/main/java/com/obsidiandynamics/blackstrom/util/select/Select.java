@@ -50,15 +50,15 @@ public final class Select<V, R> implements SelectRoot<R> {
       return new NullThen<>(this, test(isNull())).checked();
     }
     
-    public <C> ValueThen<Select<V, R>.Checked, C, R>.Checked whenInstanceOf(Class<C> type) throws Exception {
+    public <C> ValueThen<Select<V, R>.Checked, C, R>.Checked whenInstanceOf(Class<C> type) {
       return when(instanceOf(type)).transform(obj -> type.cast(obj));
     }
     
-    public Select<V, R>.Checked otherwise(ThrowingConsumer<V> action) throws Exception {
+    public <X extends Exception> Select<V, R>.Checked otherwise(CheckedConsumer<V, X> action) throws X {
       return otherwise().then(action);
     }
     
-    public Select<V, R>.Checked otherwiseReturn(ThrowingFunction<V, R> action) throws Exception {
+    public <X extends Exception> Select<V, R>.Checked otherwiseReturn(CheckedFunction<V, R, X> action) throws X {
       return otherwise().thenReturn(action);
     }
     
@@ -124,11 +124,11 @@ public final class Select<V, R> implements SelectRoot<R> {
     }
   }
   
-  public static final <R> WithReturn<R> withReturn() {
-    return withReturn(null);
+  public static final <R> WithReturn<R> returning() {
+    return returning(null);
   }
   
-  public static final <R> WithReturn<R> withReturn(Class<R> type) {
+  public static final <R> WithReturn<R> returning(Class<R> type) {
     return new WithReturn<>();
   }
   

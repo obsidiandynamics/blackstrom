@@ -12,7 +12,7 @@ public final class ThrowingConsumerTest {
     final AtomicReference<String> consumed0 = new AtomicReference<>();
     final AtomicReference<String> consumed1 = new AtomicReference<>();
     final ThrowingConsumer<String> c = consumed0::set;
-    final ThrowingConsumer<String> cc = c.andThen(consumed1::set);
+    final CheckedConsumer<String, Exception> cc = c.andThen(consumed1::set);
     cc.accept("test");
     
     assertEquals("test", consumed0.get());
