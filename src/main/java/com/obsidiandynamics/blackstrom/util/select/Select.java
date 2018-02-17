@@ -80,7 +80,7 @@ public final class Select<V, R> implements SelectRoot<R> {
     return new Checked();
   }
   
-  private final boolean test(Predicate<? super V> predicate) {
+  private boolean test(Predicate<? super V> predicate) {
     if (consumed) {
       return false;
     } else {
@@ -90,49 +90,49 @@ public final class Select<V, R> implements SelectRoot<R> {
   }
   
   @Override
-  public final void setReturn(R returnValue) {
+  public void setReturn(R returnValue) {
     this.returnValue = returnValue;
   }
   
-  public final R getReturn() {
+  public R getReturn() {
     return returnValue;
   }
   
-  public static final <V> Predicate<V> isNull() {
+  public static <V> Predicate<V> isNull() {
     return v -> v == null;
   }
   
-  public static final <V> Predicate<V> isNotNull() {
+  public static <V> Predicate<V> isNotNull() {
     return not(isNull());
   }
   
-  public static final <V> Predicate<V> not(Predicate<V> positive) {
+  public static <V> Predicate<V> not(Predicate<V> positive) {
     return v -> ! positive.test(v);
   }
   
-  public static final <V> Predicate<V> instanceOf(Class<?> type) {
+  public static <V> Predicate<V> instanceOf(Class<?> type) {
     return v -> type.isInstance(v);
   }
   
-  public static final <V> Predicate<V> alwaysTrue() {
+  public static <V> Predicate<V> alwaysTrue() {
     return v -> true;
   }
   
-  public static final class Returning<R> {
+  public static class Returning<R> {
     public <V> Select<V, R> from(V value) {
       return new Select<>(value);
     }
   }
   
-  public static final <R> Returning<R> returning() {
+  public static <R> Returning<R> returning() {
     return returning(null);
   }
   
-  public static final <R> Returning<R> returning(Class<R> type) {
+  public static <R> Returning<R> returning(Class<R> type) {
     return new Returning<>();
   }
   
-  public static final <V, R> Select<V, R> from(V value) {
+  public static <V, R> Select<V, R> from(V value) {
     return new Select<>(value);
   }
 }

@@ -206,7 +206,7 @@ public final class Group implements AutoCloseable {
                         new NAKACK2(),
                         new UNICAST3(),
                         new STABLE(),
-                        new GMS(),
+                        createGMS(),
                         new UFC(),
                         new MFC(),
                         new FRAG2());
@@ -229,9 +229,15 @@ public final class Group implements AutoCloseable {
                         new NAKACK2(),
                         new UNICAST3(),
                         new STABLE(),
-                        new GMS(),
+                        createGMS(),
                         new UFC(),
                         new MFC(),
                         new FRAG2());
+  }
+  
+  private static GMS createGMS() {
+    final GMS gms = new GMS();
+    gms.setPrintLocalAddr(false);
+    return gms;
   }
 }

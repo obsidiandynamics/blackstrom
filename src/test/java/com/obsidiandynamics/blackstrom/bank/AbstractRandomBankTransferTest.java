@@ -31,8 +31,8 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000 * SCALE, false, false, false));
   }
 
-  private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean enableLogging, 
-                                   boolean enableTracking) {
+  private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean loggingEnabled, 
+                                   boolean trackingEnabled) {
     final long transferAmount = 1_000;
     final long initialBalance = runs * transferAmount / (numBranches * numBranches);
     final int backlogTarget = Math.min(runs / 10, 10_000);
@@ -49,7 +49,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       }
     };
     final BankBranch[] branches = BankBranch.create(numBranches, initialBalance, idempotencyEnabled, sandbox);
-    final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTrackingEnabled(enableTracking));
+    final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTrackingEnabled(trackingEnabled));
     buildStandardManifold(initiator, monitor, branches);
 
     final long took = TestSupport.took(() -> {
@@ -77,7 +77,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
             final int backlog = (int) (run - commits.get() - aborts.get() - timeouts.get());
             if (backlog > backlogTarget) {
               TestSupport.sleep(1);
-              if (enableLogging && System.currentTimeMillis() - lastLogTime > 5_000) {
+              if (loggingEnabled && System.currentTimeMillis() - lastLogTime > 5_000) {
                 TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d txns)\n", backlog, run);
                 lastLogTime = System.currentTimeMillis();
               }
