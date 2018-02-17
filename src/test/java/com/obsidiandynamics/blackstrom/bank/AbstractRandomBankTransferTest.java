@@ -41,7 +41,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
     final AtomicInteger timeouts = new AtomicInteger();
-    final Sandbox sandbox = Sandbox.forTest(this);
+    final Sandbox sandbox = Sandbox.forInstance(this);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
         (o.getResolution() == Resolution.COMMIT ? commits : o.getAbortReason() == AbortReason.REJECT ? aborts : timeouts)
