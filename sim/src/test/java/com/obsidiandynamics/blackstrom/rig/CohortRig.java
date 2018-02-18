@@ -3,10 +3,7 @@ package com.obsidiandynamics.blackstrom.rig;
 import static org.jgroups.Message.Flag.*;
 import static org.junit.Assert.*;
 
-import java.util.function.*;
-
 import org.jgroups.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.bank.*;
@@ -15,22 +12,15 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.util.select.*;
-import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class CohortRig implements Disposable {
-  private static final Logger LOG = LoggerFactory.getLogger(CohortRig.class);
-  
-  public static class Config {
-    Supplier<Ledger> ledgerFactory;
-    CheckedSupplier<JChannel, Exception> channelFactory;
-    String clusterName = "rig";
+  public static class Config extends RigConfig {
     String branchId;
     long initialBalance = Integer.MAX_VALUE;
     boolean guided = true;
     
-    void validate() {
-      assertNotNull(ledgerFactory);
-      assertNotNull(channelFactory);
+    @Override void validate() {
+      super.validate();
       assertNotNull(branchId);
     }
   }
@@ -38,6 +28,8 @@ public final class CohortRig implements Disposable {
   private final Config config;
   
   private final Group group;
+  
+  private String sandboxKey;
   
   private volatile Manifold manifold;
   
@@ -51,7 +43,7 @@ public final class CohortRig implements Disposable {
   }
   
   private void connect() throws Exception {
-    LOG.info("Joining cluster '{}'", config.clusterName);
+    config.log.info("Cohort {}: joining cluster '{}'", config.branchId, config.clusterName);
     group.connect(config.clusterName);
   }
   
@@ -63,9 +55,11 @@ public final class CohortRig implements Disposable {
     });
   }
   
-  private void build(String sandboxKey) {
-    LOG.info("Building manifold with sandbox key {}", sandboxKey);
+  private synchronized void build(String sandboxKey) {
+    if (sandboxKey.equals(this.sandboxKey)) return;
     cleanupExisting();
+    this.sandboxKey = sandboxKey;
+    config.log.info("Cohort {}: building manifold with sandbox key {}", config.branchId, sandboxKey);
 
     final boolean idempotencyEnabled = false;
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);

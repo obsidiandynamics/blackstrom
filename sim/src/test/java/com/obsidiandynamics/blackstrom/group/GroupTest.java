@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.group;
 
+import static java.util.concurrent.TimeUnit.*;
 import static org.jgroups.Message.Flag.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -244,7 +245,7 @@ public final class GroupTest {
     final UUID packetId = UUID.randomUUID();
     final Future<Message> f = g0.request(address, new TestPacket(packetId), DONT_BUNDLE);
     try {
-      f.get(1, TimeUnit.MILLISECONDS);
+      f.get(1, MILLISECONDS);
     } finally {
       assertEquals(1, g0.numHandlers(packetId));
       f.cancel(false);
@@ -273,7 +274,7 @@ public final class GroupTest {
     final Future<Map<Address, Message>> f = g0.gather(new TestPacket(packetId), DONT_BUNDLE);
     final Map<Address, Message> responses;
     try {
-      responses = f.get();
+      responses = f.get(10_000, MILLISECONDS);
     } finally {
       assertEquals(0, g0.numHandlers(packetId));
       f.cancel(false);
