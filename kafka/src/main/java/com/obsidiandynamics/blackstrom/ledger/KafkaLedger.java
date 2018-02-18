@@ -106,6 +106,7 @@ public final class KafkaLedger implements Ledger {
       try {
         if (groupId != null) {
           consumer.subscribe(Collections.singletonList(topic));
+          log.debug("subscribed to topic {}", topic);
         } else {
           final List<PartitionInfo> infos = consumer.partitionsFor(topic);
           final List<TopicPartition> partitions = infos.stream()
