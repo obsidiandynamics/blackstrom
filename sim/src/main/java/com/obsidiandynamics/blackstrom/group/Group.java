@@ -135,14 +135,14 @@ public final class Group implements AutoCloseable {
   }
   
   public ResponseSync gather(int respondents, SyncPacket syncMessage, GroupMessageHandler handler, Flag... flags) throws Exception {
-    final Map<Address, Message> responses = new HashMap<>();
+    final Map<Address, Message> responses = new ConcurrentHashMap<>();
     final Serializable id = syncMessage.getId();
     final HostMessageHandler idHandler = new HostMessageHandler() {
       @Override public void handle(JChannel channel, Message resp) throws Exception {
         responses.put(resp.getSrc(), resp);
         if (responses.size() == respondents) {
           removeHandler(id, this);
-          handler.handle(channel, responses);
+          handler.handle(channel, Collections.unmodifiableMap(responses));
         }
       }
     };

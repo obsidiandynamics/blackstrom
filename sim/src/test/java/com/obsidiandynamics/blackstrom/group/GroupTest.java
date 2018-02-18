@@ -199,9 +199,9 @@ public final class GroupTest {
     final Future<Message> f = g0.request(address, new TestPacket(packetId), DONT_BUNDLE);
     final Message response;
     try {
-      response = f.get();
-    } finally {
+      response = f.get(10_000, MILLISECONDS);
       assertEquals(0, g0.numHandlers(packetId));
+    } finally {
       f.cancel(false);
     }
     assertEquals(Ack.forId(packetId), response.getObject());
@@ -246,8 +246,8 @@ public final class GroupTest {
     final Future<Message> f = g0.request(address, new TestPacket(packetId), DONT_BUNDLE);
     try {
       f.get(1, MILLISECONDS);
-    } finally {
       assertEquals(1, g0.numHandlers(packetId));
+    } finally {
       f.cancel(false);
       assertEquals(0, g0.numHandlers(packetId));
     }
@@ -275,8 +275,8 @@ public final class GroupTest {
     final Map<Address, Message> responses;
     try {
       responses = f.get(10_000, MILLISECONDS);
-    } finally {
       assertEquals(0, g0.numHandlers(packetId));
+    } finally {
       f.cancel(false);
     }
     assertEquals(2, responses.size());
@@ -326,8 +326,8 @@ public final class GroupTest {
     final Future<Map<Address, Message>> f = g0.gather(new TestPacket(packetId), DONT_BUNDLE);
     try {
       f.get(1, TimeUnit.MILLISECONDS);
-    } finally {
       assertEquals(1, g0.numHandlers(packetId));
+    } finally {
       f.cancel(false);
       assertEquals(0, g0.numHandlers(packetId));
     }
