@@ -9,7 +9,7 @@ services:
       ZOOKEEPER_autopurge.purgeInterval: "0"
 
   kafka:
-    image: confluent/kafka
+    image: wurstmeister/kafka
     depends_on:
       - zookeeper
     ports:

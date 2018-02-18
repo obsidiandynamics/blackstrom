@@ -11,4 +11,8 @@ public final class TestTopic {
     return format("%s.%s-%d.v%d", 
                   testClass.getSimpleName(), codecName, encodingVersion, MessageCodec.SCHEMA_VERSION);
   }
+  
+  public static void create(KafkaClusterConfig config, String topic) {
+    //TODO
+  }
 }
