@@ -222,7 +222,6 @@ public final class Group implements AutoCloseable {
     return new JChannel(new SHARED_LOOPBACK(),
                         new SHARED_LOOPBACK_PING(),
                         new MERGE3(),
-                        new FD_SOCK(),
                         new FD_ALL(),
                         new VERIFY_SUSPECT(),
                         new BARRIER(),
