@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class DefaultMonitor implements Monitor {
   static final boolean DEBUG = false;
   
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultMonitor.class);
+  private static final Logger log = LoggerFactory.getLogger(DefaultMonitor.class);
   
   private Ledger ledger;
   
@@ -116,7 +116,7 @@ public final class DefaultMonitor implements Monitor {
       
       if (reaped != 0) {
         reapedSoFar += reaped;
-        LOG.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
+        log.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
                   reaped, reapedSoFar, pending.size(), decided.size());
       }
     }
@@ -148,14 +148,14 @@ public final class DefaultMonitor implements Monitor {
   }
   
   private void timeoutCohort(Proposal proposal, String cohort) {
-    LOG.debug("Timed out {} for cohort {}", proposal, cohort);
+    log.debug("Timed out {} for cohort {}", proposal, cohort);
     append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null))
            .inResponseTo(proposal).withSource(groupId));
   }
   
   private void append(Message message) {
     ledger.append(message, (id, x) -> {
-      if (x != null) LOG.warn("Error appending to ledger [message: " + message + "]", x);
+      if (x != null) log.warn("Error appending to ledger [message: " + message + "]", x);
     });
   }
   
@@ -175,7 +175,7 @@ public final class DefaultMonitor implements Monitor {
       final PendingBallot newBallot = new PendingBallot(proposal);
       final PendingBallot existingBallot = pending.put(proposal.getBallotId(), newBallot);
       if (existingBallot != null) {
-        if (DEBUG) LOG.trace("Skipping redundant {} (ballot already pending)", proposal);
+        if (DEBUG) log.trace("Skipping redundant {} (ballot already pending)", proposal);
         pending.put(proposal.getBallotId(), existingBallot);
         return;
       } else {
@@ -183,7 +183,7 @@ public final class DefaultMonitor implements Monitor {
       }
     }
     
-    if (DEBUG) LOG.trace("Initiating ballot for {}", proposal);
+    if (DEBUG) log.trace("Initiating ballot for {}", proposal);
   }
 
   @Override
@@ -191,19 +191,19 @@ public final class DefaultMonitor implements Monitor {
     synchronized (messageLock) {
       final PendingBallot ballot = pending.get(vote.getBallotId());
       if (ballot != null) {
-        if (DEBUG) LOG.trace("Received {}", vote);
-        final boolean decided = ballot.castVote(LOG, vote);
+        if (DEBUG) log.trace("Received {}", vote);
+        final boolean decided = ballot.castVote(log, vote);
         if (decided) {
           decideBallot(ballot);
         }
       } else {
-        if (DEBUG) LOG.trace("Missing pending ballot for vote {}", vote);
+        if (DEBUG) log.trace("Missing pending ballot for vote {}", vote);
       }
     }
   }
   
   private void decideBallot(PendingBallot ballot) {
-    if (DEBUG) LOG.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
+    if (DEBUG) log.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
     final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses())
@@ -216,7 +216,7 @@ public final class DefaultMonitor implements Monitor {
       if (x == null) {
         ballot.getConfirmation().confirm();
       } else {
-        LOG.warn("Error appending to ledger [message: " + outcome + "]", x);
+        log.warn("Error appending to ledger [message: " + outcome + "]", x);
       }
     });
   }
