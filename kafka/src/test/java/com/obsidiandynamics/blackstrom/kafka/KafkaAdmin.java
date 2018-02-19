@@ -27,13 +27,23 @@ public final class KafkaAdmin {
     return new KafkaAdmin(admin);
   }
   
-  public void ensureExists(String topic) throws InterruptedException, ExecutionException {
+  /**
+   *  Ensures that a given topic exists, creating one if necessary.
+   *  
+   *  @param topic The topic.
+   *  @return The set of topics that were created. (Absence from the set implies that the topic had already existed.)
+   *  @throws InterruptedException If the thread was interrupted while waiting for the create outcome.
+   *  @throws ExecutionException If an unexpected error occurred.
+   */
+  public Set<String> ensureExists(String topic) throws InterruptedException, ExecutionException {
     final NewTopic newTopic = new NewTopic(topic, 1, (short) 1);
     final CreateTopicsResult result = admin.createTopics(Collections.singleton(newTopic));
+    final Set<String> created = new HashSet<>();
     for (Map.Entry<String, KafkaFuture<Void>> entry : result.values().entrySet()) {
       try {
         entry.getValue().get();
         LOG.debug("Created topic {}", entry.getKey());
+        created.add(entry.getKey());
       } catch (ExecutionException e) {
         if (e.getCause() instanceof TopicExistsException) {
           LOG.debug("Topic {} already exists", entry.getKey());
@@ -42,5 +52,6 @@ public final class KafkaAdmin {
         }
       }
     }
+    return created;
   }
 }

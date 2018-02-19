@@ -25,9 +25,9 @@ public final class KafkaGroupLedgerIT extends AbstractGroupLedgerTest {
     KafkaDocker.start();
   }
   
-  private final String topic = TestTopic.of(KafkaGroupLedgerIT.class, "json-" + System.currentTimeMillis(), JacksonMessageCodec.ENCODING_VERSION);
-  
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+  
+  private final String topic = TestTopic.of(KafkaGroupLedgerIT.class, "json-" + System.currentTimeMillis(), JacksonMessageCodec.ENCODING_VERSION);
   
   @Before
   public void before() throws InterruptedException, ExecutionException {
