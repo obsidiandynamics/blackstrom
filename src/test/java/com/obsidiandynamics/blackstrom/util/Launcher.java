@@ -17,7 +17,7 @@ public final class Launcher {
   }
   
   private static void run(String[] classes) throws Exception {
-    final int packageCompressLevel = PropertyUtils.get("launcher.packageCompressLevel", Integer::parseInt, 0);
+    final int packageCompressLevel = PropertyUtils.get("launcher.package.compress.level", Integer::parseInt, 0);
     
     Arrays.sort(classes);
     final String partialClassName = PropertyUtils.get("launcher.class", String::valueOf, null);

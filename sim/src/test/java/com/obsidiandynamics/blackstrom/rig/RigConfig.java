@@ -11,13 +11,12 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public abstract class RigConfig {
-  Logger log;
+  Logger log = LoggerFactory.getLogger(RigConfig.class);
   Supplier<Ledger> ledgerFactory;
   CheckedSupplier<JChannel, Exception> channelFactory;
   String clusterName = "rig";
   
   void validate() {
-    assertNotNull(log);
     assertNotNull(ledgerFactory);
     assertNotNull(channelFactory);
   }

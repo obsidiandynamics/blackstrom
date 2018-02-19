@@ -40,11 +40,15 @@ public final class InitiatorRig {
       super.validate();
       assertNotEquals(0, runs);
     }
+    
+    public InitiatorRig create() { 
+      return new InitiatorRig(this);
+    }
   }
   
   private final Config config;
   
-  public InitiatorRig(Config config) {
+  private InitiatorRig(Config config) {
     config.validate();
     this.config = config;
   }

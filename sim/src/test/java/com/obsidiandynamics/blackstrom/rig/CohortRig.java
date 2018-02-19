@@ -23,6 +23,10 @@ public final class CohortRig implements Disposable {
       super.validate();
       assertNotNull(branchId);
     }
+    
+    public CohortRig create() throws Exception { 
+      return new CohortRig(this); 
+    }
   }
   
   private final Config config;
@@ -33,7 +37,7 @@ public final class CohortRig implements Disposable {
   
   private volatile Manifold manifold;
   
-  public CohortRig(Config config) throws Exception {
+  private CohortRig(Config config) throws Exception {
     config.validate();
     this.config = config;
     

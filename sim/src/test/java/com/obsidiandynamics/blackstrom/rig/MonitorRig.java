@@ -16,6 +16,10 @@ public final class MonitorRig implements Disposable {
     @Override void validate() {
       super.validate();
     }
+    
+    public MonitorRig create() throws Exception { 
+      return new MonitorRig(this); 
+    }
   }
   
   private final Config config;
@@ -26,7 +30,7 @@ public final class MonitorRig implements Disposable {
   
   private volatile Manifold manifold;
   
-  public MonitorRig(Config config) throws Exception {
+  private MonitorRig(Config config) throws Exception {
     config.validate();
     this.config = config;
     

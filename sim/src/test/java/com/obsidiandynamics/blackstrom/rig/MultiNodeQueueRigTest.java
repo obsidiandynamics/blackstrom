@@ -52,29 +52,29 @@ public final class MultiNodeQueueRigTest {
     final Logger _log = LoggerFactory.getLogger(MultiNodeQueueRigTest.class);
     final long _runs = runs;
 
-    final InitiatorRig initiator = new InitiatorRig(new InitiatorRig.Config() {{
+    final InitiatorRig initiator = new InitiatorRig.Config() {{
       log = _log;
       ledgerFactory = _ledgerFactory;
       channelFactory = _channelFactory;
       runs = _runs;
-    }});
+    }}.create();
     
     final String[] branchIds = BankBranch.generateIds(branches);
     for (String _branchId : branchIds) {
-      final CohortRig cohort = new CohortRig(new CohortRig.Config() {{
+      final CohortRig cohort = new CohortRig.Config() {{
         log = _log;
         ledgerFactory = _ledgerFactory;
         channelFactory = _channelFactory;
         branchId = _branchId;
-      }});
+      }}.create();
       cleanup.add(cohort);
     }
     
-    final MonitorRig monitor = new MonitorRig(new MonitorRig.Config() {{
+    final MonitorRig monitor = new MonitorRig.Config() {{
       log = _log;
       ledgerFactory = _ledgerFactory;
       channelFactory = _channelFactory;
-    }});
+    }}.create();
     cleanup.add(monitor);
     
     initiator.run();
