@@ -102,33 +102,23 @@ public final class KafkaLedger implements Ledger {
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
     final Consumer<String, Message> consumer = kafka.getConsumer(props);
-    for (int triesLeft = attachRetries; triesLeft > 0; triesLeft--) {
-      try {
-        if (groupId != null) {
-          consumer.subscribe(Collections.singletonList(topic));
-          log.debug("subscribed to topic {}", topic);
-        } else {
-          final List<PartitionInfo> infos = consumer.partitionsFor(topic);
-          final List<TopicPartition> partitions = infos.stream()
-              .map(i -> new TopicPartition(i.topic(), i.partition()))
-              .collect(Collectors.toList());
-          log.debug("infos={}, partitions={}", infos, partitions);
-          final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
-          consumer.assign(partitions);
-          for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
-            consumer.seek(entry.getKey(), entry.getValue());
-          }
-        }
-        break;
-      } catch (KafkaException e) {
-        if (triesLeft == 1) {
-          log.error("Error", e);
-          throw e;
-        } else {
-          log.warn("Error: {} ({} tries remaining)", e, triesLeft - 1);
+    KafkaRetry.run(attachRetries, log, () -> {
+      if (groupId != null) {
+        consumer.subscribe(Collections.singletonList(topic));
+        log.debug("subscribed to topic {}", topic);
+      } else {
+        final List<PartitionInfo> infos = consumer.partitionsFor(topic);
+        final List<TopicPartition> partitions = infos.stream()
+            .map(i -> new TopicPartition(i.topic(), i.partition()))
+            .collect(Collectors.toList());
+        log.debug("infos={}, partitions={}", infos, partitions);
+        final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
+        consumer.assign(partitions);
+        for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
+          consumer.seek(entry.getKey(), entry.getValue());
         }
       }
-    }
+    });
 
     final Integer handlerId;
     final ConsumerOffsets consumerOffsets;

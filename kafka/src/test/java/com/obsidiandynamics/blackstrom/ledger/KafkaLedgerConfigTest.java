@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.*;
 
 import org.junit.*;
+import org.mockito.*;
+import org.slf4j.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.codec.*;
@@ -27,6 +29,25 @@ public final class KafkaLedgerConfigTest {
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
     assertNotNull(config.getLog());
+    assertEquals(10, config.getAttachRetries());
     Assertions.assertToStringOverride(config);
+  }
+  
+  @Test
+  public void testFluent() {
+    final KafkaLedgerConfig config = new KafkaLedgerConfig()
+        .withKafka(new MockKafka<>())
+        .withTopic("test")
+        .withProducerPipeConfig(new ProducerPipeConfig())
+        .withConsumerPipeConfig(new ConsumerPipeConfig())
+        .withLog(Mockito.mock(Logger.class))
+        .withAttachRetries(5);
+    
+    assertNotNull(config.getKafka());
+    assertEquals("test", config.getTopic());
+    assertNotNull(config.getProducerPipeConfig());
+    assertNotNull(config.getConsumerPipeConfig());
+    assertNotNull(config.getLog());
+    assertEquals(5, config.getAttachRetries());
   }
 }
