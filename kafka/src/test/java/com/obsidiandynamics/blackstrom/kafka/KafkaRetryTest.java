@@ -49,10 +49,12 @@ public final class KafkaRetryTest {
     try {
       KafkaRetry.run(2, log, failFor(2));
     } finally {
-      final ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-      verify(log).warn(any(String.class), (Object[]) captor.capture());
-      assertTrue(captor.getAllValues().size() > 1);
-      verify(log).error(any(String.class), any(Throwable.class));
+      final ArgumentCaptor<Object> warnCaptor = ArgumentCaptor.forClass(Object.class);
+      verify(log).warn(any(String.class), (Object[]) warnCaptor.capture());
+      assertTrue(warnCaptor.getAllValues().size() > 1);
+      final ArgumentCaptor<Object> errorCaptor = ArgumentCaptor.forClass(Object.class);
+      verify(log).error(any(String.class), (Object[]) errorCaptor.capture());
+      assertTrue(errorCaptor.getAllValues().size() > 1);
     }
   }
 }

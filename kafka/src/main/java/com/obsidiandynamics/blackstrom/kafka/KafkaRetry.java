@@ -13,7 +13,7 @@ public final class KafkaRetry {
         break;
       } catch (KafkaException e) {
         if (attempt == attempts - 1) {
-          log.error("Error", e);
+          log.error("Error: {} (attempt #{} of {})", e, attempt + 1, attempts);
           throw e;
         } else {
           log.warn("Error: {} (attempt #{} of {})", e, attempt + 1, attempts);
