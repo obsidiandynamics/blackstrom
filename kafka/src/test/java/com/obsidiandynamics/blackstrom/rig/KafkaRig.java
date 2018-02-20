@@ -39,6 +39,7 @@ public final class KafkaRig {
   public static final class Initiator {
     public static void main(String[] args) throws Exception {
       final long _runs = get("rig.runs", Long::valueOf, 1_000_000L);
+      final int _backlogTarget = get("rig.backlog", Integer::valueOf, 10_000);
       before();
       
       new InitiatorRig.Config() {{
@@ -46,6 +47,7 @@ public final class KafkaRig {
         channelFactory = KafkaRig::createChannel;
         clusterName = KafkaRig.clusterName;
         runs = _runs;
+        backlogTarget = _backlogTarget;
       }}.create().run();
     }
   }

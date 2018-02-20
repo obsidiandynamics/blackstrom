@@ -35,6 +35,7 @@ public final class InitiatorRig {
     long runs;
     double warmupFraction = .1;
     double pAbort = 0.1;
+    int backlogTarget = 10_000;
     
     @Override void validate() {
       super.validate();
@@ -56,7 +57,7 @@ public final class InitiatorRig {
   public void run() throws Exception {
     final long transferAmount = 1;
     final long runs = config.runs;
-    final int backlogTarget = (int) Math.min(runs / 10, 10_000);
+    final int backlogTarget = (int) Math.min(runs / 10, config.backlogTarget);
     
     final AtomicLong commits = new AtomicLong();
     final AtomicLong aborts = new AtomicLong();
