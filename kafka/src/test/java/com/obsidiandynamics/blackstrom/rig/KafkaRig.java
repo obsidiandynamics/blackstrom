@@ -4,6 +4,7 @@ import static com.obsidiandynamics.indigo.util.PropertyUtils.*;
 import static org.junit.Assert.*;
 
 import org.jgroups.*;
+import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.group.*;
@@ -14,6 +15,8 @@ import com.obsidiandynamics.indigo.util.*;
 public final class KafkaRig {
   private static final String clusterName = get("rig.cluster.name", String::valueOf, "rig");
   private static final String bootstrapServers = get("rig.bootstrap.servers", String::valueOf, "localhost:9092");
+  
+  private static final Logger log = LoggerFactory.getLogger(KafkaRig.class);
   
   private static final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers(bootstrapServers);
@@ -40,15 +43,21 @@ public final class KafkaRig {
     public static void main(String[] args) throws Exception {
       final long _runs = get("rig.runs", Long::valueOf, 1_000_000L);
       final int _backlogTarget = get("rig.backlog", Integer::valueOf, 10_000);
+      final int cycles = get("rig.cycles", Integer::valueOf, 1);
       before();
       
-      new InitiatorRig.Config() {{
-        ledgerFactory = KafkaRig::createLedger;
-        channelFactory = KafkaRig::createChannel;
-        clusterName = KafkaRig.clusterName;
-        runs = _runs;
-        backlogTarget = _backlogTarget;
-      }}.create().run();
+      for (int cycle = 0; cycle < cycles; cycle++) {
+        if (cycles != 1) log.info("Cycle #{}/{}", cycle + 1, cycles);
+        
+        new InitiatorRig.Config() {{
+          log = KafkaRig.log;
+          ledgerFactory = KafkaRig::createLedger;
+          channelFactory = KafkaRig::createChannel;
+          clusterName = KafkaRig.clusterName;
+          runs = _runs;
+          backlogTarget = _backlogTarget;
+        }}.create().run();
+      }
     }
   }
   
@@ -59,6 +68,7 @@ public final class KafkaRig {
       before();
       
       new CohortRig.Config() {{
+        log = KafkaRig.log;
         ledgerFactory = KafkaRig::createLedger;
         channelFactory = KafkaRig::createChannel;
         clusterName = KafkaRig.clusterName;
@@ -74,6 +84,7 @@ public final class KafkaRig {
       before();
       
       new MonitorRig.Config() {{
+        log = KafkaRig.log;
         ledgerFactory = KafkaRig::createLedger;
         channelFactory = KafkaRig::createChannel;
         clusterName = KafkaRig.clusterName;

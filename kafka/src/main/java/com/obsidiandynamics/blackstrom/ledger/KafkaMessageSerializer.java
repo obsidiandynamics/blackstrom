@@ -10,7 +10,7 @@ import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KafkaMessageSerializer implements Serializer<Message> {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaMessageSerializer.class);
+  private static final Logger log = LoggerFactory.getLogger(KafkaMessageSerializer.class);
   
   static final class MessageSerializationException extends KafkaException {
     private static final long serialVersionUID = 1L;
@@ -32,7 +32,7 @@ public final class KafkaMessageSerializer implements Serializer<Message> {
     try {
       return codec.encode(data);
     } catch (Throwable e) {
-      LOG.error("Error serializing message " + data, e);
+      log.error("Error serializing message " + data, e);
       throw new MessageSerializationException("Error serializing message", e);
     }
   }

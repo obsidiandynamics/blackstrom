@@ -10,7 +10,7 @@ import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class KafkaMessageDeserializer implements Deserializer<Message> {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaMessageDeserializer.class);
+  private static final Logger log = LoggerFactory.getLogger(KafkaMessageDeserializer.class);
   
   static final class MessageDeserializationException extends KafkaException {
     private static final long serialVersionUID = 1L;
@@ -32,7 +32,7 @@ public final class KafkaMessageDeserializer implements Deserializer<Message> {
     try {
       return codec.decode(data);
     } catch (Throwable e) {
-      LOG.error("Error deserializing message " + data, e);
+      log.error("Error deserializing message " + data, e);
       throw new MessageDeserializationException("Error deserializing message", e);
     }
   }
