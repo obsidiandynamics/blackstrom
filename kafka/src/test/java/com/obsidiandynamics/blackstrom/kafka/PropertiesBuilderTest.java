@@ -25,6 +25,23 @@ public final class PropertiesBuilderTest {
   }
   
   @Test
+  public void testDefault() {
+    final Properties defaults = new PropertiesBuilder()
+        .with("amount", 100)
+        .build();
+    
+    final Properties props = new PropertiesBuilder()
+        .withDefault("amount", defaults, 200)
+        .withDefault("amountUseSupplied", defaults, 300)
+        .withDefault("amountUseNull", defaults, null)
+        .build();
+
+    assertEquals("100", props.getProperty("amount"));
+    assertEquals("300", props.getProperty("amountUseSupplied"));
+    assertEquals(null, props.getProperty("amountUseNull"));
+  }
+  
+  @Test
   public void testConfig() throws IOException {
     final PropertiesBuilder builder = new MappingContext()
         .withParser(new SnakeyamlParser())

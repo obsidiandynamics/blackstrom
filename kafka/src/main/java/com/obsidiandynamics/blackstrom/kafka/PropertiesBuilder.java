@@ -2,7 +2,6 @@ package com.obsidiandynamics.blackstrom.kafka;
 
 import java.util.*;
 
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y(PropertiesBuilder.Mapper.class)
@@ -46,7 +45,7 @@ public final class PropertiesBuilder {
    *  @return This builder, for fluent chaining.
    */
   public PropertiesBuilder withDefault(String key, Properties defaultProperties, Object defaultValue) {
-    return with(key, PropertyUtils.get(defaultProperties, key, s -> s, defaultValue));
+    return with(key, defaultProperties.getProperty(key, defaultValue != null ? defaultValue.toString() : null));
   }
   
   public Properties build() {
