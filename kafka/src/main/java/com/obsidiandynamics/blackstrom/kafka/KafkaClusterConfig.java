@@ -18,7 +18,7 @@ public final class KafkaClusterConfig {
   public static final String CONFIG_BOOTSTRAP_SERVERS = "bootstrap.servers";
   
   private Properties common = new PropertiesBuilder()
-      .withDefault(CONFIG_BOOTSTRAP_SERVERS, String::valueOf, null)
+      .withSystemDefault(CONFIG_BOOTSTRAP_SERVERS, null)
       .build();
 
   private Properties producer = new Properties();

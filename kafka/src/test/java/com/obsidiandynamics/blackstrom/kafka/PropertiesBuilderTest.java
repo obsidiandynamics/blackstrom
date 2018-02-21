@@ -15,11 +15,13 @@ public final class PropertiesBuilderTest {
   public void testApi() {
     final PropertiesBuilder builder = new PropertiesBuilder()
         .with("foo", "bar")
-        .with("null", null);
+        .with("null", null)
+        .withSystemDefault("amount", 100);
     
     final Properties props = builder.build();
     assertEquals("bar", props.get("foo"));
     assertEquals(props.toString(), builder.toString());
+    assertEquals("100", props.getProperty("amount"));
   }
   
   @Test

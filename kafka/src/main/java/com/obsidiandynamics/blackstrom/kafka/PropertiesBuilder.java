@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
 import java.util.*;
-import java.util.function.*;
 
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.yconf.*;
@@ -25,8 +24,29 @@ public final class PropertiesBuilder {
     return this;
   }
   
-  public <T> PropertiesBuilder withDefault(String key, Function<String, T> parser, T defaultValue) {
-    return with(key, PropertyUtils.get(key, parser, defaultValue));
+  /**
+   *  Assigns the property, sourcing initially from the system properties, and falling back
+   *  to {@code defaultValue} if the entry wasn't found in {@code System#getProperties()}.
+   *  
+   *  @param key The key.
+   *  @param defaultValue The default value, if the entry isn't in {@code System#getProperties()}.
+   *  @return This builder, for fluent chaining.
+   */
+  public PropertiesBuilder withSystemDefault(String key, Object defaultValue) {
+    return withDefault(key, System.getProperties(), defaultValue);
+  }
+  
+  /**
+   *  Assigns the property, sourcing initially from a set of default properties, and falling back
+   *  to {@code defaultValue} if the entry wasn't found in {@code defaultProperties}.
+   *  
+   *  @param key The key.
+   *  @param defaultProperties The defaults to source from.
+   *  @param defaultValue The default value, if the entry isn't in {@code defaultProperties}.
+   *  @return This builder, for fluent chaining.
+   */
+  public PropertiesBuilder withDefault(String key, Properties defaultProperties, Object defaultValue) {
+    return with(key, PropertyUtils.get(defaultProperties, key, s -> s, defaultValue));
   }
   
   public Properties build() {

@@ -61,10 +61,10 @@ public final class KafkaLedger implements Ledger {
 
     // may be user-specified in config
     final Properties defaults = new PropertiesBuilder()
-        .withDefault("retries", Integer::valueOf, Integer.MAX_VALUE)
-        .withDefault("batch.size", Integer::valueOf, 1 << 18)
-        .withDefault("linger.ms", Integer::valueOf, 1)
-        .withDefault("compression.type", String::valueOf, "lz4")
+        .withSystemDefault("retries", Integer.MAX_VALUE)
+        .withSystemDefault("batch.size", 1 << 18)
+        .withSystemDefault("linger.ms", 1)
+        .withSystemDefault("compression.type", "lz4")
         .build();
 
     // set by the application — required for correctness (overrides user config)
@@ -97,9 +97,9 @@ public final class KafkaLedger implements Ledger {
     
     // may be user-specified in config
     final Properties defaults = new PropertiesBuilder()
-        .withDefault("session.timeout.ms", Integer::valueOf, 6_000)
-        .withDefault("heartbeat.interval.ms", Integer::valueOf, 2_000)
-        .withDefault("max.poll.records", Integer::valueOf, 10_000)
+        .withSystemDefault("session.timeout.ms", 6_000)
+        .withSystemDefault("heartbeat.interval.ms", 2_000)
+        .withSystemDefault("max.poll.records", 10_000)
         .build();
 
     // set by the application — required for correctness (overrides user config)
