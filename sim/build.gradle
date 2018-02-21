@@ -3,12 +3,14 @@ version = project(':').version
 
 dependencies {
   compile project(':')
+  compile 'org.jgroups:jgroups:4.0.10.Final'
 }
 
 task addBenchmarks() {
   project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.BalancedRandomBankTransferTest'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.BalancedLedgerTest'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.MultiNodeQueueRigTest'
 }
 
 jar {

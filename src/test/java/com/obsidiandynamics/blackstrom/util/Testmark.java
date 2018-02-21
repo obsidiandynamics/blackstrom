@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.util;
 import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.resolver.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class Testmark {
   private static class TestmarkConfig {
@@ -51,7 +51,7 @@ public final class Testmark {
     Resolver.assign(optionsType, Singleton.of(options));
   }
   
-  public static void ifEnabled(ThrowingRunnable r) {
+  public static <X extends Exception> void ifEnabled(CheckedRunnable<X> r) {
     if (isEnabled()) {
       System.out.println("Starting benchmark...");
       try {

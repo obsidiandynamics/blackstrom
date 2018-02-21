@@ -56,7 +56,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
   
   private long messageId;
   
-  private final Sandbox sandbox = Sandbox.forTest(this);
+  private final Sandbox sandbox = Sandbox.forInstance(this);
   
   protected final Timesert wait = getWait();
   

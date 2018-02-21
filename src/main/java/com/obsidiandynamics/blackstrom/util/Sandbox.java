@@ -19,9 +19,12 @@ public final class Sandbox {
     return Objects.equals(key, message.getShardKey());
   }
   
-  public static Sandbox forTest(Object test) {
-    final String key = test.getClass().getSimpleName() + "-" + UUID.randomUUID();
+  public static Sandbox forKey(String key) {
     return new Sandbox(key);
+  }
+  
+  public static Sandbox forInstance(Object instance) {
+    return forKey(instance.getClass().getSimpleName() + "-" + UUID.randomUUID());
   }
   
   @Override

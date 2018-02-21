@@ -20,6 +20,9 @@ task addBenchmarks() {
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.KafkaJacksonRandomBankTransferIT'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.KafkaKryoLedgerIT'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.KafkaJacksonLedgerIT'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.KafkaRig$Initiator'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.KafkaRig$Cohort'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.KafkaRig$Monitor'
 }
 
 task startKafka(type: JavaExec) {

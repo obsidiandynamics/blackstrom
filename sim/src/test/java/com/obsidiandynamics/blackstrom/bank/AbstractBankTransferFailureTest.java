@@ -93,7 +93,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     final int initialBalance = 1_000;
     final AsyncInitiator initiator = new AsyncInitiator();
     final Monitor monitor = new DefaultMonitor();
-    final Sandbox sandbox = Sandbox.forTest(this);
+    final Sandbox sandbox = Sandbox.forInstance(this);
     final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
 
     ledger = createLedger();

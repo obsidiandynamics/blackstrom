@@ -53,7 +53,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
   
   private long messageId;
   
-  private final Sandbox sandbox = Sandbox.forTest(this);
+  private final Sandbox sandbox = Sandbox.forInstance(this);
   
   private final Timesert wait = getWait();
   
