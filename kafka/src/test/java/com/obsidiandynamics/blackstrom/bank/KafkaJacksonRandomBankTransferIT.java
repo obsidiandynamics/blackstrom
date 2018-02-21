@@ -28,9 +28,10 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
   
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
   
-  private final String baseTopic = TestTopic.of(KafkaJacksonRandomBankTransferIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);
-  
-  private final String topic = baseTopic + (Testmark.isEnabled() ? ".bench" : "");
+  private final String topic = 
+      TestTopic.of(KafkaJacksonRandomBankTransferIT.class, "kryo", 
+                   JacksonMessageCodec.ENCODING_VERSION, 
+                   Testmark.isEnabled() ? new String[] {"bench"} : new String[] {});
   
   @Before
   public void before() throws InterruptedException, ExecutionException {
