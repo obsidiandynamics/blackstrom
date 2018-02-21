@@ -12,7 +12,7 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   private final KafkaClusterConfig config;
   
   public KafkaCluster(@YInject(name="clusterConfig") KafkaClusterConfig config) {
-    config.init();
+    config.validate();
     this.config = config;
   }
   

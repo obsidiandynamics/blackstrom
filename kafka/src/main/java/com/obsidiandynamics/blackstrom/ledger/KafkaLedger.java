@@ -61,13 +61,13 @@ public final class KafkaLedger implements Ledger {
 
     // may be user-specified in config
     final Properties defaults = new PropertiesBuilder()
-        .with("retries", Integer.MAX_VALUE)
-        .with("batch.size", 1 << 18)
-        .with("linger.ms", 1)
-        .with("compression.type", "lz4")
+        .withDefault("retries", Integer::valueOf, Integer.MAX_VALUE)
+        .withDefault("batch.size", Integer::valueOf, 1 << 18)
+        .withDefault("linger.ms", Integer::valueOf, 1)
+        .withDefault("compression.type", String::valueOf, "lz4")
         .build();
 
-    // set by the application — required for correctness
+    // set by the application — required for correctness (overrides user config)
     final Properties overrides = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
         .with("value.serializer", KafkaMessageSerializer.class.getName())
@@ -97,12 +97,12 @@ public final class KafkaLedger implements Ledger {
     
     // may be user-specified in config
     final Properties defaults = new PropertiesBuilder()
-        .with("session.timeout.ms", 6_000)
-        .with("heartbeat.interval.ms", 2_000)
-        .with("max.poll.records", 10_000)
+        .withDefault("session.timeout.ms", Integer::valueOf, 6_000)
+        .withDefault("heartbeat.interval.ms", Integer::valueOf, 2_000)
+        .withDefault("max.poll.records", Integer::valueOf, 10_000)
         .build();
 
-    // set by the application — required for correctness
+    // set by the application — required for correctness (overrides user config)
     final Properties overrides = new PropertiesBuilder()
         .with("group.id", consumerGroupId)
         .with("auto.offset.reset", autoOffsetReset)

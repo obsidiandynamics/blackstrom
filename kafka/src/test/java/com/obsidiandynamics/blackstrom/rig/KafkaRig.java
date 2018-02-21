@@ -3,6 +3,9 @@ package com.obsidiandynamics.blackstrom.rig;
 import static com.obsidiandynamics.indigo.util.PropertyUtils.*;
 import static org.junit.Assert.*;
 
+import java.util.*;
+import java.util.concurrent.*;
+
 import org.jgroups.*;
 import org.slf4j.*;
 
@@ -14,18 +17,30 @@ import com.obsidiandynamics.indigo.util.*;
 
 public final class KafkaRig {
   private static final String clusterName = get("rig.cluster.name", String::valueOf, "rig");
-  private static final String bootstrapServers = get("rig.bootstrap.servers", String::valueOf, "localhost:9092");
+  
+  private static final String bootstrapServers = get("bootstrap.servers", String::valueOf, "localhost:9092");
   
   private static final Logger log = LoggerFactory.getLogger(KafkaRig.class);
   
-  private static final KafkaClusterConfig config = new KafkaClusterConfig()
-      .withBootstrapServers(bootstrapServers);
+  private static final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(bootstrapServers);
 
   private static final String topic = 
       TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, clusterName);
   
-  private static void before() {
-    //TODO create topic
+  private static void before() throws InterruptedException, ExecutionException {
+    KafkaAdmin.forConfig(config).ensureExists(topic);
+    printConfig();
+  }
+  
+  private static void printConfig() {
+    log.info("Producer properties:");
+    for (Map.Entry<Object, Object> entry : config.getProducerCombinedProps().entrySet()) {
+      log.info(String.format("  %-30s: %s", entry.getKey(), entry.getValue()));
+    }
+    log.info("Consumer properties:");
+    for (Map.Entry<Object, Object> entry : config.getConsumerCombinedProps().entrySet()) {
+      log.info(String.format("  %-30s: %s", entry.getKey(), entry.getValue()));
+    }
   }
   
   private static Ledger createLedger() {

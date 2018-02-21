@@ -58,6 +58,6 @@ public final class KafkaConfigTest {
   
   @Test(expected=IllegalArgumentException.class)
   public void testNoBoostrapServers() {
-    new KafkaClusterConfig().init();
+    new KafkaClusterConfig().validate();
   }
 }

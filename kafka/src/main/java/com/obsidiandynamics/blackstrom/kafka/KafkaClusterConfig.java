@@ -17,16 +17,15 @@ public final class KafkaClusterConfig {
   
   public static final String CONFIG_BOOTSTRAP_SERVERS = "bootstrap.servers";
   
-  @YInject
-  private Properties common = new Properties();
+  private Properties common = new PropertiesBuilder()
+      .withDefault(CONFIG_BOOTSTRAP_SERVERS, String::valueOf, null)
+      .build();
 
-  @YInject
   private Properties producer = new Properties();
   
-  @YInject
   private Properties consumer = new Properties();
   
-  void init() {
+  public void validate() {
     if (common.getProperty(CONFIG_BOOTSTRAP_SERVERS) == null) {
       throw new IllegalArgumentException("Must specify a value for '" + CONFIG_BOOTSTRAP_SERVERS + "'");
     }
@@ -36,7 +35,7 @@ public final class KafkaClusterConfig {
     return withCommonProps(Collections.singletonMap(CONFIG_BOOTSTRAP_SERVERS, bootstrapServers));
   }
   
-  Properties getCommonProps() {
+  public Properties getCommonProps() {
     return common;
   }
   
@@ -46,29 +45,29 @@ public final class KafkaClusterConfig {
     return props;
   }
   
-  KafkaClusterConfig withCommonProps(Map<Object, Object> common) {
+  public KafkaClusterConfig withCommonProps(Map<Object, Object> common) {
     this.common.putAll(common);
     return this;
   }
 
-  Properties getProducerCombinedProps() {
+  public Properties getProducerCombinedProps() {
     final Properties props = getCommonPropsCopy();
     props.putAll(producer);
     return props;
   }
   
-  KafkaClusterConfig withProducerProps(Map<Object, Object> producer) {
+  public KafkaClusterConfig withProducerProps(Map<Object, Object> producer) {
     this.producer.putAll(producer);
     return this;
   }
   
-  Properties getConsumerCombinedProps() {
+  public Properties getConsumerCombinedProps() {
     final Properties props = getCommonPropsCopy();
     props.putAll(consumer);
     return props;
   }
   
-  KafkaClusterConfig withConsumerProps(Map<Object, Object> consumer) {
+  public KafkaClusterConfig withConsumerProps(Map<Object, Object> consumer) {
     this.consumer.putAll(consumer);
     return this;
   }
