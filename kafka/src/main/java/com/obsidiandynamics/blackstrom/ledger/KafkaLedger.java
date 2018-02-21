@@ -59,18 +59,24 @@ public final class KafkaLedger implements Ledger {
     attachRetries = config.getAttachRetries();
     codecLocator = CodecRegistry.register(config.getCodec());
 
-    final Properties props = new PropertiesBuilder()
-        .with("key.serializer", StringSerializer.class.getName())
-        .with("value.serializer", KafkaMessageSerializer.class.getName())
-        .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
-        .with("acks", "all")
-        .with("max.in.flight.requests.per.connection", 1)
+    // may be user-specified in config
+    final Properties defaults = new PropertiesBuilder()
         .with("retries", Integer.MAX_VALUE)
         .with("batch.size", 1 << 18)
         .with("linger.ms", 1)
         .with("compression.type", "lz4")
         .build();
-    producer = kafka.getProducer(props);
+
+    // set by the application — required for correctness
+    final Properties overrides = new PropertiesBuilder()
+        .with("key.serializer", StringSerializer.class.getName())
+        .with("value.serializer", KafkaMessageSerializer.class.getName())
+        .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
+        .with("acks", "all")
+        .with("max.in.flight.requests.per.connection", 1)
+        .build();
+    
+    producer = kafka.getProducer(defaults, overrides);
     final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
         new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log);
@@ -88,20 +94,26 @@ public final class KafkaLedger implements Ledger {
       consumerGroupId = null;
       autoOffsetReset = OffsetResetStrategy.LATEST.name().toLowerCase();
     }
+    
+    // may be user-specified in config
+    final Properties defaults = new PropertiesBuilder()
+        .with("session.timeout.ms", 6_000)
+        .with("heartbeat.interval.ms", 2_000)
+        .with("max.poll.records", 10_000)
+        .build();
 
-    final Properties props = new PropertiesBuilder()
+    // set by the application — required for correctness
+    final Properties overrides = new PropertiesBuilder()
         .with("group.id", consumerGroupId)
         .with("auto.offset.reset", autoOffsetReset)
         .with("enable.auto.commit", false)
         .with("auto.commit.interval.ms", 0)
-        .with("session.timeout.ms", 6_000)
-        .with("heartbeat.interval.ms", 2_000)
-        .with("max.poll.records", 10_000)
         .with("key.deserializer", StringDeserializer.class.getName())
         .with("value.deserializer", KafkaMessageDeserializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
-    final Consumer<String, Message> consumer = kafka.getConsumer(props);
+    
+    final Consumer<String, Message> consumer = kafka.getConsumer(defaults, overrides);
     KafkaRetry.run(attachRetries, log, () -> {
       if (groupId != null) {
         consumer.subscribe(Collections.singletonList(topic));

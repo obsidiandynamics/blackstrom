@@ -55,13 +55,21 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
     this.commitExceptionGenerator = confirmExceptionGenerator;
     return this;
   }
+  
+  @Override
+  public FallibleMockProducer<K, V> getProducer(Properties overrides) {
+    return getProducer(new Properties(), overrides);
+  }
 
   @Override
-  public FallibleMockProducer<K, V> getProducer(Properties props) {
+  public FallibleMockProducer<K, V> getProducer(Properties defaults, Properties overrides) {
+    final Properties combined = new Properties();
+    combined.putAll(defaults);
+    combined.putAll(overrides);
     synchronized (lock) {
       if (producer == null) {
-        final String keySerializer = props.getProperty("key.serializer");
-        final String valueSerializer = props.getProperty("value.serializer");
+        final String keySerializer = combined.getProperty("key.serializer");
+        final String valueSerializer = combined.getProperty("value.serializer");
         producer = new FallibleMockProducer<K, V>(true, instantiate(keySerializer), instantiate(valueSerializer)) {
           {
             this.sendCallbackExceptionGenerator = MockKafka.this.sendCallbackExceptionGenerator;
@@ -134,10 +142,18 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
       backlog = backlog.subList(backlog.size() - maxHistory, backlog.size());
     }
   }
+  
+  @Override
+  public FallibleMockConsumer<K, V> getConsumer(Properties overrides) {
+    return getConsumer(new Properties(), overrides);
+  }
 
   @Override
-  public FallibleMockConsumer<K, V> getConsumer(Properties props) {
-    final String groupId = props.getProperty("group.id");
+  public FallibleMockConsumer<K, V> getConsumer(Properties defaults, Properties overrides) {
+    final Properties combined = new Properties();
+    combined.putAll(defaults);
+    combined.putAll(overrides);
+    final String groupId = combined.getProperty("group.id");
     final boolean newGroupMember = groupId == null || groups.add(groupId);
     if (newGroupMember) {
       return createAttachedConsumer();

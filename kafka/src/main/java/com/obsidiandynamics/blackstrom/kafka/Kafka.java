@@ -6,7 +6,15 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 
 public interface Kafka<K, V> {
-  Producer<K, V> getProducer(Properties props);
+  default Producer<K, V> getProducer(Properties overrides) {
+    return getProducer(new Properties(), overrides);
+  }
   
-  Consumer<K, V> getConsumer(Properties props);
+  Producer<K, V> getProducer(Properties defaults, Properties overrides);
+  
+  default Consumer<K, V> getConsumer(Properties overrides) {
+    return getConsumer(new Properties(), overrides);
+  }
+  
+  Consumer<K, V> getConsumer(Properties defaults, Properties overrides);
 }
