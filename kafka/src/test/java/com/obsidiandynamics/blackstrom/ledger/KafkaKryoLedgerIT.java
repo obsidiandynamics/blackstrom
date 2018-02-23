@@ -21,8 +21,11 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
   private final String topic = TestTopic.of(KafkaKryoLedgerIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
   
   @Before
-  public void before() throws InterruptedException, ExecutionException {
-    KafkaAdmin.forConfig(config).ensureExists(topic);
+  public void before() throws InterruptedException, ExecutionException, TimeoutException {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
+      admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
+    }
   }
   
   @Override

@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import org.apache.kafka.clients.admin.*;
+
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.concat.*;
 
@@ -17,5 +19,9 @@ public final class TestTopic {
     .append(MessageCodec.SCHEMA_VERSION)
     .when(extras.length != 0).append(".").appendArray(".", extras)
     .toString();
+  }
+  
+  public static NewTopic newOf(String topic) {
+    return new NewTopic(topic, (short) 1, (short) 1);
   }
 }

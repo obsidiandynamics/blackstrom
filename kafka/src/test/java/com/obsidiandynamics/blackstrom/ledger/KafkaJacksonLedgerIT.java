@@ -26,8 +26,11 @@ public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
   
   @Before
-  public void before() throws InterruptedException, ExecutionException {
-    KafkaAdmin.forConfig(config).ensureExists(topic);
+  public void before() throws InterruptedException, ExecutionException, TimeoutException {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
+      admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
+    }
   }
   
   @Override

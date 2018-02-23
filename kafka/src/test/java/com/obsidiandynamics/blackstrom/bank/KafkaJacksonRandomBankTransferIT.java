@@ -34,8 +34,11 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
                    Testmark.isEnabled() ? new String[] {"bench"} : new String[] {});
   
   @Before
-  public void before() throws InterruptedException, ExecutionException {
-    KafkaAdmin.forConfig(config).ensureExists(topic);
+  public void before() throws InterruptedException, ExecutionException, TimeoutException {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
+      admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
+    }
   }
   
   @Override

@@ -27,8 +27,11 @@ public final class KafkaRig {
   private static final String topic = 
       TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, clusterName);
   
-  private static void before() throws InterruptedException, ExecutionException {
-    KafkaAdmin.forConfig(config).ensureExists(topic);
+  private static void before() throws InterruptedException, ExecutionException, TimeoutException {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
+      admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
+    }
     printConfig();
   }
   
