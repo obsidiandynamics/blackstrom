@@ -84,7 +84,7 @@ public final class KafkaAdmin implements AutoCloseable {
   public Set<String> ensureExists(NewTopic topic, long timeoutMillis) throws InterruptedException, ExecutionException, TimeoutException {
     final CreateTopicsResult result = admin.createTopics(Collections.singleton(topic), 
                                                          new CreateTopicsOptions().timeoutMs((int) timeoutMillis));
-    ignoreExceptions(() -> awaitFutures(timeoutMillis, result.values().values()), TopicExistsException.class);
+    awaitFutures(timeoutMillis, result.values().values());
     
     final Set<String> created = new HashSet<>();
     for (Map.Entry<String, KafkaFuture<Void>> entry : result.values().entrySet()) {
@@ -112,25 +112,11 @@ public final class KafkaAdmin implements AutoCloseable {
     admin.close(duration, unit);
   }
   
-  public static void ignoreExceptions(Awaiter awaiter, Class<?>... ignoreExceptions) throws TimeoutException, InterruptedException, ExecutionException {
-    try {
-      awaiter.doAwait();
-    } catch (ExecutionException e) {
-      if (! Arrays.asList(ignoreExceptions).contains(e.getCause().getClass())) {
-        throw e;
-      }
-    }
-  }
-  
-  public interface Awaiter {
-    void doAwait() throws TimeoutException, InterruptedException, ExecutionException;
-  }
-  
-  public static void awaitFutures(long timeout, KafkaFuture<?>... futures) throws TimeoutException, InterruptedException, ExecutionException {
+  public static void awaitFutures(long timeout, KafkaFuture<?>... futures) throws TimeoutException, InterruptedException {
     awaitFutures(timeout, Arrays.asList(futures));
   }
   
-  public static void awaitFutures(long timeoutMillis, Collection<? extends KafkaFuture<?>> futures) throws TimeoutException, InterruptedException, ExecutionException {
+  public static void awaitFutures(long timeoutMillis, Collection<? extends KafkaFuture<?>> futures) throws TimeoutException, InterruptedException {
     for (KafkaFuture<?> future : futures) {
       try {
         // allow for a 50% grace period to avoid a premature timeout (let the AdminClient timeout first)
@@ -138,8 +124,6 @@ public final class KafkaAdmin implements AutoCloseable {
       } catch (ExecutionException e) {
         if (e.getCause() instanceof org.apache.kafka.common.errors.TimeoutException) {
           throw new TimeoutException(e.getCause().getMessage());
-        } else {
-          throw e;
         }
       }
     }
