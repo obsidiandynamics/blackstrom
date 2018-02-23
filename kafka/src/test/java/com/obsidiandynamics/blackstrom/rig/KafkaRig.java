@@ -28,21 +28,18 @@ public final class KafkaRig {
       TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, clusterName);
   
   private static void before() throws InterruptedException, ExecutionException, TimeoutException {
+    printProps("Producer properties", config.getProducerCombinedProps());
+    printProps("Consumer properties", config.getConsumerCombinedProps());
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
       admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
     }
-    printConfig();
   }
   
-  private static void printConfig() {
-    log.info("Producer properties:");
-    for (Map.Entry<Object, Object> entry : config.getProducerCombinedProps().entrySet()) {
-      log.info(String.format("  %-30s: %s", entry.getKey(), entry.getValue()));
-    }
-    log.info("Consumer properties:");
-    for (Map.Entry<Object, Object> entry : config.getConsumerCombinedProps().entrySet()) {
-      log.info(String.format("  %-30s: %s", entry.getKey(), entry.getValue()));
+  private static void printProps(String title, Properties props) {
+    log.info("{}:", title);
+    for (Map.Entry<Object, Object> entry : props.entrySet()) {
+      log.info(String.format("  %-20s: %s", entry.getKey(), entry.getValue()));
     }
   }
   
@@ -59,9 +56,12 @@ public final class KafkaRig {
   
   public static final class Initiator {
     public static void main(String[] args) throws Exception {
-      final long _runs = get("rig.runs", Long::valueOf, 1_000_000L);
-      final int _backlogTarget = get("rig.backlog", Integer::valueOf, 10_000);
-      final int cycles = get("rig.cycles", Integer::valueOf, 1);
+      final Properties props = new Properties(System.getProperties());
+      final long _runs = getOrSet(props, "rig.runs", Long::valueOf, 1_000_000L);
+      final int _backlogTarget = getOrSet(props, "rig.backlog", Integer::valueOf, 10_000);
+      final int cycles = getOrSet(props, "rig.cycles", Integer::valueOf, 1);
+      printProps("Rig properties", props);
+      
       before();
       
       for (int cycle = 0; cycle < cycles; cycle++) {
@@ -81,8 +81,10 @@ public final class KafkaRig {
   
   public static final class Cohort {
     public static void main(String[] args) throws Exception {
-      final String _branchId = get("rig.branch.id", String::valueOf, null);
+      final Properties props = new Properties(System.getProperties());
+      final String _branchId = getOrSet(props, "rig.branch.id", String::valueOf, null);
       assertNotNull(_branchId);
+      printProps("Rig properties", props);
       before();
       
       new CohortRig.Config() {{
