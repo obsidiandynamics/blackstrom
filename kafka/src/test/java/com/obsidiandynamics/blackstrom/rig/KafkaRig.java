@@ -6,6 +6,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.kafka.clients.admin.*;
 import org.jgroups.*;
 import org.slf4j.*;
 
@@ -30,7 +31,7 @@ public final class KafkaRig {
   private static void before() throws InterruptedException, ExecutionException, TimeoutException {
     printProps("Producer properties", config.getProducerCombinedProps());
     printProps("Consumer properties", config.getConsumerCombinedProps());
-    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
       admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
     }

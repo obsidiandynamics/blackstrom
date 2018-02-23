@@ -5,6 +5,7 @@ import static com.obsidiandynamics.blackstrom.kafka.KafkaClusterConfig.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.TimeoutException;
+import java.util.function.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.*;
@@ -16,15 +17,16 @@ public final class KafkaAdmin implements AutoCloseable {
   
   private final AdminClient admin;
   
-  private KafkaAdmin(AdminClient admin) {
+  public KafkaAdmin(AdminClient admin) {
     this.admin = admin;
   }
   
-  public static KafkaAdmin forConfig(KafkaClusterConfig config) {
+  public static KafkaAdmin forConfig(KafkaClusterConfig config, Function<Properties, AdminClient> adminClientFactory) {
     final String bootstrapServers = config.getCommonProps().getProperty(CONFIG_BOOTSTRAP_SERVERS);
-    final AdminClient admin = AdminClient.create(new PropertiesBuilder()
-                                                 .with(CONFIG_BOOTSTRAP_SERVERS, bootstrapServers)
-                                                 .build());
+    final Properties props = new PropertiesBuilder()
+        .with(CONFIG_BOOTSTRAP_SERVERS, bootstrapServers)
+        .build();
+    final AdminClient admin = adminClientFactory.apply(props);
     return new KafkaAdmin(admin);
   }
   

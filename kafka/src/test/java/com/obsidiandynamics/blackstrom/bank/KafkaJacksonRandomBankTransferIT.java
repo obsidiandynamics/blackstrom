@@ -3,6 +3,7 @@ package com.obsidiandynamics.blackstrom.bank;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.kafka.clients.admin.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -35,7 +36,7 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
   
   @Before
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
-    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
       admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
     }

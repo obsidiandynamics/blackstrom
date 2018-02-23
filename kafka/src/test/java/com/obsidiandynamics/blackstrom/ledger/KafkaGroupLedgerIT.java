@@ -3,6 +3,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.kafka.clients.admin.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -31,7 +32,7 @@ public final class KafkaGroupLedgerIT extends AbstractGroupLedgerTest {
   
   @Before
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
-    try (KafkaAdmin admin = KafkaAdmin.forConfig(config)) {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
       admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
     }
