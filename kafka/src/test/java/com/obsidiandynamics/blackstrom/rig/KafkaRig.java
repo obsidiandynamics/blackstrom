@@ -14,7 +14,7 @@ import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class KafkaRig {
@@ -24,7 +24,8 @@ public final class KafkaRig {
   
   private static final Logger log = LoggerFactory.getLogger(KafkaRig.class);
   
-  private static final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(bootstrapServers);
+  private static final KafkaClusterConfig config = new KafkaClusterConfig()
+      .withBootstrapServers(bootstrapServers);
 
   private static final String topic = 
       TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, clusterName);
@@ -37,7 +38,7 @@ public final class KafkaRig {
   }
   
   private static void printProps(Properties props) {
-    PrintProperties.print(log::info, "Rig properties", props, 20, "rig.");
+    PropertyFormat.printStandard(log::info, "Rig properties", props, "rig.");
   }
   
   private static Ledger createLedger() {

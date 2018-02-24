@@ -41,7 +41,8 @@ public final class KafkaLedgerConfigTest {
         .withProducerPipeConfig(new ProducerPipeConfig())
         .withConsumerPipeConfig(new ConsumerPipeConfig())
         .withLog(Mockito.mock(Logger.class))
-        .withAttachRetries(5);
+        .withAttachRetries(5)
+        .withPrintConfig(true);
     
     assertNotNull(config.getKafka());
     assertEquals("test", config.getTopic());
@@ -49,5 +50,6 @@ public final class KafkaLedgerConfigTest {
     assertNotNull(config.getConsumerPipeConfig());
     assertNotNull(config.getLog());
     assertEquals(5, config.getAttachRetries());
+    assertTrue(config.isPrintConfig());
   }
 }

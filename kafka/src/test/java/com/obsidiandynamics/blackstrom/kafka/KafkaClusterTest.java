@@ -1,6 +1,8 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
@@ -27,16 +29,35 @@ public class KafkaClusterTest {
   }
   
   @Test
-  public void testProducer() {
+  public void testGetProducer() {
     try (Producer<?, ?> producer = createCluster().getProducer(new Properties())) {
       assertNotNull(producer);
     }
   }
   
+  private interface LogLine extends java.util.function.Consumer<String> {}
+  
   @Test
-  public void testConsumer() {
+  public void testDescribeProducer() {
+    final LogLine logLine = mock(LogLine.class);
+    createCluster().describeProducer(logLine, 
+                                     new PropertiesBuilder().with("default", "1").build(),
+                                     new PropertiesBuilder().with("overriden", "2").build());
+    verify(logLine, atLeastOnce()).accept(any());
+  }
+  
+  @Test
+  public void testGetConsumer() {
     try (Consumer<?, ?> producer = createCluster().getConsumer(new Properties())) {
       assertNotNull(producer);
     }
+  }
+  @Test
+  public void testDescribeConsumer() {
+    final LogLine logLine = mock(LogLine.class);
+    createCluster().describeConsumer(logLine, 
+                                     new PropertiesBuilder().with("default", "1").build(),
+                                     new PropertiesBuilder().with("overriden", "2").build());
+    verify(logLine, atLeastOnce()).accept(any());
   }
 }

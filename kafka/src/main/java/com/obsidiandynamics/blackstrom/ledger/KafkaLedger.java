@@ -44,6 +44,8 @@ public final class KafkaLedger implements Ledger {
 
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
   
+  private final boolean printConfig;
+  
   private final int attachRetries;
   
   private final WorkerThread retryThread;
@@ -75,6 +77,7 @@ public final class KafkaLedger implements Ledger {
     kafka = config.getKafka();
     topic = config.getTopic();
     log = config.getLog();
+    printConfig = config.isPrintConfig();
     consumerPipeConfig = config.getConsumerPipeConfig();
     attachRetries = config.getAttachRetries();
     codecLocator = CodecRegistry.register(config.getCodec());
@@ -86,7 +89,7 @@ public final class KafkaLedger implements Ledger {
         .buildAndStart();
 
     // may be user-specified in config
-    final Properties defaults = new PropertiesBuilder()
+    final Properties producerDefaults = new PropertiesBuilder()
         .withSystemDefault("batch.size", 1 << 18)
         .withSystemDefault("linger.ms", 1)
         .withSystemDefault("compression.type", "lz4")
@@ -95,7 +98,7 @@ public final class KafkaLedger implements Ledger {
         .build();
 
     // set by the application — required for correctness (overrides user config)
-    final Properties overrides = new PropertiesBuilder()
+    final Properties producerOverrides = new PropertiesBuilder()
         .with("key.serializer", StringSerializer.class.getName())
         .with("value.serializer", KafkaMessageSerializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
@@ -105,7 +108,8 @@ public final class KafkaLedger implements Ledger {
         .with("max.block.ms", Long.MAX_VALUE)
         .build();
     
-    producer = kafka.getProducer(defaults, overrides);
+    if (printConfig) kafka.describeProducer(log::info, producerDefaults, producerOverrides);
+    producer = kafka.getProducer(producerDefaults, producerOverrides);
     final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
         new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log);
@@ -134,14 +138,14 @@ public final class KafkaLedger implements Ledger {
     }
     
     // may be user-specified in config
-    final Properties defaults = new PropertiesBuilder()
+    final Properties consumerDefaults = new PropertiesBuilder()
         .withSystemDefault("session.timeout.ms", 6_000)
         .withSystemDefault("heartbeat.interval.ms", 2_000)
         .withSystemDefault("max.poll.records", 10_000)
         .build();
 
     // set by the application — required for correctness (overrides user config)
-    final Properties overrides = new PropertiesBuilder()
+    final Properties consumerOverrides = new PropertiesBuilder()
         .with("group.id", consumerGroupId)
         .with("auto.offset.reset", autoOffsetReset)
         .with("enable.auto.commit", false)
@@ -151,7 +155,8 @@ public final class KafkaLedger implements Ledger {
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
     
-    final Consumer<String, Message> consumer = kafka.getConsumer(defaults, overrides);
+    if (printConfig) kafka.describeConsumer(log::info, consumerDefaults, consumerOverrides);
+    final Consumer<String, Message> consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
     KafkaRetry.run(attachRetries, log, () -> {
       if (groupId != null) {
         consumer.subscribe(Collections.singletonList(topic));

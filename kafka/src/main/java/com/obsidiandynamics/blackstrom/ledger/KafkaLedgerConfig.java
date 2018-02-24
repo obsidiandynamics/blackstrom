@@ -29,6 +29,9 @@ public final class KafkaLedgerConfig {
   
   @YInject
   private int attachRetries = 10;
+  
+  @YInject
+  private boolean printConfig;
 
   Kafka<String, Message> getKafka() {
     return kafka;
@@ -92,11 +95,20 @@ public final class KafkaLedgerConfig {
     this.attachRetries = attachRetries;
     return this;
   }
+  
+  public KafkaLedgerConfig withPrintConfig(boolean printConfig) {
+    this.printConfig = printConfig;
+    return this;
+  }
+  
+  boolean isPrintConfig() {
+    return printConfig;
+  }
 
   @Override
   public String toString() {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
         ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + ", log=" + log + 
-        ", attachRetries=" + attachRetries + "]";
+        ", attachRetries=" + attachRetries + ", printConfig=" + printConfig + "]";
   }
 }

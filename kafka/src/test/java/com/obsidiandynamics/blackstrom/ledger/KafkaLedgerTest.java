@@ -38,9 +38,17 @@ public final class KafkaLedgerTest {
     if (ledger != null) ledger.dispose();
   }
   
-  private static KafkaLedger createLedger(Kafka<String, Message> kafka, boolean asyncProducer, boolean asyncConsumer, 
+  private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
+                                          boolean asyncProducer, boolean asyncConsumer, 
                                           int pipelineSizeBatches, Logger log) {
-    return new KafkaLedger(new KafkaLedgerConfig()
+    return createLedger(kafka, new KafkaLedgerConfig(), asyncProducer, asyncConsumer, pipelineSizeBatches, log);
+  }
+  
+  private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
+                                          KafkaLedgerConfig baseConfig,
+                                          boolean asyncProducer, boolean asyncConsumer, 
+                                          int pipelineSizeBatches, Logger log) {
+    return new KafkaLedger(baseConfig
                            .withKafka(kafka)
                            .withTopic("test")
                            .withCodec(new NullMessageCodec())
@@ -55,7 +63,8 @@ public final class KafkaLedgerTest {
   @Test
   public void testPipelineBackoff() {
     final Kafka<String, Message> kafka = new MockKafka<>();
-    ledger = createLedger(kafka, false, true, 1, LoggerFactory.getLogger(KafkaLedger.class));
+    ledger = createLedger(kafka, new KafkaLedgerConfig().withPrintConfig(true), 
+                          false, true, 1, LoggerFactory.getLogger(KafkaLedger.class));
     final CyclicBarrier barrierA = new CyclicBarrier(2);
     final CyclicBarrier barrierB = new CyclicBarrier(2);
     final AtomicInteger received = new AtomicInteger();

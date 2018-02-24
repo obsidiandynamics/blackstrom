@@ -26,7 +26,7 @@ public final class Group implements AutoCloseable {
     channel.setDiscardOwnMessages(true);
     channel.setReceiver(new ReceiverAdapter() {
       @Override public void receive(Message msg) {
-        if (log.isDebugEnabled()) log.debug("Received {}", msg);
+        log.debug("Received {}", msg);
         try {
           for (HostMessageHandler onMessage : generalHandlers) {
             onMessage.handle(channel, msg);

@@ -3,6 +3,7 @@ package com.obsidiandynamics.blackstrom.kafka;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
@@ -54,6 +55,11 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
   public MockKafka<K, V> withConfirmExceptionGenerator(ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>, Exception> confirmExceptionGenerator) {
     this.commitExceptionGenerator = confirmExceptionGenerator;
     return this;
+  }
+
+  @Override
+  public void describeProducer(Consumer<String> logLine, Properties defaults, Properties overrides) {
+    logLine.accept("Mock producer");
   }
   
   @Override
@@ -141,6 +147,11 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
     if (backlog.size() > maxHistory) {
       backlog = backlog.subList(backlog.size() - maxHistory, backlog.size());
     }
+  }
+
+  @Override
+  public void describeConsumer(Consumer<String> logLine, Properties defaults, Properties overrides) {
+    logLine.accept("Mock consumer");
   }
   
   @Override
