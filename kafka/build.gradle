@@ -20,9 +20,6 @@ task addBenchmarks() {
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.KafkaJacksonRandomBankTransferIT'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.KafkaKryoLedgerIT'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.KafkaJacksonLedgerIT'
-  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.KafkaRig$Initiator'
-  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.KafkaRig$Cohort'
-  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.KafkaRig$Monitor'
 }
 
 task startKafka(type: JavaExec) {
@@ -103,4 +100,21 @@ bintray {
       vcsTag = project(':').version
     }
   }
+}
+
+task testJar(type: Jar) {
+  dependsOn configurations.compile
+  dependsOn configurations.runtime
+  dependsOn configurations.testCompile
+  dependsOn configurations.testRuntime
+  dependsOn jar
+  from sourceSets.main.output
+  from sourceSets.test.output
+  from { // bundle all dependencies
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+    configurations.testCompile.collect { it.isDirectory() ? it : zipTree(it) }
+    configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }
+  }   
+  baseName packageName + '-test'
 }

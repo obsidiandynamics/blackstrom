@@ -8,6 +8,7 @@ import java.util.stream.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
+import org.apache.kafka.common.errors.*;
 import org.apache.kafka.common.serialization.*;
 import org.slf4j.*;
 
@@ -15,11 +16,15 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
 
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
+  
+  private static final int RETRY_BACKOFF_MILLIS = 100;
 
   private final Kafka<String, Message> kafka;
 
@@ -40,6 +45,21 @@ public final class KafkaLedger implements Ledger {
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
   
   private final int attachRetries;
+  
+  private final WorkerThread retryThread;
+  
+  private static class RetryTask {
+    final Message message;
+    final AppendCallback callback;
+    
+    RetryTask(Message message, AppendCallback callback) {
+      this.message = message;
+      this.callback = callback;
+    }
+  }
+  
+  private final NodeQueue<RetryTask> retryQueue = new NodeQueue<>();
+  private final QueueConsumer<RetryTask> retryQueueConsumer = retryQueue.consumer();
 
   private static class ConsumerOffsets {
     final Object lock = new Object();
@@ -58,13 +78,20 @@ public final class KafkaLedger implements Ledger {
     consumerPipeConfig = config.getConsumerPipeConfig();
     attachRetries = config.getAttachRetries();
     codecLocator = CodecRegistry.register(config.getCodec());
+    retryThread = WorkerThread.builder()
+        .withOptions(new WorkerOptions()
+                     .withDaemon(true)
+                     .withName(KafkaLedger.class.getSimpleName() + "-retry-" + topic))
+        .onCycle(this::onRetry)
+        .buildAndStart();
 
     // may be user-specified in config
     final Properties defaults = new PropertiesBuilder()
-        .withSystemDefault("retries", Integer.MAX_VALUE)
         .withSystemDefault("batch.size", 1 << 18)
         .withSystemDefault("linger.ms", 1)
         .withSystemDefault("compression.type", "lz4")
+        .withSystemDefault("request.timeout.ms", 10_000)
+        .withSystemDefault("retry.backoff.ms", 100)
         .build();
 
     // set by the application — required for correctness (overrides user config)
@@ -74,12 +101,23 @@ public final class KafkaLedger implements Ledger {
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
+        .with("retries", 0)
+        .with("max.block.ms", Long.MAX_VALUE)
         .build();
     
     producer = kafka.getProducer(defaults, overrides);
     final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
         new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log);
+  }
+  
+  private void onRetry(WorkerThread t) throws InterruptedException {
+    final RetryTask retryTask = retryQueueConsumer.poll();
+    if (retryTask != null) {
+      append(retryTask.message, retryTask.callback);
+    } else {
+      Thread.sleep(RETRY_BACKOFF_MILLIS);
+    }
   }
 
   @Override
@@ -201,6 +239,9 @@ public final class KafkaLedger implements Ledger {
     final Callback sendCallback = (metadata, exception) -> {
       if (exception == null) {
         callback.onAppend(new DefaultMessageId(metadata.partition(), metadata.offset()), null);
+      } else if (exception instanceof RetriableException) { 
+        logException(exception, "Retriable error publishing %s (queuing in background)", record);
+        retryQueue.add(new RetryTask(message, callback));
       } else {
         callback.onAppend(null, exception);
         logException(exception, "Error publishing %s", record);
@@ -231,9 +272,11 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void dispose() {
+    retryThread.terminate();
     receivers.forEach(t -> t.terminate());
     consumerPipes.forEach(t -> t.terminate());
     producerPipe.terminate();
+    retryThread.joinQuietly();
     receivers.forEach(t -> t.joinQuietly());
     consumerPipes.forEach(t -> t.joinQuietly());
     producerPipe.joinQuietly();

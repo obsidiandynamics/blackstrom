@@ -139,7 +139,7 @@ public final class DefaultMonitor implements Monitor {
             cohortResponded = pending.hasResponded(cohort);
           }
           
-          if (! cohortResponded) {
+          if (! cohortResponded && pending.tryEnqueueExplicitTimeout(cohort)) {
             timeoutCohort(proposal, cohort);
           }
         }

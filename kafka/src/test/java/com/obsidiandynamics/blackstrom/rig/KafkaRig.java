@@ -14,6 +14,7 @@ import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class KafkaRig {
@@ -29,19 +30,14 @@ public final class KafkaRig {
       TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, clusterName);
   
   private static void before() throws InterruptedException, ExecutionException, TimeoutException {
-    printProps("Producer properties", config.getProducerCombinedProps());
-    printProps("Consumer properties", config.getConsumerCombinedProps());
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
       admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
     }
   }
   
-  private static void printProps(String title, Properties props) {
-    log.info("{}:", title);
-    for (Map.Entry<Object, Object> entry : props.entrySet()) {
-      log.info(String.format("  %-20s: %s", entry.getKey(), entry.getValue()));
-    }
+  private static void printProps(Properties props) {
+    PrintProperties.print(log::info, "Rig properties", props, 20, "rig.");
   }
   
   private static Ledger createLedger() {
@@ -61,12 +57,15 @@ public final class KafkaRig {
       final long _runs = getOrSet(props, "rig.runs", Long::valueOf, 1_000_000L);
       final int _backlogTarget = getOrSet(props, "rig.backlog", Integer::valueOf, 10_000);
       final int cycles = getOrSet(props, "rig.cycles", Integer::valueOf, 1);
-      printProps("Rig properties", props);
+      printProps(props);
       
       before();
       
       for (int cycle = 0; cycle < cycles; cycle++) {
-        if (cycles != 1) log.info("Cycle #{}/{}", cycle + 1, cycles);
+        if (cycles != 1) {
+          log.info("——");
+          log.info("Cycle #{}/{}", cycle + 1, cycles);
+        }
         
         new InitiatorRig.Config() {{
           log = KafkaRig.log;
@@ -84,8 +83,8 @@ public final class KafkaRig {
     public static void main(String[] args) throws Exception {
       final Properties props = new Properties(System.getProperties());
       final String _branchId = getOrSet(props, "rig.branch.id", String::valueOf, null);
-      assertNotNull(_branchId);
-      printProps("Rig properties", props);
+      assertNotNull("rig.branch.id not set", _branchId);
+      printProps(props);
       before();
       
       new CohortRig.Config() {{

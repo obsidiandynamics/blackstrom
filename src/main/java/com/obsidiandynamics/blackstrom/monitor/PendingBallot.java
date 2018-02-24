@@ -18,6 +18,8 @@ final class PendingBallot {
   
   private Confirmation confirmation;
   
+  private Set<String> explicitTimeoutsSent;
+  
   PendingBallot(Proposal proposal) {
     this.proposal = proposal;
     responses = new HashMap<>(proposal.getCohorts().length);
@@ -86,5 +88,12 @@ final class PendingBallot {
   
   private boolean allResponsesPresent() {
     return responses.size() == proposal.getCohorts().length;
+  }
+  
+  boolean tryEnqueueExplicitTimeout(String cohort) {
+    if (explicitTimeoutsSent == null) {
+      explicitTimeoutsSent = new HashSet<>();
+    }
+    return explicitTimeoutsSent.add(cohort);
   }
 }

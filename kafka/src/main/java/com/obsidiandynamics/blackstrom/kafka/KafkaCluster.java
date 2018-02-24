@@ -19,23 +19,29 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   public KafkaClusterConfig getConfig() {
     return config;
   }
+  
+  private static Properties mergeProps(Properties... propertiesArray) {
+    final Properties merged = new Properties();
+    Arrays.stream(propertiesArray).forEach(merged::putAll);
+    return merged;
+  }
+  
+  private Properties mergeProducerProps(Properties defaults, Properties overrides) {
+    return mergeProps(defaults, config.getProducerCombinedProps(), overrides);
+  }
 
   @Override
   public Producer<K, V> getProducer(Properties defaults, Properties overrides) {
-    final Properties combinedProps = new Properties();
-    combinedProps.putAll(defaults);
-    combinedProps.putAll(config.getProducerCombinedProps());
-    combinedProps.putAll(overrides);
-    return new KafkaProducer<>(combinedProps);
+    return new KafkaProducer<>(mergeProducerProps(defaults, overrides));
+  }
+  
+  private Properties mergeConsumerProps(Properties defaults, Properties overrides) {
+    return mergeProps(defaults, config.getConsumerCombinedProps(), overrides);
   }
 
   @Override
   public Consumer<K, V> getConsumer(Properties defaults, Properties overrides) {
-    final Properties combinedProps = new Properties();
-    combinedProps.putAll(defaults);
-    combinedProps.putAll(config.getConsumerCombinedProps());
-    combinedProps.putAll(overrides);
-    return new KafkaConsumer<>(combinedProps);
+    return new KafkaConsumer<>(mergeConsumerProps(defaults, overrides));
   }
 
   @Override

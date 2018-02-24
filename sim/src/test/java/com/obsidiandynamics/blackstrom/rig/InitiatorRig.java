@@ -57,7 +57,7 @@ public final class InitiatorRig {
   public void run() throws Exception {
     final long transferAmount = 1;
     final long runs = config.runs;
-    final int backlogTarget = (int) Math.min(runs / 10, config.backlogTarget);
+    final int backlogTarget = (int) Math.max(1, Math.min(runs / 10, config.backlogTarget));
     
     final AtomicLong commits = new AtomicLong();
     final AtomicLong aborts = new AtomicLong();
@@ -144,15 +144,16 @@ public final class InitiatorRig {
       
       Timesert.wait(BENCHMARK_FINALISE_MILLIS).until(() -> {
         final long c = commits.get(), a = aborts.get(), t = timeouts.get();
-        assertEquals(String.format("commits=%,d, aborts=%,d, timeouts=%,d", c, a, t), runs, c + a + t);
+        assertTrue(String.format("commits=%,d, aborts=%,d, timeouts=%,d", c, a, t), c + a + t >= runs);
       });
       
       final long took = System.currentTimeMillis() - startTime;
       final long timedRuns = runs - warmupRuns;
       config.log.info(String.format("%,d took %,d ms, %,.0f txns/sec", 
                                     timedRuns, took, (double) timedRuns / took * 1000));
-      config.log.info(String.format("%,d commits | %,d aborts | %,d timeouts", 
-                                    commits.get(), aborts.get(), timeouts.get()));
+      final long c = commits.get(), a = aborts.get(), t = timeouts.get();
+      config.log.info(String.format("%,d commits | %,d aborts | %,d timeouts | %,d total", 
+                                    c, a, t, c + a + t));
     } finally {
       manifold.dispose();
     }
