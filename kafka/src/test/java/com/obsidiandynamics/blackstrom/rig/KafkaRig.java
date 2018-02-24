@@ -45,7 +45,8 @@ public final class KafkaRig {
     return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(new KafkaCluster<>(config))
                            .withTopic(topic)
-                           .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));
+                           .withCodec(new KryoMessageCodec(true, new KryoBankExpansion()))
+                           .withPrintConfig(true));
   }
   
   private static JChannel createChannel() throws Exception {
