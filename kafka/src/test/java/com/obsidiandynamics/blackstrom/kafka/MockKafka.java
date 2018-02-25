@@ -52,8 +52,8 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
     return this;
   }
 
-  public MockKafka<K, V> withConfirmExceptionGenerator(ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>, Exception> confirmExceptionGenerator) {
-    this.commitExceptionGenerator = confirmExceptionGenerator;
+  public MockKafka<K, V> withCommitExceptionGenerator(ExceptionGenerator<Map<TopicPartition, OffsetAndMetadata>, Exception> commitExceptionGenerator) {
+    this.commitExceptionGenerator = commitExceptionGenerator;
     return this;
   }
 

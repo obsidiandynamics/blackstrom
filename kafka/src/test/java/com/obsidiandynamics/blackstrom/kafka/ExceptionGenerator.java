@@ -9,13 +9,22 @@ public interface ExceptionGenerator<T, X> {
   }
   
   static <T, X> ExceptionGenerator<T, X> once(X exception) {
+    return times(exception, 1);
+  }
+  
+  static <T, X> ExceptionGenerator<T, X> times(X exception, int times) {
     return new ExceptionGenerator<T, X>() {
-      private X ex = exception;
+      private final X ex = exception;
+      private int thrown;
       @Override public X get(T obj) {
-        try {
-          return ex;
-        } finally {
-          ex = null;
+        if (thrown < times) {
+          try {
+            return ex;
+          } finally {
+            thrown++;
+          }
+        } else {
+          return null;
         }
       }
     };

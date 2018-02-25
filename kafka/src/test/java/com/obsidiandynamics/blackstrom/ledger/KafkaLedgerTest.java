@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.errors.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -90,7 +92,7 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testSendExceptionLoggerPass() {
+  public void testSendCallbackExceptionLoggerPass() {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("testSendExceptionLoggerPass");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
@@ -101,7 +103,7 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testSendExceptionLoggerFail() {
+  public void testSendCallbackExceptionLoggerFail() {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("testSendExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
@@ -111,6 +113,25 @@ public final class KafkaLedgerTest {
     
     wait.until(() -> {
       verify(log).warn(isNotNull(), eq(exception));
+    });
+  }
+  
+  @Test
+  public void testSendCallbackRetriableException() {
+    final Logger log = mock(Logger.class);
+    final Exception exception = new CorruptRecordException("testSendRetriableException");
+    final ExceptionGenerator<ProducerRecord<String, Message>, Exception> exGen = ExceptionGenerator.times(exception, 2);
+    final ExceptionGenerator<ProducerRecord<String, Message>, Exception> mockExGen = Cast.from(mock(ExceptionGenerator.class));
+    when(mockExGen.get(any())).thenAnswer(invocation -> exGen.get(invocation.getArgument(0)));
+    
+    final Kafka<String, Message> kafka = new MockKafka<String, Message>()
+        .withSendCallbackExceptionGenerator(mockExGen);
+    ledger = createLedger(kafka, false, true, 10, log);
+    ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
+    
+    wait.until(() -> {
+      verify(log, times(2)).warn(isNotNull(), eq(exception));
+      verify(mockExGen, times(3)).get(any());
     });
   }
   
@@ -128,11 +149,11 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testCommitExceptionLoggerFail() {
+  public void testCommitCallbackExceptionLoggerFail() {
     final Logger log = mock(Logger.class);
     final Exception exception = new Exception("testCommitExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
-        .withConfirmExceptionGenerator(ExceptionGenerator.once(exception));
+        .withCommitExceptionGenerator(ExceptionGenerator.once(exception));
     ledger = createLedger(kafka, false, true, 10, log);
     final String groupId = "test";
     
