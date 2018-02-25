@@ -18,12 +18,12 @@ import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class KafkaRig {
-  private static final Properties common = new Properties();
+  private static final Properties base = new Properties(System.getProperties());
   
-  private static final String cluster = getOrSet(common, "rig.cluster", String::valueOf, "rig");
-  private static final String bootstrapServers = getOrSet(common, "bootstrap.servers", String::valueOf, "localhost:9092");
-  private static final boolean asyncProducer = getOrSet(common, "rig.async.producer", Boolean::valueOf, false);
-  private static final boolean asyncConsumer = getOrSet(common, "rig.async.consumer", Boolean::valueOf, true);
+  private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
+  private static final String bootstrapServers = getOrSet(base, "bootstrap.servers", String::valueOf, "localhost:9092");
+  private static final boolean producerAsync = getOrSet(base, "rig.producer.async", Boolean::valueOf, false);
+  private static final boolean consumerAsync = getOrSet(base, "rig.consumer.async", Boolean::valueOf, true);
   
   private static final Logger log = LoggerFactory.getLogger(KafkaRig.class);
   
@@ -46,8 +46,8 @@ public final class KafkaRig {
   
   private static Ledger createLedger() {
     return new KafkaLedger(new KafkaLedgerConfig()
-                           .withProducerPipeConfig(new ProducerPipeConfig().withAsync(asyncProducer))
-                           .withConsumerPipeConfig(new ConsumerPipeConfig().withAsync(asyncConsumer))
+                           .withProducerPipeConfig(new ProducerPipeConfig().withAsync(producerAsync))
+                           .withConsumerPipeConfig(new ConsumerPipeConfig().withAsync(consumerAsync))
                            .withKafka(new KafkaCluster<>(config))
                            .withTopic(topic)
                            .withCodec(new KryoMessageCodec(true, new KryoBankExpansion()))
@@ -60,7 +60,7 @@ public final class KafkaRig {
   
   public static final class Initiator {
     public static void main(String[] args) throws Exception {
-      final Properties props = new Properties(common);
+      final Properties props = new Properties(base);
       final long _runs = getOrSet(props, "rig.runs", Long::valueOf, 1_000_000L);
       final int _backlogTarget = getOrSet(props, "rig.backlog", Integer::valueOf, 10_000);
       final int cycles = getOrSet(props, "rig.cycles", Integer::valueOf, 1);
@@ -88,7 +88,7 @@ public final class KafkaRig {
   
   public static final class Cohort {
     public static void main(String[] args) throws Exception {
-      final Properties props = new Properties(common);
+      final Properties props = new Properties(base);
       final String _branchId = getOrSet(props, "rig.branch.id", String::valueOf, null);
       assertNotNull("rig.branch.id not set", _branchId);
       printProps(props);
