@@ -97,6 +97,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     for (int i = 0; i < responses.length; i++) {
       responses[i] = deserializeResponse(p, responsesNode.get(i));
     }
-    return new Outcome(ballotId, timestamp, resolution, abortReason, responses);
+    final Object metadata = Payload.unpack(JacksonUtils.readObject("metadata", root, p, getPayloadClass()));
+    return new Outcome(ballotId, timestamp, resolution, abortReason, responses, metadata);
   }
 }

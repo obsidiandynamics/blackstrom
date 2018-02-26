@@ -206,7 +206,8 @@ public final class DefaultMonitor implements Monitor {
     if (DEBUG) log.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
-    final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses())
+    final Object metadata = null;
+    final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses(), metadata)
         .inResponseTo(proposal).withSource(groupId);
     pending.remove(ballotId);
     if (trackingEnabled) {

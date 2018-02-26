@@ -85,5 +85,6 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
       serializeResponse(response, gen);
     }
     gen.writeEndArray();
+    JacksonUtils.writeObject("metadata", packConditional(o.getMetadata()), gen);
   }
 }

@@ -36,10 +36,10 @@ public final class AsyncInitiatorTest {
       if (m.getMessageType() == MessageType.PROPOSAL) {
         called.incrementAndGet();
         try {
-          c.getLedger().append(new Outcome(m.getBallotId(), Resolution.COMMIT, null, new Response[0]));
+          c.getLedger().append(new Outcome(m.getBallotId(), Resolution.COMMIT, null, new Response[0], null));
           
           // second append should do nothing
-          c.getLedger().append(new Outcome(m.getBallotId(), Resolution.ABORT, AbortReason.REJECT, new Response[0]));
+          c.getLedger().append(new Outcome(m.getBallotId(), Resolution.ABORT, AbortReason.REJECT, new Response[0], null));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }

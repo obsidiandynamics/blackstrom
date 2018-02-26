@@ -75,6 +75,7 @@ final class KryoMessageSerializer extends Serializer<Message> {
     for (Response response : responses) {
       serializeResponse(kryo, out, response);
     }
+    serializePayload(kryo, out, outcome.getMetadata());
   }
   
   private static void serializeResponse(Kryo kryo, Output out, Response response) {
@@ -153,7 +154,8 @@ final class KryoMessageSerializer extends Serializer<Message> {
     for (int i = 0; i < responsesLength; i++) {
       responses[i] = deserializeResponse(kryo, in);
     }
-    return new Outcome(ballotId, timestamp, resolution, abortReason, responses);
+    final Object metadata = deserializePayload(kryo, in);
+    return new Outcome(ballotId, timestamp, resolution, abortReason, responses, metadata);
   }
   
   private Response deserializeResponse(Kryo kryo, Input in) {

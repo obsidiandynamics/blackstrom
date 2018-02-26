@@ -163,7 +163,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
     final JacksonAnimal<?> a = new JacksonDog().named("Rex").withFriend(new JacksonCat().named("Tigger"));
     final Response ra = new Response("test-cohort-a", Intent.ACCEPT, a);
     final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
-    final Outcome m = new Outcome("O100", Resolution.COMMIT, null, new Response[] {ra, rb}).withSource("test");
+    final Outcome m = new Outcome("O100", Resolution.COMMIT, null, new Response[] {ra, rb}, "metadata").withSource("test");
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
@@ -176,6 +176,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
     assertNotNull(d1.getResponses()[0].getMetadata());
     assertEquals(LinkedHashMap.class, d1.getResponses()[0].getMetadata().getClass());
     assertNull(d1.getResponses()[1].getMetadata());
+    assertNotNull(d1.getMetadata());
     
     final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);
@@ -192,7 +193,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
     final JacksonAnimal<?> a = new JacksonDog().named("Rex").withFriend(new JacksonCat().named("Tigger"));
     final Response ra = new Response("test-cohort-a", Intent.REJECT, a);
     final Response rb = new Response("test-cohort-b", Intent.ACCEPT, null);
-    final Outcome m = new Outcome("O100", Resolution.ABORT, AbortReason.REJECT, new Response[] {ra, rb});
+    final Outcome m = new Outcome("O100", Resolution.ABORT, AbortReason.REJECT, new Response[] {ra, rb}, null);
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
@@ -205,6 +206,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
     assertNotNull(d1.getResponses()[0].getMetadata());
     assertEquals(LinkedHashMap.class, d1.getResponses()[0].getMetadata().getClass());
     assertNull(d1.getResponses()[1].getMetadata());
+    assertNull(d1.getMetadata());
     
     final String reencoded = c.encodeText(d1);
     logReencoded(reencoded);

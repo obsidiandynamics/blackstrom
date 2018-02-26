@@ -211,6 +211,6 @@ public final class BankBranchTest {
   
   private void outcome(Resolution resolution) {
     final AbortReason abortReason = resolution == Resolution.COMMIT ? null : AbortReason.REJECT;
-    branch.onOutcome(context, new Outcome("B0", resolution, abortReason, new Response[0]));
+    branch.onOutcome(context, new Outcome("B0", resolution, abortReason, new Response[0], null));
   }
 }
