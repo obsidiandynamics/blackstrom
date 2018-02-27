@@ -92,12 +92,14 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testInitialisation() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withGroupId("test-monitor")));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withGroupId("test-monitor")));
     assertEquals("test-monitor", monitor.getGroupId());
   }
   
   @Test
   public void testProposalOutcome_oneCohort() {
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withMetadataEnabled(true)));
+    
     String ballotId;
     
     ballotId = UUID.randomUUID().toString();
@@ -121,6 +123,7 @@ public final class DefaultMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertNotNull(outcomes.get(0).getMetadata());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -160,6 +163,7 @@ public final class DefaultMonitorTest {
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
+    assertNull(outcomes.get(0).getMetadata());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "b").getIntent());
@@ -196,7 +200,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testDuplicateProposal_twoCohorts() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig()
                                          .withOutcomeLifetime(60_000)
                                          .withGCInterval(1)));
     
@@ -264,7 +268,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testGCNoReap() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig()
                                          .withOutcomeLifetime(60_000)
                                          .withGCInterval(1)));
     final String ballotId = UUID.randomUUID().toString();
@@ -278,7 +282,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testGCReap() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withOutcomeLifetime(1).withGCInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withOutcomeLifetime(1).withGCInterval(1)));
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
@@ -311,7 +315,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testExplicitTimeout_twoCohorts() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withTimeoutInterval(1)));
     
     final String ballotId = UUID.randomUUID().toString();
     final long startTimestamp = System.currentTimeMillis();
@@ -343,7 +347,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testNoTimeout_twoCohorts() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withTimeoutInterval(1)));
     
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 10_000, "a", "b");
@@ -367,7 +371,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testImplicitTimeout_twoCohorts() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig()
                                          .withTimeoutInterval(60_000)));
     
     final String ballotId = UUID.randomUUID().toString();
@@ -383,7 +387,7 @@ public final class DefaultMonitorTest {
   
   @Test(expected=IllegalStateException.class)
   public void testNoTracking() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions()
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig()
                                          .withTrackingEnabled(false)));
     
     final String ballotId = UUID.randomUUID().toString();
@@ -397,7 +401,7 @@ public final class DefaultMonitorTest {
   
   @Test
   public void testTimeoutVoteBadLedger() {
-    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorOptions().withTimeoutInterval(1)));
+    setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withTimeoutInterval(1)));
     final Ledger ledger = mock(Ledger.class);
     setLedger(ledger);
     ledger.init();

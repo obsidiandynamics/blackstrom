@@ -8,7 +8,7 @@ import com.obsidiandynamics.assertion.*;
 
 public final class VoteTest {
   @Test
-  public void test() {
+  public void testFields() {
     final Response ra = new Response("a", Intent.ACCEPT, "meta-a");
     final Vote v = new Vote("B1", ra);
     assertSame(ra, v.getResponse());

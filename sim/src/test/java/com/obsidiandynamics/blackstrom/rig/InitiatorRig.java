@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import org.HdrHistogram.*;
 import org.jgroups.Message.*;
 
 import com.obsidiandynamics.await.*;
@@ -19,6 +20,7 @@ import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 
@@ -58,10 +60,6 @@ public final class InitiatorRig {
     final long transferAmount = 1;
     final long runs = config.runs;
     final int backlogTarget = (int) Math.max(1, Math.min(runs / 10, config.backlogTarget));
-    
-    final AtomicLong commits = new AtomicLong();
-    final AtomicLong aborts = new AtomicLong();
-    final AtomicLong timeouts = new AtomicLong();
 
     final String sandboxKey = UUID.randomUUID().toString();
     try (Group group = new Group(config.channelFactory.get())) {
@@ -86,10 +84,18 @@ public final class InitiatorRig {
       }
       config.log.info("Initiator: warming up");
     }
-    
+
+    final Histogram hist = new Histogram(NANOSECONDS.toNanos(10), SECONDS.toNanos(10), 0);
+    final AtomicLong commits = new AtomicLong();
+    final AtomicLong aborts = new AtomicLong();
+    final AtomicLong timeouts = new AtomicLong();
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
+        final DefaultOutcomeMetadata meta = o.getMetadata();
+        if (meta != null) {
+          hist.recordValue(System.currentTimeMillis() - meta.getProposalTimestamp());
+        }
         (o.getResolution() == COMMIT ? commits : o.getAbortReason() == REJECT ? aborts : timeouts)
         .incrementAndGet();
       }
@@ -154,6 +160,16 @@ public final class InitiatorRig {
       final long c = commits.get(), a = aborts.get(), t = timeouts.get();
       config.log.info(String.format("%,d commits | %,d aborts | %,d timeouts | %,d total", 
                                     c, a, t, c + a + t));
+      
+      final long min = hist.getMinValue();
+      final double mean = hist.getMean();
+      final long p50 = hist.getValueAtPercentile(50.0);
+      final long p95 = hist.getValueAtPercentile(95.0);
+      final long p99 = hist.getValueAtPercentile(99.0);
+      final long max = hist.getMaxValue();
+      
+      config.log.info(String.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d", 
+                                    min, mean, p50, p95, p99, max));
     } finally {
       manifold.dispose();
     }

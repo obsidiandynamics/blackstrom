@@ -22,7 +22,7 @@ public final class MessageTest {
   }
 
   @Test
-  public void testAttributes() {
+  public void testFields() {
     final long time = System.currentTimeMillis();
     final Message m = new UntypedMessage("B0", 0)
         .withMessageId(new DefaultMessageId(100))

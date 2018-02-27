@@ -74,6 +74,7 @@ public final class MultiNodeQueueRigTest {
       log = _log;
       ledgerFactory = _ledgerFactory;
       channelFactory = _channelFactory;
+      metadataEnabled = true;
     }}.create();
     cleanup.add(monitor);
     

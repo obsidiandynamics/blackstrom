@@ -47,16 +47,19 @@ public final class DefaultMonitor implements Monitor {
   
   private final ShardedFlow flow = new ShardedFlow();
   
+  private final boolean metadataEnabled;
+  
   public DefaultMonitor() {
-    this(new DefaultMonitorOptions());
+    this(new DefaultMonitorConfig());
   }
   
-  public DefaultMonitor(DefaultMonitorOptions options) {
-    this.groupId = options.getGroupId();
-    this.trackingEnabled = options.isTrackingEnabled();
-    this.gcIntervalMillis = options.getGCInterval();
-    this.outcomeLifetimeMillis = options.getOutcomeLifetime();
-    this.timeoutIntervalMillis = options.getTimeoutInterval();
+  public DefaultMonitor(DefaultMonitorConfig config) {
+    groupId = config.getGroupId();
+    trackingEnabled = config.isTrackingEnabled();
+    gcIntervalMillis = config.getGCInterval();
+    outcomeLifetimeMillis = config.getOutcomeLifetime();
+    timeoutIntervalMillis = config.getTimeoutInterval();
+    metadataEnabled = config.isMetadataEnabled();
     
     if (trackingEnabled) {
       gcThread = WorkerThread.builder()
@@ -206,7 +209,7 @@ public final class DefaultMonitor implements Monitor {
     if (DEBUG) log.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
-    final Object metadata = null;
+    final Object metadata = metadataEnabled ? new DefaultOutcomeMetadata(proposal.getTimestamp()) : null;
     final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses(), metadata)
         .inResponseTo(proposal).withSource(groupId);
     pending.remove(ballotId);

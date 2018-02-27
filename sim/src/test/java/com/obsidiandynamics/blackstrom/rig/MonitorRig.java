@@ -13,6 +13,8 @@ import com.obsidiandynamics.blackstrom.util.select.*;
 
 public final class MonitorRig implements Disposable {
   public static class Config extends RigConfig {
+    boolean metadataEnabled;
+    
     @Override void validate() {
       super.validate();
     }
@@ -25,7 +27,7 @@ public final class MonitorRig implements Disposable {
   private final Config config;
   
   private final Group group;
-  
+
   private String sandboxKey;
   
   private volatile Manifold manifold;
@@ -59,7 +61,9 @@ public final class MonitorRig implements Disposable {
     config.log.info("Monitor: building manifold with sandbox key {}", sandboxKey);
 
     final boolean trackingEnabled = false;
-    final Monitor monitor = new DefaultMonitor(new DefaultMonitorOptions().withTrackingEnabled(trackingEnabled));
+    final Monitor monitor = new DefaultMonitor(new DefaultMonitorConfig()
+                                               .withTrackingEnabled(trackingEnabled)
+                                               .withMetadataEnabled(config.metadataEnabled));
     final Ledger ledger = config.ledgerFactory.get();
     manifold = Manifold.builder()
         .withLedger(ledger)

@@ -8,7 +8,7 @@ import com.obsidiandynamics.assertion.*;
 
 public final class OutcomeTest {
   @Test
-  public void test() {
+  public void testFields() {
     final Response ra = new Response("a", Intent.ACCEPT, "a-meta");
     final Response rb = new Response("b", Intent.REJECT, "b-meta");
     final Outcome outcome = new Outcome("B1", Resolution.ABORT, AbortReason.REJECT, new Response[] {ra, rb}, "metadata");
