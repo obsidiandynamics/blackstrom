@@ -7,6 +7,7 @@ import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class ProducerPipe<K, V> implements Joinable {
+  private static final int MAX_YIELDS = 100;
   private static final int QUEUE_BACKOFF_MILLIS = 1;
   
   private static class AsyncRecord<K, V> {
@@ -28,6 +29,8 @@ public final class ProducerPipe<K, V> implements Joinable {
   private final WorkerThread thread;
   
   private final Logger log;
+  
+  private int yields;
   
   private volatile boolean producerDisposed;
   
@@ -56,7 +59,10 @@ public final class ProducerPipe<K, V> implements Joinable {
     final AsyncRecord<K, V> rec = queueConsumer.poll();
     if (rec != null) {
       sendNow(rec.record, rec.callback);
+    } else if (yields++ < MAX_YIELDS) {
+      Thread.yield();
     } else {
+      yields = 0;
       Thread.sleep(QUEUE_BACKOFF_MILLIS);
     }
   }

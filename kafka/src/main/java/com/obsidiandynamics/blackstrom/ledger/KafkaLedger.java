@@ -22,6 +22,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
 
+  private static final int PIPELINE_MAX_YIELDS = 100;
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
   
   private static final int RETRY_BACKOFF_MILLIS = 100;
@@ -202,7 +203,7 @@ public final class KafkaLedger implements Ledger {
         new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
-      for (;;) {
+      for (int yields = 0;;) {
         final boolean enqueued = consumerPipe.receive(records);
 
         if (consumerOffsets != null) {
@@ -225,7 +226,10 @@ public final class KafkaLedger implements Ledger {
 
         if (enqueued) {
           break;
+        } else if (yields++ < PIPELINE_MAX_YIELDS) {
+          Thread.yield();
         } else {
+          yields = 0;
           Thread.sleep(PIPELINE_BACKOFF_MILLIS);
         }
       }

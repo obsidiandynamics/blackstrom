@@ -79,7 +79,7 @@ final class PendingBallot {
   }
   
   private boolean hasLapsed(Vote vote) {
-    return vote.getTimestamp() - proposal.getTimestamp() > proposal.getTtl();
+    return vote.getTimestamp() - proposal.getTimestamp() > proposal.getTtl() * 1_000_000L;
   }
   
   boolean hasResponded(String cohort) {

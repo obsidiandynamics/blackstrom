@@ -52,8 +52,16 @@ public final class Testmark {
   }
   
   public static <X extends Exception> void ifEnabled(CheckedRunnable<X> r) {
+    ifEnabled(null, r);
+  }
+  
+  public static <X extends Exception> void ifEnabled(String name, CheckedRunnable<X> r) {
     if (isEnabled()) {
-      System.out.println("Starting benchmark...");
+      if (name != null) {
+        System.out.format("Starting benchmark (%s)...\n", name);
+      } else {
+        System.out.format("Starting benchmark...\n");
+      }
       try {
         r.run();
       } catch (Throwable e) {

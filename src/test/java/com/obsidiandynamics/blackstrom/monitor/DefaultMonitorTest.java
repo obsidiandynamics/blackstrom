@@ -318,7 +318,7 @@ public final class DefaultMonitorTest {
     setMonitorAndInit(new DefaultMonitor(new DefaultMonitorConfig().withTimeoutInterval(1)));
     
     final String ballotId = UUID.randomUUID().toString();
-    final long startTimestamp = System.currentTimeMillis();
+    final long startTimestamp = NanoClock.now();
     nominate(ballotId, 0, "a", "b");
     vote(ballotId, startTimestamp, "a", Intent.ACCEPT);
     
@@ -376,7 +376,7 @@ public final class DefaultMonitorTest {
     
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 1, "a", "b");
-    vote(ballotId, System.currentTimeMillis() + 1_000, "a", Intent.ACCEPT);
+    vote(ballotId, NanoClock.now() + 1_000_000_000L, "a", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());

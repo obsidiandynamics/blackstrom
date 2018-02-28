@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.ledger.*;
+import com.obsidiandynamics.blackstrom.util.*;
 
 public final class MessageTest {
   private static final class UntypedMessage extends FluentMessage<UntypedMessage> {
@@ -23,7 +24,7 @@ public final class MessageTest {
 
   @Test
   public void testFields() {
-    final long time = System.currentTimeMillis();
+    final long time = NanoClock.now();
     final Message m = new UntypedMessage("B0", 0)
         .withMessageId(new DefaultMessageId(100))
         .withSource("test")

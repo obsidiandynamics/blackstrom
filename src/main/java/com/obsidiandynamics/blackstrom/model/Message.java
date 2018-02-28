@@ -2,6 +2,8 @@ package com.obsidiandynamics.blackstrom.model;
 
 import org.apache.commons.lang3.builder.*;
 
+import com.obsidiandynamics.blackstrom.util.*;
+
 public abstract class Message {
   private static final int UNASSIGNED = -1;
   
@@ -19,7 +21,7 @@ public abstract class Message {
   
   protected Message(String ballotId, long timestamp) {
     this.ballotId = ballotId;
-    this.timestamp = timestamp != 0 ? timestamp : System.currentTimeMillis();
+    this.timestamp = timestamp != 0 ? timestamp : NanoClock.now();
   }
   
   public final String getBallotId() {

@@ -9,6 +9,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultMonitor implements Monitor {
@@ -96,7 +97,7 @@ public final class DefaultMonitor implements Monitor {
   
   void gc() {
     synchronized (gcLock) {
-      final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+      final long collectThreshold = NanoClock.now() - outcomeLifetimeMillis * 1_000_000L;
       int reaped = 0;
       synchronized (trackerLock) {
         for (Iterator<Outcome> outcomesIt = decided.iterator(); outcomesIt.hasNext();) {
@@ -135,7 +136,7 @@ public final class DefaultMonitor implements Monitor {
     
     for (PendingBallot pending : pendingCopy) {
       final Proposal proposal = pending.getProposal();
-      if (proposal.getTimestamp() + proposal.getTtl() < System.currentTimeMillis()) {
+      if (proposal.getTimestamp() + proposal.getTtl() * 1_000_000L < NanoClock.now()) {
         for (String cohort : proposal.getCohorts()) {
           final boolean cohortResponded;
           synchronized (messageLock) {

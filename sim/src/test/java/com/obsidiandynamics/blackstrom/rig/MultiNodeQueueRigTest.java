@@ -37,17 +37,28 @@ public final class MultiNodeQueueRigTest {
   
   @Test
   public void test() throws Exception {
-    test(1_000, 2);
+    test(1_000, 2, false);
   }
   
   @Test
-  public void testBenchmark() throws Exception {
-    Testmark.ifEnabled(() -> test(4_000_000 * SCALE, 2));
+  public void testBenchmarkLatency() throws Exception {
+    Testmark.ifEnabled("latency", () -> {
+      test(1_000 * SCALE, 2, true);
+    });
   }
   
-  private void test(long runs, int branches) throws Exception {
+  @Test
+  public void testBenchmarkThroughput() throws Exception {
+    Testmark.ifEnabled("throughput", () -> {
+      test(4_000_000 * SCALE, 2, false);
+    });
+  }
+  
+  private void test(long runs, int branches, boolean lowLatency) throws Exception {
     final CheckedSupplier<JChannel, Exception> _channelFactory = Group::newLoopbackChannel;
-    final MultiNodeQueueLedger ledger = new MultiNodeQueueLedger();
+    final int maxYields = lowLatency ? Integer.MAX_VALUE : 100;
+    final MultiNodeQueueLedger ledger = new MultiNodeQueueLedger(new MultiNodeQueueLedger.Config()
+                                                                 .withMaxYields(maxYields));
     final Supplier<Ledger> _ledgerFactory = () -> ledger;
     final Logger _log = LoggerFactory.getLogger(MultiNodeQueueRigTest.class);
     final long _runs = runs;
@@ -57,6 +68,8 @@ public final class MultiNodeQueueRigTest {
       ledgerFactory = _ledgerFactory;
       channelFactory = _channelFactory;
       runs = _runs;
+      backlogTarget = lowLatency ? 1 : 10_000;
+      histogram = lowLatency;
     }}.create();
     
     final String[] branchIds = BankBranch.generateIds(branches);

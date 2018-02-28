@@ -17,6 +17,15 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class MultiNodeQueueLedger implements Ledger {
   private static final int POLL_BACKOFF_MILLIS = 1;
   
+  public static final class Config {
+    int maxYields = 100;
+    
+    public Config withMaxYields(int maxYields) {
+      this.maxYields = maxYields;
+      return this;
+    }
+  }
+  
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();
   
@@ -29,6 +38,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   private class NodeWorker implements WorkerCycle {
     private final MessageHandler handler;
     private final QueueConsumer<Message> consumer;
+    private int yields;
     
     NodeWorker(MessageHandler handler, QueueConsumer<Message> consumer) {
       this.handler = handler;
@@ -40,10 +50,23 @@ public final class MultiNodeQueueLedger implements Ledger {
       final Message m = consumer.poll();
       if (m != null) {
         handler.onMessage(context, m);
+      } else if (yields++ < maxYields) {
+        Thread.yield();
       } else {
+        yields = 0;
         Thread.sleep(POLL_BACKOFF_MILLIS);
       }
     }
+  }
+  
+  private final int maxYields;
+  
+  public MultiNodeQueueLedger() {
+    this(new Config());
+  }
+  
+  public MultiNodeQueueLedger(Config config) {
+    maxYields = config.maxYields;
   }
   
   @Override

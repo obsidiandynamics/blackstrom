@@ -1,7 +1,10 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static org.junit.Assert.*;
+
 import java.util.*;
 
+import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
@@ -29,5 +32,12 @@ public final class MultiNodeQueueLedgerTest extends AbstractLedgerTest {
   public static void main(String[] args) {
     Testmark.enable().withOptions(Scale.by(8));
     JUnitCore.runClasses(MultiNodeQueueLedgerTest.class);
+  }
+  
+  @Test
+  public void testConfig() {
+    final MultiNodeQueueLedger.Config config = new MultiNodeQueueLedger.Config();
+    config.withMaxYields(10);
+    assertEquals(10, config.maxYields);
   }
 }

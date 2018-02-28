@@ -52,7 +52,7 @@ public final class BankBranch implements Cohort {
   private void gcCycle(WorkerThread thread) throws InterruptedException {
     Thread.sleep(gcIntervalMillis);
     
-    final long collectThreshold = System.currentTimeMillis() - outcomeLifetimeMillis;
+    final long collectThreshold = NanoClock.now() - outcomeLifetimeMillis * 1_000_000L;
     final List<Outcome> deathRow = new ArrayList<>();
     
     final List<Outcome> decidedCopy;

@@ -1,7 +1,10 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static org.junit.Assert.*;
+
 import java.util.*;
 
+import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
@@ -24,5 +27,12 @@ public final class SingleNodeQueueLedgerTest extends AbstractLedgerTest {
   @Override
   protected Ledger createLedger() {
     return new SingleNodeQueueLedger();
+  }
+  
+  @Test
+  public void testConfig() {
+    final SingleNodeQueueLedger.Config config = new SingleNodeQueueLedger.Config();
+    config.withMaxYields(10);
+    assertEquals(10, config.maxYields);
   }
 }

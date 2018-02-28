@@ -38,6 +38,7 @@ public final class InitiatorRig {
     double warmupFraction = .1;
     double pAbort = 0.1;
     int backlogTarget = 10_000;
+    boolean histogram;
     
     @Override void validate() {
       super.validate();
@@ -85,16 +86,18 @@ public final class InitiatorRig {
       config.log.info("Initiator: warming up");
     }
 
-    final Histogram hist = new Histogram(NANOSECONDS.toNanos(10), SECONDS.toNanos(10), 0);
+    final boolean histogram = config.histogram;
+    final Histogram hist = histogram ? new Histogram(NANOSECONDS.toNanos(10), SECONDS.toNanos(10), 5) : null;
     final AtomicLong commits = new AtomicLong();
     final AtomicLong aborts = new AtomicLong();
     final AtomicLong timeouts = new AtomicLong();
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
-        final DefaultOutcomeMetadata meta = o.getMetadata();
-        if (meta != null) {
-          hist.recordValue(System.currentTimeMillis() - meta.getProposalTimestamp());
+        if (histogram) {
+          final DefaultOutcomeMetadata meta = o.getMetadata();
+          final long latency = NanoClock.now() - meta.getProposalTimestamp();
+          hist.recordValue(latency);
         }
         (o.getResolution() == COMMIT ? commits : o.getAbortReason() == REJECT ? aborts : timeouts)
         .incrementAndGet();
@@ -126,7 +129,7 @@ public final class InitiatorRig {
           long lastLogTime = 0;
           for (;;) {
             final int backlog = (int) (run - commits.get() - aborts.get() - timeouts.get());
-            if (backlog > backlogTarget) {
+            if (backlog >= backlogTarget) {
               TestSupport.sleep(1);
               if (System.currentTimeMillis() - lastLogTime > 5_000) {
                 config.log.debug(String.format("Initiator: throttling... backlog @ %,d (%,d txns)", backlog, run));
@@ -144,7 +147,8 @@ public final class InitiatorRig {
         } else {
           settlement = run % 1 == 0 ? settlement0 : settlement1;
         }
-        ledger.append(new Proposal(Long.toHexString(run), branchIds, settlement, PROPOSAL_TIMEOUT_MILLIS)
+        ledger.append(new Proposal(Long.toHexString(run), NanoClock.now(), branchIds, settlement, 
+                                   PROPOSAL_TIMEOUT_MILLIS * 1_000)
                       .withShardKey(sandbox.key()));
       }
       
@@ -161,15 +165,16 @@ public final class InitiatorRig {
       config.log.info(String.format("%,d commits | %,d aborts | %,d timeouts | %,d total", 
                                     c, a, t, c + a + t));
       
-      final long min = hist.getMinValue();
-      final double mean = hist.getMean();
-      final long p50 = hist.getValueAtPercentile(50.0);
-      final long p95 = hist.getValueAtPercentile(95.0);
-      final long p99 = hist.getValueAtPercentile(99.0);
-      final long max = hist.getMaxValue();
-      
-      config.log.info(String.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d", 
-                                    min, mean, p50, p95, p99, max));
+      if (histogram) {
+        final long min = hist.getMinValue();
+        final double mean = hist.getMean();
+        final long p50 = hist.getValueAtPercentile(50.0);
+        final long p95 = hist.getValueAtPercentile(95.0);
+        final long p99 = hist.getValueAtPercentile(99.0);
+        final long max = hist.getMaxValue();
+        config.log.info(String.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d", 
+                                      min, mean, p50, p95, p99, max));
+      }
     } finally {
       manifold.dispose();
     }
