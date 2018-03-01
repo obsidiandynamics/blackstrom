@@ -60,7 +60,7 @@ public final class Testmark {
   
   public static <X extends Exception> void ifEnabled(String name, CheckedRunnable<X> r) {
     if (isEnabled()) {
-      final LogLine logLine = Resolver.lookup(LogLine.class, () -> System.out::println).get();
+      final LogLine logLine = getOptions(LogLine.class, () -> System.out::println);
       if (name != null) {
         logLine.accept(String.format("Starting benchmark (%s)...", name));
       } else {
