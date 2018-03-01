@@ -92,9 +92,10 @@ public final class InitiatorRig {
     final AtomicLong aborts = new AtomicLong();
     final AtomicLong timeouts = new AtomicLong();
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
+    final AtomicBoolean timedRunStarted = new AtomicBoolean();
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
-        if (histogram) {
+        if (histogram && timedRunStarted.get()) {
           final DefaultOutcomeMetadata meta = o.getMetadata();
           final long latency = NanoClock.now() - meta.getProposalTimestamp();
           hist.recordValue(latency);
@@ -122,6 +123,7 @@ public final class InitiatorRig {
       for (long run = 0; run < runs; run++) {
         if (run == warmupRuns) {
           config.log.info("Initiator: starting timed run");
+          timedRunStarted.set(true);
           startTime = System.currentTimeMillis();
         }
         
