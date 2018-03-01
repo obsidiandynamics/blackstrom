@@ -174,7 +174,7 @@ public final class InitiatorRig {
         final long p95 = hist.getValueAtPercentile(95.0);
         final long p99 = hist.getValueAtPercentile(99.0);
         final long max = hist.getMaxValue();
-        config.log.info(String.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d", 
+        config.log.info(String.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d (ns)", 
                                       min, mean, p50, p95, p99, max));
       }
     } finally {
