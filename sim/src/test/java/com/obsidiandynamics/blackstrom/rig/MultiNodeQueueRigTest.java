@@ -14,6 +14,7 @@ import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.util.Testmark.*;
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 import com.obsidiandynamics.junit.*;
 
@@ -95,7 +96,8 @@ public final class MultiNodeQueueRigTest {
   }
   
   public static void main(String[] args) {
-    Testmark.enable().withOptions(Scale.by(4));
+    final Logger log = LoggerFactory.getLogger(MultiNodeQueueRigTest.class);
+    Testmark.enable().withOptions(Scale.by(4)).withOptions(LogLine.class, log::info);
     JUnitCore.runClasses(MultiNodeQueueRigTest.class);
   }
 }

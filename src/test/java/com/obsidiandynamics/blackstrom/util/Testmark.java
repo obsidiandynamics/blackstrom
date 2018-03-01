@@ -6,6 +6,9 @@ import com.obsidiandynamics.blackstrom.resolver.*;
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class Testmark {
+  @FunctionalInterface
+  public interface LogLine extends Consumer<String> {}
+  
   private static class TestmarkConfig {
     boolean enabled;
   }
@@ -57,10 +60,11 @@ public final class Testmark {
   
   public static <X extends Exception> void ifEnabled(String name, CheckedRunnable<X> r) {
     if (isEnabled()) {
+      final LogLine logLine = Resolver.lookup(LogLine.class, () -> System.out::println).get();
       if (name != null) {
-        System.out.format("Starting benchmark (%s)...\n", name);
+        logLine.accept(String.format("Starting benchmark (%s)...", name));
       } else {
-        System.out.format("Starting benchmark...\n");
+        logLine.accept(String.format("Starting benchmark..."));
       }
       try {
         r.run();
