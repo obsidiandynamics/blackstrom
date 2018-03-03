@@ -8,10 +8,6 @@ public interface MessageContext {
   
   Object getHandlerId();
   
-  default void publish(Message message) {
-    getLedger().append(message);
-  }
-  
   default void confirm(MessageId messageId) {
     getLedger().confirm(getHandlerId(), messageId);
   }
