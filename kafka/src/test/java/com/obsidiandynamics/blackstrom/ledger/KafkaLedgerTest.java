@@ -166,7 +166,7 @@ public final class KafkaLedgerTest {
       @Override
       public void onMessage(MessageContext context, Message message) {
         try {
-          context.confirm(new DefaultMessageId(0, 0));
+          context.confirm(message);
         } catch (Throwable e) {
           e.printStackTrace();
         }

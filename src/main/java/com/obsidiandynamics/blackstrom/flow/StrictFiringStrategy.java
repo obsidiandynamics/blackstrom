@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class StrictFiringStrategy extends FiringStrategy {
-  public StrictFiringStrategy(AtomicReference<Confirmation> tail) {
+  public StrictFiringStrategy(AtomicReference<FlowConfirmation> tail) {
     super(tail);
   }
 

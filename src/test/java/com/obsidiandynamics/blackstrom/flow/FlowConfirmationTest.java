@@ -4,10 +4,10 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
-public final class ConfirmationTest {
+public final class FlowConfirmationTest {
   @Test
   public void test() {
-    final Confirmation c = new Confirmation(() -> {});
+    final FlowConfirmation c = new FlowConfirmation(() -> {});
     Assertions.assertToStringOverride(c);
   }
 }

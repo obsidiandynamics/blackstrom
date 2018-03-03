@@ -4,6 +4,7 @@ import java.util.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 
 public final class StackLedger implements Ledger {
   private final List<MessageHandler> handlers = new ArrayList<>();
@@ -12,7 +13,7 @@ public final class StackLedger implements Ledger {
   
   private final Object lock = new Object();
   
-  private final MessageContext context = new DefaultMessageContext(this, null);
+  private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
   
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();

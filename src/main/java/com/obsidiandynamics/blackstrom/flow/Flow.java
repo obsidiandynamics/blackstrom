@@ -7,7 +7,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class Flow implements Joinable {
   private final WorkerThread executor;
   
-  protected final AtomicReference<Confirmation> tail = new AtomicReference<>(Confirmation.anchor());
+  protected final AtomicReference<FlowConfirmation> tail = new AtomicReference<>(FlowConfirmation.anchor());
   
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
@@ -25,8 +25,8 @@ public final class Flow implements Joinable {
         .buildAndStart();
   }
   
-  public Confirmation begin(Runnable task) {
-    final Confirmation confirmation = new Confirmation(task);
+  public FlowConfirmation begin(Runnable task) {
+    final FlowConfirmation confirmation = new FlowConfirmation(task);
     confirmation.appendTo(tail);
     return confirmation;
   }

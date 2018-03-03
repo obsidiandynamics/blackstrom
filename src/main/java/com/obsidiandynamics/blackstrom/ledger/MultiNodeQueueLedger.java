@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
@@ -31,7 +32,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   
-  private final MessageContext context = new DefaultMessageContext(this, null);
+  private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
 
   private final NodeQueue<Message> queue = new NodeQueue<>();
   

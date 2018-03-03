@@ -67,7 +67,7 @@ public final class FlowTest {
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Confirmation> cons = new ArrayList<>(runs);
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
     expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
     cons.forEach(a -> a.confirm());
@@ -82,7 +82,7 @@ public final class FlowTest {
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Confirmation> cons = new ArrayList<>(runs);
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
     expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::reverse).list().forEach(a -> a.confirm());
@@ -97,7 +97,7 @@ public final class FlowTest {
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Confirmation> cons = new ArrayList<>(runs);
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
     expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::shuffle).list().forEach(a -> a.confirm());
@@ -126,7 +126,7 @@ public final class FlowTest {
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Confirmation> cons = new ArrayList<>(runs);
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
     expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
     ListQuery.of(cons).delayedBy(1).forEach(a -> a.confirm());
@@ -141,7 +141,7 @@ public final class FlowTest {
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Confirmation> cons = new ArrayList<>(runs);
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
     expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::reverse).list().forEach(a -> a.confirm());
@@ -156,7 +156,7 @@ public final class FlowTest {
     final int runs = 100;
     final List<Integer> expected = increasingListOf(runs);
     final List<Integer> completed = new CopyOnWriteArrayList<>();
-    final List<Confirmation> cons = new ArrayList<>(runs);
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
     expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::shuffle).delayedBy(1).forEach(a -> a.confirm());

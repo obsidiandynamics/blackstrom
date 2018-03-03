@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class LazyFiringStrategy extends FiringStrategy {
-  private Confirmation pending;
+  private FlowConfirmation pending;
   
-  public LazyFiringStrategy(AtomicReference<Confirmation> tail) {
+  public LazyFiringStrategy(AtomicReference<FlowConfirmation> tail) {
     super(tail);
   }
 

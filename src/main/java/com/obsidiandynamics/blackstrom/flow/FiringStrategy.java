@@ -8,18 +8,18 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public abstract class FiringStrategy implements WorkerCycle {
   protected static final int CYCLE_IDLE_INTERVAL_MILLIS = 1;
   
-  protected final AtomicReference<Confirmation> tail;
+  protected final AtomicReference<FlowConfirmation> tail;
   
-  protected Confirmation head;
+  protected FlowConfirmation head;
   
-  protected Confirmation current;
+  protected FlowConfirmation current;
   
-  protected FiringStrategy(AtomicReference<Confirmation> tail) {
+  protected FiringStrategy(AtomicReference<FlowConfirmation> tail) {
     this.tail = tail;
     head = tail.get();
     current = head;
   }
   
   @FunctionalInterface
-  public interface Factory extends Function<AtomicReference<Confirmation>, FiringStrategy> {}
+  public interface Factory extends Function<AtomicReference<FlowConfirmation>, FiringStrategy> {}
 }

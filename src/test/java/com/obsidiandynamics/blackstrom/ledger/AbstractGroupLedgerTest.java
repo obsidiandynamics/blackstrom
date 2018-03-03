@@ -40,7 +40,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
         throw error;
       }
       received.add(message);
-      context.confirm(message.getMessageId());
+      context.confirm(message);
     }
 
     @Override

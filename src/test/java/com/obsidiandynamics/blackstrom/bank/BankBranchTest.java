@@ -11,6 +11,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.util.*;
 
 public final class BankBranchTest {
@@ -36,7 +37,7 @@ public final class BankBranchTest {
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       received.add(m);
     });
-    context = new DefaultMessageContext(ledger, null);
+    context = new DefaultMessageContext(ledger, null, NopRetention.getInstance());
   }
   
   @After

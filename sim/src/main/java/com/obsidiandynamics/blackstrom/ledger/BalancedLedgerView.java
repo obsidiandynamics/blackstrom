@@ -5,6 +5,7 @@ import java.util.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class BalancedLedgerView implements Ledger {
@@ -17,7 +18,8 @@ public final class BalancedLedgerView implements Ledger {
     private final ConsumerGroup group;
     private final Object handlerId = UUID.randomUUID();
     private final WorkerThread thread;
-    private final MessageContext context = new DefaultMessageContext(BalancedLedgerView.this, handlerId);
+    private final ShardedFlow flow = new ShardedFlow();
+    private final MessageContext context = new DefaultMessageContext(BalancedLedgerView.this, handlerId, flow);
     private long[] nextReadOffsets = new long[accumulators.length];
     
     private final List<Message> sink = new ArrayList<>();
@@ -121,6 +123,7 @@ public final class BalancedLedgerView implements Ledger {
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
     consumers.forEach(c -> c.thread.joinQuietly());
+    consumers.forEach(c -> c.flow.dispose());
     consumers.stream().filter(c -> c.group != null).forEach(c -> c.group.leave(c.handlerId));
     this.consumers.clear();
     
