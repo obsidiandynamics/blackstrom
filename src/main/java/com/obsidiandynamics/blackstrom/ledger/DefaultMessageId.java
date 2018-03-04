@@ -1,17 +1,11 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
-import org.apache.commons.lang3.builder.*;
-
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class DefaultMessageId implements MessageId {
   private final int shard;
   
   private final long offset;
-
-  public DefaultMessageId(long offset) {
-    this(0, offset);
-  }
 
   public DefaultMessageId(int shard, long offset) {
     this.shard = shard;
@@ -28,10 +22,11 @@ public final class DefaultMessageId implements MessageId {
   
   @Override
   public int hashCode() {
-    return new HashCodeBuilder()
-        .append(shard)
-        .append(offset)
-        .toHashCode();
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (int) (offset ^ (offset >>> 32));
+    result = prime * result + shard;
+    return result;
   }
 
   @Override
@@ -40,10 +35,7 @@ public final class DefaultMessageId implements MessageId {
       return true;
     } else if (obj instanceof DefaultMessageId) {
       final DefaultMessageId that = (DefaultMessageId) obj;
-      return new EqualsBuilder()
-          .append(shard, that.shard)
-          .append(offset, that.offset)
-          .isEquals();
+      return shard == that.shard && offset == that.offset;
     } else {
       return false;
     }
