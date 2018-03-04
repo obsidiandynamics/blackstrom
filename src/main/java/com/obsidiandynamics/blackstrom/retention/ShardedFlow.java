@@ -47,6 +47,6 @@ public final class ShardedFlow implements Retention, Joinable {
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return Joinable.joinAll(flows.asMap().values(), timeoutMillis);
+    return Joinable.joinAll(timeoutMillis, flows.asMap().values());
   }
 }
