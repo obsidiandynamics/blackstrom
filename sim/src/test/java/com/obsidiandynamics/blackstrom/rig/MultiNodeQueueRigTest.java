@@ -14,7 +14,6 @@ import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.util.Testmark.*;
 import com.obsidiandynamics.blackstrom.util.throwing.*;
 import com.obsidiandynamics.junit.*;
 
