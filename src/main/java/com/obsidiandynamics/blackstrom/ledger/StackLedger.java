@@ -44,7 +44,4 @@ public final class StackLedger implements Ledger {
       }
     }
   }
-
-  @Override
-  public void confirm(Object handlerId, MessageId messageId) {}
 }

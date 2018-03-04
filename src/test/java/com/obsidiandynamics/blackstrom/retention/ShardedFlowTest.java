@@ -26,7 +26,9 @@ public class ShardedFlowTest {
   
   @After
   public void after() {
-    if (flow != null) flow.dispose();
+    if (flow != null) {
+      flow.terminate().joinQuietly();
+    }
   }
 
   @Test
@@ -45,6 +47,7 @@ public class ShardedFlowTest {
         confirmed.add(((DefaultMessageId) messageId).getOffset());
       }
     };
+    
     final MessageContext context = new MessageContext() {
       @Override public Ledger getLedger() {
         return ledger;
@@ -64,21 +67,21 @@ public class ShardedFlowTest {
       }
     };
     
-    final Confirmation a0 = flow.begin(context, message(0, 0));
-    final Confirmation a1 = flow.begin(context, message(1, 0));
-    final Confirmation a2 = flow.begin(context, message(2, 1));
-    final Confirmation a3 = flow.begin(context, message(3, 1));
+    final Confirmation c0 = flow.begin(context, message(0, 0));
+    final Confirmation c1 = flow.begin(context, message(1, 0));
+    final Confirmation c2 = flow.begin(context, message(2, 1));
+    final Confirmation c3 = flow.begin(context, message(3, 1));
     
-    a1.confirm();
-    a3.confirm();
+    c1.confirm();
+    c3.confirm();
     assertEquals(0, confirmed.size());
     
-    a2.confirm();
+    c2.confirm();
     wait.until(() -> {
       assertEquals(Arrays.asList(3L), confirmed);
     });
     
-    a0.confirm();
+    c0.confirm();
     wait.until(() -> {
       assertEquals(Arrays.asList(3L, 1L), confirmed);
     });

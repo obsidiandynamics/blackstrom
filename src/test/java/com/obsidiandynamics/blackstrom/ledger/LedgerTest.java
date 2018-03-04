@@ -7,6 +7,9 @@ import java.io.*;
 
 import org.junit.*;
 
+import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.model.*;
+
 public final class LedgerTest {
   @Test
   public void testExceptionLoggingAppendCallback() throws IOException {
@@ -17,5 +20,21 @@ public final class LedgerTest {
     
     c.onAppend(null, new Exception());
     verify(stream, atLeastOnce()).println(any(Object.class));
+  }
+  
+  @Test
+  public void testDefaultMethods() {
+    final Ledger ledger = new Ledger() {
+      @Override
+      public void attach(MessageHandler handler) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void append(Message message, AppendCallback callback) {}
+    };
+    ledger.init();
+    ledger.confirm(null, null);
+    ledger.append(null);
   }
 }

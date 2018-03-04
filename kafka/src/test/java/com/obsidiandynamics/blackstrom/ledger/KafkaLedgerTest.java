@@ -71,8 +71,7 @@ public final class KafkaLedgerTest {
     final CyclicBarrier barrierB = new CyclicBarrier(2);
     final AtomicInteger received = new AtomicInteger();
     ledger.attach(new NullGroupMessageHandler() {
-      @Override
-      public void onMessage(MessageContext context, Message message) {
+      @Override public void onMessage(MessageContext context, Message message) {
         if (received.get() == 0) {
           TestSupport.await(barrierA);
           TestSupport.await(barrierB);
@@ -177,6 +176,14 @@ public final class KafkaLedgerTest {
       ledger.append(new Proposal("B100", new String[0], null, 0));
       verify(log, atLeastOnce()).warn(isNotNull(), eq(exception));
     });
+  }
+  
+  @Test
+  public void testConfirmDirectNoHandlerId() {
+    final Kafka<String, Message> kafka = new MockKafka<>();
+    final Logger log = mock(Logger.class);
+    ledger = createLedger(kafka, false, true, 10, log);
+    ledger.confirm(null, null);
   }
   
   @Test

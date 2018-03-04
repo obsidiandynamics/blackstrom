@@ -85,9 +85,6 @@ public final class SingleNodeQueueLedger implements Ledger {
     queue.add(message);
     callback.onAppend(message.getMessageId(), null);
   }
-  
-  @Override
-  public void confirm(Object handlerId, MessageId messageId) {}
 
   @Override
   public void dispose() {

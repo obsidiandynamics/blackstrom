@@ -122,8 +122,9 @@ public final class BalancedLedgerView implements Ledger {
     hub.removeView(this);
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
+    consumers.forEach(c -> c.flow.terminate());
     consumers.forEach(c -> c.thread.joinQuietly());
-    consumers.forEach(c -> c.flow.dispose());
+    consumers.forEach(c -> c.flow.joinQuietly());
     consumers.stream().filter(c -> c.group != null).forEach(c -> c.group.leave(c.handlerId));
     this.consumers.clear();
     

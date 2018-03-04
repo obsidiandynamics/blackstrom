@@ -30,5 +30,5 @@ public interface Ledger extends Disposable.Default {
     append(message, SYS_ERR_APPEND_CALLBACK);
   }
   
-  void confirm(Object handlerId, MessageId messageId);
+  default void confirm(Object handlerId, MessageId messageId) {}
 }
