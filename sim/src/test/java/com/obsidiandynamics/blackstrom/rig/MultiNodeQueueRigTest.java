@@ -96,8 +96,7 @@ public final class MultiNodeQueueRigTest {
   }
   
   public static void main(String[] args) {
-    final Logger log = LoggerFactory.getLogger(MultiNodeQueueRigTest.class);
-    Testmark.enable().withOptions(Scale.by(4)).withOptions(LogLine.class, log::info);
+    Testmark.enable().withOptions(Scale.by(4));
     JUnitCore.runClasses(MultiNodeQueueRigTest.class);
   }
 }
