@@ -135,7 +135,7 @@ public final class BankBranch implements Cohort {
         e.printStackTrace();
       }
     } finally {
-      context.confirm(proposal);
+      context.beginAndConfirm(proposal);
     }
   }
 
@@ -166,7 +166,7 @@ public final class BankBranch implements Cohort {
       
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: finalising %s\n", branchId, outcome);
     } finally {
-      context.confirm(outcome);
+      context.beginAndConfirm(outcome);
     }
   }
   

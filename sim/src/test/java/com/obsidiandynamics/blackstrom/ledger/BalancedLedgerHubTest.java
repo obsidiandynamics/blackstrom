@@ -157,7 +157,7 @@ public final class BalancedLedgerHubTest {
       @Override
       public void onMessage(MessageContext context, Message message) {
         view.dispose();
-        context.confirm(message);
+        context.beginAndConfirm(message);
         received.set(true);
       }
     });

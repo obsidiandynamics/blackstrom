@@ -48,7 +48,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
         }
       }
       received.add(message);
-      context.confirm(message);
+      context.beginAndConfirm(message);
     }
   }
   
@@ -221,13 +221,13 @@ public abstract class AbstractLedgerTest implements TestSupport {
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (sandbox.contains(m) && m.getSource().equals("source")) {
         c.getLedger().append(new Proposal(m.getBallotId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
-        c.confirm(m);
+        c.beginAndConfirm(m);
       }
     });
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (m.getSource().equals("echo")) {
         received.incrementAndGet();
-        c.confirm(m);
+        c.beginAndConfirm(m);
       }
     });
     ledger.init();

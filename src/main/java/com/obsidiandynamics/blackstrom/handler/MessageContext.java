@@ -16,7 +16,7 @@ public interface MessageContext {
     return getRetention().begin(this, message);
   }
   
-  default void confirm(Message message) {
+  default void beginAndConfirm(Message message) {
     begin(message).confirm();
   }
 }

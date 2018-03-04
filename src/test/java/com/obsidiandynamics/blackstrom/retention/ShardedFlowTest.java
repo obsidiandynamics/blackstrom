@@ -57,7 +57,7 @@ public class ShardedFlowTest {
         return null;
       }
       
-      @Override public void confirm(Message message) {
+      @Override public void beginAndConfirm(Message message) {
         throw new UnsupportedOperationException();
       }
 

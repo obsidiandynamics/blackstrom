@@ -7,15 +7,24 @@ public final class FlowConfirmation implements Confirmation {
   
   private final Runnable task;
   
-  private volatile boolean confirmed;
+  private final AtomicInteger requested = new AtomicInteger();
   
-  FlowConfirmation(Runnable task) {
+  private final AtomicInteger completed = new AtomicInteger();
+  
+  private final Object id;
+  
+  FlowConfirmation(Object id, Runnable task) {
+    this.id = id;
     this.task = task;
   }
   
   @Override
   public void confirm() {
-    confirmed = true;
+    completed.incrementAndGet();
+  }
+  
+  Object getId() {
+    return id;
   }
   
   boolean isAnchor() {
@@ -23,7 +32,16 @@ public final class FlowConfirmation implements Confirmation {
   }
   
   boolean isConfirmed() {
-    return confirmed;
+    final int requested = this.requested.get();
+    return requested != 0 && requested == completed.get();
+  }
+  
+  void addRequest() {
+    requested.incrementAndGet();
+  }
+  
+  int getPendingCount() {
+    return requested.get() - completed.get();
   }
   
   void appendTo(AtomicReference<FlowConfirmation> tail) {
@@ -31,8 +49,8 @@ public final class FlowConfirmation implements Confirmation {
     t1.next.lazySet(this);
   }
   
-  void fire() {
-    task.run();
+  Runnable getTask() {
+    return task;
   }
   
   FlowConfirmation next() {
@@ -41,10 +59,11 @@ public final class FlowConfirmation implements Confirmation {
   
   @Override
   public String toString() {
-    return FlowConfirmation.class.getSimpleName() + " [task=" + task + ", confirmed=" + confirmed + ", next=" + next + "]";
+    return FlowConfirmation.class.getSimpleName() + " [task=" + task + ", requested=" + requested + 
+        ", completed=" + completed + ", next=" + next + "]";
   }
 
-  static FlowConfirmation anchor() {
-    return new FlowConfirmation(null);
+  static FlowConfirmation anchor(Flow flow) {
+    return new FlowConfirmation(flow, null);
   }
 }

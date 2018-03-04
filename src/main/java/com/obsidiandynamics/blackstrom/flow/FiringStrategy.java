@@ -1,12 +1,13 @@
 package com.obsidiandynamics.blackstrom.flow;
 
 import java.util.concurrent.atomic.*;
-import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public abstract class FiringStrategy implements WorkerCycle {
   protected static final int CYCLE_IDLE_INTERVAL_MILLIS = 1;
+  
+  protected final Flow flow;
   
   protected final AtomicReference<FlowConfirmation> tail;
   
@@ -14,12 +15,15 @@ public abstract class FiringStrategy implements WorkerCycle {
   
   protected FlowConfirmation current;
   
-  protected FiringStrategy(AtomicReference<FlowConfirmation> tail) {
+  protected FiringStrategy(Flow flow, AtomicReference<FlowConfirmation> tail) {
+    this.flow = flow;
     this.tail = tail;
     head = tail.get();
     current = head;
   }
   
   @FunctionalInterface
-  public interface Factory extends Function<AtomicReference<FlowConfirmation>, FiringStrategy> {}
+  public interface Factory {
+    FiringStrategy create(Flow flow, AtomicReference<FlowConfirmation> tail);
+  }
 }

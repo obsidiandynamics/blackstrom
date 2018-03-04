@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class LazyFiringStrategy extends FiringStrategy {
-  private FlowConfirmation pending;
+  private FlowConfirmation complete;
   
-  public LazyFiringStrategy(AtomicReference<FlowConfirmation> tail) {
-    super(tail);
+  public LazyFiringStrategy(Flow flow, AtomicReference<FlowConfirmation> tail) {
+    super(flow, tail);
   }
 
   @Override
@@ -17,11 +17,12 @@ public final class LazyFiringStrategy extends FiringStrategy {
       if (current.isAnchor()) {
         // skip the anchor
       } else if (current.isConfirmed()) {
-        pending = current;
+        flow.removeWithoutCompleting(current.getId());
+        complete = current;
       } else {
-        if (pending != null) { 
-          pending.fire();
-          pending = null;
+        if (complete != null) { 
+          flow.complete(complete);
+          complete = null;
         }
         
         Thread.sleep(CYCLE_IDLE_INTERVAL_MILLIS);
@@ -34,9 +35,9 @@ public final class LazyFiringStrategy extends FiringStrategy {
     current = head.next();
     if (current != null) {
       head = current;
-    } else if (pending != null) { 
-      pending.fire();
-      pending = null;
+    } else if (complete != null) { 
+      flow.complete(complete);
+      complete = null;
     }
   }
 }

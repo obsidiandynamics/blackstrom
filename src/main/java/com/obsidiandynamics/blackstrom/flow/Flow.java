@@ -1,16 +1,20 @@
 package com.obsidiandynamics.blackstrom.flow;
 
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class Flow implements Joinable {
-  private final WorkerThread executor;
-  
-  protected final AtomicReference<FlowConfirmation> tail = new AtomicReference<>(FlowConfirmation.anchor());
-  
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
+  
+  private final WorkerThread executor;
+  
+  private final AtomicReference<FlowConfirmation> tail = new AtomicReference<>(FlowConfirmation.anchor(this));
+  
+  private final ConcurrentHashMap<Object, FlowConfirmation> confirmations = new ConcurrentHashMap<>();
   
   public Flow(FiringStrategy.Factory completionStrategyFactory) {
     this(completionStrategyFactory, Flow.class.getSimpleName() + "-" + nextThreadNo.getAndIncrement());
@@ -21,14 +25,27 @@ public final class Flow implements Joinable {
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
                      .withName(threadName))
-        .onCycle(firingStrategyFactory.apply(tail))
+        .onCycle(firingStrategyFactory.create(this, tail))
         .buildAndStart();
   }
   
-  public FlowConfirmation begin(Runnable task) {
-    final FlowConfirmation confirmation = new FlowConfirmation(task);
-    confirmation.appendTo(tail);
+  public FlowConfirmation begin(Object id, Runnable task) {
+    final FlowConfirmation confirmation = confirmations.computeIfAbsent(id, __id -> {
+      final FlowConfirmation newConfirmation = new FlowConfirmation(id, task);
+      newConfirmation.appendTo(tail);
+      return newConfirmation;
+    });
+    confirmation.addRequest();
     return confirmation;
+  }
+  
+  void removeWithoutCompleting(Object id) {
+    confirmations.remove(id);
+  }
+  
+  void complete(FlowConfirmation confirmation) {
+    confirmations.remove(confirmation.getId());
+    confirmation.getTask().run();
   }
   
   /**
@@ -40,6 +57,10 @@ public final class Flow implements Joinable {
   public Joinable terminate() {
     executor.terminate();
     return this;
+  }
+  
+  public Map<Object, FlowConfirmation> getPendingConfirmations() {
+    return Collections.unmodifiableMap(confirmations);
   }
   
   @Override

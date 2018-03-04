@@ -8,12 +8,21 @@ import java.util.function.*;
 import java.util.stream.*;
 
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public final class FlowTest {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   private final Timesert wait = Wait.SHORT;
 
   private Flow flow;
@@ -54,11 +63,13 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
 
     for (int i = 0; i < runs; i++) {
-      flow.begin(new TestTask(completed, i));
+      flow.begin(i, new TestTask(completed, i));
+      flow.begin(i, new TestTask(completed, i));
     }
 
     TestSupport.sleep(10);
     assertEquals(0, completed.size());
+    assertEquals(runs, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -69,11 +80,43 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    expected.forEach(i -> {
+      cons.add(flow.begin(i, new TestTask(completed, i)));
+    });
+    
+    cons.forEach(a -> a.confirm());
+    wait.until(ListQuery.of(completed).isSize(runs));
+    assertEquals(expected, completed);
+    assertEquals(0, flow.getPendingConfirmations().size());
+  }
+
+  @Test
+  public void testStrictIncreasingDoublePending() {
+    createFlow(StrictFiringStrategy::new);
+    final int runs = 100;
+    final List<Integer> expected = increasingListOf(runs);
+    final List<Integer> completed = new CopyOnWriteArrayList<>();
+    final List<FlowConfirmation> cons = new ArrayList<>(runs);
+
+    expected.forEach(i -> {
+      final FlowConfirmation c0 = flow.begin(i, new TestTask(completed, i));
+      cons.add(c0);
+      assertEquals(1, c0.getPendingCount());
+      final FlowConfirmation c1 = flow.begin(i, new TestTask(completed, i));
+      assertSame(c0, c1);
+      assertEquals(2, c0.getPendingCount());
+    });
+    
+    cons.forEach(a -> a.confirm());
+    
+    // single pass shouldn't lead to any completions
+    assertThat(ListQuery.of(completed).isSize(0));
+    
     cons.forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
+    assertEquals(0, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -84,11 +127,12 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::reverse).list().forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
+    assertEquals(0, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -99,11 +143,12 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::shuffle).list().forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).isSize(runs));
     assertEquals(expected, completed);
+    assertEquals(0, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -113,11 +158,12 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
 
     for (int i = 0; i < runs; i++) {
-      flow.begin(new TestTask(completed, i));
+      flow.begin(i, new TestTask(completed, i));
     }
 
     TestSupport.sleep(10);
     assertEquals(0, completed.size());
+    assertEquals(runs, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -128,11 +174,12 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     ListQuery.of(cons).delayedBy(1).forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).contains(runs - 1));
     assertThat(ListQuery.of(completed).isOrderedBy(Integer::compare));
+    assertEquals(0, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -143,11 +190,12 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::reverse).list().forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).contains(runs - 1));
     assertEquals(1, completed.size());
+    assertEquals(0, flow.getPendingConfirmations().size());
   }
 
   @Test
@@ -158,11 +206,12 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> cons.add(flow.begin(new TestTask(completed, i))));
+    expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     ListQuery.of(cons).transform(Collections::shuffle).delayedBy(1).forEach(a -> a.confirm());
 
     wait.until(ListQuery.of(completed).contains(runs - 1));
     assertThat(ListQuery.of(completed).isOrderedBy(Integer::compare));
+    assertEquals(0, flow.getPendingConfirmations().size());
   }
 
   private static List<Integer> increasingListOf(int numElements) {

@@ -37,7 +37,8 @@ public final class ShardedFlow implements Retention, Joinable {
   @Override
   public Confirmation begin(MessageContext context, Message message) {
     final Flow flow = flows.forKey(message.getShard());
-    return flow.begin(new ConfirmTask(context, message.getMessageId()));
+    final MessageId messageId = message.getMessageId();
+    return flow.begin(messageId, new ConfirmTask(context, messageId));
   }
 
   public Joinable terminate() {
