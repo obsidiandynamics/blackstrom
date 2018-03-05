@@ -1,3 +1,5 @@
 Blackstrom
 ===
-Reference implementation of the Asynchronous Voting Manifold atomic commit protocol on the JVM.
+[ ![Build](https://travis-ci.org/obsidiandynamics/blackstrom.svg?branch=master) ](https://travis-ci.org/obsidiandynamics/blackstrom/jobs/349238170#)
+===
+Reference implementation of the ICARUS (Iso-Conclusive Atomic Resolution with Unimodal Structure) protocol on the JVM.
