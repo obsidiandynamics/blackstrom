@@ -64,9 +64,9 @@ allprojects {
     sourceDirectories = files(sourceSets.main.allSource.srcDirs)
     classDirectories = files(sourceSets.main.output)
     reports {
-      html.enabled = true
-      xml.enabled = true
-      csv.enabled = false
+      html.enabled true
+      xml.enabled true
+      csv.enabled false
     }
   }
 
@@ -89,9 +89,9 @@ task jacocoRootReport(type: JacocoReport) {
   classDirectories = files(allprojects.sourceSets.main.output)
   executionData = files(allprojects.jacocoTestReport.executionData)
   reports {
-    html.enabled = true
-    xml.enabled = false
-    csv.enabled = false
+    html.enabled true
+    xml.enabled true
+    csv.enabled false
   }
   onlyIf = {
     true
