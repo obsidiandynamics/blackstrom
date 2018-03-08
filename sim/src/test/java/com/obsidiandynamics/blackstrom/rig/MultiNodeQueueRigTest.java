@@ -95,7 +95,7 @@ public final class MultiNodeQueueRigTest {
   }
   
   public static void main(String[] args) {
-    Testmark.enable().withOptions(Scale.by(4));
+    Testmark.enable().withOptions(Scale.by(8));
     JUnitCore.runClasses(MultiNodeQueueRigTest.class);
   }
 }
