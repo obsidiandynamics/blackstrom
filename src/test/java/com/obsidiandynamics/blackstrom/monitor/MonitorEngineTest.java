@@ -23,7 +23,7 @@ import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class DefaultMonitorTest {
+public final class MonitorEngineTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -276,7 +276,7 @@ public final class DefaultMonitorTest {
     nominate(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
-    monitor.gc();
+    monitor.getEngine().gc();
     wait.until(numOutcomesIs(1));
     wait.until(numTrackedOutcomesIs(1));
   }
@@ -397,7 +397,7 @@ public final class DefaultMonitorTest {
     vote(ballotId, "b", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
-    monitor.getOutcomes();
+    monitor.getEngine().getOutcomes();
   }
   
   @Test
@@ -451,7 +451,7 @@ public final class DefaultMonitorTest {
   }
   
   private Runnable numTrackedOutcomesIs(int size) {
-    return () -> assertEquals(size, monitor.getOutcomes().size());
+    return () -> assertEquals(size, monitor.getEngine().getOutcomes().size());
   }
   
   private Response getResponseForCohort(Outcome outcome, String cohort) {

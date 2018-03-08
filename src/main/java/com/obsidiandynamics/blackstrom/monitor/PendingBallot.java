@@ -55,7 +55,7 @@ final class PendingBallot {
     final Response response = vote.getResponse();
     final Response existing = responses.put(response.getCohort(), response);
     if (existing != null) {
-      if (DefaultMonitor.DEBUG) log.trace("Skipping redundant {} (already cast in current ballot)", vote);
+      if (MonitorEngine.DEBUG) log.trace("Skipping redundant {} (already cast in current ballot)", vote);
       responses.put(existing.getCohort(), existing);
       return false;
     }
