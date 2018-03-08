@@ -129,13 +129,13 @@ public final class BankBranch implements Cohort {
       }
       
       try {
-        context.publish(new Vote(proposal.getBallotId(), new Response(branchId, intent, null))
-                        .inResponseTo(proposal).withSource(branchId));
+        context.getLedger().append(new Vote(proposal.getBallotId(), new Response(branchId, intent, null))
+                                   .inResponseTo(proposal).withSource(branchId));
       } catch (Exception e) {
         e.printStackTrace();
       }
     } finally {
-      context.confirm(proposal.getMessageId());
+      context.beginAndConfirm(proposal);
     }
   }
 
@@ -166,7 +166,7 @@ public final class BankBranch implements Cohort {
       
       if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: finalising %s\n", branchId, outcome);
     } finally {
-      context.confirm(outcome.getMessageId());
+      context.beginAndConfirm(outcome);
     }
   }
   

@@ -5,6 +5,7 @@ import java.util.function.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.scheduler.*;
 
 public final class FallibleFactor implements Factor, ProposalProcessor, VoteProcessor, OutcomeProcessor {
@@ -94,6 +95,11 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
       @Override
       public Object getHandlerId() {
         return context.getHandlerId();
+      }
+
+      @Override
+      public Retention getRetention() {
+        return context.getRetention();
       }
     };
     

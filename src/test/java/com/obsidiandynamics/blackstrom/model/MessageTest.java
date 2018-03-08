@@ -26,13 +26,13 @@ public final class MessageTest {
   public void testFields() {
     final long time = NanoClock.now();
     final Message m = new UntypedMessage("B0", 0)
-        .withMessageId(new DefaultMessageId(100))
+        .withMessageId(new DefaultMessageId(0, 100))
         .withSource("test")
         .withShardKey("key")
         .withShard(99);
 
     assertEquals("B0", m.getBallotId());
-    assertEquals(new DefaultMessageId(100), m.getMessageId());
+    assertEquals(new DefaultMessageId(0, 100), m.getMessageId());
     assertEquals("test", m.getSource());
     assertEquals("key", m.getShardKey());
     assertEquals(99, m.getShard());
@@ -45,7 +45,7 @@ public final class MessageTest {
   public void testShardUnassignedAndCustomTime() {
     final long time = 1000;
     final Message m = new UntypedMessage("B0", time)
-        .withMessageId(new DefaultMessageId(100))
+        .withMessageId(new DefaultMessageId(0, 100))
         .withSource("test")
         .withShardKey("key");
     
@@ -58,11 +58,11 @@ public final class MessageTest {
   @Test
   public void testEqualsHashcode() {
     final Message m1 = new UntypedMessage("B1", 1000)
-        .withMessageId(new DefaultMessageId(1)).withSource("source").withShardKey("key").withShard(10);
+        .withMessageId(new DefaultMessageId(0, 1)).withSource("source").withShardKey("key").withShard(10);
     final Message m2 = new UntypedMessage("B0", 1000)
-        .withMessageId(new DefaultMessageId(1)).withSource("source").withShardKey("key").withShard(10);
+        .withMessageId(new DefaultMessageId(0, 1)).withSource("source").withShardKey("key").withShard(10);
     final Message m3 = new UntypedMessage("B1", 1000)
-        .withMessageId(new DefaultMessageId(1)).withSource("source").withShardKey("key").withShard(10);
+        .withMessageId(new DefaultMessageId(0, 1)).withSource("source").withShardKey("key").withShard(10);
     final Message m4 = m1;
 
     assertNotEquals(m1, m2);

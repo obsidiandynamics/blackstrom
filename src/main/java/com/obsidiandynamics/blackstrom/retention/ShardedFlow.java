@@ -1,13 +1,12 @@
-package com.obsidiandynamics.blackstrom.flow;
+package com.obsidiandynamics.blackstrom.retention;
 
-import java.util.*;
-
-import com.obsidiandynamics.blackstrom.*;
+import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.keyed.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class ShardedFlow implements Disposable {
+public final class ShardedFlow implements Retention, Joinable {
   private static class ConfirmTask implements Runnable {
     private final MessageContext context;
     private final MessageId messageId;
@@ -19,7 +18,7 @@ public final class ShardedFlow implements Disposable {
 
     @Override
     public void run() {
-      context.confirm(messageId);
+      context.getLedger().confirm(context.getHandlerId(), messageId);
     }
   }
   
@@ -35,15 +34,20 @@ public final class ShardedFlow implements Disposable {
     });
   }
 
+  @Override
   public Confirmation begin(MessageContext context, Message message) {
     final Flow flow = flows.forKey(message.getShard());
-    return flow.begin(new ConfirmTask(context, message.getMessageId()));
+    final MessageId messageId = message.getMessageId();
+    return flow.begin(messageId, new ConfirmTask(context, messageId));
+  }
+
+  public Joinable terminate() {
+    flows.asMap().values().forEach(f -> f.terminate());
+    return this;
   }
 
   @Override
-  public void dispose() {
-    final Collection<Flow> flows = this.flows.asMap().values();
-    flows.forEach(t -> t.terminate());
-    flows.forEach(t -> t.joinQuietly());
+  public boolean join(long timeoutMillis) throws InterruptedException {
+    return Joinable.joinAll(timeoutMillis, flows.asMap().values());
   }
 }

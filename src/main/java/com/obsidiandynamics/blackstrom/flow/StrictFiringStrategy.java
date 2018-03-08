@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class StrictFiringStrategy extends FiringStrategy {
-  public StrictFiringStrategy(AtomicReference<Confirmation> tail) {
-    super(tail);
+  public StrictFiringStrategy(Flow flow, AtomicReference<FlowConfirmation> tail) {
+    super(flow, tail);
   }
 
   @Override
@@ -15,7 +15,7 @@ public final class StrictFiringStrategy extends FiringStrategy {
       if (current.isAnchor()) {
         // skip the anchor
       } else if (current.isConfirmed()) {
-        current.fire();
+        flow.complete(current);
       } else {
         Thread.sleep(CYCLE_IDLE_INTERVAL_MILLIS);
         return;

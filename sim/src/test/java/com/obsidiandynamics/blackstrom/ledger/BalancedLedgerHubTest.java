@@ -99,7 +99,8 @@ public final class BalancedLedgerHubTest {
       
       private void confirm(List<AtomicReference<Message>> messageRefs) {
         messageRefs.forEach(messageRef -> {
-          Optional.ofNullable(messageRef.get()).map(m -> m.getMessageId()).ifPresent(id -> context.confirm(id));
+          Optional.ofNullable(messageRef.get())
+          .ifPresent(m -> context.getLedger().confirm(context.getHandlerId(), m.getMessageId()));
         });
       }
       
@@ -156,7 +157,7 @@ public final class BalancedLedgerHubTest {
       @Override
       public void onMessage(MessageContext context, Message message) {
         view.dispose();
-        context.confirm(message.getMessageId());
+        context.beginAndConfirm(message);
         received.set(true);
       }
     });

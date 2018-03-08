@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.worker;
 
+import java.util.*;
+
 /**
  *  Definition of a concurrent entity that can be waited upon to
  *  have completed carrying out its work.
@@ -49,5 +51,23 @@ public interface Joinable {
    */
   default void joinQuietly() {
     joinQuietly(0);
+  }
+  
+  static boolean joinAll(long timeoutMillis, Joinable... joinables) throws InterruptedException {
+    return joinAll(timeoutMillis, Arrays.asList(joinables));
+  }
+ 
+  static boolean joinAll(long timeoutMillis, Collection<? extends Joinable> joinables) throws InterruptedException {
+    final long deadline = System.currentTimeMillis() + timeoutMillis;
+    for (Joinable joinable : joinables) {
+      final long remainingMillis = deadline - System.currentTimeMillis();
+      if (remainingMillis > 0) {
+        final boolean joined = joinable.join(timeoutMillis);
+        if (! joined) return false;
+      } else {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -5,6 +5,7 @@ import java.util.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
@@ -30,7 +31,7 @@ public final class SingleNodeQueueLedger implements Ledger {
   
   private volatile MessageHandler[] handlers = new MessageHandler[0];
   
-  private final MessageContext context = new DefaultMessageContext(this, null);
+  private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
   
   private final WorkerThread thread;
   
@@ -84,9 +85,6 @@ public final class SingleNodeQueueLedger implements Ledger {
     queue.add(message);
     callback.onAppend(message.getMessageId(), null);
   }
-  
-  @Override
-  public void confirm(Object handlerId, MessageId messageId) {}
 
   @Override
   public void dispose() {

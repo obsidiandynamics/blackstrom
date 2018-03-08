@@ -20,10 +20,12 @@ public final class DefaultMessageIdTest {
     final DefaultMessageId m2 = new DefaultMessageId(3, 400);
     final DefaultMessageId m3 = new DefaultMessageId(2, 400);
     final DefaultMessageId m4 = m1;
+    final DefaultMessageId m5 = new DefaultMessageId(2, 500);
     
     assertNotEquals(m1, m2);
     assertEquals(m1, m3);
     assertEquals(m1, m4);
+    assertNotEquals(m1, m5);
     assertNotEquals(m1, new Object());
     
     assertNotEquals(m1.hashCode(), m2.hashCode());

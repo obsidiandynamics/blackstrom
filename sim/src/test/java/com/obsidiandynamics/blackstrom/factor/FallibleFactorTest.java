@@ -48,7 +48,7 @@ public final class FallibleFactorTest {
     public void onProposal(MessageContext context, Proposal proposal) {
       proposals.add(proposal);
       try {
-        context.publish(new Vote(proposal.getBallotId(), new Response("test", Intent.ACCEPT, null)));
+        context.getLedger().append(new Vote(proposal.getBallotId(), new Response("test", Intent.ACCEPT, null)));
       } catch (Exception e) {
         e.printStackTrace();
         throw new RuntimeException(e);
@@ -296,7 +296,7 @@ public final class FallibleFactorTest {
     final Cohort cohort = LambdaCohort.builder()
         .onProposal((c, m) -> {
           try {
-            c.publish(new Vote(UUID.randomUUID().toString(), new Response("test", Intent.ACCEPT, null)));
+            c.getLedger().append(new Vote(UUID.randomUUID().toString(), new Response("test", Intent.ACCEPT, null)));
           } catch (Exception e) {
             causeRef.set(e);
           }

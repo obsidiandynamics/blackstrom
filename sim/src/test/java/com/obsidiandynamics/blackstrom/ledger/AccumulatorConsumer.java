@@ -5,6 +5,7 @@ import java.util.*;
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 final class AccumulatorConsumer implements Disposable {
@@ -21,7 +22,7 @@ final class AccumulatorConsumer implements Disposable {
         .onCycle(this::cycle)
         .buildAndStart();
     final Object handlerId = this;
-    context = new DefaultMessageContext(null, handlerId);
+    context = new DefaultMessageContext(null, handlerId, NopRetention.getInstance());
   }
   
   private final List<Message> sink = new ArrayList<>();

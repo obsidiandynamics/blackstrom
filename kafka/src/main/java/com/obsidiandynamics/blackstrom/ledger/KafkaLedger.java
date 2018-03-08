@@ -17,6 +17,7 @@ import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class KafkaLedger implements Ledger {
@@ -44,6 +45,8 @@ public final class KafkaLedger implements Ledger {
   private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
 
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
+  
+  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
   
   private final boolean printConfig;
   
@@ -178,16 +181,21 @@ public final class KafkaLedger implements Ledger {
 
     final Integer handlerId;
     final ConsumerOffsets consumerOffsets;
+    final Retention retention;
     if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
       consumerOffsets = new ConsumerOffsets();
       consumers.put(handlerId, consumerOffsets);
+      final ShardedFlow flow = new ShardedFlow();
+      retention = flow;
+      flows.add(flow);
     } else {
       handlerId = null;
       consumerOffsets = null;
+      retention = NopRetention.getInstance();
     }
 
-    final MessageContext context = new DefaultMessageContext(this, handlerId);
+    final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
     final String consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
@@ -285,10 +293,12 @@ public final class KafkaLedger implements Ledger {
     receivers.forEach(t -> t.terminate());
     consumerPipes.forEach(t -> t.terminate());
     producerPipe.terminate();
+    flows.forEach(t -> t.terminate());
     retryThread.joinQuietly();
     receivers.forEach(t -> t.joinQuietly());
     consumerPipes.forEach(t -> t.joinQuietly());
     producerPipe.joinQuietly();
+    flows.forEach(t -> t.joinQuietly());
     CodecRegistry.deregister(codecLocator);
   }
 }

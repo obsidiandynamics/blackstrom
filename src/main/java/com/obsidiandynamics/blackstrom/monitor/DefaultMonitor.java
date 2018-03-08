@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -45,8 +44,6 @@ public final class DefaultMonitor implements Monitor {
   private final int timeoutIntervalMillis;
   
   private final Object messageLock = new Object();
-  
-  private final ShardedFlow flow = new ShardedFlow();
   
   private final boolean metadataEnabled;
   
@@ -183,7 +180,7 @@ public final class DefaultMonitor implements Monitor {
         pending.put(proposal.getBallotId(), existingBallot);
         return;
       } else {
-        newBallot.setConfirmation(flow.begin(context, proposal));
+        newBallot.setConfirmation(context.begin(proposal));
       }
     }
     
@@ -237,6 +234,5 @@ public final class DefaultMonitor implements Monitor {
     timeoutThread.terminate();
     if (trackingEnabled) gcThread.joinQuietly();
     timeoutThread.joinQuietly();
-    flow.dispose();
   }
 }

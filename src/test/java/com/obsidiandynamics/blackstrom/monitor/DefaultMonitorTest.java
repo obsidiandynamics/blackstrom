@@ -17,6 +17,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
@@ -70,7 +71,7 @@ public final class DefaultMonitorTest {
       (m.getMessageType() == MessageType.OUTCOME ? outcomes : votes).add(Cast.from(m));
     });
     ledger.init();
-    context = new DefaultMessageContext(ledger, null);
+    context = new DefaultMessageContext(ledger, null, NopRetention.getInstance());
   }
   
   @After
@@ -303,7 +304,7 @@ public final class DefaultMonitorTest {
     Mockito.doThrow(TestLedgerException.class).when(ledger).append(Mockito.any());
     ledger.attach((NullGroupMessageHandler) (c, m) -> outcomes.add((Outcome) m));
     ledger.init();
-    context = new DefaultMessageContext(ledger, null);
+    context = new DefaultMessageContext(ledger, null, NopRetention.getInstance());
     
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a");
