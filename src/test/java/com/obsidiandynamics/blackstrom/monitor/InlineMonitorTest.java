@@ -49,7 +49,7 @@ public final class InlineMonitorTest {
     }
   }
   
-  private void configure(DefaultMonitorConfig config) {
+  private void configure(MonitorEngineConfig config) {
     final NullGroupMessageHandler downstreamHandler = (c, m) -> {
       Select.from(m)
       .whenInstanceOf(Proposal.class).then(proposals::add)
@@ -68,7 +68,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testProposalOutcome_oneCohort() {
-    configure(new DefaultMonitorConfig().withMetadataEnabled(true));
+    configure(new MonitorEngineConfig().withMetadataEnabled(true));
     
     String ballotId;
     
@@ -104,7 +104,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testProposalOutcome_twoCohorts() {
-    configure(new DefaultMonitorConfig());
+    configure(new MonitorEngineConfig());
     
     String ballotId;
     
@@ -172,7 +172,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testDuplicateProposal_twoCohorts() {
-    configure(new DefaultMonitorConfig()
+    configure(new MonitorEngineConfig()
               .withOutcomeLifetime(60_000)
               .withGCInterval(1));
     
@@ -206,7 +206,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testDuplicateVote_twoCohorts() {
-    configure(new DefaultMonitorConfig());
+    configure(new MonitorEngineConfig());
     
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, "a", "b");
@@ -233,7 +233,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testVoteWithoutBallot() {
-    configure(new DefaultMonitorConfig());
+    configure(new MonitorEngineConfig());
     
     final String ballotId = UUID.randomUUID().toString();
     vote(ballotId, "a", Intent.ACCEPT);
@@ -244,7 +244,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testExplicitTimeout_twoCohorts() {
-    configure(new DefaultMonitorConfig().withTimeoutInterval(1));
+    configure(new MonitorEngineConfig().withTimeoutInterval(1));
     
     final String ballotId = UUID.randomUUID().toString();
     final long startTimestamp = NanoClock.now();
@@ -270,7 +270,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testNoTimeout_twoCohorts() {
-    configure(new DefaultMonitorConfig().withTimeoutInterval(1));
+    configure(new MonitorEngineConfig().withTimeoutInterval(1));
     
     final String ballotId = UUID.randomUUID().toString();
     nominate(ballotId, 10_000, "a", "b");
@@ -293,7 +293,7 @@ public final class InlineMonitorTest {
   
   @Test
   public void testImplicitTimeout_twoCohorts() {
-    configure(new DefaultMonitorConfig()
+    configure(new MonitorEngineConfig()
               .withTimeoutInterval(60_000));
     
     final String ballotId = UUID.randomUUID().toString();

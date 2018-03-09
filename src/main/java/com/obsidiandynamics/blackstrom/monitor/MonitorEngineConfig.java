@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.monitor;
 import com.obsidiandynamics.yconf.*;
 
 @Y
-public final class DefaultMonitorConfig {
+public final class MonitorEngineConfig {
   @YInject
   private String groupId = "monitor";
   
@@ -26,7 +26,7 @@ public final class DefaultMonitorConfig {
     return groupId;
   }
 
-  public DefaultMonitorConfig withGroupId(String groupId) {
+  public MonitorEngineConfig withGroupId(String groupId) {
     this.groupId = groupId;
     return this;
   }
@@ -35,7 +35,7 @@ public final class DefaultMonitorConfig {
     return trackingEnabled;
   }
   
-  public DefaultMonitorConfig withTrackingEnabled(boolean trackingEnabled) {
+  public MonitorEngineConfig withTrackingEnabled(boolean trackingEnabled) {
     this.trackingEnabled = trackingEnabled;
     return this;
   }
@@ -44,7 +44,7 @@ public final class DefaultMonitorConfig {
     return gcIntervalMillis;
   }
 
-  public DefaultMonitorConfig withGCInterval(int gcIntervalMillis) {
+  public MonitorEngineConfig withGCInterval(int gcIntervalMillis) {
     this.gcIntervalMillis = gcIntervalMillis;
     return this;
   }
@@ -53,7 +53,7 @@ public final class DefaultMonitorConfig {
     return outcomeLifetimeMillis;
   }
 
-  public DefaultMonitorConfig withOutcomeLifetime(int outcomeLifetimeMillis) {
+  public MonitorEngineConfig withOutcomeLifetime(int outcomeLifetimeMillis) {
     this.outcomeLifetimeMillis = outcomeLifetimeMillis;
     return this;
   }
@@ -62,7 +62,7 @@ public final class DefaultMonitorConfig {
     return timeoutIntervalMillis;
   }
 
-  public DefaultMonitorConfig withTimeoutInterval(int timeoutIntervalMillis) {
+  public MonitorEngineConfig withTimeoutInterval(int timeoutIntervalMillis) {
     this.timeoutIntervalMillis = timeoutIntervalMillis;
     return this;
   }
@@ -71,14 +71,14 @@ public final class DefaultMonitorConfig {
     return metadataEnabled;
   }
   
-  public DefaultMonitorConfig withMetadataEnabled(boolean metadataEnabled) {
+  public MonitorEngineConfig withMetadataEnabled(boolean metadataEnabled) {
     this.metadataEnabled = metadataEnabled;
     return this;
   }
 
   @Override
   public String toString() {
-    return DefaultMonitorConfig.class.getSimpleName() + " [groupId=" + groupId + ", gcIntervalMillis=" + gcIntervalMillis
+    return MonitorEngineConfig.class.getSimpleName() + " [groupId=" + groupId + ", gcIntervalMillis=" + gcIntervalMillis
            + ", outcomeLifetimeMillis=" + outcomeLifetimeMillis + ", timeoutIntervalMillis=" + timeoutIntervalMillis
            + ", trackingEnabled=" + trackingEnabled + ", metadataEnabled=" + metadataEnabled + "]";
   }

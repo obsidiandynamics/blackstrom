@@ -83,7 +83,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     final int transferAmount = initialBalance;
 
     final AsyncInitiator initiator = new AsyncInitiator();
-    final Monitor monitor = new DefaultMonitor(new DefaultMonitorConfig().withTimeoutInterval(60_000));
+    final Monitor monitor = new DefaultMonitor(new MonitorEngineConfig().withTimeoutInterval(60_000));
     final Sandbox sandbox = Sandbox.forInstance(this);
     final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
     // we delay the receive rather than the send, so that the send timestamp appears recent — triggering implicit timeout
@@ -114,7 +114,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     final int transferAmount = initialBalance;
 
     final AsyncInitiator initiator = new AsyncInitiator();
-    final Monitor monitor = new DefaultMonitor(new DefaultMonitorConfig().withTimeoutInterval(1));
+    final Monitor monitor = new DefaultMonitor(new MonitorEngineConfig().withTimeoutInterval(1));
     final Sandbox sandbox = Sandbox.forInstance(this);
     final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
     // it doesn't matter whether we delay receive or send, since the messages are sufficiently delayed, such

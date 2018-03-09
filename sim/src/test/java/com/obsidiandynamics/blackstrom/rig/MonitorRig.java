@@ -61,7 +61,7 @@ public final class MonitorRig implements Disposable {
     config.log.info("Monitor: building manifold with sandbox key {}", sandboxKey);
 
     final boolean trackingEnabled = false;
-    final Monitor monitor = new DefaultMonitor(new DefaultMonitorConfig()
+    final Monitor monitor = new DefaultMonitor(new MonitorEngineConfig()
                                                .withTrackingEnabled(trackingEnabled)
                                                .withMetadataEnabled(config.metadataEnabled));
     final Ledger ledger = config.ledgerFactory.get();

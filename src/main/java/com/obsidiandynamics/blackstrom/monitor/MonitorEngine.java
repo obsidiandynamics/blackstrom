@@ -47,7 +47,7 @@ public final class MonitorEngine implements Disposable {
   
   private final MonitorAction action;
   
-  public MonitorEngine(MonitorAction action, DefaultMonitorConfig config) {
+  public MonitorEngine(MonitorAction action, MonitorEngineConfig config) {
     groupId = config.getGroupId();
     trackingEnabled = config.isTrackingEnabled();
     gcIntervalMillis = config.getGCInterval();

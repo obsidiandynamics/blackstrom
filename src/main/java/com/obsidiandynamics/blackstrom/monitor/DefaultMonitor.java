@@ -12,11 +12,11 @@ public final class DefaultMonitor implements Monitor {
   private Ledger ledger;
   
   public DefaultMonitor() {
-    this(new DefaultMonitorConfig());
+    this(new MonitorEngineConfig());
   }
   
-  public DefaultMonitor(DefaultMonitorConfig config) {
-    this.groupId = config.getGroupId();
+  public DefaultMonitor(MonitorEngineConfig engineConfig) {
+    this.groupId = engineConfig.getGroupId();
     
     engine = new MonitorEngine(new MonitorAction() {
       @Override public void appendVote(Vote vote, AppendCallback callback) {
@@ -26,7 +26,7 @@ public final class DefaultMonitor implements Monitor {
       @Override public void appendOutcome(Outcome outcome, AppendCallback callback) {
         ledger.append(outcome, callback);
       }
-    }, config);
+    }, engineConfig);
   }
   
   public MonitorEngine getEngine() {

@@ -13,8 +13,8 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
   
   private MessageContext defaultContext;
   
-  public InlineMonitor(DefaultMonitorConfig monitorConfig, MessageHandler downstreamHandler) {
-    monitorConfig.withGroupId(downstreamHandler.getGroupId());
+  public InlineMonitor(MonitorEngineConfig engineConfig, MessageHandler downstreamHandler) {
+    engineConfig.withGroupId(downstreamHandler.getGroupId());
     engine = new MonitorEngine(new MonitorAction() {
       @Override public void appendVote(Vote vote, AppendCallback callback) {
         defaultContext.getLedger().append(vote, callback);
@@ -24,7 +24,7 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
         callback.onAppend(null, null);
         downstreamHandler.onMessage(defaultContext, outcome);
       }
-    }, monitorConfig);
+    }, engineConfig);
     this.downstreamHandler = downstreamHandler;
   }
   

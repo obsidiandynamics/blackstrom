@@ -49,7 +49,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       }
     };
     final BankBranch[] branches = BankBranch.create(numBranches, initialBalance, idempotencyEnabled, sandbox);
-    final Monitor monitor = new DefaultMonitor(new DefaultMonitorConfig().withTrackingEnabled(trackingEnabled));
+    final Monitor monitor = new DefaultMonitor(new MonitorEngineConfig().withTrackingEnabled(trackingEnabled));
     buildStandardManifold(initiator, monitor, branches);
 
     final long took = TestSupport.took(() -> {

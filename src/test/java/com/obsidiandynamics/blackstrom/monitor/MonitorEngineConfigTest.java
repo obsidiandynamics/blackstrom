@@ -9,13 +9,13 @@ import org.junit.*;
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.yconf.*;
 
-public final class DefaultMonitorConfigTest {
+public final class MonitorEngineConfigTest {
   @Test
   public void testConfig() throws IOException {
-    final DefaultMonitorConfig config = new MappingContext()
+    final MonitorEngineConfig config = new MappingContext()
         .withParser(new SnakeyamlParser())
-        .fromStream(DefaultMonitorConfig.class.getClassLoader().getResourceAsStream("defaultmonitor.conf"))
-        .map(DefaultMonitorConfig.class);
+        .fromStream(MonitorEngineConfig.class.getClassLoader().getResourceAsStream("monitorengine.conf"))
+        .map(MonitorEngineConfig.class);
     assertEquals("test", config.getGroupId());
     assertEquals(1, config.getGCInterval());
     assertEquals(2, config.getOutcomeLifetime());
@@ -26,6 +26,6 @@ public final class DefaultMonitorConfigTest {
   
   @Test
   public void testToString() {
-    Assertions.assertToStringOverride(new DefaultMonitorConfig());
+    Assertions.assertToStringOverride(new MonitorEngineConfig());
   }
 }
