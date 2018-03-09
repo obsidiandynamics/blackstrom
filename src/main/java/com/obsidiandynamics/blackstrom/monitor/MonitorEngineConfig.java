@@ -5,9 +5,6 @@ import com.obsidiandynamics.yconf.*;
 @Y
 public final class MonitorEngineConfig {
   @YInject
-  private String groupId = "monitor";
-  
-  @YInject
   private int gcIntervalMillis = 1_000;
   
   @YInject
@@ -21,15 +18,6 @@ public final class MonitorEngineConfig {
   
   @YInject
   private boolean metadataEnabled = false;
-  
-  String getGroupId() {
-    return groupId;
-  }
-
-  public MonitorEngineConfig withGroupId(String groupId) {
-    this.groupId = groupId;
-    return this;
-  }
   
   boolean isTrackingEnabled() {
     return trackingEnabled;
@@ -78,10 +66,8 @@ public final class MonitorEngineConfig {
 
   @Override
   public String toString() {
-    return MonitorEngineConfig.class.getSimpleName() + " [groupId=" + groupId + ", gcIntervalMillis=" + gcIntervalMillis
+    return MonitorEngineConfig.class.getSimpleName() + " [gcIntervalMillis=" + gcIntervalMillis
            + ", outcomeLifetimeMillis=" + outcomeLifetimeMillis + ", timeoutIntervalMillis=" + timeoutIntervalMillis
            + ", trackingEnabled=" + trackingEnabled + ", metadataEnabled=" + metadataEnabled + "]";
   }
-  
-  
 }

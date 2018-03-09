@@ -16,7 +16,6 @@ public final class MonitorEngineConfigTest {
         .withParser(new SnakeyamlParser())
         .fromStream(MonitorEngineConfig.class.getClassLoader().getResourceAsStream("monitorengine.conf"))
         .map(MonitorEngineConfig.class);
-    assertEquals("test", config.getGroupId());
     assertEquals(1, config.getGCInterval());
     assertEquals(2, config.getOutcomeLifetime());
     assertEquals(3, config.getTimeoutInterval());

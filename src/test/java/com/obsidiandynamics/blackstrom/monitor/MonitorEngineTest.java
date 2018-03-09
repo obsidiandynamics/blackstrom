@@ -93,8 +93,8 @@ public final class MonitorEngineTest {
   
   @Test
   public void testInitialisation() {
-    setMonitorAndInit(new DefaultMonitor(new MonitorEngineConfig().withGroupId("test-monitor")));
-    assertEquals("test-monitor", monitor.getGroupId());
+    setMonitorAndInit(new DefaultMonitor(new MonitorEngineConfig()));
+    assertEquals("monitor", monitor.getGroupId());
   }
   
   @Test

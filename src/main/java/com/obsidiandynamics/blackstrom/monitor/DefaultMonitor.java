@@ -5,9 +5,9 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class DefaultMonitor implements Monitor {
-  private final MonitorEngine engine;
+  private static final String GROUP_ID = "monitor";
   
-  private final String groupId;
+  private final MonitorEngine engine;
   
   private Ledger ledger;
   
@@ -16,8 +16,6 @@ public final class DefaultMonitor implements Monitor {
   }
   
   public DefaultMonitor(MonitorEngineConfig engineConfig) {
-    this.groupId = engineConfig.getGroupId();
-    
     engine = new MonitorEngine(new MonitorAction() {
       @Override public void appendVote(Vote vote, AppendCallback callback) {
         ledger.append(vote, callback);
@@ -26,7 +24,7 @@ public final class DefaultMonitor implements Monitor {
       @Override public void appendOutcome(Outcome outcome, AppendCallback callback) {
         ledger.append(outcome, callback);
       }
-    }, engineConfig);
+    }, GROUP_ID, engineConfig);
   }
   
   public MonitorEngine getEngine() {
@@ -35,7 +33,7 @@ public final class DefaultMonitor implements Monitor {
 
   @Override
   public String getGroupId() {
-    return groupId;
+    return GROUP_ID;
   }
 
   @Override

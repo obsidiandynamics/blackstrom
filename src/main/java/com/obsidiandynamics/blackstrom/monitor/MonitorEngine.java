@@ -47,8 +47,8 @@ public final class MonitorEngine implements Disposable {
   
   private final MonitorAction action;
   
-  public MonitorEngine(MonitorAction action, MonitorEngineConfig config) {
-    groupId = config.getGroupId();
+  public MonitorEngine(MonitorAction action, String groupId, MonitorEngineConfig config) {
+    this.groupId = groupId;
     trackingEnabled = config.isTrackingEnabled();
     gcIntervalMillis = config.getGCInterval();
     outcomeLifetimeMillis = config.getOutcomeLifetime();
@@ -59,7 +59,7 @@ public final class MonitorEngine implements Disposable {
     if (trackingEnabled) {
       gcThread = WorkerThread.builder()
           .withOptions(new WorkerOptions()
-                       .withName(nameThread("gc"))
+                       .withName(nameThread(groupId, "gc"))
                        .withDaemon(true))
           .onCycle(this::gcCycle)
           .buildAndStart();
@@ -69,14 +69,14 @@ public final class MonitorEngine implements Disposable {
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(nameThread("timeout"))
+                     .withName(nameThread(groupId, "timeout"))
                      .withDaemon(true))
         .onCycle(this::timeoutCycle)
         .buildAndStart();
   }
   
-  private String nameThread(String role) {
-    return MonitorEngine.class.getSimpleName() + "-" + role + "-" + Integer.toHexString(System.identityHashCode(this));
+  private String nameThread(String groupId, String role) {
+    return MonitorEngine.class.getSimpleName() + "-" + groupId + "-" + role + "-" + Integer.toHexString(System.identityHashCode(this));
   }
   
   private void gcCycle(WorkerThread thread) throws InterruptedException {
