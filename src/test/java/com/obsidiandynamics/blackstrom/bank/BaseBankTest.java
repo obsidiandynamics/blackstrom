@@ -7,8 +7,10 @@ import org.junit.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.factor.*;
+import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
+import com.obsidiandynamics.blackstrom.monitor.*;
 
 public abstract class BaseBankTest {  
   protected static final String[] TWO_BRANCH_IDS = BankBranch.generateIds(2);
@@ -30,7 +32,7 @@ public abstract class BaseBankTest {
     if (manifold != null) manifold.dispose();
   }
   
-  protected final void buildStandardManifold(Factor initiator, Factor monitor, Factor... branches) {
+  protected final void buildStandardManifold(Initiator initiator, Monitor monitor, Factor... branches) {
     ledger = createLedger();
     manifold = Manifold.builder()
         .withLedger(ledger)
