@@ -11,10 +11,12 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
   
   private final MessageHandler downstreamHandler;
   
+  private final Factor downstreamFactor;
+  
   private MessageContext defaultContext;
   
-  public InlineMonitor(MonitorEngineConfig engineConfig, MessageHandler downstreamHandler) {
-    engineConfig.withGroupId(downstreamHandler.getGroupId());
+  public InlineMonitor(MonitorEngineConfig engineConfig, Factor downstreamFactor) {
+    engineConfig.withGroupId(downstreamFactor.getGroupId());
     engine = new MonitorEngine(new MonitorAction() {
       @Override public void appendVote(Vote vote, AppendCallback callback) {
         defaultContext.getLedger().append(vote, callback);
@@ -25,7 +27,9 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
         downstreamHandler.onMessage(defaultContext, outcome);
       }
     }, engineConfig);
-    this.downstreamHandler = downstreamHandler;
+    
+    downstreamHandler = new MessageHandlerAdapter(downstreamFactor);
+    this.downstreamFactor = downstreamFactor;
   }
   
   public MonitorEngine getEngine() {
@@ -34,7 +38,7 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
 
   @Override
   public String getGroupId() {
-    return downstreamHandler.getGroupId();
+    return downstreamFactor.getGroupId();
   }
 
   @Override
@@ -52,10 +56,12 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
   @Override
   public void init(InitContext context) {
     defaultContext = new DefaultMessageContext(context.getLedger(), null, NopRetention.getInstance());
+    downstreamFactor.init(context);
   }
   
   @Override
   public void dispose() {
+    downstreamFactor.dispose();
     engine.dispose();
   }
 }

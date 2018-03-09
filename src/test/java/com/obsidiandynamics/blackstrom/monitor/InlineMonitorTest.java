@@ -4,18 +4,19 @@ import static junit.framework.TestCase.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.util.select.*;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -38,6 +39,10 @@ public final class InlineMonitorTest {
   
   private final Timesert wait = Wait.SHORT;
   
+  private final AtomicBoolean downstreamInitCalled = new AtomicBoolean();
+  
+  private final AtomicBoolean downstreamDisposeCalled = new AtomicBoolean();
+  
   @After
   public void after() {
     cleanup();
@@ -49,21 +54,45 @@ public final class InlineMonitorTest {
     }
   }
   
+  private interface AllFactor extends NullGroupFactor, ProposalProcessor, VoteProcessor, OutcomeProcessor {}
+  
   private void configure(MonitorEngineConfig config) {
-    final NullGroupMessageHandler downstreamHandler = (c, m) -> {
-      Select.from(m)
-      .whenInstanceOf(Proposal.class).then(proposals::add)
-      .whenInstanceOf(Vote.class).then(votes::add)
-      .whenInstanceOf(Outcome.class).then(outcomes::add)
-      .otherwise(obj -> { throw new UnsupportedOperationException("Unsupported message " + obj); });
+    final AllFactor downstreamFactor = new AllFactor() {
+      @Override public void init(InitContext context) {
+        downstreamInitCalled.set(true);
+      }
+      
+      @Override public void dispose() {
+        downstreamDisposeCalled.set(true);
+      }
+      
+      @Override public void onProposal(MessageContext context, Proposal proposal) {
+        proposals.add(proposal);
+      }
+
+      @Override public void onVote(MessageContext context, Vote vote) {
+        votes.add(vote);
+      }
+
+      @Override public void onOutcome(MessageContext context, Outcome outcome) {
+        outcomes.add(outcome);
+      }
     };
     
-    monitor = new InlineMonitor(config, downstreamHandler);
+    monitor = new InlineMonitor(config, downstreamFactor);
     
     manifold = Manifold.builder()
         .withLedger(new MultiNodeQueueLedger())
         .withFactors(monitor)
         .build();
+  }
+  
+  @Test
+  public void testDownstreamInitDispose() {
+    configure(new MonitorEngineConfig());
+    assertTrue(downstreamInitCalled.get());
+    cleanup();
+    assertTrue(downstreamDisposeCalled.get());
   }
   
   @Test
