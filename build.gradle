@@ -121,7 +121,6 @@ project.ext.set('benchmarkClasses', new ArrayList())
 
 task addBenchmarks() {
   project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.MultiNodeQueueRandomBankTransferTest'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedgerTest'
 }
 

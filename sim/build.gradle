@@ -9,6 +9,7 @@ dependencies {
 task addBenchmarks() {
   project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.BalancedRandomBankTransferTest'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.bank.MultiNodeQueueRandomBankTransferTest'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.BalancedLedgerTest'
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.rig.MultiNodeQueueRigTest'
 }
