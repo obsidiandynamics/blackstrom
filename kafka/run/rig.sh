@@ -11,9 +11,9 @@ shift
 cd $(dirname "$0")
 
 jvm_args="-XX:-MaxFDLimit -XX:+TieredCompilation -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking \
-          -Xms2G -Xmx2G -Xss1M -XX:+UseParallelGC -Djava.net.preferIPv4Stack=true \
-          -XX:+ExplicitGCInvokesConcurrent -Xloggc:../logs/${role}-gc-%t.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps \
-          -XX:+UseParallelGC"
+          -Xms2G -Xmx2G -Xss1M -Djava.net.preferIPv4Stack=true \
+          -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:InitiatingHeapOccupancyPercent=0 -XX:+DisableExplicitGC \
+          -Xloggc:../logs/${role}-gc-%t.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
 cd ../..
 ./gradlew -x test blackstrom-kafka:testJar 1> /dev/null
 if [ $? -ne 0 ]; then
