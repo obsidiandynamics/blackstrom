@@ -102,7 +102,7 @@ public final class InlineMonitorTest {
     String ballotId;
     
     ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a");
+    propose(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
@@ -116,7 +116,7 @@ public final class InlineMonitorTest {
     outcomes.clear();
     
     ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a");
+    propose(ballotId, "a");
     vote(ballotId, "a", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
@@ -138,7 +138,7 @@ public final class InlineMonitorTest {
     String ballotId;
     
     ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a", "b");
+    propose(ballotId, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Intent.ACCEPT);
@@ -154,7 +154,7 @@ public final class InlineMonitorTest {
     outcomes.clear();
     
     ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a", "b");
+    propose(ballotId, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Intent.REJECT);
@@ -171,7 +171,7 @@ public final class InlineMonitorTest {
     outcomes.clear();
     
     ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a", "b");
+    propose(ballotId, "a", "b");
     vote(ballotId, "a", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
@@ -185,7 +185,7 @@ public final class InlineMonitorTest {
     outcomes.clear();
     
     ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a", "b");
+    propose(ballotId, "a", "b");
     vote(ballotId, "a", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
@@ -206,13 +206,13 @@ public final class InlineMonitorTest {
               .withGCInterval(1));
     
     final String ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a", "b");
-    nominate(ballotId, "a", "b", "c");
+    propose(ballotId, "a", "b");
+    propose(ballotId, "a", "b", "c");
     vote(ballotId, "a", Intent.ACCEPT);
 
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
-    nominate(ballotId, "a", "b", "c");
+    propose(ballotId, "a", "b", "c");
 
     TestSupport.sleep(10);
     assertEquals(0, outcomes.size());
@@ -227,7 +227,7 @@ public final class InlineMonitorTest {
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
-    nominate(ballotId, "a", "b", "c");
+    propose(ballotId, "a", "b", "c");
     assertEquals(0, outcomes.size());
 
     wait.until(numTrackedOutcomesIs(1));
@@ -238,7 +238,7 @@ public final class InlineMonitorTest {
     configure(new MonitorEngineConfig());
     
     final String ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, "a", "b");
+    propose(ballotId, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     vote(ballotId, "a", Intent.REJECT);
 
@@ -277,7 +277,7 @@ public final class InlineMonitorTest {
     
     final String ballotId = UUID.randomUUID().toString();
     final long startTimestamp = NanoClock.now();
-    nominate(ballotId, 0, "a", "b");
+    propose(ballotId, 0, "a", "b");
     vote(ballotId, startTimestamp, "a", Intent.ACCEPT);
     
     wait.until(numVotesIsAtLeast(2));
@@ -302,7 +302,7 @@ public final class InlineMonitorTest {
     configure(new MonitorEngineConfig().withTimeoutInterval(1));
     
     final String ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, 10_000, "a", "b");
+    propose(ballotId, 10_000, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     
     TestSupport.sleep(10);
@@ -326,7 +326,7 @@ public final class InlineMonitorTest {
               .withTimeoutInterval(60_000));
     
     final String ballotId = UUID.randomUUID().toString();
-    nominate(ballotId, 1, "a", "b");
+    propose(ballotId, 1, "a", "b");
     vote(ballotId, NanoClock.now() + 1_000_000_000L, "a", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
@@ -352,11 +352,11 @@ public final class InlineMonitorTest {
     return Arrays.stream(outcome.getResponses()).filter(r -> r.getCohort().equals(cohort)).findAny().get();
   }
 
-  private void nominate(String ballotId, String... cohorts) {
-    nominate(ballotId, Integer.MAX_VALUE, cohorts);
+  private void propose(String ballotId, String... cohorts) {
+    propose(ballotId, Integer.MAX_VALUE, cohorts);
   }
 
-  private void nominate(String ballotId, int ttl, String... cohorts) {
+  private void propose(String ballotId, int ttl, String... cohorts) {
     manifold.getLedger().append(new Proposal(ballotId.toString(), cohorts, null, ttl));
   }
 
