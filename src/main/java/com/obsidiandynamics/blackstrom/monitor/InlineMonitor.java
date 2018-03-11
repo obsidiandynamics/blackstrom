@@ -48,8 +48,8 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
   
   @Override
   public void onVote(MessageContext context, Vote vote) {
-    engine.onVote(context, vote);
     downstreamHandler.onMessage(context, vote);
+    engine.onVote(context, vote);
   }
   
   @Override

@@ -20,19 +20,32 @@ import com.obsidiandynamics.indigo.util.*;
 public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
   private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
   
+  private static final boolean LOG_BENCHMARK = false;
+  
   @Test
-  public final void testRandomTransfers() {
+  public final void testRandomTransfersAutonomous() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
-    testRandomTransfers(branches, 100 * SCALE, true, true, true);
+    testRandomTransfers(branches, 100 * SCALE, true, true, true, true);
+  }
+  
+  @Test
+  public final void testRandomTransfersCoordinated() {
+    final int branches = Testmark.isEnabled() ? 2 : 10;
+    testRandomTransfers(branches, 100 * SCALE, true, true, true, false);
   }
 
   @Test
-  public final void testRandomTransfersBenchmark() {
-    Testmark.ifEnabled(() -> testRandomTransfers(2, 4_000_000 * SCALE, false, false, false));
+  public final void testRandomTransfersAutonomousBenchmark() {
+    Testmark.ifEnabled("autonomous", () -> testRandomTransfers(2, 4_000_000 * SCALE, false, LOG_BENCHMARK, false, true));
+  }
+
+  @Test
+  public final void testRandomTransfersCoordinatedBenchmark() {
+    Testmark.ifEnabled("coordinated", () -> testRandomTransfers(2, 4_000_000 * SCALE, false, LOG_BENCHMARK, false, false));
   }
 
   private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean loggingEnabled, 
-                                   boolean trackingEnabled) {
+                                   boolean trackingEnabled, boolean autonomous) {
     final long transferAmount = 1_000;
     final long initialBalance = runs * transferAmount / (numBranches * numBranches);
     final int backlogTarget = Math.min(runs / 10, 10_000);
@@ -41,6 +54,18 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
     final AtomicInteger timeouts = new AtomicInteger();
+    
+    final AtomicBoolean progressMonitorRunning = new AtomicBoolean(true);
+    final Thread t = new Thread(() -> {
+      while (progressMonitorRunning.get()) {
+        System.out.format("%,d commits | %,d aborts | %,d timeouts\n", 
+                          commits.get(), aborts.get(), timeouts.get());
+        TestSupport.sleep(2000);
+      }
+    });
+    t.setDaemon(true);
+    t.start();
+    
     final Sandbox sandbox = Sandbox.forInstance(this);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
@@ -49,8 +74,15 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       }
     };
     final BankBranch[] branches = BankBranch.create(numBranches, initialBalance, idempotencyEnabled, sandbox);
-    final Monitor monitor = new DefaultMonitor(new MonitorEngineConfig().withTrackingEnabled(trackingEnabled));
-    buildStandardManifold(initiator, monitor, branches);
+    if (autonomous) {
+      buildAutonomousManifold(new MonitorEngineConfig().withTrackingEnabled(trackingEnabled),
+                              initiator, 
+                              branches);
+    } else {
+      buildCoordinatedManifold(new MonitorEngineConfig().withTrackingEnabled(trackingEnabled),
+                               initiator, 
+                               branches);
+    }
 
     final long took = TestSupport.took(() -> {
       String[] branchIds = null;
@@ -74,7 +106,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         if (run % backlogTarget == 0) {
           long lastLogTime = 0;
           for (;;) {
-            final int backlog = (int) (run - commits.get() - aborts.get() - timeouts.get());
+            final int backlog = (int) (run - getMinOutcomes(branches));
             if (backlog >= backlogTarget) {
               TestSupport.sleep(1);
               if (loggingEnabled && System.currentTimeMillis() - lastLogTime > 5_000) {
@@ -87,7 +119,8 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           }
         }
       }
-
+      progressMonitorRunning.set(false);
+      
       wait.until(() -> {
         assertEquals(runs, commits.get() + aborts.get() + timeouts.get());
         final long expectedBalance = numBranches * initialBalance;
@@ -98,5 +131,16 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     });
     System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts | %,d timeouts)\n", 
                       runs, took, (double) runs / took * 1000, commits.get(), aborts.get(), timeouts.get());
+  }
+  
+  private long getMinOutcomes(BankBranch[] branches) {
+    long minOutcomes = Long.MAX_VALUE;
+    for (BankBranch branch : branches) {
+      final long outcomes = branch.getNumOutcomes();
+      if (outcomes < minOutcomes) {
+        minOutcomes = outcomes;
+      }
+    }
+    return minOutcomes;
   }
 }

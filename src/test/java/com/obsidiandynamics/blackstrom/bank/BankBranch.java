@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.bank;
 
 import java.util.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.*;
 
@@ -29,6 +30,8 @@ public final class BankBranch implements Cohort {
   private final int outcomeLifetimeMillis = 1_000;
   
   private final Predicate<Message> messageFilter;
+  
+  private final AtomicLong outcomes = new AtomicLong();
   
   private long balance;
   
@@ -144,8 +147,12 @@ public final class BankBranch implements Cohort {
     try {
       if (! messageFilter.test(outcome)) return;
       
+      outcomes.incrementAndGet();
+      
       final Proposal proposal = proposals.remove(outcome.getBallotId());
-      if (proposal == null) return; // outcome doesn't apply to this branch
+      if (proposal == null) {
+        return; // outcome doesn't apply to this branch
+      }
       
       if (idempotencyEnabled) {
         synchronized (lock) {
@@ -168,6 +175,10 @@ public final class BankBranch implements Cohort {
     } finally {
       context.beginAndConfirm(outcome);
     }
+  }
+  
+  public long getNumOutcomes() {
+    return outcomes.get();
   }
   
   @Override

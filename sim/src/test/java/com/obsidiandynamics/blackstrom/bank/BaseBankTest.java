@@ -31,13 +31,24 @@ public abstract class BaseBankTest {
   public final void after() {
     if (manifold != null) manifold.dispose();
   }
-  
-  protected final void buildStandardManifold(Initiator initiator, Monitor monitor, Factor... branches) {
+
+  protected final void buildCoordinatedManifold(MonitorEngineConfig engineConfig, Initiator initiator, Factor... branches) {
     ledger = createLedger();
     manifold = Manifold.builder()
         .withLedger(ledger)
-        .withFactors(initiator, monitor)
+        .withFactors(initiator, new DefaultMonitor(engineConfig))
         .withFactors(branches)
+        .build();
+  }
+  
+  protected final void buildAutonomousManifold(MonitorEngineConfig engineConfig, Initiator initiator, Factor... branches) {
+    ledger = createLedger();
+    manifold = Manifold.builder()
+        .withLedger(ledger)
+        .withFactors(new InlineMonitor(engineConfig, initiator))
+        .withFactors(Arrays.stream(branches)
+                     .map(f -> new InlineMonitor(engineConfig, f))
+                     .collect(Collectors.toList()))
         .build();
   }
 

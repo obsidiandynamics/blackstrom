@@ -52,7 +52,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     }
   }
   
-  private Ledger ledger;
+  protected Ledger ledger;
   
   private long messageId;
   
@@ -71,7 +71,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     }
   }
   
-  private void useLedger(Ledger ledger) {
+  protected void useLedger(Ledger ledger) {
     if (this.ledger != null) this.ledger.dispose();
     this.ledger = ledger;
   }
