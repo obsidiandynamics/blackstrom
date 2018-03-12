@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.scheduler;
 
 import static junit.framework.TestCase.*;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -296,6 +297,80 @@ public final class TaskSchedulerTest implements TestSupport {
 
     System.out.format("Schedule volume: %,d took %,d ms, %,.0f tasks/sec (%d threads)\n", 
                       expectedTasks, took / 1_000_000L, (double) expectedTasks / took * 1_000_000_000L, submissionThreads);
+  }
+  
+  @Test
+  public void testScheduleSingleNoTasks() {
+    final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compareByTimeAndId);
+    TaskScheduler.scheduleSingle(tasks, null, true);
+  }
+  
+  private static class MockTask implements Task {
+    private final long time;
+    
+    private final int id;
+    
+    MockTask(long time, int id) {
+      this.time = time;
+      this.id = id;
+    }
+    
+    @Override
+    public void execute(TaskScheduler scheduler) {}
+
+    @Override
+    public Comparable<?> getId() {
+      return id;
+    }
+
+    @Override
+    public long getTime() {
+      return time;
+    }
+  }
+  
+  @Test
+  public void testScheduleSingleExecuteUnforced() {
+    final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compareByTimeAndId);
+    final MockTask task = new MockTask(0, 1);
+    final MockTask spied = spy(task);
+    tasks.add(spied);
+    TaskScheduler.scheduleSingle(tasks, null, false);
+    verify(spied).execute(any());
+  }
+  
+  @Test
+  public void testScheduleSingleExecuteForced() {
+    final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compareByTimeAndId);
+    final MockTask task = new MockTask(Long.MAX_VALUE, 1);
+    final MockTask spied = spy(task);
+    tasks.add(spied);
+    TaskScheduler.scheduleSingle(tasks, null, true);
+    verify(spied).execute(any());
+  }
+  
+  @Test
+  public void testScheduleSingleNotTime() {
+    final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compareByTimeAndId);
+    final MockTask task = new MockTask(Long.MAX_VALUE, 1);
+    final MockTask spied = spy(task);
+    tasks.add(spied);
+    TaskScheduler.scheduleSingle(tasks, null, false);
+    verify(spied, never()).execute(any());
+  }
+  
+  @Test
+  public void testScheduleSingleNoRemove() {
+    final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compareByTimeAndId);
+    final MockTask task = new MockTask(0, 1);
+    final MockTask spied = spy(task);
+    tasks.add(spied);
+    when(spied.getTime()).then((invocation) -> {
+      tasks.clear();
+      return 0L;
+    });
+    TaskScheduler.scheduleSingle(tasks, null, false);
+    verify(spied, never()).execute(any());
   }
   
   private TestTask doIn(long millis) {

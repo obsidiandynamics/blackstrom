@@ -22,10 +22,10 @@ public final class TaskScheduler implements Joinable {
   private static final long ADJ_NANOS = 0l;
   
   /** List of pending tasks, ordered with the most immediate at the head. */
-  private final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compare);
+  private final NavigableSet<Task> tasks = new ConcurrentSkipListSet<>(TaskScheduler::compareByTimeAndId);
   
   @SuppressWarnings("unchecked")
-  private static int compare(Task t1, Task t2) {
+  static int compareByTimeAndId(Task t1, Task t2) {
     final int timeComp = Long.compare(t1.getTime(), t2.getTime());
     if (timeComp != 0) {
       return timeComp;
@@ -99,19 +99,27 @@ public final class TaskScheduler implements Joinable {
       }
     }
 
-    scheduleSingle();
+    scheduleSingle(tasks, this, forceExecute);
   }
   
   /**
    *  Schedules a single task from the head of the queue, if one is pending and its 
-   *  time has come.
+   *  time has come.<p>
+   *  
+   *  This code has been extracted into a static method to facilitate unit test coverage,
+   *  which is otherwise non-deterministic due to the double-checked use of {@code first()}
+   *  and {@code remove()}.
+   *  
+   *  @param tasks The tasks list.
+   *  @param scheduler The scheduler.
+   *  @param forceExecute Whether all tasks should be executed, regardless of time.
    */
-  private void scheduleSingle() {
+  static void scheduleSingle(NavigableSet<Task> tasks, TaskScheduler scheduler, boolean forceExecute) {
     try {
       final Task first = tasks.first();
       if (forceExecute || System.nanoTime() >= first.getTime() - ADJ_NANOS) {
         if (tasks.remove(first)) {
-          first.execute(this);
+          first.execute(scheduler);
         }
       }
     } catch (NoSuchElementException e) {} // in case the task was aborted in the meantime
