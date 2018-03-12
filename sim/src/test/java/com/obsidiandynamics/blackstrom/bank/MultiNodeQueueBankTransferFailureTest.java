@@ -7,6 +7,7 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
+import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -18,7 +19,7 @@ public final class MultiNodeQueueBankTransferFailureTest extends AbstractBankTra
   }
   
   @Override
-  protected Ledger createLedger() {
+  protected Ledger createLedger(Guidance guidance) {
     return new MultiNodeQueueLedger();
   }
 

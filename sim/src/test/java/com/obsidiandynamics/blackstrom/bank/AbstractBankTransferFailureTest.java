@@ -96,7 +96,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     final Sandbox sandbox = Sandbox.forInstance(this);
     final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
 
-    ledger = createLedger();
+    ledger = createLedger(Guidance.COORDINATED);
     manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(new FallibleFactor(initiator)

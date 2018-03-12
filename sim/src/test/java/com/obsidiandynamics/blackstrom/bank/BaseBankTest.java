@@ -23,7 +23,7 @@ public abstract class BaseBankTest {
 
   protected Manifold manifold;
   
-  protected abstract Ledger createLedger();
+  protected abstract Ledger createLedger(Guidance guidance);
   
   protected abstract Timesert getWait();
   
@@ -33,7 +33,7 @@ public abstract class BaseBankTest {
   }
 
   protected final void buildCoordinatedManifold(MonitorEngineConfig engineConfig, Initiator initiator, Factor... branches) {
-    ledger = createLedger();
+    ledger = createLedger(Guidance.COORDINATED);
     manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(initiator, new DefaultMonitor(engineConfig))
@@ -42,7 +42,7 @@ public abstract class BaseBankTest {
   }
   
   protected final void buildAutonomousManifold(MonitorEngineConfig engineConfig, Initiator initiator, Factor... branches) {
-    ledger = createLedger();
+    ledger = createLedger(Guidance.AUTONOMOUS);
     manifold = Manifold.builder()
         .withLedger(ledger)
         .withFactors(new InlineMonitor(engineConfig, initiator))
