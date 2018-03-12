@@ -20,10 +20,10 @@ public final class JacksonDefaultOutcomeMetadataExpansionTest {
     new JacksonDefaultOutcomeMetadataExpansion().accept(module);
     mapper.registerModule(module);
     
-    final DefaultOutcomeMetadata meta = new DefaultOutcomeMetadata(100);
+    final OutcomeMetadata meta = new OutcomeMetadata(100);
     final String encoded = mapper.writeValueAsString(meta);
     
-    final DefaultOutcomeMetadata decoded = mapper.readValue(encoded, DefaultOutcomeMetadata.class);
+    final OutcomeMetadata decoded = mapper.readValue(encoded, OutcomeMetadata.class);
     assertEquals(meta, decoded);
   }
 }

@@ -96,7 +96,7 @@ public final class InitiatorRig {
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
         if (histogram && timedRunStarted.get()) {
-          final DefaultOutcomeMetadata meta = o.getMetadata();
+          final OutcomeMetadata meta = o.getMetadata();
           final long latency = NanoClock.now() - meta.getProposalTimestamp();
           hist.recordValue(latency);
         }

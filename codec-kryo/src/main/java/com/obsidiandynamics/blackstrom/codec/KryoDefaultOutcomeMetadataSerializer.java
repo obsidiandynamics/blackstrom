@@ -4,15 +4,15 @@ import com.esotericsoftware.kryo.*;
 import com.esotericsoftware.kryo.io.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 
-public final class KryoDefaultOutcomeMetadataSerializer extends Serializer<DefaultOutcomeMetadata> {
+public final class KryoDefaultOutcomeMetadataSerializer extends Serializer<OutcomeMetadata> {
   @Override
-  public void write(Kryo kryo, Output out, DefaultOutcomeMetadata metadata) {
+  public void write(Kryo kryo, Output out, OutcomeMetadata metadata) {
     out.writeLong(metadata.getProposalTimestamp());
   }
   
   @Override
-  public DefaultOutcomeMetadata read(Kryo kryo, Input in, Class<DefaultOutcomeMetadata> type) {
+  public OutcomeMetadata read(Kryo kryo, Input in, Class<OutcomeMetadata> type) {
     final long proposalTimestamp = in.readLong();
-    return new DefaultOutcomeMetadata(proposalTimestamp);
+    return new OutcomeMetadata(proposalTimestamp);
   }
 }

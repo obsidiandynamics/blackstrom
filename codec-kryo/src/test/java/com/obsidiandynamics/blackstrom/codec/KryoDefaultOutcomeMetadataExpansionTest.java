@@ -15,12 +15,12 @@ public final class KryoDefaultOutcomeMetadataExpansionTest {
     kryo.setReferences(false);
     new KryoDefaultOutcomeMetadataExpansion().accept(kryo);
     
-    final DefaultOutcomeMetadata meta = new DefaultOutcomeMetadata(100);
+    final OutcomeMetadata meta = new OutcomeMetadata(100);
     final ByteBufferOutput out = new ByteBufferOutput(128, -1);
     kryo.writeObject(out, meta);
     
     final ByteBufferInput in = new ByteBufferInput(out.toBytes());
-    final DefaultOutcomeMetadata decoded = kryo.readObject(in, DefaultOutcomeMetadata.class);
+    final OutcomeMetadata decoded = kryo.readObject(in, OutcomeMetadata.class);
     
     assertEquals(meta, decoded);
   }

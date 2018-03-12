@@ -203,7 +203,7 @@ public final class MonitorEngine implements Disposable {
     if (DEBUG) log.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
-    final Object metadata = metadataEnabled ? new DefaultOutcomeMetadata(proposal.getTimestamp()) : null;
+    final Object metadata = metadataEnabled ? new OutcomeMetadata(proposal.getTimestamp()) : null;
     final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses(), metadata)
         .inResponseTo(proposal).withSource(groupId);
     pending.remove(ballotId);

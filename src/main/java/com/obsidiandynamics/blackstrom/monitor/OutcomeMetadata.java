@@ -2,10 +2,10 @@ package com.obsidiandynamics.blackstrom.monitor;
 
 import org.apache.commons.lang3.builder.*;
 
-public final class DefaultOutcomeMetadata {
+public final class OutcomeMetadata {
   private final long proposalTimestamp;
 
-  public DefaultOutcomeMetadata(long proposalTimestamp) {
+  public OutcomeMetadata(long proposalTimestamp) {
     this.proposalTimestamp = proposalTimestamp;
   }
 
@@ -22,8 +22,8 @@ public final class DefaultOutcomeMetadata {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof DefaultOutcomeMetadata) {
-      final DefaultOutcomeMetadata that = (DefaultOutcomeMetadata) obj;
+    } else if (obj instanceof OutcomeMetadata) {
+      final OutcomeMetadata that = (OutcomeMetadata) obj;
       return new EqualsBuilder().append(proposalTimestamp, that.proposalTimestamp).isEquals();
     } else {
       return false;
@@ -32,6 +32,6 @@ public final class DefaultOutcomeMetadata {
 
   @Override
   public String toString() {
-    return DefaultOutcomeMetadata.class.getSimpleName() + " [proposalTimestamp=" + proposalTimestamp + "]";
+    return OutcomeMetadata.class.getSimpleName() + " [proposalTimestamp=" + proposalTimestamp + "]";
   }
 }
