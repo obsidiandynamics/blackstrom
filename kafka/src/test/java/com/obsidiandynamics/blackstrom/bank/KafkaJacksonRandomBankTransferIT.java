@@ -31,7 +31,7 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
   
   private static String getTopic(Guidance guidance) {
-    return TestTopic.of(KafkaJacksonRandomBankTransferIT.class, "kryo", 
+    return TestTopic.of(KafkaJacksonRandomBankTransferIT.class, "json", 
                         JacksonMessageCodec.ENCODING_VERSION, 
                         Testmark.isEnabled() ? "bench" : "test",
                         guidance);
