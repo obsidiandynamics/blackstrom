@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.*;
@@ -9,9 +10,11 @@ import java.util.stream.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
+import org.mockito.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedger.Config.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
@@ -42,15 +45,17 @@ public final class MultiNodeQueueLedgerTest extends AbstractLedgerTest {
   
   @Test
   public void testDebugMessageCount() {
-    // test coverage of debug messages -- no further assertions
-    
+    final LogLine logLine = mock(LogLine.class);
     final AtomicInteger received = new AtomicInteger();
     final int messages = 10;
-    useLedger(new MultiNodeQueueLedger(new MultiNodeQueueLedger.Config().withDebugMessageCounts(messages)));
+    useLedger(new MultiNodeQueueLedger(new MultiNodeQueueLedger.Config()
+                                       .withDebugMessageCounts(messages)
+                                       .withLogLine(logLine)));
     ledger.attach((NullGroupMessageHandler) (c, m) -> received.incrementAndGet());
     IntStream.range(0, messages).boxed().forEach(i -> ledger.append(new Proposal(i + "", new String[0], null, 0)));
     
     wait.until(() -> assertEquals(10, received.get()));
+    verify(logLine, times(2)).accept(any());
   }
   
   public static void main(String[] args) {

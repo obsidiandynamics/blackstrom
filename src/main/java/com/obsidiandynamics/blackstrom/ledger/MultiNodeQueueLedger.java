@@ -3,16 +3,17 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedger.Config.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 /**
- *  A high-performance, lock-free, unbounded MPMC (multi-producer, 
--consumer) queue
+ *  A high-performance, lock-free, unbounded MPMC (multi-producer, multi-consumer) queue
  *  implementation, adapted from Indigo's scheduler.<p>
  *  
  *  @see <a href="https://github.com/obsidiandynamics/indigo/blob/4b13815d1aefb0e5a5a45ad89444ced9f6584e20/src/main/java/com/obsidiandynamics/indigo/NodeQueueActivation.java">NodeQueueActivation</a>
@@ -21,9 +22,14 @@ public final class MultiNodeQueueLedger implements Ledger {
   private static final int POLL_BACKOFF_MILLIS = 1;
   
   public static final class Config {
+    @FunctionalInterface
+    public interface LogLine extends Consumer<String> {}
+    
     int maxYields = 100;
     
     int debugMessageCounts = 0;
+    
+    LogLine logLine = System.out::println;
     
     public Config withMaxYields(int maxYields) {
       this.maxYields = maxYields;
@@ -32,6 +38,11 @@ public final class MultiNodeQueueLedger implements Ledger {
     
     public Config withDebugMessageCounts(int debugMessageCounts) {
       this.debugMessageCounts = debugMessageCounts;
+      return this;
+    }
+    
+    public Config withLogLine(LogLine logLine) {
+      this.logLine = logLine;
       return this;
     }
   }
@@ -48,6 +59,8 @@ public final class MultiNodeQueueLedger implements Ledger {
   private final int debugMessageCounts;
   
   private final int maxYields;
+  
+  private final LogLine logLine;
   
   private class NodeWorker implements WorkerCycle {
     private final MessageHandler handler;
@@ -70,7 +83,7 @@ public final class MultiNodeQueueLedger implements Ledger {
         if (debugMessageCounts != 0) {
           final long consumed = this.consumed.getAndIncrement();
           if (consumed % debugMessageCounts == 0) {
-            System.out.format("groupId=%s, consumed=%,d \n", groupId, consumed);
+            logLine.accept(String.format("groupId=%s, consumed=%,d", groupId, consumed));
           }
         }
         
@@ -91,6 +104,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   public MultiNodeQueueLedger(Config config) {
     maxYields = config.maxYields;
     debugMessageCounts = config.debugMessageCounts;
+    logLine = config.logLine;
   }
   
   @Override
@@ -113,7 +127,7 @@ public final class MultiNodeQueueLedger implements Ledger {
     if (debugMessageCounts != 0) {
       final long appends = this.appends.getAndIncrement();
       if (appends % debugMessageCounts == 0) {
-        System.out.format("appends=%,d\n", appends);
+        logLine.accept(String.format("appends=%,d", appends));
       }
     }
     
