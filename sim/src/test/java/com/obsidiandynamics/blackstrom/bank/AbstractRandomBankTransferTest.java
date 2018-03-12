@@ -55,16 +55,20 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     final AtomicInteger aborts = new AtomicInteger();
     final AtomicInteger timeouts = new AtomicInteger();
     
-    final AtomicBoolean progressMonitorRunning = new AtomicBoolean(true);
-    final Thread t = new Thread(() -> {
-      while (progressMonitorRunning.get()) {
-        System.out.format("%,d commits | %,d aborts | %,d timeouts\n", 
-                          commits.get(), aborts.get(), timeouts.get());
+    final long started = System.currentTimeMillis();
+    final AtomicBoolean progressLoggerThreadRunning = new AtomicBoolean(true);
+    final Thread progressLoggerThread = new Thread(() -> {
+      while (progressLoggerThreadRunning.get()) {
         TestSupport.sleep(2000);
+        final int c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
+        final long took = System.currentTimeMillis() - started;
+        final double rate = 1000d * s / took;
+        System.out.format("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]\n", 
+                          c, a, t, s, rate);
       }
-    });
-    t.setDaemon(true);
-    t.start();
+    }, AbstractRandomBankTransferTest.class.getSimpleName() + "-progress");
+    progressLoggerThread.setDaemon(true);
+    progressLoggerThread.start();
     
     final Sandbox sandbox = Sandbox.forInstance(this);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
@@ -119,7 +123,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           }
         }
       }
-      progressMonitorRunning.set(false);
+      progressLoggerThreadRunning.set(false);
       
       wait.until(() -> {
         assertEquals(runs, commits.get() + aborts.get() + timeouts.get());
