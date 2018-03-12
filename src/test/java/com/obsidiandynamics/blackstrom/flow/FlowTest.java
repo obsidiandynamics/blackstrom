@@ -80,9 +80,8 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
-    expected.forEach(i -> {
-      cons.add(flow.begin(i, new TestTask(completed, i)));
-    });
+    TestSupport.sleep(10); // covers the idle wait branch of StrictFiringStrategy.cycle()
+    expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     
     cons.forEach(a -> a.confirm());
     wait.until(ListQuery.of(completed).isSize(runs));
@@ -174,6 +173,7 @@ public final class FlowTest {
     final List<Integer> completed = new CopyOnWriteArrayList<>();
     final List<FlowConfirmation> cons = new ArrayList<>(runs);
 
+    TestSupport.sleep(10); // covers the idle wait branch of StrictFiringStrategy.cycle()
     expected.forEach(i -> cons.add(flow.begin(i, new TestTask(completed, i))));
     ListQuery.of(cons).delayedBy(1).forEach(a -> a.confirm());
 
