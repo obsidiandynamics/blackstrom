@@ -122,6 +122,7 @@ project.ext.set('benchmarkClasses', new ArrayList())
 task addBenchmarks() {
   project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
   project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedgerTest'
+  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.scheduler.TaskSchedulerTest'
 }
 
 task launch() {
