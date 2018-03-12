@@ -291,6 +291,7 @@ public final class MonitorEngineTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     
+    wait.until(() -> assertEquals(1, monitor.getEngine().getNumReapedOutcomes()));
     wait.until(numTrackedOutcomesIs(0));
   }
   
@@ -387,7 +388,7 @@ public final class MonitorEngineTest {
   }
   
   @Test(expected=IllegalStateException.class)
-  public void testNoTracking() {
+  public void testNoTracking_getOutcomes() {
     setMonitorAndInit(new DefaultMonitor(new MonitorEngineConfig()
                                          .withTrackingEnabled(false)));
     
@@ -398,6 +399,13 @@ public final class MonitorEngineTest {
     
     wait.until(numOutcomesIs(1));
     monitor.getEngine().getOutcomes();
+  }
+  
+  @Test(expected=IllegalStateException.class)
+  public void testNoTracking_getNumReapedOutcomes() {
+    setMonitorAndInit(new DefaultMonitor(new MonitorEngineConfig()
+                                         .withTrackingEnabled(false)));
+    monitor.getEngine().getNumReapedOutcomes();
   }
   
   @Test

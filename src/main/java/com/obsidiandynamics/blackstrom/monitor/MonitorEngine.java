@@ -162,6 +162,12 @@ public final class MonitorEngine implements Disposable {
     return Collections.unmodifiableList(decidedCopy);
   }
   
+  public long getNumReapedOutcomes() {
+    if (! trackingEnabled) throw new IllegalStateException("Tracking is not enabled");
+    
+    return reapedSoFar;
+  }
+  
   public void onProposal(MessageContext context, Proposal proposal) {
     synchronized (messageLock) {
       final PendingBallot newBallot = new PendingBallot(proposal);
