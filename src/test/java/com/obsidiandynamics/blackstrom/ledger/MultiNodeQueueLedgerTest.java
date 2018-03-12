@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -10,7 +11,6 @@ import java.util.stream.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
-import org.mockito.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
