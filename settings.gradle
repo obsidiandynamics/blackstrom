@@ -6,6 +6,9 @@ project(':blackstrom-codec-jackson').projectDir = new File(settingsDir, 'codec-j
 include 'blackstrom-codec-kryo'
 project(':blackstrom-codec-kryo').projectDir = new File(settingsDir, 'codec-kryo')
 
+include 'blackstrom-hazelcast'
+project(':blackstrom-hazelcast').projectDir = new File(settingsDir, 'hazelcast')
+
 include 'blackstrom-kafka'
 project(':blackstrom-kafka').projectDir = new File(settingsDir, 'kafka')
 
