@@ -2,10 +2,10 @@ package com.obsidiandynamics.blackstrom.hazelcast.elect;
 
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 
-public final class NotLeaderException extends HazelException {
+public final class NotTenantException extends HazelException {
   private static final long serialVersionUID = 1L;
 
-  NotLeaderException(String m, Throwable cause) {
+  NotTenantException(String m, Throwable cause) {
     super(m, cause);
   }
 }

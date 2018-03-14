@@ -100,7 +100,7 @@ public final class Election implements Joinable {
     return leaseView;
   }
   
-  public void touch(String resource, UUID tenant) throws NotLeaderException {
+  public void touch(String resource, UUID tenant) throws NotTenantException {
     for (;;) {
       final Lease existingLease = checkCurrent(resource, tenant);
       final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
@@ -114,7 +114,7 @@ public final class Election implements Joinable {
     }
   }
   
-  public void yield(String resource, UUID tenant) throws NotLeaderException {
+  public void yield(String resource, UUID tenant) throws NotTenantException {
     for (;;) {
       final Lease existingLease = checkCurrent(resource, tenant);
       final boolean removed = leaseTable.remove(resource, existingLease.pack());
@@ -127,12 +127,12 @@ public final class Election implements Joinable {
     }
   }
   
-  private Lease checkCurrent(String resource, UUID assumedTenant) throws NotLeaderException {
+  private Lease checkCurrent(String resource, UUID assumedTenant) throws NotTenantException {
     final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
     if (! existingLease.isHeldByAndCurrent(assumedTenant)) {
       final String m = String.format("Leader of %s is %s until %s", 
                                      resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
-      throw new NotLeaderException(m, null);
+      throw new NotTenantException(m, null);
     } else {
       return existingLease;
     }
