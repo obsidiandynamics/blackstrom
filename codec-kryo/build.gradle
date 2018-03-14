@@ -1,14 +1,14 @@
-def packageName = 'blackstrom-codec-kryo'
-version = project(':').version
+def packageName = "blackstrom-codec-kryo"
+version = project(":").version
 
 dependencies {
-  compile project(':')
-  compile 'com.esotericsoftware:kryo:4.0.1'
+  compile project(":")
+  compile "com.esotericsoftware:kryo:4.0.1"
 }
 
 task addBenchmarks() {
-  project(':').benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  project(':').benchmarkClasses += 'com.obsidiandynamics.blackstrom.codec.KryoMessageCodecTest'
+  project(":").benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.codec.KryoMessageCodecTest"
 }
 
 jar {
@@ -17,14 +17,14 @@ jar {
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
   baseName packageName
-  classifier = 'javadoc'
+  classifier = "javadoc"
   from "$buildDir/docs/javadoc"
 }
  
 task sourcesJar(type: Jar) {
   baseName packageName
   from sourceSets.main.allSource
-  classifier = 'sources'
+  classifier = "sources"
 }
  
 artifacts {
@@ -36,9 +36,9 @@ artifacts {
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId project(':').group
+      groupId project(":").group
       artifactId packageName
-      version project(':').version
+      version project(":").version
       from components.java
       artifact sourcesJar
       artifact javadocJar
@@ -51,21 +51,21 @@ publishing {
   }
 }
 
-def envUser = 'BINTRAY_USER'
-def envKey = 'BINTRAY_KEY'
-def packageDesc = 'Kryo (binary) serialization support'
-def repoName = 'blackstrom'
+def envUser = "BINTRAY_USER"
+def envKey = "BINTRAY_KEY"
+def packageDesc = "Kryo (binary) serialization support"
+def repoName = "blackstrom"
 bintray {
   user = System.getenv(envUser)
   key = System.getenv(envKey)
-  publications = ['mavenJava']
+  publications = ["mavenJava"]
   pkg {
     repo = "${repoName}"
     name = packageName
-    userOrg = 'obsidiandynamics'
+    userOrg = "obsidiandynamics"
     desc = packageDesc
     websiteUrl = "https://github.com/obsidiandynamics/${repoName}"
-    licenses = ['BSD New']
+    licenses = ["BSD New"]
     vcsUrl = "https://github.com/obsidiandynamics/${repoName}"
     issueTrackerUrl = "https://github.com/obsidiandynamics/${repoName}/issues"
     publicDownloadNumbers = true
@@ -73,10 +73,10 @@ bintray {
     override = true
     publish = false
     version {
-      name = project(':').version
+      name = project(":").version
       desc = packageDesc
       released  = new Date()
-      vcsTag = project(':').version
+      vcsTag = project(":").version
     }
   }
 }

@@ -1,17 +1,17 @@
-rootProject.name = 'blackstrom'
+rootProject.name = "blackstrom"
 
-include 'blackstrom-codec-jackson'
-project(':blackstrom-codec-jackson').projectDir = new File(settingsDir, 'codec-jackson')
+include "blackstrom-codec-jackson"
+project(":blackstrom-codec-jackson").projectDir = new File(settingsDir, "codec-jackson")
 
-include 'blackstrom-codec-kryo'
-project(':blackstrom-codec-kryo').projectDir = new File(settingsDir, 'codec-kryo')
+include "blackstrom-codec-kryo"
+project(":blackstrom-codec-kryo").projectDir = new File(settingsDir, "codec-kryo")
 
-include 'blackstrom-hazelcast'
-project(':blackstrom-hazelcast').projectDir = new File(settingsDir, 'hazelcast')
+include "blackstrom-hazelcast"
+project(":blackstrom-hazelcast").projectDir = new File(settingsDir, "hazelcast")
 
-include 'blackstrom-kafka'
-project(':blackstrom-kafka').projectDir = new File(settingsDir, 'kafka')
+include "blackstrom-kafka"
+project(":blackstrom-kafka").projectDir = new File(settingsDir, "kafka")
 
-include 'blackstrom-sim'
-project(':blackstrom-sim').projectDir = new File(settingsDir, 'sim')
+include "blackstrom-sim"
+project(":blackstrom-sim").projectDir = new File(settingsDir, "sim")
 
