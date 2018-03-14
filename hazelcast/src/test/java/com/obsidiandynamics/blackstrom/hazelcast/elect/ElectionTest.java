@@ -40,7 +40,7 @@ public final class ElectionTest {
   
   private HazelcastInstance newInstance() {
     final Config config = new Config()
-        .setProperty("hazelcast.logging.type", "slf4j");
+        .setProperty("hazelcast.logging.type", "none");
     final HazelcastInstance instance = new MockHazelcastInstanceFactory().create(config);
     instances.add(instance);
     return instance;
@@ -88,7 +88,7 @@ public final class ElectionTest {
     
     await.until(() -> assertEquals(1, e.getLeaseView().asMap().size()));
     verify(handler, never()).onAssign(eq("resource"), eq(c));
-    verify(handler, atLeastOnce()).onExpire(eq("resource"), eq(o));
+    await.until(() -> verify(handler, atLeastOnce()).onExpire(eq("resource"), eq(o)));
   }
 
   @Test
