@@ -133,11 +133,24 @@ public final class TaskScheduler implements Joinable {
   public void schedule(Task task) {
     tasks.add(task);
     if (task.getTime() < nextWake) {
-      synchronized (sleepLock) {
-        if (task.getTime() < nextWake) {
-          nextWake = task.getTime();
-          sleepLock.notify();
-        }
+      adjustWakeHorizon(task);
+    }
+  }
+  
+  /**
+   *  Conditionally brings the wake horizon forward if the task is sooner
+   *  than the wake horizon.<p>
+   *  
+   *  This method has been extracted to facilitate unit testing, which is otherwise
+   *  non-deterministic due to the use of double-checking in {@link #schedule(Task)}.
+   *  
+   *  @param task The task to be scheduled.
+   */
+  void adjustWakeHorizon(Task task) {
+    synchronized (sleepLock) {
+      if (task.getTime() < nextWake) {
+        nextWake = task.getTime();
+        sleepLock.notify();
       }
     }
   }

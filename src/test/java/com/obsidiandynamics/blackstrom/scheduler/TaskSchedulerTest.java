@@ -113,7 +113,15 @@ public final class TaskSchedulerTest implements TestSupport {
     for (int i = tasks; --i >= 0; ) {
       final TestTask task = doIn(new UUID(0, i), referenceNanos, i);
       ids.add(task.getId());
-      scheduler.schedule(task);
+      
+      // alternate method call order to cover the double-checked adjustment of wake horizon
+      if (i % 2 == 0) {
+        scheduler.schedule(task);
+        scheduler.adjustWakeHorizon(task); 
+      } else {
+        scheduler.adjustWakeHorizon(task); 
+        scheduler.schedule(task);
+      }
     }
     
     TestSupport.await(barrier); // resume scheduling
