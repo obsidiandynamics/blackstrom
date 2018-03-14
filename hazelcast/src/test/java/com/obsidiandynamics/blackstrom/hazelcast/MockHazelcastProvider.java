@@ -11,4 +11,9 @@ public final class MockHazelcastProvider implements HazelcastProvider {
   public HazelcastInstance createInstance(Config config) {
     return factory.newHazelcastInstance(config);
   }
+
+  @Override
+  public void shutdownAll() {
+    factory.shutdownAll();
+  }
 }

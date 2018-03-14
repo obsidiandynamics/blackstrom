@@ -4,16 +4,13 @@ import java.util.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
-import com.hazelcast.test.*;
 
 public final class HazelcastSampleTester {
   public static void main(String[] args) {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "slf4j");
     
-    final HazelcastProvider provider = 
-        new TestHazelcastInstanceFactory()::newHazelcastInstance;
-    
+    final HazelcastProvider provider = GridHazelcastProvider.getInstance();
     final HazelcastInstance h0 = provider.createInstance(config);
     final HazelcastInstance h1 = provider.createInstance(config);
     useInstance(h0);

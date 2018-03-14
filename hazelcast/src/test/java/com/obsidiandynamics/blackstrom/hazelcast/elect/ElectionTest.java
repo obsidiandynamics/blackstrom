@@ -25,12 +25,7 @@ public final class ElectionTest {
     return TestCycle.timesQuietly(1);
   }
   
-  private static HazelcastProvider defaultProvider;
-  
-  @BeforeClass
-  public static void beforeClass() {
-    defaultProvider = new MockHazelcastProvider();
-  }
+  private HazelcastProvider defaultProvider;
   
   private final Set<HazelcastInstance> instances = new HashSet<>();
   
@@ -38,11 +33,16 @@ public final class ElectionTest {
   
   private final Timesert await = Wait.SHORT;
   
+  @Before
+  public void before() {
+    defaultProvider = new MockHazelcastProvider();
+  }
+  
   @After
   public void after() {
     elections.forEach(e -> e.terminate());
     elections.forEach(e -> e.joinQuietly());
-    instances.forEach(h -> h.getLifecycleService().terminate());
+    instances.forEach(h -> h.shutdown());
   }
   
   private HazelcastInstance newInstance() {

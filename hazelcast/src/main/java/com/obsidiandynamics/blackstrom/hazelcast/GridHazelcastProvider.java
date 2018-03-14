@@ -16,4 +16,9 @@ public final class GridHazelcastProvider implements HazelcastProvider {
   public HazelcastInstance createInstance(Config config) {
     return Hazelcast.newHazelcastInstance(config);
   }
+
+  @Override
+  public void shutdownAll() {
+    Hazelcast.shutdownAll();
+  }
 }
