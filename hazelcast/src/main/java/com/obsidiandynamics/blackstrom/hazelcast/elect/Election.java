@@ -48,7 +48,7 @@ public final class Election implements Joinable {
         if (existingLease.isVacant()) {
           log.debug("Lease of {} is vacant", resource); 
         } else {
-          log.debug("Lease of {} held by {} expired at {}", resource, existingLease.getCandidateId(), new Date(existingLease.getExpiry()));
+          log.debug("Lease of {} held by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
         }
         
         final UUID nextCandidateId = register.getRandomCandidate(resource);
@@ -106,7 +106,7 @@ public final class Election implements Joinable {
           reloadView();
         }
       } else {
-        final String m = String.format("Leader of %s is %s until %s", resource, existingLease.getCandidateId(), new Date(existingLease.getExpiry()));
+        final String m = String.format("Leader of %s is %s until %s", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
         throw new NotLeaderException(m, null);
       }
     }

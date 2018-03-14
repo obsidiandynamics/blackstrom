@@ -44,7 +44,7 @@ public final class LeaseTest {
   public void testFields() {
     final UUID c = UUID.randomUUID();
     final Lease current = new Lease(c, Long.MAX_VALUE);
-    assertEquals(c, current.getCandidateId());
+    assertEquals(c, current.getTenant());
     assertEquals(Long.MAX_VALUE, current.getExpiry());
   }
   

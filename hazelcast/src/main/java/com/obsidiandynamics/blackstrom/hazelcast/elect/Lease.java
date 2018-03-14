@@ -8,29 +8,29 @@ import org.apache.commons.lang3.builder.*;
 public final class Lease {
   static final Lease VACANT = new Lease(null, 0);
   
-  private final UUID candidateId;
+  private final UUID tenant;
   
   private final long expiry;
 
-  Lease(UUID candidateId, long expiry) {
-    this.candidateId = candidateId;
+  Lease(UUID tenant, long expiry) {
+    this.tenant = tenant;
     this.expiry = expiry;
   }
   
   public boolean isVacant() {
-    return candidateId == null;
+    return tenant == null;
   }
   
   public boolean isHeldBy(UUID candidateId) {
-    return candidateId.equals(this.candidateId);
+    return candidateId.equals(tenant);
   }
   
   public boolean isHeldByAndCurrent(UUID candidateId) {
     return isHeldBy(candidateId) && isCurrent();
   }
   
-  public UUID getCandidateId() {
-    return candidateId;
+  public UUID getTenant() {
+    return tenant;
   }
 
   public long getExpiry() {
@@ -39,7 +39,7 @@ public final class Lease {
   
   @Override
   public int hashCode() {
-    return new HashCodeBuilder().append(candidateId).append(expiry).hashCode();
+    return new HashCodeBuilder().append(tenant).append(expiry).hashCode();
   }
   
   @Override
@@ -48,7 +48,7 @@ public final class Lease {
       return true;
     } else if (obj instanceof Lease) {
       final Lease that = (Lease) obj;
-      return new EqualsBuilder().append(candidateId, that.candidateId).append(expiry, that.expiry).isEquals();
+      return new EqualsBuilder().append(tenant, that.tenant).append(expiry, that.expiry).isEquals();
     } else {
       return false;
     }
@@ -60,13 +60,13 @@ public final class Lease {
 
   @Override
   public String toString() {
-    return Lease.class.getSimpleName() + " [candidateId=" + candidateId + ", expiry=" + expiry + "]";
+    return Lease.class.getSimpleName() + " [tenant=" + tenant + ", expiry=" + expiry + "]";
   }
   
   byte[] pack() {
     final ByteBuffer buf = ByteBuffer.allocate(24);
-    buf.putLong(candidateId.getMostSignificantBits());
-    buf.putLong(candidateId.getLeastSignificantBits());
+    buf.putLong(tenant.getMostSignificantBits());
+    buf.putLong(tenant.getLeastSignificantBits());
     buf.putLong(expiry);
     return buf.array();
   }
