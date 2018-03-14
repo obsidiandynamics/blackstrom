@@ -6,19 +6,19 @@ public final class Register {
   private final Map<String, Set<UUID>> candidates = new HashMap<>();
   private final Object lock = new Object();
   
-  public void enroll(String interestKey, UUID candidateId) {
+  public void enroll(String resource, UUID candidate) {
     synchronized (lock) {
-      final Set<UUID> candidatesForKey = candidates.computeIfAbsent(interestKey, k -> new HashSet<>());
-      candidatesForKey.add(candidateId);
+      final Set<UUID> candidatesForResource = candidates.computeIfAbsent(resource, k -> new HashSet<>());
+      candidatesForResource.add(candidate);
     }
   }
   
-  public void unenroll(String interestKey, UUID candidateId) {
+  public void unenroll(String resource, UUID candidate) {
     synchronized (lock) {
-      final Set<UUID> candidatesForKey = candidates.getOrDefault(interestKey, Collections.emptySet());
-      candidatesForKey.remove(candidateId);
-      if (candidatesForKey.isEmpty()) {
-        candidates.remove(interestKey);
+      final Set<UUID> candidatesForResource = candidates.getOrDefault(resource, Collections.emptySet());
+      candidatesForResource.remove(candidate);
+      if (candidatesForResource.isEmpty()) {
+        candidates.remove(resource);
       }
     }
   }
@@ -33,14 +33,14 @@ public final class Register {
     return Collections.unmodifiableMap(copy);
   }
   
-  UUID getRandomCandidate(String interestKey) {
+  UUID getRandomCandidate(String resource) {
     synchronized (lock) {
-      final Set<UUID> candidatesForKey = candidates.getOrDefault(interestKey, Collections.emptySet());
-      if (candidatesForKey.isEmpty()) {
+      final Set<UUID> candidatesForResource = candidates.getOrDefault(resource, Collections.emptySet());
+      if (candidatesForResource.isEmpty()) {
         return null;
       } else {
-        final int randomIndex = (int) (Math.random() * candidatesForKey.size());
-        return new ArrayList<>(candidatesForKey).get(randomIndex);
+        final int randomIndex = (int) (Math.random() * candidatesForResource.size());
+        return new ArrayList<>(candidatesForResource).get(randomIndex);
       }
     }
   }

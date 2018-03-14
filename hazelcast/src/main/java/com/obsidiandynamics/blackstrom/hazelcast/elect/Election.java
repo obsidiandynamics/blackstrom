@@ -14,7 +14,7 @@ public final class Election implements Joinable {
   
   private final IMap<String, byte[]> leaseTable;
   
-  private final LeadershipAssignmentHandler assignmentHandler;
+  private final LeaseChangeHandler changeHandler;
   
   private final Register register;
   
@@ -22,10 +22,10 @@ public final class Election implements Joinable {
   
   private volatile LeaseViewImpl leaseView = new LeaseViewImpl();
   
-  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, LeadershipAssignmentHandler assignmentHandler) {
+  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, LeaseChangeHandler changeHandler) {
     this.config = config;
     this.leaseTable = leaseTable;
-    this.assignmentHandler = assignmentHandler;
+    this.changeHandler = changeHandler;
     register = new Register();
     
     scavengerThread = WorkerThread.builder()
@@ -45,16 +45,17 @@ public final class Election implements Joinable {
     for (String resource : resources) {
       final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
       if (! existingLease.isCurrent()) {
+        changeHandler.onExpire(resource, existingLease.getTenant());
         if (existingLease.isVacant()) {
           log.debug("Lease of {} is vacant", resource); 
         } else {
-          log.debug("Lease of {} held by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
+          log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
         }
         
-        final UUID nextCandidateId = register.getRandomCandidate(resource);
-        if (nextCandidateId != null) {
+        final UUID nextCandidate = register.getRandomCandidate(resource);
+        if (nextCandidate != null) {
           final boolean success;
-          final Lease newLease = new Lease(nextCandidateId, System.currentTimeMillis() + config.getLeaseDuration());
+          final Lease newLease = new Lease(nextCandidate, System.currentTimeMillis() + config.getLeaseDuration());
           if (existingLease.isVacant()) {
             final byte[] previous = leaseTable.putIfAbsent(resource, newLease.pack());
             success = previous == null;
@@ -63,9 +64,9 @@ public final class Election implements Joinable {
           }
           
           if (success) {
-            log.debug("New lease of {} by {} until {}", resource, nextCandidateId, new Date(newLease.getExpiry()));
+            log.debug("New lease of {} by {} until {}", resource, nextCandidate, new Date(newLease.getExpiry()));
             updateViewWithLease(resource, newLease);
-            assignmentHandler.onAssign(resource, nextCandidateId);
+            changeHandler.onAssign(resource, nextCandidate);
           }
         }
       }
@@ -93,11 +94,11 @@ public final class Election implements Joinable {
     return leaseView;
   }
   
-  public void touch(String resource, UUID candidateId) throws NotLeaderException {
+  public void touch(String resource, UUID tenant) throws NotLeaderException {
     for (;;) {
       final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
-      if (existingLease.isHeldByAndCurrent(candidateId)) {
-        final Lease newLease = new Lease(candidateId, System.currentTimeMillis() + config.getLeaseDuration());
+      if (existingLease.isHeldByAndCurrent(tenant)) {
+        final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
         final boolean updated = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
         if (updated) {
           updateViewWithLease(resource, newLease);

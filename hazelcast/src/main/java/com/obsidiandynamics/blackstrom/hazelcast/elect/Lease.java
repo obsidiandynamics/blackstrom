@@ -21,12 +21,12 @@ public final class Lease {
     return tenant == null;
   }
   
-  public boolean isHeldBy(UUID candidateId) {
-    return candidateId.equals(tenant);
+  public boolean isHeldBy(UUID candidate) {
+    return candidate.equals(tenant);
   }
   
-  public boolean isHeldByAndCurrent(UUID candidateId) {
-    return isHeldBy(candidateId) && isCurrent();
+  public boolean isHeldByAndCurrent(UUID candidate) {
+    return isHeldBy(candidate) && isCurrent();
   }
   
   public UUID getTenant() {
@@ -73,8 +73,8 @@ public final class Lease {
   
   static Lease unpack(byte[] bytes) {
     final ByteBuffer buf = ByteBuffer.wrap(bytes);
-    final UUID candidateId = new UUID(buf.getLong(), buf.getLong());
+    final UUID tenant = new UUID(buf.getLong(), buf.getLong());
     final long expiry = buf.getLong();
-    return new Lease(candidateId, expiry);
+    return new Lease(tenant, expiry);
   }
 }
