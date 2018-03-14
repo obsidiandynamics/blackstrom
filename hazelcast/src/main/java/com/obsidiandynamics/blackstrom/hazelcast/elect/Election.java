@@ -16,7 +16,7 @@ public final class Election implements Joinable {
   
   private final LeaseChangeHandler changeHandler;
   
-  private final Register register;
+  private final Registry registry;
   
   private final WorkerThread scavengerThread;
   
@@ -26,7 +26,7 @@ public final class Election implements Joinable {
     this.config = config;
     this.leaseTable = leaseTable;
     this.changeHandler = changeHandler;
-    register = new Register();
+    registry = new Registry();
     
     scavengerThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName(Election.class, "scavenger").withDaemon(true))
@@ -34,14 +34,14 @@ public final class Election implements Joinable {
         .buildAndStart();
   }
   
-  public Register getRegister() {
-    return register;
+  public Registry getRegistry() {
+    return registry;
   }
   
   private void scavegeCycle(WorkerThread t) throws InterruptedException {
     reloadView();
     
-    final Set<String> resources = register.getCandidatesView().keySet();
+    final Set<String> resources = registry.getCandidatesView().keySet();
     for (String resource : resources) {
       final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
       if (! existingLease.isCurrent()) {
@@ -52,7 +52,7 @@ public final class Election implements Joinable {
           log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
         }
         
-        final UUID nextCandidate = register.getRandomCandidate(resource);
+        final UUID nextCandidate = registry.getRandomCandidate(resource);
         if (nextCandidate != null) {
           final boolean success;
           final Lease newLease = new Lease(nextCandidate, System.currentTimeMillis() + config.getLeaseDuration());
@@ -89,6 +89,12 @@ public final class Election implements Joinable {
     newLeaseView.put(resource, lease);
     leaseView = newLeaseView;
   }
+  
+  private void updateViewRemoveLease(String resource) {
+    final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
+    newLeaseView.remove(resource);
+    leaseView = newLeaseView;
+  }
 
   public LeaseView getLeaseView() {
     return leaseView;
@@ -96,20 +102,39 @@ public final class Election implements Joinable {
   
   public void touch(String resource, UUID tenant) throws NotLeaderException {
     for (;;) {
-      final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
-      if (existingLease.isHeldByAndCurrent(tenant)) {
-        final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
-        final boolean updated = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
-        if (updated) {
-          updateViewWithLease(resource, newLease);
-          return;
-        } else {
-          reloadView();
-        }
+      final Lease existingLease = checkCurrent(resource, tenant);
+      final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
+      final boolean novated = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
+      if (novated) {
+        updateViewWithLease(resource, newLease);
+        return;
       } else {
-        final String m = String.format("Leader of %s is %s until %s", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
-        throw new NotLeaderException(m, null);
+        reloadView();
       }
+    }
+  }
+  
+  public void yield(String resource, UUID tenant) throws NotLeaderException {
+    for (;;) {
+      final Lease existingLease = checkCurrent(resource, tenant);
+      final boolean removed = leaseTable.remove(resource, existingLease.pack());
+      if (removed) {
+        updateViewRemoveLease(resource);
+        return;
+      } else {
+        reloadView();
+      }
+    }
+  }
+  
+  private Lease checkCurrent(String resource, UUID assumedTenant) throws NotLeaderException {
+    final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
+    if (! existingLease.isHeldByAndCurrent(assumedTenant)) {
+      final String m = String.format("Leader of %s is %s until %s", 
+                                     resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
+      throw new NotLeaderException(m, null);
+    } else {
+      return existingLease;
     }
   }
   

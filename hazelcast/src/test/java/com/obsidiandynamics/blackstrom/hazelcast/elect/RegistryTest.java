@@ -8,15 +8,15 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
-public final class RegisterTest {
+public final class RegistryTest {
   @Test
   public void testToString() {
-    Assertions.assertToStringOverride(new Register());
+    Assertions.assertToStringOverride(new Registry());
   }
   
   @Test 
   public void testEnrollUnenroll() {
-    final Register r = new Register();
+    final Registry r = new Registry();
     assertEquals(Collections.emptyMap(), r.getCandidatesView());    
     assertNull(r.getRandomCandidate("key"));
     

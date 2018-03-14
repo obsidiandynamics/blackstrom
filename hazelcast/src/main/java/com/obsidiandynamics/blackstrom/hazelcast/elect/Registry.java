@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.elect;
 
 import java.util.*;
 
-public final class Register {
+public final class Registry {
   private final Map<String, Set<UUID>> candidates = new HashMap<>();
   private final Object lock = new Object();
   
@@ -47,6 +47,6 @@ public final class Register {
 
   @Override
   public String toString() {
-    return Register.class.getSimpleName() + " [candidates=" + candidates + "]";
+    return Registry.class.getSimpleName() + " [candidates=" + candidates + "]";
   }
 }
