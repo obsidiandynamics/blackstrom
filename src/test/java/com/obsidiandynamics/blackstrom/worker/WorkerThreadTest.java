@@ -308,4 +308,18 @@ public final class WorkerThreadTest {
     
     assertTrue(baos.toByteArray().length > 0);
   }
+  
+  @Test
+  public void testWithNameNoFrags() {
+    final WorkerOptions opts = new WorkerOptions()
+        .withName(WorkerThreadTest.class);
+    assertEquals(WorkerThreadTest.class.getSimpleName(), opts.getName());
+  }
+  
+  @Test
+  public void testWithNameFrags() {
+    final WorkerOptions opts = new WorkerOptions()
+        .withName(WorkerThreadTest.class, 1, 2, 3);
+    assertEquals(WorkerThreadTest.class.getSimpleName() + "-1-2-3", opts.getName());
+  }
 }

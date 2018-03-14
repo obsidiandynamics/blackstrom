@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.worker;
 
+import com.obsidiandynamics.concat.*;
+
 public final class WorkerOptions {
   private String name;
   
@@ -14,6 +16,14 @@ public final class WorkerOptions {
   public WorkerOptions withName(String name) {
     this.name = name;
     return this;
+  }
+  
+  public WorkerOptions withName(Class<?> cls, Object... nameFrags) {
+    final String name = new Concat()
+        .append(cls.getSimpleName())
+        .when(nameFrags.length > 0).append(new Concat().append("-").appendArray("-", nameFrags))
+        .toString();
+    return withName(name);
   }
 
   public boolean isDaemon() {

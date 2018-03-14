@@ -113,6 +113,7 @@ def packageName = 'blackstrom-core'
 dependencies {
   compile 'org.slf4j:slf4j-api:1.7.25'
   compile 'com.obsidiandynamics.yconf:yconf-core:0.2.1'
+  compile 'com.obsidiandynamics.fulcrum:fulcrum-concat:0.4.0'
   compile 'org.apache.commons:commons-lang3:3.7'
 }
 
