@@ -7,7 +7,7 @@ import org.junit.*;
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 
-public final class DefaultHazelcastInstanceFactoryTest {
+public final class GridHazelcastProviderTest {
   private HazelcastInstance instance;
   
   @After
@@ -30,7 +30,7 @@ public final class DefaultHazelcastInstanceFactoryTest {
     config.setNetworkConfig(new NetworkConfig().setJoin(new JoinConfig()
                                                         .setMulticastConfig(multicastConfig)
                                                         .setTcpIpConfig(tcpIpConfig)));
-    instance = DefaultHazelcastInstanceFactory.getInstance().create(config);
+    instance = GridHazelcastProvider.getInstance().createInstance(config);
     assertNotNull(instance);
   }
 }

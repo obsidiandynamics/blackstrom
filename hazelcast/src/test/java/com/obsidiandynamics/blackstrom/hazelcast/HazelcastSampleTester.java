@@ -11,11 +11,11 @@ public final class HazelcastSampleTester {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "slf4j");
     
-    final HazelcastInstanceFactory instanceFactory = 
+    final HazelcastProvider provider = 
         new TestHazelcastInstanceFactory()::newHazelcastInstance;
     
-    final HazelcastInstance h0 = instanceFactory.create(config);
-    final HazelcastInstance h1 = instanceFactory.create(config);
+    final HazelcastInstance h0 = provider.createInstance(config);
+    final HazelcastInstance h1 = provider.createInstance(config);
     useInstance(h0);
     useInstance(h1);
     h0.shutdown();
@@ -24,12 +24,12 @@ public final class HazelcastSampleTester {
   
   private static void useInstance(HazelcastInstance instance) {
     final Map<Integer, String> mapCustomers = instance.getMap("customers");
-    mapCustomers.put(1, "Joe");
-    mapCustomers.put(2, "Ali");
-    mapCustomers.put(3, "Avi");
+    mapCustomers.put(1, "Alpha");
+    mapCustomers.put(2, "Bravo");
+    mapCustomers.put(3, "Charlie");
 
-    System.out.println("Customer with key 1: "+ mapCustomers.get(1));
-    System.out.println("Map Size: " + mapCustomers.size());
+    System.out.println("Customer with key 1: " + mapCustomers.get(1));
+    System.out.println("Map size: " + mapCustomers.size());
 
     final Queue<String> queueCustomers = instance.getQueue("customers");
     queueCustomers.offer("Tom");

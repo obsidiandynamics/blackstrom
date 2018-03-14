@@ -41,7 +41,7 @@ public final class ElectionTest {
   private HazelcastInstance newInstance() {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "none");
-    final HazelcastInstance instance = new MockHazelcastInstanceFactory().create(config);
+    final HazelcastInstance instance = new MockHazelcastProvider().createInstance(config);
     instances.add(instance);
     return instance;
   }

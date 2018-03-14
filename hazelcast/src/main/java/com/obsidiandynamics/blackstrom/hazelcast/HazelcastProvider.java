@@ -4,6 +4,6 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 
 @FunctionalInterface
-public interface HazelcastInstanceFactory {
-  HazelcastInstance create(Config config);
+public interface HazelcastProvider {
+  HazelcastInstance createInstance(Config config);
 }

@@ -4,11 +4,11 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.test.*;
 
-public final class MockHazelcastInstanceFactory implements HazelcastInstanceFactory {
+public final class MockHazelcastProvider implements HazelcastProvider {
   private final TestHazelcastInstanceFactory factory = new TestHazelcastInstanceFactory();
   
   @Override
-  public HazelcastInstance create(Config config) {
+  public HazelcastInstance createInstance(Config config) {
     return factory.newHazelcastInstance(config);
   }
 }
