@@ -18,6 +18,17 @@ public final class WorkerOptions {
     return this;
   }
   
+  /**
+   *  Helper for naming the thread by taking the simple name of the given class (i.e. {@link Class#getSimpleName()})
+   *  and concatenating hyphen-delimited {@code nameFrags}.<p>
+   *  
+   *  Example 1: {@code withName(Reaper.class)} results in {@code Reaper}.<br>
+   *  Example 2: {@code withName(Reaper.class, "collector", 0)} results in {@code Reaper-collector-0}.<br>
+   *  
+   *  @param cls The class name.
+   *  @param nameFrags The name fragments.
+   *  @return This {@link WorkerOptions} instance for fluent chaining.
+   */
   public WorkerOptions withName(Class<?> cls, Object... nameFrags) {
     final String name = new Concat()
         .append(cls.getSimpleName())
