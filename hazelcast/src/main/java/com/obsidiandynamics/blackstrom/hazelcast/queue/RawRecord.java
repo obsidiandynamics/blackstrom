@@ -1,7 +1,7 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 public final class RawRecord {
-  private static final long UNASSIGNED_OFFSET = -1;
+  public static final long UNASSIGNED_OFFSET = -1;
   
   private long offset = UNASSIGNED_OFFSET;
   

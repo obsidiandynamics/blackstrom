@@ -1,6 +1,8 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import com.hazelcast.config.*;
 import com.hazelcast.core.*;
+import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
@@ -28,11 +30,23 @@ final class DefaultQPublisher implements QPublisher, Joinable {
   
   private final QueueConsumer<AsyncRecord> queueConsumer = queue.consumer();
   
+  private final Ringbuffer<byte[]> buffer;
+  
   private int yields;
 
   DefaultQPublisher(HazelcastInstance instance, QPublisherConfig config) {
     this.instance = instance;
     this.config = config;
+    
+    final String streamFQName = QNamespace.HAZELQ_STREAM.qualify(config.getStreamConfig().getName());
+    final RingbufferConfig ringbufferConfig = new RingbufferConfig(streamFQName)
+        .setBackupCount(config.getStreamConfig().getSyncReplicas())
+        .setAsyncBackupCount(config.getStreamConfig().getAsyncReplicas())
+        .setCapacity(config.getStreamConfig().getInMemCapacity());
+    instance.getConfig().addRingBufferConfig(ringbufferConfig);
+    
+    buffer = instance.getRingbuffer(streamFQName);
+    
     publishThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultQPublisher.class, "publisher"))
         .onCycle(this::publishCycle)
@@ -52,7 +66,13 @@ final class DefaultQPublisher implements QPublisher, Joinable {
   }
   
   private void sendNow(RawRecord record, PublishCallback callback) {
-    //TODO send and invoke callback
+    try {
+      final long offset = buffer.add(record.getData());
+      record.setOffset(offset);
+      callback.onComplete(offset, null);
+    } catch (Throwable e) {
+      callback.onComplete(RawRecord.UNASSIGNED_OFFSET, e);
+    }
   }
 
   @Override
