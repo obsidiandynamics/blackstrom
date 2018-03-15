@@ -88,10 +88,10 @@ public final class MultiNodeQueueLedger implements Ledger {
         }
         
         handler.onMessage(context, m);
+        yields = 0;
       } else if (yields++ < maxYields) {
         Thread.yield();
       } else {
-        yields = 0;
         Thread.sleep(POLL_BACKOFF_MILLIS);
       }
     }

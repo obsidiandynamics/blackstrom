@@ -59,10 +59,10 @@ public final class ProducerPipe<K, V> implements Joinable {
     final AsyncRecord<K, V> rec = queueConsumer.poll();
     if (rec != null) {
       sendNow(rec.record, rec.callback);
+      yields = 0;
     } else if (yields++ < MAX_YIELDS) {
       Thread.yield();
     } else {
-      yields = 0;
       Thread.sleep(QUEUE_BACKOFF_MILLIS);
     }
   }

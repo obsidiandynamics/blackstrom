@@ -63,10 +63,10 @@ public final class SingleNodeQueueLedger implements Ledger {
       for (MessageHandler handler : handlers) {
         handler.onMessage(context, m);
       }
+      yields = 0;
     } else if (yields++ < maxYields) {
       Thread.yield();
     } else {
-      yields = 0;
       Thread.sleep(POLL_BACKOFF_MILLIS);
     }
   }

@@ -60,10 +60,10 @@ final class DefaultPublisher implements Publisher, Joinable {
     final AsyncRecord rec = queueConsumer.poll();
     if (rec != null) {
       sendNow(rec.record, rec.callback);
+      yields = 0;
     } else if (yields++ < PUBLISH_MAX_YIELDS) {
       Thread.yield();
     } else {
-      yields = 0;
       Thread.sleep(PUBLISH_BACKOFF_MILLIS);
     }
   }

@@ -233,11 +233,12 @@ public final class KafkaLedger implements Ledger {
         }
 
         if (enqueued) {
+          yields = 0;
           break;
-        } else if (yields++ < PIPELINE_MAX_YIELDS) {
+        } else if (yields < PIPELINE_MAX_YIELDS) {
+          yields++;
           Thread.yield();
         } else {
-          yields = 0;
           Thread.sleep(PIPELINE_BACKOFF_MILLIS);
         }
       }
