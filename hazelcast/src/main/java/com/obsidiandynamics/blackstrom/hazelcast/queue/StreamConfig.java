@@ -1,6 +1,9 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import java.util.concurrent.*;
+
 import com.hazelcast.config.*;
+import com.hazelcast.core.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
@@ -9,7 +12,16 @@ public final class StreamConfig {
   private String name;
   
   @YInject
-  private int inMemCapacity = RingbufferConfig.DEFAULT_CAPACITY;
+  private int heapCapacity = RingbufferConfig.DEFAULT_CAPACITY;
+  
+  @YInject
+  private long residualCapacity = Long.MAX_VALUE;
+  
+  @YInject
+  private long residualRetentionMillis = TimeUnit.DAYS.toMillis(7);
+  
+  @YInject
+  private RingbufferStoreFactory<byte[]> residualStoreFactory = null;
   
   @YInject
   private int syncReplicas = RingbufferConfig.DEFAULT_SYNC_BACKUP_COUNT;
@@ -26,12 +38,39 @@ public final class StreamConfig {
     return this;
   }
 
-  int getInMemCapacity() {
-    return inMemCapacity;
+  int getHeapCapacity() {
+    return heapCapacity;
   }
 
-  public StreamConfig withInMemCapacity(int inMemCapacity) {
-    this.inMemCapacity = inMemCapacity;
+  public StreamConfig withHeapCapacity(int heapCapacity) {
+    this.heapCapacity = heapCapacity;
+    return this;
+  }
+
+  long getResidualCapacity() {
+    return residualCapacity;
+  }
+
+  public StreamConfig withResidualCapacity(long residualCapacity) {
+    this.residualCapacity = residualCapacity;
+    return this;
+  }
+
+  long getResidualRetention() {
+    return residualRetentionMillis;
+  }
+
+  public StreamConfig withResidualRetention(long residualRetentionMillis) {
+    this.residualRetentionMillis = residualRetentionMillis;
+    return this;
+  }
+
+  RingbufferStoreFactory<byte[]> getResidualStoreFactory() {
+    return residualStoreFactory;
+  }
+
+  public StreamConfig withResidualStoreFactory(RingbufferStoreFactory<byte[]> residualStoreFactory) {
+    this.residualStoreFactory = residualStoreFactory;
     return this;
   }
 
@@ -55,7 +94,8 @@ public final class StreamConfig {
 
   @Override
   public String toString() {
-    return StreamConfig.class.getSimpleName() + " [name=" + name + ", inMemCapacity=" + inMemCapacity + ", syncReplicas=" + syncReplicas
-           + ", asyncReplicas=" + asyncReplicas + "]";
+    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity + ", residualCapacity=" + residualCapacity
+           + ", residualRetentionMillis=" + residualRetentionMillis + ", residualStoreFactory=" + residualStoreFactory
+           + ", syncReplicas=" + syncReplicas + ", asyncReplicas=" + asyncReplicas + "]";
   }
 }

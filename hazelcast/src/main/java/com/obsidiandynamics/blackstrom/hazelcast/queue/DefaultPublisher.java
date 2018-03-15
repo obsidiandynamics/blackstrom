@@ -6,15 +6,15 @@ import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-final class DefaultQPublisher implements QPublisher, Joinable {
+final class DefaultPublisher implements Publisher, Joinable {
   private static final int PUBLISH_MAX_YIELDS = 100;
   private static final int PUBLISH_BACKOFF_MILLIS = 1;
   
   private static class AsyncRecord {
-    final RawRecord record;
+    final Record record;
     final PublishCallback callback;
     
-    AsyncRecord(RawRecord record, PublishCallback callback) {
+    AsyncRecord(Record record, PublishCallback callback) {
       this.record = record;
       this.callback = callback;
     }
@@ -22,7 +22,7 @@ final class DefaultQPublisher implements QPublisher, Joinable {
   
   private final HazelcastInstance instance;
   
-  private final QPublisherConfig config;
+  private final PublisherConfig config;
   
   private final WorkerThread publishThread;
   
@@ -34,21 +34,24 @@ final class DefaultQPublisher implements QPublisher, Joinable {
   
   private int yields;
 
-  DefaultQPublisher(HazelcastInstance instance, QPublisherConfig config) {
+  DefaultPublisher(HazelcastInstance instance, PublisherConfig config) {
     this.instance = instance;
     this.config = config;
     
     final String streamFQName = QNamespace.HAZELQ_STREAM.qualify(config.getStreamConfig().getName());
+    final StreamConfig streamConfig = config.getStreamConfig();
     final RingbufferConfig ringbufferConfig = new RingbufferConfig(streamFQName)
-        .setBackupCount(config.getStreamConfig().getSyncReplicas())
-        .setAsyncBackupCount(config.getStreamConfig().getAsyncReplicas())
-        .setCapacity(config.getStreamConfig().getInMemCapacity());
+        .setBackupCount(streamConfig.getSyncReplicas())
+        .setAsyncBackupCount(streamConfig.getAsyncReplicas())
+        .setCapacity(streamConfig.getHeapCapacity())
+        .setRingbufferStoreConfig(new RingbufferStoreConfig()
+                                  .setFactoryImplementation(streamConfig.getResidualStoreFactory()));
     instance.getConfig().addRingBufferConfig(ringbufferConfig);
     
     buffer = instance.getRingbuffer(streamFQName);
     
     publishThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultQPublisher.class, "publisher"))
+        .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultPublisher.class, "publisher"))
         .onCycle(this::publishCycle)
         .buildAndStart();
   }
@@ -65,18 +68,18 @@ final class DefaultQPublisher implements QPublisher, Joinable {
     }
   }
   
-  private void sendNow(RawRecord record, PublishCallback callback) {
+  private void sendNow(Record record, PublishCallback callback) {
     try {
       final long offset = buffer.add(record.getData());
       record.setOffset(offset);
       callback.onComplete(offset, null);
     } catch (Throwable e) {
-      callback.onComplete(RawRecord.UNASSIGNED_OFFSET, e);
+      callback.onComplete(Record.UNASSIGNED_OFFSET, e);
     }
   }
 
   @Override
-  public void publishAsync(RawRecord record, PublishCallback callback) {
+  public void publishAsync(Record record, PublishCallback callback) {
     queue.add(new AsyncRecord(record, callback));
   }
 

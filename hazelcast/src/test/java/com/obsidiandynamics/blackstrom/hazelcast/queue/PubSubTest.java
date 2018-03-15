@@ -10,7 +10,7 @@ import org.junit.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class PubSubTest {
-  private final Set<QPublisher> publishers = new HashSet<>();
+  private final Set<Publisher> publishers = new HashSet<>();
   
   @After
   public void after() {

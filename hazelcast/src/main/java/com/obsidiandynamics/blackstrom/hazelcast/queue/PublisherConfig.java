@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 import com.obsidiandynamics.yconf.*;
 
 @Y
-public final class QPublisherConfig {
+public final class PublisherConfig {
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
 
@@ -11,13 +11,13 @@ public final class QPublisherConfig {
     return streamConfig;
   }
 
-  public QPublisherConfig withStreamConfig(StreamConfig streamConfig) {
+  public PublisherConfig withStreamConfig(StreamConfig streamConfig) {
     this.streamConfig = streamConfig;
     return this;
   }
 
   @Override
   public String toString() {
-    return QPublisherConfig.class.getSimpleName() + " [streamConfig=" + streamConfig + "]";
+    return PublisherConfig.class.getSimpleName() + " [streamConfig=" + streamConfig + "]";
   }
 }

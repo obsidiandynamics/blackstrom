@@ -1,13 +1,13 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-public final class RawRecord {
+public final class Record {
   public static final long UNASSIGNED_OFFSET = -1;
   
   private long offset = UNASSIGNED_OFFSET;
   
   private final byte[] data;
   
-  public RawRecord(byte[] data) {
+  public Record(byte[] data) {
     this.data = data;
   }
 
@@ -25,6 +25,6 @@ public final class RawRecord {
 
   @Override
   public String toString() {
-    return RawRecord.class.getSimpleName() + " [offset=" + offset + ", data.length=" + data.length + "]";
+    return Record.class.getSimpleName() + " [offset=" + offset + ", data.length=" + data.length + "]";
   }
 }
