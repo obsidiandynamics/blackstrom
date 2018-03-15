@@ -8,11 +8,16 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 
 public final class GridHazelcastProviderTest {
-  private HazelcastInstance instance;
+  private HazelcastProvider provider;
+  
+  @Before
+  public void before() {
+    provider = GridHazelcastProvider.getInstance();
+  }
   
   @After
   public void after() {
-    if (instance != null) instance.getLifecycleService().terminate();
+    if (provider != null) provider.shutdownAll();
   }
   
   @Test
@@ -30,7 +35,7 @@ public final class GridHazelcastProviderTest {
     config.setNetworkConfig(new NetworkConfig().setJoin(new JoinConfig()
                                                         .setMulticastConfig(multicastConfig)
                                                         .setTcpIpConfig(tcpIpConfig)));
-    instance = GridHazelcastProvider.getInstance().createInstance(config);
+    final HazelcastInstance instance = GridHazelcastProvider.getInstance().createInstance(config);
     assertNotNull(instance);
   }
 }

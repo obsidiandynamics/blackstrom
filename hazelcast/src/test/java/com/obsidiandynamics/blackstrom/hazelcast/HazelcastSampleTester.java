@@ -8,7 +8,8 @@ import com.hazelcast.core.*;
 public final class HazelcastSampleTester {
   public static void main(String[] args) {
     final Config config = new Config()
-        .setProperty("hazelcast.logging.type", "slf4j");
+        .setProperty("hazelcast.logging.type", "slf4j")
+        .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(10));
     
     final HazelcastProvider provider = GridHazelcastProvider.getInstance();
     final HazelcastInstance h0 = provider.createInstance(config);
