@@ -88,10 +88,13 @@ public final class MultiNodeQueueLedger implements Ledger {
         }
         
         handler.onMessage(context, m);
-        yields = 0;
       } else if (yields++ < maxYields) {
         Thread.yield();
       } else {
+        // resetting yields here appears counterintuitive (it makes more sense to reset it on a hit than a miss),
+        // however, this technique avoids writing to an instance field from a hotspot, markedly improving performance
+        // at the expense of (1) prematurely sleeping on the next miss and (2) yielding after a sleep
+        yields = 0;
         Thread.sleep(POLL_BACKOFF_MILLIS);
       }
     }
