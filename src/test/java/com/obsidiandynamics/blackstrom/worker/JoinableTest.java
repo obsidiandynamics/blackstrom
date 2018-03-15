@@ -35,4 +35,9 @@ public final class JoinableTest {
     final Joinable j = new TestJoinable(false);
     assertFalse(Joinable.joinAll(0, j));
   }
+  
+  @Test
+  public void testNop() throws InterruptedException {
+    assertTrue(Joinable.NOP.join(0));
+  }
 }

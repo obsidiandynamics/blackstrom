@@ -6,7 +6,10 @@ import java.util.*;
  *  Definition of a concurrent entity that can be waited upon to
  *  have completed carrying out its work.
  */
+@FunctionalInterface
 public interface Joinable {
+  static Joinable NOP = timeoutMillis -> true;
+  
   /**
    *  Waits until this concurrent entity terminates.
    *  
