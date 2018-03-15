@@ -7,7 +7,7 @@ public final class WorkerOptions {
   
   private boolean daemon;
   
-  private int priority = 5;
+  private int priority = Thread.NORM_PRIORITY;
 
   public String getName() {
     return name;
