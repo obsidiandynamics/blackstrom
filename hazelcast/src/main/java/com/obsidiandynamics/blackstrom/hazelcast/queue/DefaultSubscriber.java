@@ -3,8 +3,6 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.slf4j.*;
-
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
@@ -13,8 +11,6 @@ import com.obsidiandynamics.blackstrom.worker.*;
 public final class DefaultSubscriber implements Subscriber, Joinable {
   private static final int PUBLISH_MAX_YIELDS = 100;
   private static final int PUBLISH_BACKOFF_MILLIS = 1;
-  
-  private final Logger log;
   
   private final SubscriberConfig config;
   
@@ -40,7 +36,6 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   DefaultSubscriber(HazelcastInstance instance, SubscriberConfig config) {
     this.config = config;
-    log = config.getLog();
     
     final StreamConfig streamConfig = config.getStreamConfig();
     buffer = StreamHelper.getRingbuffer(instance, streamConfig);
@@ -55,11 +50,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       leaseCandidate = UUID.randomUUID();
       election = new Election(config.getElectionConfig(), leaseTable, new LeaseChangeHandler() {
         @Override public void onExpire(String resource, UUID tenant) {
-          log.debug("Expired lease of {} held by {}", resource, tenant);
+          config.getLog().debug("Expired lease of {} held by {}", resource, tenant);
         }
         
         @Override public void onAssign(String resource, UUID tenant) {
-          log.debug("Assigned lease of {} to {}", resource, tenant);
+          config.getLog().debug("Assigned lease of {} to {}", resource, tenant);
         }
       });
       election.getRegistry().enroll(config.getGroup(), leaseCandidate);
@@ -94,8 +89,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       groupOffsets.put(config.getGroup(), offset);
       lastConfirmedOffset = offset;
     } else {
-      log.warn("Failed confirming offset {} for stream {}: {} is not the current tenant for group {}",
-               offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
+      final String m = String.format("Failed confirming offset %s for stream %s: %s is not the current tenant for group %s",
+                                     offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
+      config.getErrorHandler().onError(m, null);
     }
   }
   
@@ -117,15 +113,23 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         nextOffset = lastReadOffset + 1;
         return readBatch(resultSet);
       } catch (ExecutionException e) {
-        log.warn(String.format("Error reading at offset %d from stream %s",
-                               nextOffset, config.getStreamConfig().getName()), e.getCause());
+        final String m = String.format("Error reading at offset %d from stream %s",
+                                       nextOffset, config.getStreamConfig().getName());
+        config.getErrorHandler().onError(m, e);
         f.cancel(true);
         return RecordBatch.empty();
       } catch (TimeoutException e) {
         f.cancel(true);
         return RecordBatch.empty();
       } finally {
-        //TODO if tenant, update lease
+        if (leaseCandidate != null) {
+          try {
+            election.touch(config.getGroup(), leaseCandidate);
+          } catch (NotTenantException e) {
+            final String m = "Failed to touch lease";
+            config.getErrorHandler().onError(m, e);
+          }
+        }
       }
     } else {
       nextOffset = Record.UNASSIGNED_OFFSET;

@@ -132,7 +132,7 @@ public final class Election implements Joinable {
     if (! existingLease.isHeldByAndCurrent(assumedTenant)) {
       final String m = String.format("Leader of %s is %s until %s", 
                                      resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
-      throw new NotTenantException(m, null);
+      throw new NotTenantException(m);
     } else {
       return existingLease;
     }

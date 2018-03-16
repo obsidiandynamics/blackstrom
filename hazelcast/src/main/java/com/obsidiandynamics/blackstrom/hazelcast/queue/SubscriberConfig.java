@@ -9,6 +9,8 @@ import com.obsidiandynamics.yconf.*;
 public final class SubscriberConfig {
   private Logger log = LoggerFactory.getLogger(DefaultSubscriber.class);
   
+  private ErrorHandler errorHandler = new LogAwareErrorHandler(this::getLog);
+  
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
   
@@ -24,6 +26,15 @@ public final class SubscriberConfig {
   
   public SubscriberConfig withLog(Logger log) {
     this.log = log;
+    return this;
+  }
+  
+  ErrorHandler getErrorHandler() {
+    return errorHandler;
+  }
+  
+  public SubscriberConfig withErrorHandler(ErrorHandler errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 

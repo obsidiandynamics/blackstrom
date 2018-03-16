@@ -1,0 +1,141 @@
+package com.obsidiandynamics.blackstrom.hazelcast.queue;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.*;
+import org.slf4j.*;
+
+import com.hazelcast.config.*;
+import com.hazelcast.core.*;
+import com.hazelcast.ringbuffer.*;
+import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.hazelcast.*;
+import com.obsidiandynamics.blackstrom.util.*;
+
+public final class SubscriberTest {
+  private HazelcastProvider provider;
+  
+  private HazelcastInstance instance;
+  
+  private Subscriber subscriber;
+  
+  private final Timesert await = Wait.SHORT;
+  
+  @Before
+  public void before() {
+    provider = new MockHazelcastProvider();
+    instance = provider.createInstance(new Config().setProperty("hazelcast.logging.type", "none"));
+  }
+  
+  @After
+  public void after() {
+    if (subscriber != null) subscriber.terminate().joinQuietly();
+    if (instance != null) instance.shutdown();
+  }
+  
+  private void configureSubscriber(SubscriberConfig config) {
+    subscriber = Subscriber.createDefault(instance, config);
+  }
+
+  @Test
+  public void testConsumeEmpty() throws InterruptedException {
+    final String stream = "test";
+    final int capacity = 10;
+    configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
+                                                                .withName(stream)
+                                                                .withHeapCapacity(capacity)));
+    final RecordBatch b0 = subscriber.poll(1);
+    assertEquals(0, b0.size());
+    
+    final RecordBatch b1 = subscriber.poll(1);
+    assertEquals(0, b1.size());
+    subscriber.confirm(); // shouldn't do anything
+  }
+  
+  @Test
+  public void testConsumeOne() throws InterruptedException {
+    final String stream = "test";
+    final int capacity = 10;
+    configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
+                                                                .withName(stream)
+                                                                .withHeapCapacity(capacity)));
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("hello".getBytes());
+    
+    final RecordBatch b0 = subscriber.poll(1_000);
+    assertEquals(1, b0.size());
+    assertArrayEquals("hello".getBytes(), b0.all().get(0).getData());
+    
+    final RecordBatch b1 = subscriber.poll(10);
+    assertEquals(0, b1.size());
+    subscriber.confirm(); // shouldn't do anything
+  }
+  
+  @Test
+  public void testConsumeTwo() throws InterruptedException {
+    final String stream = "test";
+    final int capacity = 10;
+    configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
+                                                                .withName(stream)
+                                                                .withHeapCapacity(capacity)));
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    final RecordBatch b0 = subscriber.poll(1_000);
+    assertEquals(2, b0.size());
+    assertArrayEquals("h0".getBytes(), b0.all().get(0).getData());
+    assertArrayEquals("h1".getBytes(), b0.all().get(1).getData());
+    
+    final RecordBatch b1 = subscriber.poll(10);
+    assertEquals(0, b1.size());
+  }
+  
+  @Test
+  public void testSeek() throws InterruptedException {
+    final String stream = "test";
+    final int capacity = 10;
+    configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
+                                                                .withName(stream)
+                                                                .withHeapCapacity(capacity)));
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    subscriber.seek(1);
+    final RecordBatch b0 = subscriber.poll(1_000);
+    assertEquals(1, b0.size());
+    assertArrayEquals("h1".getBytes(), b0.all().get(0).getData());
+  }
+  
+  @Test(expected=IllegalArgumentException.class)
+  public void testSeekIllegalArgumentTooLow() throws InterruptedException {
+    final String stream = "test";
+    final int capacity = 10;
+    configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
+                                                                .withName(stream)
+                                                                .withHeapCapacity(capacity)));
+    subscriber.seek(-5);
+  }
+  
+  @Test
+  public void testReadFailure() throws InterruptedException {
+    final String stream = "test";
+    final int capacity = 1;
+    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    configureSubscriber(new SubscriberConfig()
+                        .withErrorHandler(errorHandler)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)
+                                          .withResidualStoreFactory(null)));
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    final RecordBatch b = subscriber.poll(1_000);
+    assertEquals(0, b.size());
+    verify(errorHandler).onError(isNotNull(), (Exception) isNotNull());
+  }
+}
