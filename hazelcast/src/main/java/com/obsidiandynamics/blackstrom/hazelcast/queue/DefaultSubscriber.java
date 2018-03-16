@@ -9,8 +9,8 @@ import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
-  private static final int PUBLISH_MAX_YIELDS = 100;
-  private static final int PUBLISH_BACKOFF_MILLIS = 1;
+  private static final int KEEPER_MAX_YIELDS = 100;
+  private static final int KEEPER_BACKOFF_MILLIS = 1;
   
   private final SubscriberConfig config;
   
@@ -22,7 +22,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private final UUID leaseCandidate;
   
-  private final WorkerThread groupThread;
+  private final WorkerThread keeperThread;
   
   private long nextReadOffset;
   
@@ -63,15 +63,15 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       });
       election.getRegistry().enroll(config.getGroup(), leaseCandidate);
       
-      groupThread = WorkerThread.builder()
-          .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultSubscriber.class, "group"))
-          .onCycle(this::groupCycle)
+      keeperThread = WorkerThread.builder()
+          .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultSubscriber.class, "keeper"))
+          .onCycle(this::keeperCycle)
           .buildAndStart();
     } else {
       groupOffsets = null;
       election = null;
       leaseCandidate = null;
-      groupThread = null;
+      keeperThread = null;
     }
   }
   
@@ -159,7 +159,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     nextReadOffset = offset;
   }
   
-  private void groupCycle(WorkerThread t) throws InterruptedException {
+  private void keeperCycle(WorkerThread t) throws InterruptedException {
     final long scheduledConfirmOffset = this.scheduledConfirmOffset;
     final long scheduledTouchTimestamp = this.scheduledTouchTimestamp;
     
@@ -176,10 +176,10 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     
     if (performedWork) {
       yields = 0;
-    } else if (yields++ < PUBLISH_MAX_YIELDS) {
+    } else if (yields++ < KEEPER_MAX_YIELDS) {
       Thread.yield();
     } else {
-      Thread.sleep(PUBLISH_BACKOFF_MILLIS);
+      Thread.sleep(KEEPER_BACKOFF_MILLIS);
     }
   }
   
@@ -214,13 +214,13 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
 
   @Override
   public Joinable terminate() {
-    if (groupThread != null) groupThread.terminate();
+    if (keeperThread != null) keeperThread.terminate();
     if (election != null) election.terminate();
     return this;
   }
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return groupThread != null ? Joinable.joinAll(timeoutMillis, groupThread, election) : true;
+    return keeperThread != null ? Joinable.joinAll(timeoutMillis, keeperThread, election) : true;
   }
 }

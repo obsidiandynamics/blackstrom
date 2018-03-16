@@ -2,10 +2,13 @@ package com.obsidiandynamics.blackstrom.hazelcast;
 
 import static org.junit.Assert.*;
 
+import java.io.*;
+
 import org.junit.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
+import com.obsidiandynamics.yconf.*;
 
 public final class GridHazelcastProviderTest {
   private HazelcastProvider provider;
@@ -37,5 +40,15 @@ public final class GridHazelcastProviderTest {
                                                         .setTcpIpConfig(tcpIpConfig)));
     final HazelcastInstance instance = GridHazelcastProvider.getInstance().createInstance(config);
     assertNotNull(instance);
+  }
+  
+  @Test
+  public void testConfig() throws IOException {
+    final Object provider = new MappingContext()
+        .withParser(new SnakeyamlParser())
+        .fromString("type: com.obsidiandynamics.blackstrom.hazelcast.GridHazelcastProvider")
+        .map(Object.class);
+    assertNotNull(provider);
+    assertEquals(GridHazelcastProvider.class, provider.getClass());
   }
 }
