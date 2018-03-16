@@ -39,7 +39,7 @@ public final class JoinableTest {
   
   @Test
   public void testJoinAllOutOfTime() throws InterruptedException {
-    final Joinable j0= new TestJoinable(true);
+    final Joinable j0 = new TestJoinable(true);
     final Joinable j1 = new TestJoinable(false);
     assertFalse(Joinable.joinAll(1, j0, j1));
   }
