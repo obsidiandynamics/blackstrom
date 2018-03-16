@@ -1,6 +1,5 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
@@ -20,10 +19,6 @@ final class DefaultPublisher implements Publisher, Joinable {
     }
   }
   
-  private final HazelcastInstance instance;
-  
-  private final PublisherConfig config;
-  
   private final WorkerThread publishThread;
   
   private final NodeQueue<AsyncRecord> queue = new NodeQueue<>();
@@ -35,17 +30,15 @@ final class DefaultPublisher implements Publisher, Joinable {
   private int yields;
 
   DefaultPublisher(HazelcastInstance instance, PublisherConfig config) {
-    this.instance = instance;
-    this.config = config;
     buffer = StreamHelper.getRingbuffer(instance, config.getStreamConfig());
     
     publishThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultPublisher.class, "publisher"))
-        .onCycle(this::publishCycle)
+        .onCycle(this::publisherCycle)
         .buildAndStart();
   }
   
-  private void publishCycle(WorkerThread t) throws InterruptedException {
+  private void publisherCycle(WorkerThread t) throws InterruptedException {
     final AsyncRecord rec = queueConsumer.poll();
     if (rec != null) {
       sendNow(rec.record, rec.callback);

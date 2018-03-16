@@ -18,6 +18,9 @@ public final class SubscriberConfig {
   private String group = null;
   
   @YInject
+  private InitialOffsetScheme initialOffsetScheme = InitialOffsetScheme.AUTO;
+  
+  @YInject
   private ElectionConfig electionConfig = new ElectionConfig();
   
   Logger getLog() {
@@ -57,6 +60,15 @@ public final class SubscriberConfig {
 
   public SubscriberConfig withGroup(String group) {
     this.group = group;
+    return this;
+  }
+  
+  InitialOffsetScheme getInitialOffsetScheme() {
+    return initialOffsetScheme;
+  }
+  
+  public SubscriberConfig withInitialOffsetScheme(InitialOffsetScheme initialOffsetScheme) {
+    this.initialOffsetScheme = initialOffsetScheme;
     return this;
   }
 

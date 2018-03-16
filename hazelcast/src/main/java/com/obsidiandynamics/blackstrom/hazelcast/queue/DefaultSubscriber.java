@@ -16,7 +16,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private final Ringbuffer<byte[]> buffer;
   
-  private final IMap<String, Long> groupOffsets;
+  private final IMap<String, Long> offsets;
   
   private final Election election;
   
@@ -26,7 +26,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private long nextReadOffset;
   
-  private long lastReadOffset = Record.UNASSIGNED_OFFSET;
+  private long lastReadOffset;
   
   private volatile long scheduledConfirmOffset = Record.UNASSIGNED_OFFSET;
   
@@ -45,9 +45,12 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     buffer = StreamHelper.getRingbuffer(instance, streamConfig);
     
     if (config.hasGroup()) {
-      final String offsetsFQName = QNamespace.HAZELQ_META.qualify("offsets." + streamConfig.getName());
-      groupOffsets = instance.getMap(offsetsFQName);
+      // checks for IllegalStateException; no initial assignment is made until poll() is called
+      getInitialOffset(true);
       nextReadOffset = Record.UNASSIGNED_OFFSET;
+      
+      final String offsetsFQName = QNamespace.HAZELQ_META.qualify("offsets." + streamConfig.getName());
+      offsets = instance.getMap(offsetsFQName);
       
       final String leaseFQName = QNamespace.HAZELQ_META.qualify("lease." + streamConfig.getName());
       final IMap<String, byte[]> leaseTable = instance.getMap(leaseFQName);
@@ -68,11 +71,14 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
           .onCycle(this::keeperCycle)
           .buildAndStart();
     } else {
-      groupOffsets = null;
+      // checks for IllegalStateException as well as performing initial assignment
+      nextReadOffset = getInitialOffset(false);
+      offsets = null;
       election = null;
       leaseCandidate = null;
       keeperThread = null;
     }
+    lastReadOffset = nextReadOffset - 1;
   }
   
   Election getElection() {
@@ -87,6 +93,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     if (! isGroupSubscriber || isCurrentTenant) {
       if (nextReadOffset == Record.UNASSIGNED_OFFSET) {
         nextReadOffset = loadConfirmedOffset() + 1;
+        lastReadOffset = nextReadOffset - 1;
       }
       
       final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextReadOffset, 1, 1_000, StreamHelper.NOT_NULL);
@@ -117,12 +124,22 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   }
   
   private long loadConfirmedOffset() {
-    final Long confirmedOffset = groupOffsets.get(config.getGroup());
+    final Long confirmedOffset = offsets.get(config.getGroup());
     if (confirmedOffset != null) {
       return confirmedOffset;
     } else {
-      // TODO offset reset
-      return -1;
+      return getInitialOffset(true) - 1;
+    }
+  }
+  
+  private long getInitialOffset(boolean useGroups) {
+    final InitialOffsetScheme concreteInitialOffsetScheme = config.getInitialOffsetScheme().resolveConcreteScheme(useGroups);
+    if (concreteInitialOffsetScheme == InitialOffsetScheme.EARLIEST) {
+      return 0;
+    } else if (concreteInitialOffsetScheme == InitialOffsetScheme.LATEST) {
+      return buffer.headSequence();
+    } else {
+      throw new IllegalStateException("Cannot reset offset using with scheme " + concreteInitialOffsetScheme);
     }
   }
   
@@ -185,7 +202,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private void confirmOffset(long offset) {
     if (isCurrentTenant()) {
-      groupOffsets.put(config.getGroup(), offset);
+      offsets.put(config.getGroup(), offset);
     } else {
       final String m = String.format("Failed confirming offset %s for stream %s: %s is not the current tenant for group %s",
                                      offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
