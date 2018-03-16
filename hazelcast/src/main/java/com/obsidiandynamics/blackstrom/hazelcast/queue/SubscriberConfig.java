@@ -1,10 +1,14 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import org.slf4j.*;
+
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
 public final class SubscriberConfig {
+  private Logger log = LoggerFactory.getLogger(DefaultSubscriber.class);
+  
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
   
@@ -13,6 +17,15 @@ public final class SubscriberConfig {
   
   @YInject
   private ElectionConfig electionConfig;
+  
+  Logger getLog() {
+    return log;
+  }
+  
+  public SubscriberConfig withLog(Logger log) {
+    this.log = log;
+    return this;
+  }
 
   StreamConfig getStreamConfig() {
     return streamConfig;

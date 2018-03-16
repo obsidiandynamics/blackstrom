@@ -14,7 +14,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   private static final int PUBLISH_MAX_YIELDS = 100;
   private static final int PUBLISH_BACKOFF_MILLIS = 1;
   
-  private static final Logger log = LoggerFactory.getLogger(DefaultSubscriber.class);
+  private final Logger log;
   
   private final SubscriberConfig config;
   
@@ -30,6 +30,8 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private long nextOffset;
   
+  private long lastReadOffset = Record.UNASSIGNED_OFFSET;
+  
   private volatile long lastScheduledOffset = Record.UNASSIGNED_OFFSET;
   
   private long lastConfirmedOffset = lastScheduledOffset;
@@ -38,6 +40,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   DefaultSubscriber(HazelcastInstance instance, SubscriberConfig config) {
     this.config = config;
+    log = config.getLog();
     
     final StreamConfig streamConfig = config.getStreamConfig();
     buffer = StreamHelper.getRingbuffer(instance, streamConfig);
@@ -107,10 +110,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         nextOffset = loadConfirmedOffset() + 1;
       }
       
-      final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextOffset, 1, 1000, null);
+      final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextOffset, 1, 1_000, StreamHelper.NOT_NULL);
       try {
         final ReadResultSet<byte[]> resultSet = f.get(timeoutMillis, TimeUnit.MILLISECONDS);
-        nextOffset += resultSet.size();
+        lastReadOffset = resultSet.getSequence(resultSet.size() - 1);
+        nextOffset = lastReadOffset + 1;
         return readBatch(resultSet);
       } catch (ExecutionException e) {
         log.warn(String.format("Error reading at offset %d from stream %s",
@@ -120,6 +124,8 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       } catch (TimeoutException e) {
         f.cancel(true);
         return RecordBatch.empty();
+      } finally {
+        //TODO if tenant, update lease
       }
     } else {
       nextOffset = Record.UNASSIGNED_OFFSET;
@@ -140,12 +146,29 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     }
     return new RecordBatch(records);
   }
+  
+  @Override
+  public void confirm() {
+    if (lastReadOffset != Record.UNASSIGNED_OFFSET) {
+      confirm(lastReadOffset);
+    }
+  }
 
   @Override
   public void confirm(long offset) {
+    if (offset > lastReadOffset || offset < StreamHelper.SMALLEST_OFFSET) {
+      throw new IllegalArgumentException(String.format("Illegal offset %d; last read %d", offset, lastReadOffset));
+    }
+    
     if (leaseCandidate != null) {
       lastScheduledOffset = offset;
     }
+  }
+  
+  @Override
+  public void seek(long offset) {
+    if (offset < StreamHelper.SMALLEST_OFFSET) throw new IllegalArgumentException("Invalid seek offset " + offset);
+    nextOffset = offset;
   }
 
   @Override

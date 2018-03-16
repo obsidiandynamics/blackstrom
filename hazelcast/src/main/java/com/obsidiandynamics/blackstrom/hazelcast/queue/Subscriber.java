@@ -8,6 +8,10 @@ public interface Subscriber {
   
   void confirm(long offset);
   
+  void confirm();
+  
+  void seek(long offset);
+  
   Joinable terminate();
   
   static DefaultSubscriber createDefault(HazelcastInstance instance, SubscriberConfig config) {

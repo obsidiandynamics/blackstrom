@@ -5,6 +5,9 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 
 final class StreamHelper {
+  static final long SMALLEST_OFFSET = 0;
+  static final IFunction<byte[], Boolean> NOT_NULL = bytes -> bytes != null;
+  
   private StreamHelper() {}
   
   static Ringbuffer<byte[]> getRingbuffer(HazelcastInstance instance, StreamConfig streamConfig) {
