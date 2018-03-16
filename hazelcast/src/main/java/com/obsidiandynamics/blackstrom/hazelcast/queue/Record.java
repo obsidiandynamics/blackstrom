@@ -10,6 +10,11 @@ public final class Record {
   public Record(byte[] data) {
     this.data = data;
   }
+  
+  Record(byte[] data, long offset) {
+    this.data = data;
+    this.offset = offset;
+  }
 
   public long getOffset() {
     return offset;

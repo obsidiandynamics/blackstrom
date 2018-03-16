@@ -7,10 +7,10 @@ public interface LeaseView {
   Map<String, Lease> asMap();
   
   default UUID getTenant(String resource) {
-    return asMap().getOrDefault(resource, Lease.VACANT).getTenant();
+    return asMap().getOrDefault(resource, Lease.vacant()).getTenant();
   }
   
   default boolean isCurrentTenant(String resource, UUID candidate) {
-    return asMap().getOrDefault(resource, Lease.VACANT).isHeldByAndCurrent(candidate);
+    return asMap().getOrDefault(resource, Lease.vacant()).isHeldByAndCurrent(candidate);
   }
 }

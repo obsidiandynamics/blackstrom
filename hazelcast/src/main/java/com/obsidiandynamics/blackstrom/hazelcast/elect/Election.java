@@ -43,7 +43,7 @@ public final class Election implements Joinable {
     
     final Set<String> resources = registry.getCandidatesView().keySet();
     for (String resource : resources) {
-      final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
+      final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
       if (! existingLease.isCurrent()) {
         changeHandler.onExpire(resource, existingLease.getTenant());
         if (existingLease.isVacant()) {
@@ -128,7 +128,7 @@ public final class Election implements Joinable {
   }
   
   private Lease checkCurrent(String resource, UUID assumedTenant) throws NotTenantException {
-    final Lease existingLease = leaseView.getOrDefault(resource, Lease.VACANT);
+    final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
     if (! existingLease.isHeldByAndCurrent(assumedTenant)) {
       final String m = String.format("Leader of %s is %s until %s", 
                                      resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));

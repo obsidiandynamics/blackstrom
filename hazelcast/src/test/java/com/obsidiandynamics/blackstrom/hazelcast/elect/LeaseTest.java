@@ -58,7 +58,7 @@ public final class LeaseTest {
     assertTrue(current.isHeldByAndCurrent(c));
     assertFalse(current.isHeldByAndCurrent(UUID.randomUUID()));
     
-    final Lease vacant = Lease.VACANT;
+    final Lease vacant = Lease.vacant();
     assertTrue(vacant.isVacant());
     assertFalse(vacant.isHeldBy(c));
     assertFalse(vacant.isCurrent());

@@ -5,7 +5,7 @@ import com.obsidiandynamics.yconf.*;
 @Y
 public final class ElectionConfig {
   @YInject
-  private int scavengeIntervalMillis = 1_000;
+  private int scavengeIntervalMillis = 100;
   
   @YInject
   private int leaseDurationMillis = 60_000;

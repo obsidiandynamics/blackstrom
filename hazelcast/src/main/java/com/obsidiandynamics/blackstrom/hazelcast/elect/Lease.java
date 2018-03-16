@@ -6,7 +6,9 @@ import java.util.*;
 import org.apache.commons.lang3.builder.*;
 
 public final class Lease {
-  static final Lease VACANT = new Lease(null, 0);
+  private static final Lease vacant = new Lease(null, 0);
+  
+  public static Lease vacant() { return vacant; }
   
   private final UUID tenant;
   

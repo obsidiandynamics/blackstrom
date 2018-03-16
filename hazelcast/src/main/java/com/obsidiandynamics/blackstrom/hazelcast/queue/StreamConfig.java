@@ -21,7 +21,7 @@ public final class StreamConfig {
   private long residualRetentionMillis = TimeUnit.DAYS.toMillis(7);
   
   @YInject
-  private RingbufferStoreFactory<byte[]> residualStoreFactory = null;
+  private RingbufferStoreFactory<byte[]> residualStoreFactory;
   
   @YInject
   private int syncReplicas = RingbufferConfig.DEFAULT_SYNC_BACKUP_COUNT;

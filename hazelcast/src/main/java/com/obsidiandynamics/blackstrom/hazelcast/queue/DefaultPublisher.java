@@ -37,18 +37,7 @@ final class DefaultPublisher implements Publisher, Joinable {
   DefaultPublisher(HazelcastInstance instance, PublisherConfig config) {
     this.instance = instance;
     this.config = config;
-    
-    final String streamFQName = QNamespace.HAZELQ_STREAM.qualify(config.getStreamConfig().getName());
-    final StreamConfig streamConfig = config.getStreamConfig();
-    final RingbufferConfig ringbufferConfig = new RingbufferConfig(streamFQName)
-        .setBackupCount(streamConfig.getSyncReplicas())
-        .setAsyncBackupCount(streamConfig.getAsyncReplicas())
-        .setCapacity(streamConfig.getHeapCapacity())
-        .setRingbufferStoreConfig(new RingbufferStoreConfig()
-                                  .setFactoryImplementation(streamConfig.getResidualStoreFactory()));
-    instance.getConfig().addRingBufferConfig(ringbufferConfig);
-    
-    buffer = instance.getRingbuffer(streamFQName);
+    buffer = StreamHelper.getRingbuffer(instance, config.getStreamConfig());
     
     publishThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultPublisher.class, "publisher"))
