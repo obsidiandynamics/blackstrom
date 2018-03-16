@@ -13,7 +13,7 @@ public interface Joinable {
   /**
    *  Waits until this concurrent entity terminates.
    *  
-   *  @param timeoutMillis The time to wait.
+   *  @param timeoutMillis The time to wait. {@code 0} means wait forever.
    *  @return True if this entity was terminated, false if the wait timed out.
    *  @throws InterruptedException If the thread is interrupted.
    */
@@ -34,7 +34,7 @@ public interface Joinable {
    *  This variant suppresses an {@link InterruptedException} and will re-assert the interrupt 
    *  prior to returning.
    *  
-   *  @param timeoutMillis The time to wait.
+   *  @param timeoutMillis The time to wait. {@code 0} means wait forever.
    *  @return True if this entity was terminated, false if the wait timed out.
    */
   default boolean joinQuietly(long timeoutMillis) {
@@ -61,7 +61,7 @@ public interface Joinable {
   }
  
   static boolean joinAll(long timeoutMillis, Collection<? extends Joinable> joinables) throws InterruptedException {
-    final long deadline = System.currentTimeMillis() + timeoutMillis;
+    final long deadline = timeoutMillis != 0 ? System.currentTimeMillis() + timeoutMillis : Long.MAX_VALUE;
     for (Joinable joinable : joinables) {
       final long remainingMillis = deadline - System.currentTimeMillis();
       if (remainingMillis > 0) {
