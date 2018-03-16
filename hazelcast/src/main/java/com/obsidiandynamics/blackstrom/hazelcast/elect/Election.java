@@ -104,8 +104,8 @@ public final class Election implements Joinable {
     for (;;) {
       final Lease existingLease = checkCurrent(resource, tenant);
       final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
-      final boolean novated = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
-      if (novated) {
+      final boolean extended = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
+      if (extended) {
         updateViewWithLease(resource, newLease);
         return;
       } else {

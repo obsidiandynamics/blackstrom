@@ -163,18 +163,18 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     final long scheduledConfirmOffset = this.scheduledConfirmOffset;
     final long scheduledTouchTimestamp = this.scheduledTouchTimestamp;
     
-    boolean didWork = false;
+    boolean performedWork = false;
     if (scheduledConfirmOffset != lastConfirmedOffset) {
-      didWork = true;
+      performedWork = true;
       confirmOffset(scheduledConfirmOffset);
     }
     
     if (scheduledTouchTimestamp != lastTouchedTimestamp) {
-      didWork = true;
+      performedWork = true;
       touchLease(scheduledTouchTimestamp);
     }
     
-    if (didWork) {
+    if (performedWork) {
       yields = 0;
     } else if (yields++ < PUBLISH_MAX_YIELDS) {
       Thread.yield();
@@ -198,7 +198,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     try {
       election.touch(config.getGroup(), leaseCandidate);
     } catch (NotTenantException e) {
-      config.getErrorHandler().onError("Failed to touch lease", e);
+      config.getErrorHandler().onError("Failed to extend lease", e);
     }
     lastTouchedTimestamp = timestamp;
   }

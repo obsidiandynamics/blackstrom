@@ -4,14 +4,25 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.*;
+
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
+import com.obsidiandynamics.junit.*;
 
-public final class SubscriberTest {
+@RunWith(Parameterized.class)
+public final class SubscriberNoGroupTest {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   private HazelcastProvider provider;
   
   private HazelcastInstance instance;

@@ -14,7 +14,7 @@ public final class Lease {
   
   private final long expiry;
 
-  public Lease(UUID tenant, long expiry) {
+  Lease(UUID tenant, long expiry) {
     this.tenant = tenant;
     this.expiry = expiry;
   }
@@ -78,5 +78,9 @@ public final class Lease {
     final UUID tenant = new UUID(buf.getLong(), buf.getLong());
     final long expiry = buf.getLong();
     return new Lease(tenant, expiry);
+  }
+  
+  public static Lease forever(UUID tenant) {
+    return new Lease(tenant, Long.MAX_VALUE);
   }
 }

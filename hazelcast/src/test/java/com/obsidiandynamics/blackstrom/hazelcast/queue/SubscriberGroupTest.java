@@ -1,12 +1,14 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
 
 import org.junit.*;
-import org.mockito.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
@@ -15,8 +17,15 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public final class SubscriberGroupTest {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   private HazelcastProvider provider;
   
   private HazelcastInstance instance;
@@ -77,8 +86,8 @@ public final class SubscriberGroupTest {
                                           .withName(stream)
                                           .withHeapCapacity(capacity)));
     final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
-    offsets.put(group, -1L);
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    offsets.put(group, -1L);
     
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
@@ -93,8 +102,7 @@ public final class SubscriberGroupTest {
     
     // confirm offsets and check in the map
     subscriber.confirm();
-    await.until(() -> assertEquals(1, offsets.size()));
-    assertEquals(1, (long) offsets.get(group));
+    await.until(() -> assertEquals(1, (long) offsets.get(group)));
     
     // polling would also have touched the lease -- check the expiry
     await.until(() -> {
@@ -164,11 +172,46 @@ public final class SubscriberGroupTest {
     });
     
     // forcibly take the lease away and confirm that the subscriber has seen this 
-    leaseTable.put(group, new Lease(UUID.randomUUID(), Long.MAX_VALUE).pack());
+    leaseTable.put(group, Lease.forever(UUID.randomUUID()).pack());
     await.until(() -> assertFalse(subscriber.isAssigned()));
     
     // schedule a confirmation and verify that it has failed
     subscriber.confirm();
     await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
+  }
+  
+  @Test
+  public void testPollReadFailureAndExtendFailure() throws InterruptedException {
+    final String stream = "s";
+    final String group = "g";
+    final int capacity = 1;
+    
+    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    configureSubscriber(new SubscriberConfig()
+                        .withGroup(group)
+                        .withErrorHandler(errorHandler)
+                        .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withResidualStoreFactory(null)
+                                          .withHeapCapacity(capacity)));
+    final IMap<String, byte[]> leaseTable = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    await.untilTrue(subscriber::isAssigned);
+    
+    // when an error occurs, forcibly reassign the lease
+    doAnswer(invocation -> leaseTable.put(group, Lease.forever(UUID.randomUUID()).pack()))
+    .when(errorHandler).onError(any(), any());
+    
+    // simulate an error by reading stale items
+    Thread.sleep(10);
+    final RecordBatch b = subscriber.poll(1_000);
+    assertEquals(0, b.size());
+    
+    // there should be two errors -- the first for the stale read, the second for the failed lease extension
+    await.until(() -> verify(errorHandler, times(2)).onError(isNotNull(), (Exception) isNotNull()));
   }
 }
