@@ -6,6 +6,6 @@ jdk:
 before_script:
   - chmod +x gradlew
 script:
-  - ./gradlew check integrationTest
+  - ./gradlew check integrationTest --stacktrace --info
 after_success:
   - bash <(curl -s https://codecov.io/bash)
