@@ -23,7 +23,7 @@ import com.obsidiandynamics.junit.*;
 public final class SubscriberGroupTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(1000);
+    return TestCycle.timesQuietly(1);
   }
   
   private HazelcastProvider provider;
