@@ -51,7 +51,7 @@ public final class SubscriberGroupTest {
   }
 
   @Test
-  public void testConsumeEmptyResetOffset() throws InterruptedException {
+  public void testConsumeEmpty() throws InterruptedException {
     final String stream = "s";
     final String group = "g";
     final int capacity = 10;
@@ -85,8 +85,8 @@ public final class SubscriberGroupTest {
                         .withStreamConfig(new StreamConfig()
                                           .withName(stream)
                                           .withHeapCapacity(capacity)));
-    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group, -1L);
     
     buffer.add("h0".getBytes());
@@ -155,6 +155,8 @@ public final class SubscriberGroupTest {
                                           .withHeapCapacity(capacity)));
     final IMap<String, byte[]> leaseTable = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    offsets.put(group, -1L);
     
     // write some data so that we can read at least one record (otherwise we can't confirm an offset)
     buffer.add("hello".getBytes());
@@ -197,6 +199,8 @@ public final class SubscriberGroupTest {
                                           .withHeapCapacity(capacity)));
     final IMap<String, byte[]> leaseTable = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    offsets.put(group, -1L);
     
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
@@ -213,5 +217,62 @@ public final class SubscriberGroupTest {
     
     // there should be two errors -- the first for the stale read, the second for the failed lease extension
     await.until(() -> verify(errorHandler, times(2)).onError(isNotNull(), (Exception) isNotNull()));
+  }
+  
+  @Test
+  public void testInitialOffsetEarliest() throws InterruptedException {
+    final String stream = "s";
+    final String group = "g";
+    final int capacity = 10;
+    
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    configureSubscriber(new SubscriberConfig()
+                        .withGroup(group)
+                        .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)));
+    await.untilTrue(subscriber::isAssigned);
+    
+    final RecordBatch b = subscriber.poll(1_000);
+    assertEquals(2, b.size());
+  }
+  
+  @Test
+  public void testInitialOffsetLatest() throws InterruptedException {
+    final String stream = "s";
+    final String group = "g";
+    final int capacity = 10;
+    
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    configureSubscriber(new SubscriberConfig()
+                        .withGroup(group)
+                        .withInitialOffsetScheme(InitialOffsetScheme.LATEST)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)));
+    await.untilTrue(subscriber::isAssigned);
+    
+    final RecordBatch b = subscriber.poll(10);
+    assertEquals(0, b.size());
+  }
+  
+  @Test(expected=OffsetInitializationException.class)
+  public void testInitialOffsetNone() throws InterruptedException {
+    final String stream = "s";
+    final String group = "g";
+    final int capacity = 10;
+    
+    configureSubscriber(new SubscriberConfig()
+                        .withGroup(group)
+                        .withInitialOffsetScheme(InitialOffsetScheme.NONE)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)));
   }
 }

@@ -45,7 +45,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     buffer = StreamHelper.getRingbuffer(instance, streamConfig);
     
     if (config.hasGroup()) {
-      // checks for IllegalStateException; no initial assignment is made until poll() is called
+      // checks for IllegalArgumentException; no initial assignment is made until poll() is called
       getInitialOffset(true);
       nextReadOffset = Record.UNASSIGNED_OFFSET;
       
@@ -71,7 +71,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
           .onCycle(this::keeperCycle)
           .buildAndStart();
     } else {
-      // checks for IllegalStateException as well as performing initial assignment
+      if (config.getInitialOffsetScheme() == InitialOffsetScheme.NONE) {
+        throw new InvalidInitialOffsetSchemeException("Cannot use initial offset scheme " + InitialOffsetScheme.NONE + 
+                                                      " in a group-free context");
+      }
+      // performs initial offset assignment
       nextReadOffset = getInitialOffset(false);
       offsets = null;
       election = null;
@@ -133,13 +137,14 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   }
   
   private long getInitialOffset(boolean useGroups) {
+    // resolve AUTO to the appropriate scheme (EARLIEST/LATEST/NONE) depending on group mode
     final InitialOffsetScheme concreteInitialOffsetScheme = config.getInitialOffsetScheme().resolveConcreteScheme(useGroups);
     if (concreteInitialOffsetScheme == InitialOffsetScheme.EARLIEST) {
       return 0;
     } else if (concreteInitialOffsetScheme == InitialOffsetScheme.LATEST) {
-      return buffer.headSequence();
+      return buffer.tailSequence() + 1;
     } else {
-      throw new IllegalStateException("Cannot reset offset using with scheme " + concreteInitialOffsetScheme);
+      throw new OffsetInitializationException("No persisted offset");
     }
   }
   
@@ -226,7 +231,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   @Override
   public boolean isAssigned() {
-    return isCurrentTenant();
+    return leaseCandidate == null || isCurrentTenant();
   }
 
   @Override

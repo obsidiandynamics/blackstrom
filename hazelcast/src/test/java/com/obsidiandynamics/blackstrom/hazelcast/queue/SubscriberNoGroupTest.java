@@ -49,6 +49,7 @@ public final class SubscriberNoGroupTest {
   public void testConsumeEmpty() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
+    
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
                                                                 .withHeapCapacity(capacity)));
@@ -58,16 +59,20 @@ public final class SubscriberNoGroupTest {
     final RecordBatch b1 = subscriber.poll(1);
     assertEquals(0, b1.size());
     subscriber.confirm(); // shouldn't do anything
+    
+    assertTrue(subscriber.isAssigned()); // should always be true in group-free mode
   }
   
   @Test
   public void testConsumeOne() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
+    
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
                                                                 .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    
     buffer.add("hello".getBytes());
     
     final RecordBatch b0 = subscriber.poll(1_000);
@@ -83,10 +88,12 @@ public final class SubscriberNoGroupTest {
   public void testConsumeTwo() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
+    
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
                                                                 .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
     
@@ -103,10 +110,12 @@ public final class SubscriberNoGroupTest {
   public void testSeek() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
+    
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
                                                                 .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
     
@@ -120,6 +129,7 @@ public final class SubscriberNoGroupTest {
   public void testSeekIllegalArgumentTooLow() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
+    
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
                                                                 .withHeapCapacity(capacity)));
@@ -131,6 +141,7 @@ public final class SubscriberNoGroupTest {
     final String stream = "s";
     final int capacity = 1;
     final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    
     configureSubscriber(new SubscriberConfig()
                         .withErrorHandler(errorHandler)
                         .withStreamConfig(new StreamConfig()
@@ -138,10 +149,61 @@ public final class SubscriberNoGroupTest {
                                           .withHeapCapacity(capacity)
                                           .withResidualStoreFactory(null)));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
     final RecordBatch b = subscriber.poll(1_000);
     assertEquals(0, b.size());
     verify(errorHandler).onError(isNotNull(), (Exception) isNotNull());
+  }
+  
+  @Test
+  public void testInitialOffsetEarliest() throws InterruptedException {
+    final String stream = "s";
+    final int capacity = 10;
+    
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    configureSubscriber(new SubscriberConfig()
+                        .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)));
+    
+    final RecordBatch b = subscriber.poll(1_000);
+    assertEquals(2, b.size());
+  }
+  
+  @Test
+  public void testInitialOffsetLatest() throws InterruptedException {
+    final String stream = "s";
+    final int capacity = 10;
+    
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    configureSubscriber(new SubscriberConfig()
+                        .withInitialOffsetScheme(InitialOffsetScheme.LATEST)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)));
+    
+    final RecordBatch b = subscriber.poll(10);
+    assertEquals(0, b.size());
+  }
+  
+  @Test(expected=InvalidInitialOffsetSchemeException.class)
+  public void testInitialOffsetNone() throws InterruptedException {
+    final String stream = "s";
+    final int capacity = 10;
+    
+    configureSubscriber(new SubscriberConfig()
+                        .withInitialOffsetScheme(InitialOffsetScheme.NONE)
+                        .withStreamConfig(new StreamConfig()
+                                          .withName(stream)
+                                          .withHeapCapacity(capacity)));
   }
 }
