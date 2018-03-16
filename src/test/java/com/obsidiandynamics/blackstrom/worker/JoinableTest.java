@@ -46,6 +46,6 @@ public final class JoinableTest {
   
   @Test
   public void testNop() throws InterruptedException {
-    assertTrue(Joinable.NOP.join(0));
+    assertTrue(Joinable.nop().join(0));
   }
 }
