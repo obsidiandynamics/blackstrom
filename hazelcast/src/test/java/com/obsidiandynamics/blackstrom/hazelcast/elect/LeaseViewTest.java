@@ -12,7 +12,7 @@ public final class LeaseViewTest {
     final LeaseViewImpl v = new LeaseViewImpl();
     final UUID c = UUID.randomUUID();
     v.put("resource", new Lease(c, Long.MAX_VALUE));
-    assertEquals(c, v.getTenant("resource"));
+    assertEquals(c, v.getLease("resource").getTenant());
   }
   
   @Test

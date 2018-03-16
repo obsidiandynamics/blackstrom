@@ -18,7 +18,7 @@ public final class SubscriberConfig {
   private String group = null;
   
   @YInject
-  private ElectionConfig electionConfig;
+  private ElectionConfig electionConfig = new ElectionConfig();
   
   Logger getLog() {
     return log;

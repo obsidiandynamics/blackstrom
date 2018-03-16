@@ -45,10 +45,10 @@ public final class Election implements Joinable {
     for (String resource : resources) {
       final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
       if (! existingLease.isCurrent()) {
-        changeHandler.onExpire(resource, existingLease.getTenant());
         if (existingLease.isVacant()) {
           log.debug("Lease of {} is vacant", resource); 
         } else {
+          changeHandler.onExpire(resource, existingLease.getTenant());
           log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
         }
         

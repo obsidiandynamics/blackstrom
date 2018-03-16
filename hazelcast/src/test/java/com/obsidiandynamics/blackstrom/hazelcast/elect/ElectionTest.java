@@ -128,7 +128,6 @@ public final class ElectionTest {
       assertTrue(e.getLeaseView().isCurrentTenant("resource", c));
       assertEquals(1, e.getLeaseView().asMap().size());
       verify(handler).onAssign(eq("resource"), eq(c));
-      verify(handler, atLeastOnce()).onExpire(eq("resource"), isNull());
       final Lease lease = e.getLeaseView().asMap().get("resource");
       assertEquals(c, lease.getTenant());
       assertTrue(lease.getExpiry() >= beforeElection + leaseDuration);
@@ -239,7 +238,7 @@ public final class ElectionTest {
     
     TestSupport.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
-    final UUID tenant = e0.getLeaseView().getTenant("resource");
+    final UUID tenant = e0.getLeaseView().getLease("resource").getTenant();
     e0.touch("resource", tenant);
     e1.touch("resource", tenant);
     await.until(() -> {

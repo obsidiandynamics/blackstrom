@@ -6,11 +6,11 @@ import java.util.*;
 public interface LeaseView {
   Map<String, Lease> asMap();
   
-  default UUID getTenant(String resource) {
-    return asMap().getOrDefault(resource, Lease.vacant()).getTenant();
+  default Lease getLease(String resource) {
+    return asMap().getOrDefault(resource, Lease.vacant());
   }
   
   default boolean isCurrentTenant(String resource, UUID candidate) {
-    return asMap().getOrDefault(resource, Lease.vacant()).isHeldByAndCurrent(candidate);
+    return getLease(resource).isHeldByAndCurrent(candidate);
   }
 }

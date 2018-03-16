@@ -12,6 +12,8 @@ public interface Subscriber {
   
   void seek(long offset);
   
+  boolean isAssigned();
+  
   Joinable terminate();
   
   static DefaultSubscriber createDefault(HazelcastInstance instance, SubscriberConfig config) {

@@ -5,23 +5,18 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.*;
-import org.slf4j.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
-import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
-import com.obsidiandynamics.blackstrom.util.*;
 
 public final class SubscriberTest {
   private HazelcastProvider provider;
   
   private HazelcastInstance instance;
   
-  private Subscriber subscriber;
-  
-  private final Timesert await = Wait.SHORT;
+  private DefaultSubscriber subscriber;
   
   @Before
   public void before() {
@@ -41,7 +36,7 @@ public final class SubscriberTest {
 
   @Test
   public void testConsumeEmpty() throws InterruptedException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
@@ -56,7 +51,7 @@ public final class SubscriberTest {
   
   @Test
   public void testConsumeOne() throws InterruptedException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
@@ -75,7 +70,7 @@ public final class SubscriberTest {
   
   @Test
   public void testConsumeTwo() throws InterruptedException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
@@ -95,7 +90,7 @@ public final class SubscriberTest {
   
   @Test
   public void testSeek() throws InterruptedException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
@@ -112,7 +107,7 @@ public final class SubscriberTest {
   
   @Test(expected=IllegalArgumentException.class)
   public void testSeekIllegalArgumentTooLow() throws InterruptedException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
@@ -122,7 +117,7 @@ public final class SubscriberTest {
   
   @Test
   public void testReadFailure() throws InterruptedException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 1;
     final ErrorHandler errorHandler = mock(ErrorHandler.class);
     configureSubscriber(new SubscriberConfig()

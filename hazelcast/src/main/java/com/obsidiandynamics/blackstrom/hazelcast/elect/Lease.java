@@ -14,7 +14,7 @@ public final class Lease {
   
   private final long expiry;
 
-  Lease(UUID tenant, long expiry) {
+  public Lease(UUID tenant, long expiry) {
     this.tenant = tenant;
     this.expiry = expiry;
   }
@@ -65,7 +65,7 @@ public final class Lease {
     return Lease.class.getSimpleName() + " [tenant=" + tenant + ", expiry=" + expiry + "]";
   }
   
-  byte[] pack() {
+  public byte[] pack() {
     final ByteBuffer buf = ByteBuffer.allocate(24);
     buf.putLong(tenant.getMostSignificantBits());
     buf.putLong(tenant.getLeastSignificantBits());
@@ -73,7 +73,7 @@ public final class Lease {
     return buf.array();
   }
   
-  static Lease unpack(byte[] bytes) {
+  public static Lease unpack(byte[] bytes) {
     final ByteBuffer buf = ByteBuffer.wrap(bytes);
     final UUID tenant = new UUID(buf.getLong(), buf.getLong());
     final long expiry = buf.getLong();
