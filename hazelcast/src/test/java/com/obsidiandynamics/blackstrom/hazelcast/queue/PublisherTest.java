@@ -57,8 +57,9 @@ public final class PublisherTest {
   
   @Test
   public void testPublishToBoundedBuffer() throws InterruptedException, ExecutionException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
+    
     configurePublisher(new PublisherConfig().withStreamConfig(new StreamConfig()
                                                               .withName(stream)
                                                               .withHeapCapacity(capacity)));
@@ -84,8 +85,9 @@ public final class PublisherTest {
   
   @Test
   public void testPublishToStoredBuffer() throws InterruptedException, ExecutionException {
-    final String stream = "test";
+    final String stream = "s";
     final int capacity = 10;
+    
     configurePublisher(new PublisherConfig().withStreamConfig(new StreamConfig()
                                                               .withName(stream)
                                                               .withHeapCapacity(capacity)
@@ -108,6 +110,11 @@ public final class PublisherTest {
     assertEquals(capacity, buffer.size());
     final List<byte[]> allItems = readRemaining(buffer, 0);
     assertEquals(initialMessages + furtherMessages, allItems.size());
+  }
+  
+  @Test
+  public void testPublishFailure() {
+    
   }
   
   private static void publish(int numMessages, Publisher publisher, List<TestCallback> callbacks) {
