@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.retention;
 
+import java.util.*;
+
 import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.keyed.*;
@@ -24,13 +26,28 @@ public final class ShardedFlow implements Retention, Joinable {
   
   private final Keyed<Integer, Flow> flows;
   
+  private final List<Flow> createdFlows = new ArrayList<>();
+  
+  private final Object terminateLock = new Object();
+  
+  private boolean terminated;
+  
   public ShardedFlow() {
     this(LazyFiringStrategy::new);
   }
   
   public ShardedFlow(FiringStrategy.Factory firingStrategyFactory) {
     flows = new Keyed<>(shard -> {
-      return new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard-[" + shard + "]");
+      synchronized (terminateLock) {
+        final Flow flow = new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard-[" + shard + "]");
+        createdFlows.add(flow);
+        if (terminated) {
+          // the container was already terminated -- terminate the newly created flow; the resulting Confirmation
+          // objects won't do anything
+          flow.terminate();
+        }
+        return flow;
+      }
     });
   }
 
@@ -42,12 +59,21 @@ public final class ShardedFlow implements Retention, Joinable {
   }
 
   public Joinable terminate() {
-    flows.asMap().values().forEach(f -> f.terminate());
+    synchronized (terminateLock) {
+      // as flows are created lazily, it's possible that some flows are created after termination of
+      // this container; this flag ensures that new flows are stillborn
+      terminated = true;
+      createdFlows.forEach(f -> f.terminate());
+    }
     return this;
   }
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return Joinable.joinAll(timeoutMillis, flows.asMap().values());
+    final List<Flow> createdFlowsCopy; 
+    synchronized (terminateLock) {
+      createdFlowsCopy = new ArrayList<>(createdFlows);
+    }
+    return Joinable.joinAll(timeoutMillis, createdFlowsCopy);
   }
 }

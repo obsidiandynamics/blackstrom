@@ -108,17 +108,15 @@ public final class BalancedLedgerView implements Ledger {
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
     final Consumer consumer = consumers.get(handlerId);
-    if (consumer != null) {
-      final ConsumerGroup group = consumer.group;
-      if (group != null) {
-        final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
-        group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset());
-      }
+    final ConsumerGroup group = consumer.group;
+    if (group != null) {
+      final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
+      group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset());
     }
   }
 
   @Override
-  public synchronized void dispose() {
+  public void dispose() {
     hub.removeView(this);
     final Collection<Consumer> consumers = this.consumers.values();
     consumers.forEach(c -> c.thread.terminate());
@@ -126,7 +124,6 @@ public final class BalancedLedgerView implements Ledger {
     consumers.forEach(c -> c.thread.joinQuietly());
     consumers.forEach(c -> c.flow.joinQuietly());
     consumers.stream().filter(c -> c.group != null).forEach(c -> c.group.leave(c.handlerId));
-    this.consumers.clear();
     
     if (! detached) {
       hub.dispose();

@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.retention;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -13,6 +14,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.indigo.util.*;
 
 public class ShardedFlowTest {
   private final Timesert wait = Wait.SHORT;
@@ -31,6 +33,10 @@ public class ShardedFlowTest {
     }
   }
 
+  /**
+   *  Creates confirmations, confirms them, and verifies that confirmations
+   *  have propagated back to the ledger.
+   */
   @Test
   public void testShards() {
     final List<Long> confirmed = new CopyOnWriteArrayList<>();
@@ -85,6 +91,21 @@ public class ShardedFlowTest {
     wait.until(() -> {
       assertEquals(Arrays.asList(3L, 1L), confirmed);
     });
+  }
+  
+  /**
+   *  Tests the condition where a new flow is created after the termination of the
+   *  ShardedFlow container. In this case flows should be stillborn (pre-terminated).
+   */
+  @Test
+  public void testTerminateThenCreate() {
+    flow.terminate();
+    final Ledger ledger = mock(Ledger.class);
+    final MessageContext context = new DefaultMessageContext(ledger, null, flow);
+    final Confirmation c = flow.begin(context, message(0, 0));
+    c.confirm();
+    TestSupport.sleep(10);
+    verify(ledger, never()).confirm(any(), any());
   }
 
   private static Message message(long ballotId, int shard) {
