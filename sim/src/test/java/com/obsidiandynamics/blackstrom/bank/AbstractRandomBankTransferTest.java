@@ -14,6 +14,7 @@ import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.indigo.util.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -56,19 +57,17 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     final AtomicInteger timeouts = new AtomicInteger();
     
     final long started = System.currentTimeMillis();
-    final AtomicBoolean progressLoggerThreadRunning = new AtomicBoolean(true);
-    final Thread progressLoggerThread = new Thread(() -> {
-      while (progressLoggerThreadRunning.get()) {
-        TestSupport.sleep(2000);
-        final int c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
-        final long took = System.currentTimeMillis() - started;
-        final double rate = 1000d * s / took;
-        System.out.format("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]\n", 
-                          c, a, t, s, rate);
-      }
-    }, AbstractRandomBankTransferTest.class.getSimpleName() + "-progress");
-    progressLoggerThread.setDaemon(true);
-    progressLoggerThread.start();
+    final WorkerThread progressMonitorThread = WorkerThread.builder()
+        .withOptions(new WorkerOptions().withDaemon(true).withName(AbstractBankTransferTest.class, "progress"))
+        .onCycle(__thread -> {
+          Thread.sleep(2000);
+          final int c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
+          final long took = System.currentTimeMillis() - started;
+          final double rate = 1000d * s / took;
+          System.out.format("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]\n", 
+                            c, a, t, s, rate);
+        })
+        .buildAndStart();
     
     final Sandbox sandbox = Sandbox.forInstance(this);
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
@@ -123,7 +122,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           }
         }
       }
-      progressLoggerThreadRunning.set(false);
+      progressMonitorThread.terminate().joinQuietly();
       
       wait.until(() -> {
         assertEquals(runs, commits.get() + aborts.get() + timeouts.get());
