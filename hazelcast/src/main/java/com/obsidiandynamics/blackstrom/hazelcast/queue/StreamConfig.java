@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.hazelcast.config.*;
@@ -15,19 +16,22 @@ public final class StreamConfig {
   private int heapCapacity = RingbufferConfig.DEFAULT_CAPACITY;
   
   @YInject
-  private long residualCapacity = Long.MAX_VALUE;
+  private long storeCapacity = Long.MAX_VALUE;
   
   @YInject
-  private long residualRetentionMillis = TimeUnit.DAYS.toMillis(7);
+  private long storeRetentionMillis = TimeUnit.DAYS.toMillis(7);
   
   @YInject
-  private RingbufferStoreFactory<byte[]> residualStoreFactory = NopRingbufferStore.Factory.getInstance();
+  private Class<? extends RingbufferStoreFactory<byte[]>> storeFactoryClass = NopRingbufferStore.Factory.class;
   
   @YInject
   private int syncReplicas = RingbufferConfig.DEFAULT_SYNC_BACKUP_COUNT;
   
   @YInject
   private int asyncReplicas = RingbufferConfig.DEFAULT_ASYNC_BACKUP_COUNT;
+
+  @YInject
+  private Properties storeFactoryProps = new Properties();
 
   String getName() {
     return name;
@@ -47,31 +51,35 @@ public final class StreamConfig {
     return this;
   }
 
-  long getResidualCapacity() {
-    return residualCapacity;
+  long getStoreCapacity() {
+    return storeCapacity;
   }
 
-  public StreamConfig withResidualCapacity(long residualCapacity) {
-    this.residualCapacity = residualCapacity;
+  public StreamConfig withStoreCapacity(long storeCapacity) {
+    this.storeCapacity = storeCapacity;
     return this;
   }
 
-  long getResidualRetention() {
-    return residualRetentionMillis;
+  long getStoreRetention() {
+    return storeRetentionMillis;
   }
 
-  public StreamConfig withResidualRetention(long residualRetentionMillis) {
-    this.residualRetentionMillis = residualRetentionMillis;
+  public StreamConfig withStoreRetention(long storeRetentionMillis) {
+    this.storeRetentionMillis = storeRetentionMillis;
     return this;
   }
 
-  RingbufferStoreFactory<byte[]> getResidualStoreFactory() {
-    return residualStoreFactory;
+  Class<? extends RingbufferStoreFactory<byte[]>> getStoreFactoryClass() {
+    return storeFactoryClass;
   }
 
-  public StreamConfig withResidualStoreFactory(RingbufferStoreFactory<byte[]> residualStoreFactory) {
-    this.residualStoreFactory = residualStoreFactory;
+  public StreamConfig withStoreFactoryClass(Class<? extends RingbufferStoreFactory<byte[]>> storeFactoryClass) {
+    this.storeFactoryClass = storeFactoryClass;
     return this;
+  }
+
+  Properties getStoreFactoryProps() {
+    return storeFactoryProps;
   }
 
   int getSyncReplicas() {
@@ -94,8 +102,8 @@ public final class StreamConfig {
 
   @Override
   public String toString() {
-    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity + ", residualCapacity=" + residualCapacity
-           + ", residualRetentionMillis=" + residualRetentionMillis + ", residualStoreFactory=" + residualStoreFactory
+    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity + ", residualCapacity=" + storeCapacity
+           + ", storeRetentionMillis=" + storeRetentionMillis + ", storeFactoryClass=" + storeFactoryClass
            + ", syncReplicas=" + syncReplicas + ", asyncReplicas=" + asyncReplicas + "]";
   }
 }

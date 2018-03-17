@@ -12,6 +12,8 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   private static final int KEEPER_MAX_YIELDS = 100;
   private static final int KEEPER_BACKOFF_MILLIS = 1;
   
+  private final HazelcastInstance instance;
+  
   private final SubscriberConfig config;
   
   private final Ringbuffer<byte[]> buffer;
@@ -39,6 +41,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   private int yields;
   
   DefaultSubscriber(HazelcastInstance instance, SubscriberConfig config) {
+    this.instance = instance;
     this.config = config;
     
     final StreamConfig streamConfig = config.getStreamConfig();
@@ -83,6 +86,10 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       keeperThread = null;
     }
     lastReadOffset = nextReadOffset - 1;
+  }
+  
+  HazelcastInstance getInstance() {
+    return instance;
   }
   
   Election getElection() {
@@ -232,6 +239,25 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   @Override
   public boolean isAssigned() {
     return leaseCandidate == null || isCurrentTenant();
+  }
+  
+  @Override
+  public void deactivate() {
+    if (leaseCandidate != null) {
+      election.getRegistry().unenroll(config.getGroup(), leaseCandidate);
+      try {
+        election.yield(config.getGroup(), leaseCandidate);
+      } catch (NotTenantException e) {
+        config.getErrorHandler().onError("Failed to yield lease", e);
+      }
+    }
+  }
+  
+  @Override
+  public void reactivate() {
+    if (leaseCandidate != null) {
+      election.getRegistry().enroll(config.getGroup(), leaseCandidate);
+    }
   }
 
   @Override

@@ -104,7 +104,7 @@ public final class PublisherTest {
     configurePublisher(new PublisherConfig().withStreamConfig(new StreamConfig()
                                                               .withName(stream)
                                                               .withHeapCapacity(capacity)
-                                                              .withResidualStoreFactory(new HeapRingbufferStore.Factory())));
+                                                              .withStoreFactoryClass(new HeapRingbufferStore.Factory().getClass())));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final List<Record> records = new ArrayList<>();
     final List<TestCallback> callbacks = new ArrayList<>();
@@ -146,7 +146,7 @@ public final class PublisherTest {
                        .withStreamConfig(new StreamConfig()
                                          .withName(stream)
                                          .withHeapCapacity(capacity)
-                                         .withResidualStoreFactory(new HeapRingbufferStore.Factory())));
+                                         .withStoreFactoryClass(new HeapRingbufferStore.Factory().getClass())));
     final List<Record> records = new ArrayList<>();
     final List<TestCallback> callbacks = new ArrayList<>();
     

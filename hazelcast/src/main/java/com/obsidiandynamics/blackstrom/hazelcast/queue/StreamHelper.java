@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import java.util.*;
+
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
@@ -17,8 +19,13 @@ final class StreamHelper {
         .setAsyncBackupCount(streamConfig.getAsyncReplicas())
         .setCapacity(streamConfig.getHeapCapacity())
         .setRingbufferStoreConfig(new RingbufferStoreConfig()
-                                  .setFactoryImplementation(streamConfig.getResidualStoreFactory()));
+                                  .setFactoryClassName(getClassName(streamConfig.getStoreFactoryClass()))
+                                  .setProperties(new Properties()));
     instance.getConfig().addRingBufferConfig(ringbufferConfig);
     return instance.getRingbuffer(streamFQName);
+  }
+  
+  private static String getClassName(Class<?> storeFactoryClass) {
+    return storeFactoryClass != null ? storeFactoryClass.getName() : null;
   }
 }

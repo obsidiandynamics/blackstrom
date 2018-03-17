@@ -14,6 +14,10 @@ public interface Subscriber {
   
   boolean isAssigned();
   
+  void deactivate();
+  
+  void reactivate();
+  
   Joinable terminate();
   
   static DefaultSubscriber createDefault(HazelcastInstance instance, SubscriberConfig config) {

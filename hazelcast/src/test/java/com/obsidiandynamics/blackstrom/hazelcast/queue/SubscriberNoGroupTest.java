@@ -53,14 +53,19 @@ public final class SubscriberNoGroupTest {
     configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                 .withName(stream)
                                                                 .withHeapCapacity(capacity)));
+    
+    // these methods should do nothing or return a constant in group-free mode
+    assertTrue(subscriber.isAssigned()); 
+    subscriber.deactivate();
+    subscriber.reactivate();
+    // ^^
+    
     final RecordBatch b0 = subscriber.poll(1);
     assertEquals(0, b0.size());
     
     final RecordBatch b1 = subscriber.poll(1);
     assertEquals(0, b1.size());
     subscriber.confirm(); // shouldn't do anything
-    
-    assertTrue(subscriber.isAssigned()); // should always be true in group-free mode
   }
   
   @Test
@@ -147,7 +152,7 @@ public final class SubscriberNoGroupTest {
                         .withStreamConfig(new StreamConfig()
                                           .withName(stream)
                                           .withHeapCapacity(capacity)
-                                          .withResidualStoreFactory(null)));
+                                          .withStoreFactoryClass(null)));
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     
     buffer.add("h0".getBytes());
