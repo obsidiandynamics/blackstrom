@@ -51,13 +51,18 @@ final class DefaultPublisher implements Publisher, Joinable {
   }
   
   private void sendNow(Record record, PublishCallback callback) {
-    try {
-      final long offset = buffer.add(record.getData());
-      record.setOffset(offset);
-      callback.onComplete(offset, null);
-    } catch (Throwable e) {
-      callback.onComplete(Record.UNASSIGNED_OFFSET, e);
-    }
+    final ICompletableFuture<Long> f = buffer.addAsync(record.getData(), OverflowPolicy.OVERWRITE);
+    f.andThen(new ExecutionCallback<Long>() {
+      @Override public void onResponse(Long offset) {
+        final long offsetPrimitive = offset;
+        record.setOffset(offsetPrimitive);
+        callback.onComplete(offsetPrimitive, null);
+      }
+
+      @Override public void onFailure(Throwable error) {
+        callback.onComplete(Record.UNASSIGNED_OFFSET, error);
+      }
+    });
   }
 
   @Override
