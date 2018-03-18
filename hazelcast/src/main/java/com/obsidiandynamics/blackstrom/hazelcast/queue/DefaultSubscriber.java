@@ -70,7 +70,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       election.getRegistry().enroll(config.getGroup(), leaseCandidate);
       
       keeperThread = WorkerThread.builder()
-          .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultSubscriber.class, "keeper"))
+          .withOptions(new WorkerOptions()
+                       .withDaemon(true)
+                       .withName(DefaultSubscriber.class, streamConfig.getName(), "keeper"))
           .onCycle(this::keeperCycle)
           .buildAndStart();
     } else {
@@ -86,6 +88,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       keeperThread = null;
     }
     lastReadOffset = nextReadOffset - 1;
+  }
+  
+  @Override
+  public SubscriberConfig getConfig() {
+    return config;
   }
   
   HazelcastInstance getInstance() {

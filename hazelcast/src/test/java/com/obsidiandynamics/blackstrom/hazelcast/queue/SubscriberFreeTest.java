@@ -80,7 +80,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
         configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
                                                                     .withName(stream)
                                                                     .withHeapCapacity(capacity)));
-    
+    assertNotNull(s.getConfig());
     assertTrue(s.isAssigned()); 
     
     final RecordBatch b0 = s.poll(1);

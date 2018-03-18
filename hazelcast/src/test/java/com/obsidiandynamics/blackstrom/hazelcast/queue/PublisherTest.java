@@ -48,6 +48,8 @@ public final class PublisherTest extends AbstractPubSubTest {
     final Ringbuffer<byte[]> buffer = p.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final List<Record> records = new ArrayList<>();
     final List<TestCallback> callbacks = new ArrayList<>();
+    
+    assertNotNull(p.getConfig());
 
     final int initialMessages = 5;
     publish(initialMessages, p, records, callbacks);

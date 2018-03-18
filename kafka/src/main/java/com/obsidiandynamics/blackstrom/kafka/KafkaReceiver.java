@@ -18,7 +18,7 @@ public final class KafkaReceiver<K, V> implements Terminable, Joinable {
   
   private final Consumer<K, V> consumer;
   
-  private final long pollTimeoutMillis;
+  private final int pollTimeoutMillis;
   
   private final RecordHandler<K, V> recordHandler;
   
@@ -30,7 +30,7 @@ public final class KafkaReceiver<K, V> implements Terminable, Joinable {
     return cause -> logger.warn("Error processing Kafka record", cause);
   }
   
-  public KafkaReceiver(Consumer<K, V> consumer, long pollTimeoutMillis, String threadName, 
+  public KafkaReceiver(Consumer<K, V> consumer, int pollTimeoutMillis, String threadName, 
                        RecordHandler<K, V> recordHandler, ErrorHandler errorHandler) {
     this.consumer = consumer;
     this.pollTimeoutMillis = pollTimeoutMillis;
