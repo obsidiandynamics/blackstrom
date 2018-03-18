@@ -496,15 +496,16 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group1 = "g1";
     final int capacity = 10;
 
-    final HazelcastInstance instance = newInstance();
-    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
-    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    final HazelcastInstance instance0 = newInstance();
+    final HazelcastInstance instance1 = newInstance();
+    final Ringbuffer<byte[]> buffer = instance0.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = instance0.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group0, -1L);
     offsets.put(group1, -1L);
     
     final ErrorHandler eh0 = mockErrorHandler();
     final DefaultSubscriber s0 = 
-        configureSubscriber(instance,
+        configureSubscriber(instance0,
                             new SubscriberConfig()
                             .withGroup(group0)
                             .withErrorHandler(eh0)
@@ -514,7 +515,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                                               .withHeapCapacity(capacity)));
     final ErrorHandler eh1 = mockErrorHandler();
     final DefaultSubscriber s1 = 
-        configureSubscriber(instance,
+        configureSubscriber(instance1,
                             new SubscriberConfig()
                             .withGroup(group1)
                             .withErrorHandler(eh1)
