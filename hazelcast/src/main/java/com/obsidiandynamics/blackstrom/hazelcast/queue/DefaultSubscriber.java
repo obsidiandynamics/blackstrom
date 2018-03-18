@@ -151,7 +151,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     } else if (concreteInitialOffsetScheme == InitialOffsetScheme.LATEST) {
       return buffer.tailSequence() + 1;
     } else {
-      throw new OffsetInitializationException("No persisted offset");
+      throw new OffsetLoadException("No persisted offset");
     }
   }
   
@@ -164,8 +164,22 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     return new RecordBatch(records);
   }
   
+  private void ensureGroupMode() {
+    if (leaseCandidate == null) {
+      throw new IllegalStateException("Cannot call this operation in a group-free context");
+    }
+  }
+  
+  private void ensureGroupFreeMode() {
+    if (leaseCandidate != null) {
+      throw new IllegalStateException("Cannot call this operation in a group-aware context");
+    }
+  }
+  
   @Override
   public void confirm() {
+    ensureGroupMode();
+    
     if (lastReadOffset != Record.UNASSIGNED_OFFSET) {
       confirm(lastReadOffset);
     }
@@ -173,17 +187,19 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
 
   @Override
   public void confirm(long offset) {
+    ensureGroupMode();
+    
     if (offset < StreamHelper.SMALLEST_OFFSET || offset > lastReadOffset) {
       throw new IllegalArgumentException(String.format("Illegal offset %d; last read %d", offset, lastReadOffset));
     }
     
-    if (leaseCandidate != null) {
-      scheduledConfirmOffset = offset;
-    }
+    scheduledConfirmOffset = offset;
   }
   
   @Override
   public void seek(long offset) {
+    ensureGroupFreeMode();
+    
     if (offset < StreamHelper.SMALLEST_OFFSET) throw new IllegalArgumentException("Invalid seek offset " + offset);
     nextReadOffset = offset;
   }
@@ -243,21 +259,20 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   @Override
   public void deactivate() {
-    if (leaseCandidate != null) {
-      election.getRegistry().unenroll(config.getGroup(), leaseCandidate);
-      try {
-        election.yield(config.getGroup(), leaseCandidate);
-      } catch (NotTenantException e) {
-        config.getErrorHandler().onError("Failed to yield lease", e);
-      }
+    ensureGroupMode();
+    
+    election.getRegistry().unenroll(config.getGroup(), leaseCandidate);
+    try {
+      election.yield(config.getGroup(), leaseCandidate);
+    } catch (NotTenantException e) {
+      config.getErrorHandler().onError("Failed to yield lease", e);
     }
   }
   
   @Override
   public void reactivate() {
-    if (leaseCandidate != null) {
-      election.getRegistry().enroll(config.getGroup(), leaseCandidate);
-    }
+    ensureGroupMode();
+    election.getRegistry().enroll(config.getGroup(), leaseCandidate);
   }
 
   @Override

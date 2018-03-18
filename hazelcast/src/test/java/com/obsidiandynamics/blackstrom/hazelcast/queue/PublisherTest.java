@@ -134,8 +134,8 @@ public final class PublisherTest {
     final HazelcastInstance mockInstance = mock(HazelcastInstance.class);
     @SuppressWarnings("unchecked")
     final Ringbuffer<byte[]> mockBuffer = mock(Ringbuffer.class);
-    when(mockInstance.getRingbuffer(any())).then(invocation -> mockBuffer);
-    when(mockInstance.getConfig()).then(invocation -> instance.getConfig());
+    when(mockInstance.<byte[]>getRingbuffer(any())).thenReturn(mockBuffer);
+    when(mockInstance.getConfig()).thenReturn(instance.getConfig());
     final RuntimeException cause = new RuntimeException("error");
     when(mockBuffer.addAsync(any(), any())).then(invocation -> {
       return new CompletedFuture<>(null, cause, r -> r.run());

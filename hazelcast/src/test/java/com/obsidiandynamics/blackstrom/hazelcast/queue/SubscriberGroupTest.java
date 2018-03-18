@@ -10,64 +10,45 @@ import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
-import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.await.*;
-import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class SubscriberGroupTest {
+public final class SubscriberGroupTest extends AbstractSubscriberTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-  
-  private HazelcastProvider defaultProvider;
-  
-  private final Set<HazelcastInstance> instances = new HashSet<>();
-  
-  private final Set<DefaultSubscriber> subscribers = new HashSet<>();
-  
+
   private final Timesert await = Wait.SHORT;
   
-  @Before
-  public void before() {
-    defaultProvider = new MockHazelcastProvider();
-  }
-  
-  @After
-  public void after() {
-    subscribers.forEach(s -> s.terminate());
-    subscribers.forEach(s -> s.joinQuietly());
-    instances.forEach(h -> h.shutdown());
-  }
-  
-  private HazelcastInstance newInstance() {
-    return newInstance(defaultProvider);
-  }
-  
-  private HazelcastInstance newInstance(HazelcastProvider provider) {
-    final Config config = new Config()
-        .setProperty("hazelcast.logging.type", "none");
-    final HazelcastInstance instance = provider.createInstance(config);
-    instances.add(instance);
-    return instance;
-  }
-  
-  private DefaultSubscriber configureSubscriber(SubscriberConfig config) {
-    return configureSubscriber(newInstance(), config);
-  }
-  
-  private DefaultSubscriber configureSubscriber(HazelcastInstance instance, SubscriberConfig config) {
-    final DefaultSubscriber subscriber = Subscriber.createDefault(instance, config);
-    subscribers.add(subscriber);
-    return subscriber;
+  /**
+   *  Seek can only be performed in a group-free context.
+   */
+  @Test(expected=IllegalStateException.class)
+  public void testIllegalSeek() {
+    final String stream = "s";
+    final String group = "g";
+    final int capacity = 1;
+    
+    final DefaultSubscriber s =
+        configureSubscriber(new SubscriberConfig()
+                            .withGroup(group)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
+    s.seek(0);
   }
 
+  /**
+   *  Consuming from an empty buffer should result in a zero-size batch.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
   public void testConsumeEmpty() throws InterruptedException {
     final String stream = "s";
@@ -93,13 +74,28 @@ public final class SubscriberGroupTest {
     s.confirm();
   }
 
+  /**
+   *  Tests consuming of messages, and that {@code Subscriber#poll(long)} extends
+   *  the lease in the background. Also checks that we can confirm the offset of
+   *  the last consumed message.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
-  public void testConsumeConfirmAndUpdateLease() throws InterruptedException {
+  public void testConsumeExtendLeaseAndConfirm() throws InterruptedException {
     final String stream = "s";
     final String group = "g";
     final int capacity = 10;
+
+    final HazelcastInstance instance = newInstance();
+    
+    // start with an expired lease -- the new subscriber should take over it
+    final IMap<String, byte[]> leaseTable = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    leaseTable.put(group, Lease.expired(UUID.randomUUID()).pack());
+    
     final DefaultSubscriber s = 
-        configureSubscriber(new SubscriberConfig()
+        configureSubscriber(instance,
+                            new SubscriberConfig()
                             .withGroup(group)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
@@ -107,14 +103,21 @@ public final class SubscriberGroupTest {
                                               .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final IMap<String, Long> offsets = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    
+    // start with the earliest offset
     offsets.put(group, -1L);
     
+    // publish a pair of messages and wait until the subscriber is elected
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
     await.untilTrue(s::isAssigned);
+    
+    // capture the original lease expiry so that it can be compared with the extended lease
     final long expiry0 = s.getElection().getLeaseView().getLease(group).getExpiry();
     
-    Thread.sleep(10);
+    // sleep and then consume messages -- this will eventually extend the lease
+    final long sleepTime = 10;
+    Thread.sleep(sleepTime);
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(2, b0.size());
     assertArrayEquals("h0".getBytes(), b0.all().get(0).getData());
@@ -124,13 +127,16 @@ public final class SubscriberGroupTest {
     s.confirm();
     await.until(() -> assertEquals(1, (long) offsets.get(group)));
     
-    // polling would also have touched the lease -- check the expiry
+    // polling would also have extended the lease -- check the expiry
     await.until(() -> {
       final long expiry1 = s.getElection().getLeaseView().getLease(group).getExpiry();
-      assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 > expiry0);
+      assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 >= expiry0 + sleepTime);
     });
   }
   
+  /**
+   *  Test confirmation with an illegal offset -- below the minimum allowed.
+   */
   @Test(expected=IllegalArgumentException.class)
   public void testConfirmFailureOffsetTooLow() {
     final String stream = "s";
@@ -146,6 +152,9 @@ public final class SubscriberGroupTest {
     s.confirm(-1);
   }
   
+  /**
+   *  Test confirmation with an illegal offset -- above the last read offset.
+   */
   @Test(expected=IllegalArgumentException.class)
   public void testConfirmFailureOffsetTooHigh() {
     final String stream = "s";
@@ -161,8 +170,13 @@ public final class SubscriberGroupTest {
     s.confirm(0);
   }
   
+  /**
+   *  Tests the failure of a deactivation when the subscriber isn't the current tenant.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
-  public void testConfirmFailureNotAssigned() throws InterruptedException {
+  public void testConfirmAndDeactivateFailureNotAssigned() throws InterruptedException {
     final String stream = "s";
     final String group = "g";
     final int capacity = 10;
@@ -203,8 +217,22 @@ public final class SubscriberGroupTest {
     // schedule a confirmation and verify that it has failed
     s.confirm();
     await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
+    
+    // try deactivating (can only happen for a current tenant) and verify failure
+    s.deactivate();
+    await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
   }
   
+  /**
+   *  Tests the failure of a read by creating a buffer overflow condition, where the subscriber
+   *  is about to read from an offset that has already lapsed, throwing a {@link StaleSequenceException}
+   *  in the background. (The store factory has to be disabled for this to happen.)<p>
+   *  
+   *  When this error is detected, this test is also rigged to evict the subscriber's tenancy from the
+   *  lease table, thereby creating a second error when a lease extension is attempted.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
   public void testPollReadFailureAndExtendFailure() throws InterruptedException {
     final String stream = "s";
@@ -243,6 +271,11 @@ public final class SubscriberGroupTest {
     await.until(() -> verify(errorHandler, times(2)).onError(isNotNull(), (Exception) isNotNull()));
   }
   
+  /**
+   *  Tests the {@link InitialOffsetScheme#EARLIEST} offset initialisation.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
   public void testInitialOffsetEarliest() throws InterruptedException {
     final String stream = "s";
@@ -268,6 +301,11 @@ public final class SubscriberGroupTest {
     assertEquals(2, b.size());
   }
   
+  /**
+   *  Tests the {@link InitialOffsetScheme#LATEST} offset initialisation.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
   public void testInitialOffsetLatest() throws InterruptedException {
     final String stream = "s";
@@ -293,7 +331,13 @@ public final class SubscriberGroupTest {
     assertEquals(0, b.size());
   }
   
-  @Test(expected=OffsetInitializationException.class)
+  /**
+   *  Tests the {@link InitialOffsetScheme#NONE} offset initialisation. Because no offset
+   *  has been written to the offsets map, this operation will fail.
+   *  
+   *  @throws InterruptedException
+   */
+  @Test(expected=OffsetLoadException.class)
   public void testInitialOffsetNone() throws InterruptedException {
     final String stream = "s";
     final String group = "g";
@@ -307,8 +351,15 @@ public final class SubscriberGroupTest {
                                           .withHeapCapacity(capacity)));
   }
 
+  /**
+   *  Tests two subscribers competing for the same stream. Deactivation and reactivation is used
+   *  to test lease reassignment and verify that one subscriber can continue where the other has
+   *  left off.
+   *  
+   *  @throws InterruptedException
+   */
   @Test
-  public void testTwoConsumersWithActivation() throws InterruptedException {
+  public void testTwoSubscribersWithActivation() throws InterruptedException {
     final String stream = "s";
     final String group = "g";
     final int capacity = 10;

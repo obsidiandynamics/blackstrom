@@ -83,4 +83,8 @@ public final class Lease {
   public static Lease forever(UUID tenant) {
     return new Lease(tenant, Long.MAX_VALUE);
   }
+  
+  public static Lease expired(UUID tenant) {
+    return new Lease(tenant, 0);
+  }
 }

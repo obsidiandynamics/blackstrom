@@ -71,4 +71,14 @@ public final class LeaseTest {
     assertFalse(expired.isHeldByAndCurrent(c));
     assertFalse(expired.isHeldByAndCurrent(UUID.randomUUID()));
   }
+  
+  @Test
+  public void testForever() {
+    assertEquals(Long.MAX_VALUE, Lease.forever(UUID.randomUUID()).getExpiry());
+  }
+  
+  @Test
+  public void testExpired() {
+    assertEquals(0, Lease.expired(UUID.randomUUID()).getExpiry());
+  }
 }
