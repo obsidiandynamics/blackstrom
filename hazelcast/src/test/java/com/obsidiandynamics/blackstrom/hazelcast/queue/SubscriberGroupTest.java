@@ -361,6 +361,10 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final int capacity = 10;
 
     final HazelcastInstance instance = newInstance();
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    offsets.put(group, -1L);
+    
     final DefaultSubscriber s0 = 
         configureSubscriber(instance,
                             new SubscriberConfig()
@@ -369,9 +373,6 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
-    final Ringbuffer<byte[]> buffer = s0.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
-    final IMap<String, Long> offsets = s0.getInstance().getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
-    offsets.put(group, -1L);
     
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
@@ -446,5 +447,65 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     });
     
     await.until(() -> assertFalse(s1.isAssigned()));
+  }
+  
+  /**
+   *  Tests two subscribers using two separate groups. Each subscriber will receive the
+   *  same messages.
+   *  
+   *  @throws InterruptedException
+   */
+  @Test
+  public void testTwoSubscribersTwoGroups() throws InterruptedException {
+    final String stream = "s";
+    final String group0 = "g0";
+    final String group1 = "g1";
+    final int capacity = 10;
+
+    final HazelcastInstance instance = newInstance();
+    final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = instance.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    offsets.put(group0, -1L);
+    offsets.put(group1, -1L);
+    
+    final DefaultSubscriber s0 = 
+        configureSubscriber(instance,
+                            new SubscriberConfig()
+                            .withGroup(group0)
+                            .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
+    final DefaultSubscriber s1 = 
+        configureSubscriber(instance,
+                            new SubscriberConfig()
+                            .withGroup(group1)
+                            .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
+    
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    await.untilTrue(s0::isAssigned);
+    await.untilTrue(s1::isAssigned);
+
+    // consume from s0 and s1, and verify that both received the same messages
+    final RecordBatch s0_b0 = s0.poll(1_000);
+    assertEquals(2, s0_b0.size());
+    assertArrayEquals("h0".getBytes(), s0_b0.all().get(0).getData());
+    assertArrayEquals("h1".getBytes(), s0_b0.all().get(1).getData());
+
+    final RecordBatch s1_b0 = s1.poll(1_000);
+    assertEquals(2, s1_b0.size());
+    assertArrayEquals("h0".getBytes(), s1_b0.all().get(0).getData());
+    assertArrayEquals("h1".getBytes(), s1_b0.all().get(1).getData());
+    
+    // consumer again from s0 and s1 should result in an empty batch
+    final RecordBatch s0_b1 = s0.poll(10);
+    assertEquals(0, s0_b1.size());
+    
+    final RecordBatch s1_b1 = s1.poll(10);
+    assertEquals(0, s1_b1.size());
   }
 }
