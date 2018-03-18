@@ -354,7 +354,7 @@ public final class ElectionTest {
   public void testSingleNodeTouchNotTenantBackgroundReElection() throws NotTenantException {
     final HazelcastInstance h = newInstance();
     final LeaseChangeHandler handler = mockHandler();
-    final Election e = newElection(new ElectionConfig().withScavengeInterval(60_000), leaseTable(h), handler);
+    final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
     
     final UUID c0 = UUID.randomUUID();
     e.getRegistry().enroll("resource", c0);
@@ -362,7 +362,7 @@ public final class ElectionTest {
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();
-    leaseTable(h).put("resource", new Lease(c1, System.currentTimeMillis() + 60_000).pack());
+    leaseTable(h).put("resource", Lease.forever(c1).pack());
     
     // according to the view snapshot, c0 is the leader, but behind the scenes we've elected c1
     assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
@@ -396,7 +396,7 @@ public final class ElectionTest {
   public void testSingleNodeYieldNotTenantBackgroundReElection() throws NotTenantException {
     final HazelcastInstance h = newInstance();
     final LeaseChangeHandler handler = mockHandler();
-    final Election e = newElection(new ElectionConfig().withScavengeInterval(60_000), leaseTable(h), handler);
+    final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
     
     final UUID c0 = UUID.randomUUID();
     e.getRegistry().enroll("resource", c0);
@@ -404,7 +404,7 @@ public final class ElectionTest {
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();
-    leaseTable(h).put("resource", new Lease(c1, System.currentTimeMillis() + 60_000).pack());
+    leaseTable(h).put("resource", Lease.forever(c1).pack());
     
     // according to the view snapshot, c0 is the leader, but behind the scenes we've elected c1
     assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
