@@ -25,10 +25,8 @@ public final class DefaultReceiver implements Receiver {
   
   private void pollerCycle(WorkerThread thread) throws InterruptedException {
     final RecordBatch batch = subscriber.poll(pollTimeoutMillis);
-    if (! batch.isEmpty()) {
-      for (Record record : batch) {
-        recordHandler.onRecord(record);
-      }
+    for (Record record : batch) {
+      recordHandler.onRecord(record);
     }
     Thread.sleep(pollTimeoutMillis);
   }

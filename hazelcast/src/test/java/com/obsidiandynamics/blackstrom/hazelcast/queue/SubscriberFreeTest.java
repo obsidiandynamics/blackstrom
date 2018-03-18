@@ -12,6 +12,7 @@ import org.junit.runners.*;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
@@ -285,5 +286,32 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
                         .withStreamConfig(new StreamConfig()
                                           .withName(stream)
                                           .withHeapCapacity(capacity)));
+  }
+  
+  /**
+   *  Tests ability to asynchronously consume messages from a {@link Receiver}.
+   */
+  @Test
+  public void testReceiverConsume() {
+    final String stream = "s";
+    final int capacity = 10;
+    
+    final DefaultSubscriber s =
+        configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
+                                                                    .withName(stream)
+                                                                    .withHeapCapacity(capacity)));
+    final RecordHandler handler = mock(RecordHandler.class);
+    createReceiver(s, handler, 1_000);
+    
+    final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    await.until(() -> {
+      try {
+        verify(handler, times(2)).onRecord(isNotNull());
+      } catch (InterruptedException e) {}
+    });
   }
 }
