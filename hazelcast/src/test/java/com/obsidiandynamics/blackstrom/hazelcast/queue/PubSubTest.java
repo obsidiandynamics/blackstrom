@@ -1,26 +1,22 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-import static org.junit.Assert.*;
-
 import java.util.*;
 import java.util.stream.*;
 
 import org.junit.*;
 
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class PubSubTest {
-  private final Set<Publisher> publishers = new HashSet<>();
+public final class PubSubTest extends AbstractPubSubTest {
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
   
-  @After
-  public void after() {
-    final Set<Joinable> publishersJoin = publishers.stream().map(p -> p.terminate()).collect(Collectors.toSet());
-    publishersJoin.forEach(p -> p.joinQuietly());
-  }
-
   @Test
-  public void testPubSubNoGroup() {
-    //TODO
+  public void testOneWay() {
+    testOneWay(2, 4, 10_000 * SCALE);
   }
-
+  
+  private void testOneWay(int producers, int consumers, int messagesPerProducer) {
+    
+  }
 }

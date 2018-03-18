@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.stream.*;
 
 import org.junit.*;
+import org.junit.runners.*;
+import org.slf4j.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
@@ -16,6 +18,7 @@ import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractPubSubTest {
   protected HazelcastProvider defaultProvider;
   
@@ -68,18 +71,23 @@ public abstract class AbstractPubSubTest {
     return register(subscriber.createReceiver(recordHandler, pollTimeoutMillis), terminables);
   }
   
-  protected final <T> T register(T item, Collection<? super T> container) {
+  protected static final <T> T register(T item, Collection<? super T> container) {
     container.add(item);
     return item;
   }
   
-  protected final ErrorHandler mockErrorHandler() {
+  protected static final String randomGroup() {
+    final UUID random = UUID.randomUUID();
+    return "group-" + Long.toHexString(random.getMostSignificantBits() ^ random.getLeastSignificantBits());
+  }
+  
+  protected static final ErrorHandler mockErrorHandler() {
     final ErrorHandler mock = mock(ErrorHandler.class);
     doAnswer(invocation -> {
       final String summary = invocation.getArgument(0);
       final Throwable error = invocation.getArgument(1);
-      System.err.format("Intercepted error: %s\n", summary);
-      error.printStackTrace(System.err);
+      final Logger log = LoggerFactory.getLogger(AbstractPubSubTest.class);
+      log.warn(summary, error);
       return null;
     }).when(mock).onError(any(), any());
     return mock;

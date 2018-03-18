@@ -28,7 +28,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test(expected=IllegalStateException.class)
   public void testIllegalSeek() {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 1;
 
     final ErrorHandler eh = mockErrorHandler();
@@ -51,7 +51,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testConsumeEmpty() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s = 
@@ -87,7 +87,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testConsumeExtendLeaseAndConfirm() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
 
     final HazelcastInstance instance = newInstance();
@@ -147,7 +147,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test(expected=IllegalArgumentException.class)
   public void testConfirmFailureOffsetTooLow() {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s = 
@@ -168,7 +168,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test(expected=IllegalArgumentException.class)
   public void testConfirmFailureOffsetTooHigh() {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s = 
@@ -191,7 +191,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testConfirmAndDeactivateFailureNotAssigned() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     
     final ErrorHandler errorHandler = mock(ErrorHandler.class);
@@ -249,7 +249,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testPollReadFailureAndExtendFailure() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 1;
     
     final ErrorHandler errorHandler = mock(ErrorHandler.class);
@@ -292,7 +292,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testInitialOffsetEarliest() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     
     final HazelcastInstance instance = newInstance();
@@ -326,7 +326,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testInitialOffsetLatest() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     
     final HazelcastInstance instance = newInstance();
@@ -361,7 +361,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test(expected=OffsetLoadException.class)
   public void testInitialOffsetNone() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
     
     final ErrorHandler eh = mockErrorHandler();
@@ -385,7 +385,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testTwoSubscribersWithActivation() throws InterruptedException {
     final String stream = "s";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
 
     final HazelcastInstance instance0 = newInstance();
@@ -492,8 +492,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Test
   public void testTwoSubscribersTwoGroups() throws InterruptedException {
     final String stream = "s";
-    final String group0 = "g0";
-    final String group1 = "g1";
+    final String group0 = randomGroup();
+    final String group1 = randomGroup();
     final int capacity = 10;
 
     final HazelcastInstance instance0 = newInstance();
@@ -560,7 +560,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   public void testTwoSubscribersTwoStreams() throws InterruptedException {
     final String stream0 = "s";
     final String stream1 = "s1";
-    final String group = "g";
+    final String group = randomGroup();
     final int capacity = 10;
 
     final HazelcastInstance instance0 = newInstance();

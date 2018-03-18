@@ -184,7 +184,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
           
           if (i != 0 && i % checkInterval == 0) {
             final long sent = totalSent.addAndGet(checkInterval);
-            while (sent - smallestReceived.getAsLong() > backlogTarget) {
+            while (sent - smallestReceived.getAsLong() >= backlogTarget) {
               TestSupport.sleep(1);
             }
           }

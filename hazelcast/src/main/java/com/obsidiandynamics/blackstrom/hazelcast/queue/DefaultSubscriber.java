@@ -9,7 +9,6 @@ import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
-  private static final int KEEPER_MAX_YIELDS = 100;
   private static final int KEEPER_BACKOFF_MILLIS = 1;
   
   private final HazelcastInstance instance;
@@ -37,8 +36,6 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   private volatile long scheduledTouchTimestamp = 0;
   
   private long lastTouchedTimestamp = scheduledTouchTimestamp;
-  
-  private int yields;
   
   private boolean active = true;
   
@@ -221,25 +218,29 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     
     boolean performedWork = false;
     synchronized (activeLock) {
-      // avoid confirming offsets or extending the lease if this subscriber has been deactivated
-      if (active) {
-        if (scheduledConfirmOffset != lastConfirmedOffset) {
+      // avoid confirming offsets or extending the lease if this subscriber has been deactivated,
+      // but update the timestamps to thwart future attempts
+    
+      if (scheduledConfirmOffset != lastConfirmedOffset) {
+        if (active) {
           performedWork = true;
           confirmOffset(scheduledConfirmOffset);
+        } else {
+          lastConfirmedOffset = scheduledConfirmOffset;
         }
-        
-        if (scheduledTouchTimestamp != lastTouchedTimestamp) {
+      }
+      
+      if (scheduledTouchTimestamp != lastTouchedTimestamp) {
+        if (active) {
           performedWork = true;
           touchLease(scheduledTouchTimestamp);
+        } else {
+          lastTouchedTimestamp = scheduledTouchTimestamp;
         }
       }
     }
     
-    if (performedWork) {
-      yields = 0;
-    } else if (yields++ < KEEPER_MAX_YIELDS) {
-      Thread.yield();
-    } else {
+    if (! performedWork) {
       Thread.sleep(KEEPER_BACKOFF_MILLIS);
     }
   }
