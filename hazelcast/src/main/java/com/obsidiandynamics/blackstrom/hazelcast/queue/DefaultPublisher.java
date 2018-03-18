@@ -42,7 +42,7 @@ final class DefaultPublisher implements Publisher, Joinable {
     publishThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
-                     .withName(DefaultPublisher.class, streamConfig.getName(), "publisher"))
+                     .withName(Publisher.class, streamConfig.getName(), "publisher"))
         .onCycle(this::publisherCycle)
         .buildAndStart();
   }

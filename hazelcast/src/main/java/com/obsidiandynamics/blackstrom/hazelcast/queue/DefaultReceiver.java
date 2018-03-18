@@ -18,7 +18,7 @@ public final class DefaultReceiver implements Receiver {
     pollerThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
-                     .withName(DefaultReceiver.class, subscriber.getConfig().getStreamConfig().getName(), "poller"))
+                     .withName(Receiver.class, subscriber.getConfig().getStreamConfig().getName(), "poller"))
         .onCycle(this::pollerCycle)
         .buildAndStart();
   }

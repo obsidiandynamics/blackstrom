@@ -72,7 +72,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       keeperThread = WorkerThread.builder()
           .withOptions(new WorkerOptions()
                        .withDaemon(true)
-                       .withName(DefaultSubscriber.class, streamConfig.getName(), "keeper"))
+                       .withName(Subscriber.class, streamConfig.getName(), "keeper"))
           .onCycle(this::keeperCycle)
           .buildAndStart();
     } else {
