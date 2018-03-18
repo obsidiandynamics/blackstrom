@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class Flow implements Joinable {
+public final class Flow implements Terminable, Joinable {
   /** Atomically assigns sequence numbers for thread naming. */
   private static final AtomicInteger nextThreadNo = new AtomicInteger();
   
@@ -54,6 +54,7 @@ public final class Flow implements Joinable {
    *  
    *  @return A {@link Joinable} for the caller to wait on.
    */
+  @Override
   public Joinable terminate() {
     executor.terminate();
     return this;

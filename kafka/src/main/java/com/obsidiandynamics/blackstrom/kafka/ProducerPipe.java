@@ -6,7 +6,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class ProducerPipe<K, V> implements Joinable {
+public final class ProducerPipe<K, V> implements Terminable, Joinable {
   private static final int MAX_YIELDS = 100;
   private static final int QUEUE_BACKOFF_MILLIS = 1;
   
@@ -77,6 +77,7 @@ public final class ProducerPipe<K, V> implements Joinable {
     }
   }
   
+  @Override
   public Joinable terminate() {
     if (thread != null) thread.terminate();
     closeProducer();

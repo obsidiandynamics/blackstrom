@@ -5,7 +5,7 @@ import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class KafkaReceiver<K, V> implements Joinable {
+public final class KafkaReceiver<K, V> implements Terminable, Joinable {
   @FunctionalInterface
   public interface RecordHandler<K, V> {
     void onReceive(ConsumerRecords<K, V> records) throws InterruptedException;
@@ -65,6 +65,7 @@ public final class KafkaReceiver<K, V> implements Joinable {
     consumer.close();
   }
   
+  @Override
   public Joinable terminate() {
     return thread.terminate();
   }

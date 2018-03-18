@@ -8,7 +8,7 @@ import com.obsidiandynamics.blackstrom.keyed.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class ShardedFlow implements Retention, Joinable {
+public final class ShardedFlow implements Retention, Terminable, Joinable {
   private static class ConfirmTask implements Runnable {
     private final MessageContext context;
     private final MessageId messageId;
@@ -58,6 +58,7 @@ public final class ShardedFlow implements Retention, Joinable {
     return flow.begin(messageId, new ConfirmTask(context, messageId));
   }
 
+  @Override
   public Joinable terminate() {
     synchronized (terminateLock) {
       // as flows are created lazily, it's possible that some flows are created after termination of

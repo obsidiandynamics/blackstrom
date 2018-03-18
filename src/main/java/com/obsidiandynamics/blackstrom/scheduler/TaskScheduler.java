@@ -9,7 +9,7 @@ import com.obsidiandynamics.blackstrom.worker.*;
 /**
  *  A scheduler for dispatching arbitrary tasks.
  */
-public final class TaskScheduler implements Joinable {
+public final class TaskScheduler implements Terminable, Joinable {
   /** Maximum sleep time. If the next task's time is longer, the sleep will be performed in a loop.
    *  This is also the default time that the scheduler sleeps for if it has no pending tasks. */
   private static final long MAX_SLEEP_NANOS = 1_000_000_000l;
@@ -80,6 +80,7 @@ public final class TaskScheduler implements Joinable {
    *  
    *  @return A {@link Joinable} for the caller to wait on.
    */
+  @Override
   public Joinable terminate() {
     executor.terminate();
     return this;

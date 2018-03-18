@@ -7,7 +7,7 @@ import org.apache.kafka.clients.consumer.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class ConsumerPipe<K, V> implements Joinable {
+public final class ConsumerPipe<K, V> implements Terminable, Joinable {
   private final BlockingQueue<ConsumerRecords<K, V>> queue;
   
   private final RecordHandler<K, V> handler;
@@ -48,6 +48,7 @@ public final class ConsumerPipe<K, V> implements Joinable {
     return thread != null ? thread.join(timeoutMillis) : true;
   }
   
+  @Override
   public Joinable terminate() {
     if (thread != null) thread.terminate();
     return this;

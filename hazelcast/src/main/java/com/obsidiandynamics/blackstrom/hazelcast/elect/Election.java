@@ -7,7 +7,7 @@ import org.slf4j.*;
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public final class Election implements Joinable {
+public final class Election implements Terminable, Joinable {
   private static final Logger log = LoggerFactory.getLogger(Election.class);
   
   private final ElectionConfig config;
@@ -138,6 +138,7 @@ public final class Election implements Joinable {
     }
   }
   
+  @Override
   public Joinable terminate() {
     scavengerThread.terminate();
     return this;
