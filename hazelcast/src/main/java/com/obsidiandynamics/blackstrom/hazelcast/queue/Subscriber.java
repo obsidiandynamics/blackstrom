@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public interface Subscriber {
+public interface Subscriber extends Terminable {
   RecordBatch poll(long timeoutMillis) throws InterruptedException;
   
   void confirm(long offset);
@@ -17,8 +17,6 @@ public interface Subscriber {
   void deactivate();
   
   void reactivate();
-  
-  Joinable terminate();
   
   static DefaultSubscriber createDefault(HazelcastInstance instance, SubscriberConfig config) {
     return new DefaultSubscriber(instance, config);

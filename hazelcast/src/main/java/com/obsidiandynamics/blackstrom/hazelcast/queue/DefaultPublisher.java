@@ -19,6 +19,8 @@ final class DefaultPublisher implements Publisher, Joinable {
     }
   }
   
+  private final HazelcastInstance instance;
+  
   private final WorkerThread publishThread;
   
   private final NodeQueue<AsyncRecord> queue = new NodeQueue<>();
@@ -30,12 +32,17 @@ final class DefaultPublisher implements Publisher, Joinable {
   private int yields;
 
   DefaultPublisher(HazelcastInstance instance, PublisherConfig config) {
+    this.instance = instance;
     buffer = StreamHelper.getRingbuffer(instance, config.getStreamConfig());
     
     publishThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withDaemon(true).withName(DefaultPublisher.class, "publisher"))
         .onCycle(this::publisherCycle)
         .buildAndStart();
+  }
+  
+  HazelcastInstance getInstance() {
+    return instance;
   }
   
   private void publisherCycle(WorkerThread t) throws InterruptedException {

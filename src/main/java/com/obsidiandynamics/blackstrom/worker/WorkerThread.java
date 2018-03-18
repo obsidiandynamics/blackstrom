@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.worker;
 
 import java.util.concurrent.atomic.*;
 
-public final class WorkerThread implements Joinable {
+public final class WorkerThread implements Terminable, Joinable {
   private final Thread driver;
   
   private final WorkerCycle worker;
@@ -66,6 +66,7 @@ public final class WorkerThread implements Joinable {
    *  
    *  @return A {@link Joinable} for the caller to wait on.
    */
+  @Override
   public final Joinable terminate() {
     synchronized (stateLock) {
       if (state == WorkerState.CONCEIVED) {

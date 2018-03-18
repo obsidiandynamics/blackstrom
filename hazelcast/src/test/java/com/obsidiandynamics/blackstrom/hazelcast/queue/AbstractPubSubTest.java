@@ -1,19 +1,25 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import java.util.*;
+import java.util.stream.*;
 
 import org.junit.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
+import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
+import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.worker.*;
 
-public abstract class AbstractSubscriberTest {
-  private HazelcastProvider defaultProvider;
+public abstract class AbstractPubSubTest {
+  protected HazelcastProvider defaultProvider;
   
-  private final Set<HazelcastInstance> instances = new HashSet<>();
+  protected final Set<HazelcastInstance> instances = new HashSet<>();
   
-  private final Set<DefaultSubscriber> subscribers = new HashSet<>();
+  protected final Set<Terminable> terminables = new HashSet<>();
+
+  protected final Timesert await = Wait.SHORT;
   
   @Before
   public void before() {
@@ -22,8 +28,9 @@ public abstract class AbstractSubscriberTest {
   
   @After
   public void after() {
-    subscribers.forEach(s -> s.terminate());
-    subscribers.forEach(s -> s.joinQuietly());
+    final Set<Joinable> joinables = terminables.stream()
+        .map(t -> t.terminate()).collect(Collectors.toSet());
+    joinables.forEach(s -> s.joinQuietly());
     instances.forEach(h -> h.shutdown());
   }
   
@@ -39,13 +46,23 @@ public abstract class AbstractSubscriberTest {
     return instance;
   }
   
+  protected DefaultPublisher configurePublisher(PublisherConfig config) {
+    return configurePublisher(newInstance(), config);
+  }
+  
+  protected DefaultPublisher configurePublisher(HazelcastInstance instance, PublisherConfig config) {
+    final DefaultPublisher publisher = Publisher.createDefault(instance, config);
+    terminables.add(publisher);
+    return publisher;
+  }
+  
   protected DefaultSubscriber configureSubscriber(SubscriberConfig config) {
     return configureSubscriber(newInstance(), config);
   }
   
   protected DefaultSubscriber configureSubscriber(HazelcastInstance instance, SubscriberConfig config) {
     final DefaultSubscriber subscriber = Subscriber.createDefault(instance, config);
-    subscribers.add(subscriber);
+    terminables.add(subscriber);
     return subscriber;
   }
 }

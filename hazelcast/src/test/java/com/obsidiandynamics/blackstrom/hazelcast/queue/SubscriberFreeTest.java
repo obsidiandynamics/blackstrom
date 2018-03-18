@@ -15,7 +15,7 @@ import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class SubscriberFreeTest extends AbstractSubscriberTest {
+public final class SubscriberFreeTest extends AbstractPubSubTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);

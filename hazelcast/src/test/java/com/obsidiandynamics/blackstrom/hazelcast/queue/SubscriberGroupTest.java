@@ -12,19 +12,15 @@ import org.junit.runners.*;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
-import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
-import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class SubscriberGroupTest extends AbstractSubscriberTest {
+public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-
-  private final Timesert await = Wait.SHORT;
   
   /**
    *  Seek can only be performed in a group-free context.
