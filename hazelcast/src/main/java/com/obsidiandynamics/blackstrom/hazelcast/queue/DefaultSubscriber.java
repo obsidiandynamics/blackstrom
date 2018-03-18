@@ -40,6 +40,10 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private int yields;
   
+  private boolean active = true;
+  
+  private final Object activeLock = new Object();
+  
   DefaultSubscriber(HazelcastInstance instance, SubscriberConfig config) {
     this.instance = instance;
     this.config = config;
@@ -216,14 +220,19 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     final long scheduledTouchTimestamp = this.scheduledTouchTimestamp;
     
     boolean performedWork = false;
-    if (scheduledConfirmOffset != lastConfirmedOffset) {
-      performedWork = true;
-      confirmOffset(scheduledConfirmOffset);
-    }
-    
-    if (scheduledTouchTimestamp != lastTouchedTimestamp) {
-      performedWork = true;
-      touchLease(scheduledTouchTimestamp);
+    synchronized (activeLock) {
+      // avoid confirming offsets or extending the lease if this subscriber has been deactivated
+      if (active) {
+        if (scheduledConfirmOffset != lastConfirmedOffset) {
+          performedWork = true;
+          confirmOffset(scheduledConfirmOffset);
+        }
+        
+        if (scheduledTouchTimestamp != lastTouchedTimestamp) {
+          performedWork = true;
+          touchLease(scheduledTouchTimestamp);
+        }
+      }
     }
     
     if (performedWork) {
@@ -268,18 +277,25 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   public void deactivate() {
     ensureGroupMode();
     
-    election.getRegistry().unenroll(config.getGroup(), leaseCandidate);
-    try {
-      election.yield(config.getGroup(), leaseCandidate);
-    } catch (NotTenantException e) {
-      config.getErrorHandler().onError("Failed to yield lease", e);
+    synchronized (activeLock) {
+      election.getRegistry().unenroll(config.getGroup(), leaseCandidate);
+      try {
+        election.yield(config.getGroup(), leaseCandidate);
+      } catch (NotTenantException e) {
+        config.getErrorHandler().onError("Failed to yield lease", e);
+      }
+      active = false;
     }
   }
   
   @Override
   public void reactivate() {
     ensureGroupMode();
-    election.getRegistry().enroll(config.getGroup(), leaseCandidate);
+    
+    synchronized (activeLock) {
+      election.getRegistry().enroll(config.getGroup(), leaseCandidate);
+      active = true;
+    }
   }
 
   @Override

@@ -1,5 +1,8 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import java.util.*;
 import java.util.stream.*;
 
@@ -68,5 +71,25 @@ public abstract class AbstractPubSubTest {
   protected final <T> T register(T item, Collection<? super T> container) {
     container.add(item);
     return item;
+  }
+  
+  protected final ErrorHandler mockErrorHandler() {
+    final ErrorHandler mock = mock(ErrorHandler.class);
+    doAnswer(invocation -> {
+      final String summary = invocation.getArgument(0);
+      final Throwable error = invocation.getArgument(1);
+      System.err.format("Intercepted error: %s\n", summary);
+      error.printStackTrace(System.err);
+      return null;
+    }).when(mock).onError(any(), any());
+    return mock;
+  }
+  
+  protected static final void verifyNoError(ErrorHandler... mockErrorHandlers) {
+    Arrays.stream(mockErrorHandlers).forEach(AbstractPubSubTest::verifyNoError);
+  }
+  
+  protected static final void verifyNoError(ErrorHandler mockErrorHandler) {
+    verify(mockErrorHandler, never()).onError(any(), any());
   }
 }

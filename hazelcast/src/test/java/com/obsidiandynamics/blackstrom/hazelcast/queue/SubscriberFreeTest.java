@@ -76,11 +76,14 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testConsumeEmpty() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
-    
+
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s =
-        configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
-                                                                    .withName(stream)
-                                                                    .withHeapCapacity(capacity)));
+        configureSubscriber(new SubscriberConfig()
+                            .withErrorHandler(eh)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
     assertNotNull(s.getConfig());
     assertTrue(s.isAssigned()); 
     
@@ -89,6 +92,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     
     final RecordBatch b1 = s.poll(1);
     assertEquals(0, b1.size());
+    
+    verifyNoError(eh);
   }
 
   /**
@@ -100,13 +105,16 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testConsumeOne() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
-    
+
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s =
-        configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
-                                                                    .withName(stream)
-                                                                    .withHeapCapacity(capacity)));
+        configureSubscriber(new SubscriberConfig()
+                            .withErrorHandler(eh)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
-    
+
     buffer.add("hello".getBytes());
 
     final RecordBatch b0 = s.poll(1_000);
@@ -115,6 +123,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
 
     final RecordBatch b1 = s.poll(10);
     assertEquals(0, b1.size());
+    
+    verifyNoError(eh);
   }
 
   /**
@@ -127,10 +137,13 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final String stream = "s";
     final int capacity = 10;
 
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s =
-        configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
-                                                                    .withName(stream)
-                                                                    .withHeapCapacity(capacity)));
+        configureSubscriber(new SubscriberConfig()
+                            .withErrorHandler(eh)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
 
     buffer.add("h0".getBytes());
@@ -143,6 +156,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     
     final RecordBatch b1 = s.poll(10);
     assertEquals(0, b1.size());
+    
+    verifyNoError(eh);
   }
   
   /**
@@ -155,11 +170,14 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testSeek() throws InterruptedException {
     final String stream = "s";
     final int capacity = 10;
-    
+
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s =
-        configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
-                                                                    .withName(stream)
-                                                                    .withHeapCapacity(capacity)));
+        configureSubscriber(new SubscriberConfig()
+                            .withErrorHandler(eh)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     
     buffer.add("h0".getBytes());
@@ -169,6 +187,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(1, b0.size());
     assertArrayEquals("h1".getBytes(), b0.all().get(0).getData());
+    
+    verifyNoError(eh);
   }
   
   /**
@@ -231,9 +251,11 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
 
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber subscriber =
         configureSubscriber(instance,
                             new SubscriberConfig()
+                            .withErrorHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -241,6 +263,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
 
     final RecordBatch b = subscriber.poll(1_000);
     assertEquals(2, b.size());
+    
+    verifyNoError(eh);
   }
   
   /**
@@ -257,10 +281,12 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final Ringbuffer<byte[]> buffer = instance.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
-    
+
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s =
         configureSubscriber(instance,
                             new SubscriberConfig()
+                            .withErrorHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.LATEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -268,6 +294,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
 
     final RecordBatch b = s.poll(10);
     assertEquals(0, b.size());
+    
+    verifyNoError(eh);
   }
   
   /**
@@ -295,11 +323,14 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testReceiverConsume() {
     final String stream = "s";
     final int capacity = 10;
-    
+
+    final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s =
-        configureSubscriber(new SubscriberConfig().withStreamConfig(new StreamConfig()
-                                                                    .withName(stream)
-                                                                    .withHeapCapacity(capacity)));
+        configureSubscriber(new SubscriberConfig()
+                            .withErrorHandler(eh)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
     final RecordHandler handler = mock(RecordHandler.class);
     createReceiver(s, handler, 1_000);
     
@@ -313,5 +344,6 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
         verify(handler, times(2)).onRecord(isNotNull());
       } catch (InterruptedException e) {}
     });
+    verifyNoError(eh);
   }
 }
