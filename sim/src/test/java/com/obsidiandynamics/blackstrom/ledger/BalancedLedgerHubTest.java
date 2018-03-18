@@ -166,6 +166,10 @@ public final class BalancedLedgerHubTest {
     wait.untilTrue(() -> received.get());
   }
 
+  /**
+   *  Ungrouped context. Messages are published after all the views have joined and each view
+   *  receives the complete set of messages. 
+   */
   @Test
   public void testUngroupedAll() {
     final int shards = 4;
@@ -194,6 +198,10 @@ public final class BalancedLedgerHubTest {
     });
   }
 
+  /**
+   *  Ungrouped context. Messages are published before all the views have joined and none of the
+   *  views receive any messages.
+   */
   @Test
   public void testUngroupedNone() {
     final int shards = 4;
@@ -221,6 +229,11 @@ public final class BalancedLedgerHubTest {
     })));
   }
 
+  /**
+   *  Messages are consumed from one of a set of contending views without confirming messages. 
+   *  Contending views are disposed one by one and in each case messages are consumed again
+   *  from one of the remaining views.
+   */
   @Test
   public void testGroupedCountdownNoConfirm() {
     final int shards = 4;
@@ -253,6 +266,12 @@ public final class BalancedLedgerHubTest {
     });
   }
 
+  /**
+   *  Messages are consumed from one of a set of contending views, confirming the first message. 
+   *  Contending views are disposed one by one and in each case messages are consumed again
+   *  from one of the remaining views. ({@link BalancedLedgerView} re-delivers the last confirmed
+   *  message.)
+   */
   @Test
   public void testGroupedCountdownConfirmFirst() {
     final int shards = 4;
@@ -287,7 +306,12 @@ public final class BalancedLedgerHubTest {
       wait.until(assertAtLeastOneForEachShard(shards, views, expected));
     });
   }
-
+  
+  /**
+   *  Messages are consumed from one of a set of contending views, confirming the last message. 
+   *  Contending views are disposed one by one and in each case only the tail message is consumed
+   *  again. ({@link BalancedLedgerView} re-delivers the last confirmed message.)
+   */
   @Test
   public void testGroupedCountdownConfirmLast() {
     final int shards = 2;
@@ -332,6 +356,9 @@ public final class BalancedLedgerHubTest {
     });
   }
   
+  /**
+   *  Tests handover using {@link RandomShardAssignment} with no confirmations.
+   */
   @Test
   public void testHandoverRandomNoConfirm() {
     final int shards = 1;
@@ -353,6 +380,9 @@ public final class BalancedLedgerHubTest {
     wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v1), expected));
   }
   
+  /**
+   *  Tests handover using {@link StickyShardAssignment} with no confirmations.
+   */
   @Test
   public void testHandoverStickyNoConfirm() {
     final int shards = 1;
@@ -377,6 +407,10 @@ public final class BalancedLedgerHubTest {
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
   }
   
+  /**
+   *  Tests handover using {@link StickyShardAssignment} with confirmation of the first
+   *  message.
+   */
   @Test
   public void testHandoverStickyConfirmFirst() {
     final int shards = 1;
@@ -402,6 +436,10 @@ public final class BalancedLedgerHubTest {
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
   }
   
+  /**
+   *  Tests handover using {@link StickyShardAssignment} with confirmation of the last
+   *  message.
+   */
   @Test
   public void testHandoverStickyConfirmLast() {
     final int shards = 1;
@@ -428,6 +466,9 @@ public final class BalancedLedgerHubTest {
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedTail));
   }
   
+  /**
+   *  Tests consumption from two independent groups. Both will receive the same messages.
+   */
   @Test
   public void testTwoGroups() {
     final int shards = 1;
