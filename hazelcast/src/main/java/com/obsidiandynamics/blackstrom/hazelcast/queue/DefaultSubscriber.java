@@ -25,9 +25,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private final WorkerThread keeperThread;
   
-  private long nextReadOffset;
+  private volatile long nextReadOffset;
   
-  private long lastReadOffset;
+  private volatile long lastReadOffset;
   
   private volatile long scheduledConfirmOffset = Record.UNASSIGNED_OFFSET;
   
