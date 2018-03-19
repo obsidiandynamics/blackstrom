@@ -211,7 +211,6 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // write some data so that we can read at least one record (otherwise we can't confirm an offset)
     buffer.add("hello".getBytes());
     await.untilTrue(s::isAssigned);
-    //System.out.println("initial assignment: " + s.getElection().getLeaseView()); //TODO
     final long expiry0 = s.getElection().getLeaseView().getLease(group).getExpiry();
 
     Thread.sleep(10);
@@ -225,31 +224,22 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
       final long expiry1 = lease1.getExpiry();
       assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 > expiry0);
     });
-    System.out.println("extended lease " + s.getElection().getLeaseView());
     
     // forcibly take the lease away and confirm that the subscriber has seen this 
     leaseTable.put(group, Lease.forever(new UUID(0, 0)).pack());
     await.until(() -> assertFalse(s.isAssigned()));
-    final LeaseView viewAtRelease = s.getElection().getLeaseView();
-    //System.out.println("assignment released: " + s.getElection().getLeaseView()); //TODO
     
-    try {
-      // schedule a confirmation and verify that it has failed
-      s.confirm();
-      await.until(() -> {
-        assertFalse(s.isAssigned());
-        assertEquals(-1L, (long) offsets.get(group));
-        verify(errorHandler).onError(isNotNull(), isNull());
-      });
-      
-      // try deactivating (can only happen for a current tenant) and verify failure
-      s.deactivate();
-      await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
-    } catch (Throwable e) {
-      e.printStackTrace(System.out);
-      System.out.println("assignment released: " + viewAtRelease); //TODO
-      after();
-    }
+    // schedule a confirmation and verify that it has failed
+    s.confirm();
+    await.until(() -> {
+      assertFalse(s.isAssigned());
+      assertEquals(-1L, (long) offsets.get(group));
+      verify(errorHandler).onError(isNotNull(), isNull());
+    });
+    
+    // try deactivating (can only happen for a current tenant) and verify failure
+    s.deactivate();
+    await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
   }
   
   /**

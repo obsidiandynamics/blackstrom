@@ -2,13 +2,13 @@ package com.obsidiandynamics.blackstrom.hazelcast.elect;
 
 import java.util.*;
 
-public interface LeaseChangeHandler {
-  static LeaseChangeHandler nop = new LeaseChangeHandler() {
+interface ScavengeWatcher {
+  static ScavengeWatcher nop = new ScavengeWatcher() {
     @Override public void onExpire(String resource, UUID tenant) {}
     @Override public void onAssign(String resource, UUID tenant) {}
   };
   
-  static LeaseChangeHandler nop() { return nop; }
+  static ScavengeWatcher nop() { return nop; }
   
   void onAssign(String resource, UUID tenant);
 

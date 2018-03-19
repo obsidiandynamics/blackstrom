@@ -14,7 +14,7 @@ public final class Election implements Terminable, Joinable {
   
   private final IMap<String, byte[]> leaseTable;
   
-  private final LeaseChangeHandler changeHandler;
+  private final ScavengeWatcher scavengeWatcher;
   
   private final Registry registry;
   
@@ -28,10 +28,14 @@ public final class Election implements Terminable, Joinable {
   
   private long nextViewVersion = 1;
   
-  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, LeaseChangeHandler changeHandler) {
+  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable) {
+    this(config, leaseTable, ScavengeWatcher.nop());
+  }
+  
+  Election(ElectionConfig config, IMap<String, byte[]> leaseTable, ScavengeWatcher scavengeWatcher) {
     this.config = config;
     this.leaseTable = leaseTable;
-    this.changeHandler = changeHandler;
+    this.scavengeWatcher = scavengeWatcher;
     registry = new Registry(config.getInitialRegistry());
     
     scavengerThread = WorkerThread.builder()
@@ -60,7 +64,7 @@ public final class Election implements Terminable, Joinable {
           if (existingLease.isVacant()) {
             log.debug("Lease of {} is vacant", resource); 
           } else {
-            changeHandler.onExpire(resource, existingLease.getTenant());
+            scavengeWatcher.onExpire(resource, existingLease.getTenant());
             log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), Lease.formatExpiry(existingLease.getExpiry()));
           }
           
@@ -78,7 +82,7 @@ public final class Election implements Terminable, Joinable {
             if (success) {
               log.debug("New lease of {} by {} until {}", resource, nextCandidate, Lease.formatExpiry(newLease.getExpiry()));
               reloadView();
-              changeHandler.onAssign(resource, nextCandidate);
+              scavengeWatcher.onAssign(resource, nextCandidate);
             }
           }
         }

@@ -14,30 +14,39 @@ public final class RegistryTest {
     Assertions.assertToStringOverride(new Registry());
   }
   
+  @Test
+  public void testWithInitial() {
+    final UUID c = UUID.randomUUID();
+    final Registry r = new Registry(new Registry().withCandidate("resource", c));
+    assertEquals(Collections.singleton(c), r.getCandidatesView().get("resource"));
+    assertEquals(1, r.getCandidatesView().size());
+    assertEquals(Collections.singleton("resource"), r.getResourcesView());
+  }
+  
   @Test 
-  public void testEnrollUnenroll() {
+  public void testEnrolUnenrol() {
     final Registry r = new Registry();
     assertEquals(Collections.emptyMap(), r.getCandidatesView());    
     assertNull(r.getRandomCandidate("key"));
     
     final UUID c0 = UUID.randomUUID();
-    r.enroll("key", c0);
+    r.enrol("key", c0);
     assertEquals(1, r.getCandidatesView().size());
     assertEquals(setOf(c0), r.getCandidatesView().get("key"));
     assertNotNull(r.getRandomCandidate("key"));
     
     final UUID c1 = UUID.randomUUID();
-    r.enroll("key", c1);
+    r.enrol("key", c1);
     assertEquals(1, r.getCandidatesView().size());
     assertEquals(setOf(c0, c1), r.getCandidatesView().get("key"));
     assertNotNull(r.getRandomCandidate("key"));
     
-    r.unenroll("key", c0);
+    r.unenrol("key", c0);
     assertEquals(1, r.getCandidatesView().size());
     assertEquals(setOf(c1), r.getCandidatesView().get("key"));
     assertNotNull(r.getRandomCandidate("key"));
     
-    r.unenroll("key", c1);
+    r.unenrol("key", c1);
     assertEquals(Collections.emptyMap(), r.getCandidatesView());
     assertNull(r.getRandomCandidate("key"));
   }

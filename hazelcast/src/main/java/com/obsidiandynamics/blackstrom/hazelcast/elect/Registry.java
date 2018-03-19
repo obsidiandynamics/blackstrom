@@ -12,14 +12,19 @@ public final class Registry {
     candidates.putAll(initial.getCandidatesView());
   }
   
-  public void enroll(String resource, UUID candidate) {
+  public Registry withCandidate(String resource, UUID candidate) {
+    enrol(resource, candidate);
+    return this;
+  }
+  
+  public void enrol(String resource, UUID candidate) {
     synchronized (lock) {
       final Set<UUID> candidatesForResource = candidates.computeIfAbsent(resource, k -> new HashSet<>());
       candidatesForResource.add(candidate);
     }
   }
   
-  public void unenroll(String resource, UUID candidate) {
+  public void unenrol(String resource, UUID candidate) {
     synchronized (lock) {
       final Set<UUID> candidatesForResource = candidates.getOrDefault(resource, Collections.emptySet());
       candidatesForResource.remove(candidate);

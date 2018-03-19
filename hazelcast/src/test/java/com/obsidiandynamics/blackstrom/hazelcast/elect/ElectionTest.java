@@ -57,14 +57,14 @@ public final class ElectionTest {
     return instance;
   }
   
-  private Election newElection(ElectionConfig config, IMap<String, byte[]> leaseTable, LeaseChangeHandler changeHandler) {
+  private Election newElection(ElectionConfig config, IMap<String, byte[]> leaseTable, ScavengeWatcher changeHandler) {
     final Election election = new Election(config, leaseTable, changeHandler);
     elections.add(election);
     return election;
   }
   
-  private static LeaseChangeHandler mockHandler() {
-    return mock(LeaseChangeHandler.class);
+  private static ScavengeWatcher mockHandler() {
+    return mock(ScavengeWatcher.class);
   }
   
   private static IMap<String, byte[]> leaseTable(HazelcastInstance instance) {
@@ -77,7 +77,7 @@ public final class ElectionTest {
   @Test
   public void testSingleNodeEmptyWithNoCandidates() {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
     
     TestSupport.sleep(10);
@@ -92,16 +92,16 @@ public final class ElectionTest {
   @Test
   public void testSingleNodeExpiredWithNoCandidates() {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final UUID o = UUID.randomUUID();
     leaseTable(h).put("resource", new Lease(o, 0).pack());
     final UUID c = UUID.randomUUID();
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
     doAnswer(invocation -> {
-      e.getRegistry().unenroll("resource", c);
+      e.getRegistry().unenrol("resource", c);
       return null;
     }).when(handler).onExpire(any(), any());
-    e.getRegistry().enroll("resource", c);
+    e.getRegistry().enrol("resource", c);
     
     await.until(() -> assertEquals(1, e.getLeaseView().asMap().size()));
     verify(handler, never()).onAssign(eq("resource"), eq(c));
@@ -116,14 +116,14 @@ public final class ElectionTest {
   @Test
   public void testSingleNodeElectFromVacantAndTouchYield() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final int leaseDuration = 60_000;
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1).withLeaseDuration(leaseDuration), 
                                    leaseTable(h), handler);
     
     final UUID c = UUID.randomUUID();
     final long beforeElection = System.currentTimeMillis();
-    e.getRegistry().enroll("resource", c);
+    e.getRegistry().enrol("resource", c);
     await.until(() -> {
       assertTrue(e.getLeaseView().isCurrentTenant("resource", c));
       assertEquals(1, e.getLeaseView().asMap().size());
@@ -143,7 +143,7 @@ public final class ElectionTest {
                  lease.getExpiry() >= beforeTouch + leaseDuration);
     });
     
-    e.getRegistry().unenroll("resource", c);
+    e.getRegistry().unenrol("resource", c);
     e.yield("resource", c);
     await.until(() -> {
       assertEquals(0, e.getLeaseView().asMap().size());
@@ -164,19 +164,19 @@ public final class ElectionTest {
     final int leaseDuration = 60_000;
     
     final HazelcastInstance h0 = newInstance();
-    final LeaseChangeHandler handler0 = mockHandler();
+    final ScavengeWatcher handler0 = mockHandler();
     final Election e0 = newElection(new ElectionConfig().withScavengeInterval(1).withLeaseDuration(leaseDuration), 
                                     leaseTable(h0), handler0);
 
     final HazelcastInstance h1 = newInstance();
-    final LeaseChangeHandler handler1 = mockHandler();
+    final ScavengeWatcher handler1 = mockHandler();
     final Election e1 = newElection(new ElectionConfig().withScavengeInterval(1).withLeaseDuration(leaseDuration), 
                                     leaseTable(h1), handler1);
     
     final UUID c = UUID.randomUUID();
     final long beforeElection = System.currentTimeMillis();
-    e0.getRegistry().enroll("resource", c);
-    e1.getRegistry().enroll("resource", c);
+    e0.getRegistry().enrol("resource", c);
+    e1.getRegistry().enrol("resource", c);
     await.until(() -> {
       final Lease lease0 = e0.getLeaseView().asMap().get("resource");
       assertNotNull(lease0);
@@ -210,20 +210,20 @@ public final class ElectionTest {
     final int leaseDuration = 60_000;
     
     final HazelcastInstance h0 = newInstance();
-    final LeaseChangeHandler handler0 = mockHandler();
+    final ScavengeWatcher handler0 = mockHandler();
     final Election e0 = newElection(new ElectionConfig().withScavengeInterval(1).withLeaseDuration(leaseDuration), 
                                     leaseTable(h0), handler0);
 
     final HazelcastInstance h1 = newInstance();
-    final LeaseChangeHandler handler1 = mockHandler();
+    final ScavengeWatcher handler1 = mockHandler();
     final Election e1 = newElection(new ElectionConfig().withScavengeInterval(1).withLeaseDuration(leaseDuration), 
                                     leaseTable(h1), handler1);
     
     final UUID c0 = UUID.randomUUID();
     final UUID c1 = UUID.randomUUID();
     final long beforeElection = System.currentTimeMillis();
-    e0.getRegistry().enroll("resource", c0);
-    e1.getRegistry().enroll("resource", c1);
+    e0.getRegistry().enrol("resource", c0);
+    e1.getRegistry().enrol("resource", c1);
     await.until(() -> {
       final Lease lease0 = e0.getLeaseView().asMap().get("resource");
       assertNotNull(lease0);
@@ -265,7 +265,7 @@ public final class ElectionTest {
   @Test
   public void testSingleNodeElectFromVacantMissed() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final int leaseDuration = 60_000;
     final IMap<String, byte[]> leaseTable = leaseTable(h);
     
@@ -276,7 +276,7 @@ public final class ElectionTest {
                                    leaseTableSpied, handler);
     
     final UUID c = UUID.randomUUID();
-    e.getRegistry().enroll("resource", c);
+    e.getRegistry().enrol("resource", c);
     await.until(() -> verify(leaseTableSpied, atLeast(2)).putIfAbsent(any(), any()));
   }
 
@@ -289,7 +289,7 @@ public final class ElectionTest {
   @Test
   public void testSingleNodeElectFromOtherAndTouch() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final int leaseDuration = 60_000;
     leaseTable(h).put("resource", new Lease(UUID.randomUUID(), 0).pack());
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1).withLeaseDuration(leaseDuration), 
@@ -297,7 +297,7 @@ public final class ElectionTest {
     
     final UUID c = UUID.randomUUID();
     final long beforeElection = System.currentTimeMillis();
-    e.getRegistry().enroll("resource", c);
+    e.getRegistry().enrol("resource", c);
     await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c)));
     assertEquals(1, e.getLeaseView().asMap().size());
     await.until(() -> verify(handler).onAssign(eq("resource"), eq(c)));
@@ -315,7 +315,7 @@ public final class ElectionTest {
   @Test(expected=NotTenantException.class)
   public void testSingleNodeTouchNotTenantVacant() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
 
     final UUID c = UUID.randomUUID();
@@ -331,11 +331,11 @@ public final class ElectionTest {
   @Test(expected=NotTenantException.class)
   public void testSingleNodeTouchNotTenantOther() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
     
     final UUID c0 = UUID.randomUUID();
-    e.getRegistry().enroll("resource", c0);
+    e.getRegistry().enrol("resource", c0);
     await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
     assertEquals(1, e.getLeaseView().asMap().size());
 
@@ -353,14 +353,14 @@ public final class ElectionTest {
   @Test(expected=NotTenantException.class)
   public void testSingleNodeTouchNotTenantBackgroundReElection() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     
     // keep a long scavenge interval to desensitise the scavenger and pre-register candidate to ensure that
     // it's the first thing that the scavenger thread sees
     final int scavengeInterval = 30_000;
     final UUID c0 = UUID.randomUUID();
     final Registry initialRegistry = new Registry();
-    initialRegistry.enroll("resource", c0);
+    initialRegistry.enrol("resource", c0);
     
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(scavengeInterval)
@@ -388,7 +388,7 @@ public final class ElectionTest {
   @Test(expected=NotTenantException.class)
   public void testSingleNodeYieldNotTenantVacant() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
 
     final UUID c = UUID.randomUUID();
@@ -405,14 +405,14 @@ public final class ElectionTest {
   @Test(expected=NotTenantException.class)
   public void testSingleNodeYieldNotTenantBackgroundReElection() throws NotTenantException {
     final HazelcastInstance h = newInstance();
-    final LeaseChangeHandler handler = mockHandler();
+    final ScavengeWatcher handler = mockHandler();
     
     // keep a long scavenge interval to desensitise the scavenger and pre-register candidate to ensure that
     // it's the first thing that the scavenger thread sees
     final int scavengeInterval = 30_000;
     final UUID c0 = UUID.randomUUID();
     final Registry initialRegistry = new Registry();
-    initialRegistry.enroll("resource", c0);
+    initialRegistry.enrol("resource", c0);
     
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(scavengeInterval)

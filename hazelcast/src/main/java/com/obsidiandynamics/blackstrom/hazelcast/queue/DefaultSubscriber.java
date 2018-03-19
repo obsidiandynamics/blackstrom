@@ -59,8 +59,8 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       final String leaseFQName = QNamespace.HAZELQ_META.qualify("lease." + streamConfig.getName());
       final IMap<String, byte[]> leaseTable = instance.getMap(leaseFQName);
       leaseCandidate = UUID.randomUUID();
-      election = new Election(config.getElectionConfig(), leaseTable, LeaseChangeHandler.nop());
-      election.getRegistry().enroll(config.getGroup(), leaseCandidate);
+      election = new Election(config.getElectionConfig(), leaseTable);
+      election.getRegistry().enrol(config.getGroup(), leaseCandidate);
       
       keeperThread = WorkerThread.builder()
           .withOptions(new WorkerOptions()
@@ -271,7 +271,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     ensureGroupMode();
     
     synchronized (activeLock) {
-      election.getRegistry().unenroll(config.getGroup(), leaseCandidate);
+      election.getRegistry().unenrol(config.getGroup(), leaseCandidate);
       try {
         election.yield(config.getGroup(), leaseCandidate);
       } catch (NotTenantException e) {
@@ -286,7 +286,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     ensureGroupMode();
     
     synchronized (activeLock) {
-      election.getRegistry().enroll(config.getGroup(), leaseCandidate);
+      election.getRegistry().enrol(config.getGroup(), leaseCandidate);
       active = true;
     }
   }
