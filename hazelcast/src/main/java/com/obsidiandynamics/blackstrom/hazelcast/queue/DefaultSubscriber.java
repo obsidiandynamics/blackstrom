@@ -61,11 +61,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       leaseCandidate = UUID.randomUUID();
       election = new Election(config.getElectionConfig(), leaseTable, new LeaseChangeHandler() {
         @Override public void onExpire(String resource, UUID tenant) {
-          config.getLog().debug("Expired lease of {} held by {}", resource, tenant);
+//          config.getLog().debug("Expired lease of {} held by {}", resource, tenant); //TODO
         }
         
         @Override public void onAssign(String resource, UUID tenant) {
-          config.getLog().debug("Assigned lease of {} to {}", resource, tenant);
+//          config.getLog().debug("Assigned lease of {} to {}", resource, tenant); //TODO
         }
       });
       election.getRegistry().enroll(config.getGroup(), leaseCandidate);
@@ -246,8 +246,10 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   }
   
   private void confirmOffset(long offset) {
-    if (isCurrentTenant()) {
+    final LeaseView leaseView = election.getLeaseView();
+    if (leaseView.isCurrentTenant(config.getGroup(), leaseCandidate)) {
       offsets.put(config.getGroup(), offset);
+      config.getLog().debug("Lease view {}", leaseView);
     } else {
       final String m = String.format("Failed confirming offset %s for stream %s: %s is not the current tenant for group %s",
                                      offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
