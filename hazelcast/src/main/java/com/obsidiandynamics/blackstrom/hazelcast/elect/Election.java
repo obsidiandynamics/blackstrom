@@ -20,6 +20,8 @@ public final class Election implements Terminable, Joinable {
   
   private final WorkerThread scavengerThread;
   
+  private final Object scavengeLock = new Object();
+  
   private volatile LeaseViewImpl leaseView = new LeaseViewImpl();
   
   public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, LeaseChangeHandler changeHandler) {
@@ -39,40 +41,45 @@ public final class Election implements Terminable, Joinable {
   }
   
   private void scavegeCycle(WorkerThread t) throws InterruptedException {
-    reloadView();
-    
-    final Set<String> resources = registry.getCandidatesView().keySet();
-    for (String resource : resources) {
-      final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
-      if (! existingLease.isCurrent()) {
-        if (existingLease.isVacant()) {
-          log.debug("Lease of {} is vacant", resource); 
-        } else {
-          changeHandler.onExpire(resource, existingLease.getTenant());
-          log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
-        }
-        
-        final UUID nextCandidate = registry.getRandomCandidate(resource);
-        if (nextCandidate != null) {
-          final boolean success;
-          final Lease newLease = new Lease(nextCandidate, System.currentTimeMillis() + config.getLeaseDuration());
+    scavenge();
+    Thread.sleep(config.getScavengeInterval());
+  }
+  
+  void scavenge() {
+    synchronized (scavengeLock) {
+      reloadView();
+      
+      final Set<String> resources = registry.getCandidatesView().keySet();
+      for (String resource : resources) {
+        final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
+        if (! existingLease.isCurrent()) {
           if (existingLease.isVacant()) {
-            final byte[] previous = leaseTable.putIfAbsent(resource, newLease.pack());
-            success = previous == null;
+            log.debug("Lease of {} is vacant", resource); 
           } else {
-            success = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
+            changeHandler.onExpire(resource, existingLease.getTenant());
+            log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
           }
           
-          if (success) {
-            log.debug("New lease of {} by {} until {}", resource, nextCandidate, new Date(newLease.getExpiry()));
-            updateViewWithLease(resource, newLease);
-            changeHandler.onAssign(resource, nextCandidate);
+          final UUID nextCandidate = registry.getRandomCandidate(resource);
+          if (nextCandidate != null) {
+            final boolean success;
+            final Lease newLease = new Lease(nextCandidate, System.currentTimeMillis() + config.getLeaseDuration());
+            if (existingLease.isVacant()) {
+              final byte[] previous = leaseTable.putIfAbsent(resource, newLease.pack());
+              success = previous == null;
+            } else {
+              success = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
+            }
+            
+            if (success) {
+              log.debug("New lease of {} by {} until {}", resource, nextCandidate, new Date(newLease.getExpiry()));
+              updateViewWithLease(resource, newLease);
+              changeHandler.onAssign(resource, nextCandidate);
+            }
           }
         }
       }
     }
-    
-    Thread.sleep(config.getScavengeInterval());
   }
   
   private void reloadView() {

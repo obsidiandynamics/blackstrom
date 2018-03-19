@@ -354,13 +354,17 @@ public final class ElectionTest {
   public void testSingleNodeTouchNotTenantBackgroundReElection() throws NotTenantException {
     final HazelcastInstance h = newInstance();
     final LeaseChangeHandler handler = mockHandler();
-    final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
+    
+    // keep a long scavenge interval to desensitise the scavenger
+    final Election e = newElection(new ElectionConfig().withScavengeInterval(60_000), leaseTable(h), handler);
     
     final UUID c0 = UUID.randomUUID();
     e.getRegistry().enroll("resource", c0);
-    await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
+    e.scavenge();
+    assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
     assertEquals(1, e.getLeaseView().asMap().size());
 
+    TestSupport.sleep(10);
     final UUID c1 = UUID.randomUUID();
     leaseTable(h).put("resource", Lease.forever(c1).pack());
     
@@ -384,7 +388,7 @@ public final class ElectionTest {
     final UUID c = UUID.randomUUID();
     e.yield("resource", c);
   }
-
+  
   /**
    *  Simulates a race condition where a tenant holding a lease attempts to yield it, but the lease
    *  is transferred to another tenant behind the scenes. This tests the CAS operation that guards
@@ -396,11 +400,14 @@ public final class ElectionTest {
   public void testSingleNodeYieldNotTenantBackgroundReElection() throws NotTenantException {
     final HazelcastInstance h = newInstance();
     final LeaseChangeHandler handler = mockHandler();
-    final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
+    
+    // keep a long scavenge interval to desensitise the scavenger
+    final Election e = newElection(new ElectionConfig().withScavengeInterval(60_000), leaseTable(h), handler);
     
     final UUID c0 = UUID.randomUUID();
     e.getRegistry().enroll("resource", c0);
-    await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
+    e.scavenge();
+    assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();
