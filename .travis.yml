@@ -1,11 +1,11 @@
 language: java
 os:
   - linux
-  - osx
 services:
   - docker
 jdk:
   - oraclejdk8
+  - oraclejdk9
 install:
   - ./gradlew assemble --stacktrace --info
 script:
