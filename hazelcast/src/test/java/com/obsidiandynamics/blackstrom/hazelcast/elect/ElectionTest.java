@@ -355,19 +355,22 @@ public final class ElectionTest {
     final HazelcastInstance h = newInstance();
     final LeaseChangeHandler handler = mockHandler();
     
-    // keep a long scavenge interval to desensitise the scavenger
+    // keep a long scavenge interval to desensitise the scavenger and pre-register candidate to ensure that
+    // it's the first thing that the scavenger thread sees
     final int scavengeInterval = 30_000;
-    final Election e = newElection(new ElectionConfig().withScavengeInterval(scavengeInterval), leaseTable(h), handler);
-    
     final UUID c0 = UUID.randomUUID();
-    e.getRegistry().enroll("resource", c0);
-    Timesert.wait(scavengeInterval * 2).until(() -> {
-      // allow extra time in the unlikely event that the scavenger thread started before the registry enroll
-      assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
-    });
+    final Registry initialRegistry = new Registry();
+    initialRegistry.enroll("resource", c0);
+    
+    final Election e = newElection(new ElectionConfig()
+                                   .withScavengeInterval(scavengeInterval)
+                                   .withInitialRegistry(initialRegistry), 
+                                   leaseTable(h), 
+                                   handler);
+    
+    await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
     assertEquals(1, e.getLeaseView().asMap().size());
 
-    TestSupport.sleep(10);
     final UUID c1 = UUID.randomUUID();
     leaseTable(h).put("resource", Lease.forever(c1).pack());
     
@@ -404,16 +407,20 @@ public final class ElectionTest {
     final HazelcastInstance h = newInstance();
     final LeaseChangeHandler handler = mockHandler();
     
-    // keep a long scavenge interval to desensitise the scavenger
+    // keep a long scavenge interval to desensitise the scavenger and pre-register candidate to ensure that
+    // it's the first thing that the scavenger thread sees
     final int scavengeInterval = 30_000;
-    final Election e = newElection(new ElectionConfig().withScavengeInterval(scavengeInterval), leaseTable(h), handler);
-    
     final UUID c0 = UUID.randomUUID();
-    e.getRegistry().enroll("resource", c0);
-    Timesert.wait(scavengeInterval * 2).until(() -> {
-      // allow extra time in the unlikely event that the scavenger thread started before the registry enroll
-      assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
-    });
+    final Registry initialRegistry = new Registry();
+    initialRegistry.enroll("resource", c0);
+    
+    final Election e = newElection(new ElectionConfig()
+                                   .withScavengeInterval(scavengeInterval)
+                                   .withInitialRegistry(initialRegistry), 
+                                   leaseTable(h), 
+                                   handler);
+    
+    await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();

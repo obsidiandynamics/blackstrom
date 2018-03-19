@@ -28,11 +28,11 @@ public final class Election implements Terminable, Joinable {
     this.config = config;
     this.leaseTable = leaseTable;
     this.changeHandler = changeHandler;
-    registry = new Registry();
+    registry = new Registry(config.getInitialRegistry());
     
     scavengerThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().withName(Election.class, "scavenger").withDaemon(true))
-        .onCycle(this::scavegeCycle)
+        .onCycle(this::scavegerCycle)
         .buildAndStart();
   }
   
@@ -40,7 +40,7 @@ public final class Election implements Terminable, Joinable {
     return registry;
   }
   
-  private void scavegeCycle(WorkerThread t) throws InterruptedException {
+  private void scavegerCycle(WorkerThread t) throws InterruptedException {
     scavenge();
     Thread.sleep(config.getScavengeInterval());
   }

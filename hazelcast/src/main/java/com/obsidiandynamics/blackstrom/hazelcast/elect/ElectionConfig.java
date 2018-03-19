@@ -9,6 +9,8 @@ public final class ElectionConfig {
   
   @YInject
   private int leaseDurationMillis = 60_000;
+  
+  private Registry initialRegistry = new Registry();
 
   int getScavengeInterval() {
     return scavengeIntervalMillis;
@@ -27,10 +29,19 @@ public final class ElectionConfig {
     this.leaseDurationMillis = leaseDurationMillis;
     return this;
   }
+  
+  Registry getInitialRegistry() {
+    return initialRegistry;
+  }
+  
+  public ElectionConfig withInitialRegistry(Registry initialRegistry) {
+    this.initialRegistry = initialRegistry;
+    return this;
+  }
 
   @Override
   public String toString() {
     return ElectionConfig.class.getSimpleName() + " [scavengeIntervalMillis=" + scavengeIntervalMillis + 
-        ", leaseDurationMillis=" + leaseDurationMillis + "]";
+        ", leaseDurationMillis=" + leaseDurationMillis + ", initialRegistry=" + initialRegistry + "]";
   }
 }
