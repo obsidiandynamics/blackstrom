@@ -66,7 +66,7 @@ public final class Lease {
     return Lease.class.getSimpleName() + " [tenant=" + tenant + ", expiry=" + formatExpiry(expiry) + "]";
   }
   
-  static String formatExpiry(long expiry) {
+  public static String formatExpiry(long expiry) {
     if (expiry == Long.MAX_VALUE) {
       return "eschaton";
     } else if (expiry == 0) {

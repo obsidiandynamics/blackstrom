@@ -89,11 +89,9 @@ public final class Election implements Terminable, Joinable {
   private void reloadView() {
     synchronized (viewLock) {
       final LeaseViewImpl newLeaseView = new LeaseViewImpl(nextViewVersion++);
-      for (String resource : registry.getResourcesView()) {
-        Optional.ofNullable(leaseTable.get(resource)).ifPresent(valueBytes -> {
-          final Lease lease = Lease.unpack(valueBytes);
-          newLeaseView.put(resource, lease);
-        });
+      for (Map.Entry<String, byte[]> leaseTableEntry : leaseTable.entrySet()) {
+        final Lease lease = Lease.unpack(leaseTableEntry.getValue());
+        newLeaseView.put(leaseTableEntry.getKey(), lease);
       }
       leaseView = newLeaseView;
     }
@@ -134,7 +132,7 @@ public final class Election implements Terminable, Joinable {
     final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
     if (! existingLease.isHeldByAndCurrent(assumedTenant)) {
       final String m = String.format("Leader of %s is %s until %s", 
-                                     resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
+                                     resource, existingLease.getTenant(), Lease.formatExpiry(existingLease.getExpiry()));
       throw new NotTenantException(m);
     } else {
       return existingLease;
