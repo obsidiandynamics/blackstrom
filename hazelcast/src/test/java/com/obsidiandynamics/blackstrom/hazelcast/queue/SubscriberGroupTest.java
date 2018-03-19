@@ -229,7 +229,10 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // schedule a confirmation and verify that it has failed
     s.confirm();
-    await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
+    await.until(() -> {
+      assertEquals(-1L, (long) offsets.get(group));
+      verify(errorHandler).onError(isNotNull(), isNull());
+    });
     
     // try deactivating (can only happen for a current tenant) and verify failure
     s.deactivate();
