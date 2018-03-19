@@ -83,24 +83,30 @@ public final class Election implements Terminable, Joinable {
   }
   
   private void reloadView() {
-    final LeaseViewImpl newLeaseView = new LeaseViewImpl();
-    for (Map.Entry<String, byte[]> leaseTableEntry : leaseTable.entrySet()) {
-      final Lease lease = Lease.unpack(leaseTableEntry.getValue());
-      newLeaseView.put(leaseTableEntry.getKey(), lease);
+    synchronized (scavengeLock) {
+      final LeaseViewImpl newLeaseView = new LeaseViewImpl();
+      for (Map.Entry<String, byte[]> leaseTableEntry : leaseTable.entrySet()) {
+        final Lease lease = Lease.unpack(leaseTableEntry.getValue());
+        newLeaseView.put(leaseTableEntry.getKey(), lease);
+      }
+      leaseView = newLeaseView;
     }
-    leaseView = newLeaseView;
   }
   
   private void updateViewWithLease(String resource, Lease lease) {
-    final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
-    newLeaseView.put(resource, lease);
-    leaseView = newLeaseView;
+    synchronized (scavengeLock) {
+      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
+      newLeaseView.put(resource, lease);
+      leaseView = newLeaseView;
+    }
   }
   
   private void updateViewRemoveLease(String resource) {
-    final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
-    newLeaseView.remove(resource);
-    leaseView = newLeaseView;
+    synchronized (scavengeLock) {
+      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
+      newLeaseView.remove(resource);
+      leaseView = newLeaseView;
+    }
   }
 
   public LeaseView getLeaseView() {
