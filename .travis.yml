@@ -1,4 +1,7 @@
 language: java
+os:
+  - linux
+  - osx
 services:
   - docker
 jdk:
