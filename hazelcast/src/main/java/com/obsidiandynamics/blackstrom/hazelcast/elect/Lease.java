@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.hazelcast.elect;
 
 import java.nio.*;
+import java.text.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.*;
@@ -62,7 +63,17 @@ public final class Lease {
 
   @Override
   public String toString() {
-    return Lease.class.getSimpleName() + " [tenant=" + tenant + ", expiry=" + expiry + "]";
+    return Lease.class.getSimpleName() + " [tenant=" + tenant + ", expiry=" + formatExpiry(expiry) + "]";
+  }
+  
+  static String formatExpiry(long expiry) {
+    if (expiry == Long.MAX_VALUE) {
+      return "eschaton";
+    } else if (expiry == 0) {
+      return "epoch";
+    } else {
+      return new SimpleDateFormat("MMM dd HH:mm:ss.SSS zzz yyyy").format(new Date(expiry));
+    }
   }
   
   public byte[] pack() {

@@ -29,6 +29,14 @@ public final class Registry {
     }
   }
   
+  public Set<String> getResourcesView() {
+    final Set<String> copy;
+    synchronized (lock) {
+      copy = new HashSet<>(candidates.keySet());
+    }
+    return Collections.unmodifiableSet(copy);
+  }
+  
   public Map<String, Set<UUID>> getCandidatesView() {
     final Map<String, Set<UUID>> copy = new HashMap<>();
     synchronized (lock) {

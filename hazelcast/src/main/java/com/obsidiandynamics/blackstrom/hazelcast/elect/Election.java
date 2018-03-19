@@ -22,6 +22,8 @@ public final class Election implements Terminable, Joinable {
   
   private final Object scavengeLock = new Object();
   
+  private final Object viewLock = new Object();
+  
   private volatile LeaseViewImpl leaseView = new LeaseViewImpl(0);
   
   private long nextViewVersion = 1;
@@ -48,9 +50,9 @@ public final class Election implements Terminable, Joinable {
   }
   
   void scavenge() {
+    reloadView();
+    
     synchronized (scavengeLock) {
-      reloadView();
-      
       final Set<String> resources = registry.getCandidatesView().keySet();
       for (String resource : resources) {
         final Lease existingLease = leaseView.getOrDefault(resource, Lease.vacant());
@@ -59,7 +61,7 @@ public final class Election implements Terminable, Joinable {
             log.debug("Lease of {} is vacant", resource); 
           } else {
             changeHandler.onExpire(resource, existingLease.getTenant());
-            log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), new Date(existingLease.getExpiry()));
+            log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), Lease.formatExpiry(existingLease.getExpiry()));
           }
           
           final UUID nextCandidate = registry.getRandomCandidate(resource);
@@ -74,8 +76,8 @@ public final class Election implements Terminable, Joinable {
             }
             
             if (success) {
-              log.debug("New lease of {} by {} until {}", resource, nextCandidate, new Date(newLease.getExpiry()));
-              updateViewWithLease(resource, newLease);
+              log.debug("New lease of {} by {} until {}", resource, nextCandidate, Lease.formatExpiry(newLease.getExpiry()));
+              reloadView();
               changeHandler.onAssign(resource, nextCandidate);
             }
           }
@@ -85,28 +87,14 @@ public final class Election implements Terminable, Joinable {
   }
   
   private void reloadView() {
-    synchronized (scavengeLock) {
+    synchronized (viewLock) {
       final LeaseViewImpl newLeaseView = new LeaseViewImpl(nextViewVersion++);
-      for (Map.Entry<String, byte[]> leaseTableEntry : leaseTable.entrySet()) {
-        final Lease lease = Lease.unpack(leaseTableEntry.getValue());
-        newLeaseView.put(leaseTableEntry.getKey(), lease);
+      for (String resource : registry.getResourcesView()) {
+        Optional.ofNullable(leaseTable.get(resource)).ifPresent(valueBytes -> {
+          final Lease lease = Lease.unpack(valueBytes);
+          newLeaseView.put(resource, lease);
+        });
       }
-      leaseView = newLeaseView;
-    }
-  }
-  
-  private void updateViewWithLease(String resource, Lease lease) {
-    synchronized (scavengeLock) {
-      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView, nextViewVersion++);
-      newLeaseView.put(resource, lease);
-      leaseView = newLeaseView;
-    }
-  }
-  
-  private void updateViewRemoveLease(String resource) {
-    synchronized (scavengeLock) {
-      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView, nextViewVersion++);
-      newLeaseView.remove(resource);
       leaseView = newLeaseView;
     }
   }
@@ -121,7 +109,7 @@ public final class Election implements Terminable, Joinable {
       final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
       final boolean extended = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
       if (extended) {
-        updateViewWithLease(resource, newLease);
+        reloadView();
         return;
       } else {
         reloadView();
@@ -134,7 +122,7 @@ public final class Election implements Terminable, Joinable {
       final Lease existingLease = checkCurrent(resource, tenant);
       final boolean removed = leaseTable.remove(resource, existingLease.pack());
       if (removed) {
-        updateViewRemoveLease(resource);
+        reloadView();
         return;
       } else {
         reloadView();

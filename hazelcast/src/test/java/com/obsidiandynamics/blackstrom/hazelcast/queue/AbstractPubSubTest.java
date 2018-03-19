@@ -20,6 +20,13 @@ import com.obsidiandynamics.blackstrom.worker.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractPubSubTest {
+  /*  
+   *  Simulates a slow system by creating auxiliary spinning threads, thereby thrashing the scheduler. Zero means no auxiliary load. 
+   */
+  private static final int MIN_AUX_LOAD_THREADS = 0;
+  private static final int MAX_AUX_LOAD_THREADS = 0;
+  private final List<WorkerThread> auxLoadThreads = new ArrayList<>();
+  
   protected HazelcastProvider defaultProvider;
   
   protected final Set<HazelcastInstance> instances = new HashSet<>();
@@ -30,6 +37,11 @@ public abstract class AbstractPubSubTest {
   
   @Before
   public void before() {
+    final int auxThreads = (int) (Math.random() * (MAX_AUX_LOAD_THREADS - MIN_AUX_LOAD_THREADS + 1)) + MIN_AUX_LOAD_THREADS;
+    for (int i = 0; i < auxThreads; i++) {
+      auxLoadThreads.add(WorkerThread.builder().onCycle(t -> {}).buildAndStart());
+    }
+    
     defaultProvider = new MockHazelcastProvider();
   }
   
@@ -37,8 +49,10 @@ public abstract class AbstractPubSubTest {
   public void after() {
     final Set<Joinable> joinables = terminables.stream()
         .map(t -> t.terminate()).collect(Collectors.toSet());
+    auxLoadThreads.forEach(t -> t.terminate());
     joinables.forEach(s -> s.joinQuietly());
     instances.forEach(h -> h.shutdown());
+    auxLoadThreads.forEach(t -> t.joinQuietly());
   }
   
   protected final HazelcastInstance newInstance() {

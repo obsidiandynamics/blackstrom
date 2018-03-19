@@ -19,7 +19,7 @@ import com.obsidiandynamics.junit.*;
 public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(10000);
+    return TestCycle.timesQuietly(1000);
   }
   
   /**
@@ -220,9 +220,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // wait until the subscriber has touched its lease
     await.until(() -> {
-      final long expiry1 = s.getElection().getLeaseView().getLease(group).getExpiry();
+      final Lease lease1 = s.getElection().getLeaseView().getLease(group);
+      assertNotEquals(new UUID(0, 0), lease1.getTenant());
+      final long expiry1 = lease1.getExpiry();
       assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 > expiry0);
     });
+    System.out.println("extended lease " + s.getElection().getLeaseView());
     
     // forcibly take the lease away and confirm that the subscriber has seen this 
     leaseTable.put(group, Lease.forever(new UUID(0, 0)).pack());
@@ -232,7 +235,6 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     try {
       // schedule a confirmation and verify that it has failed
-      //assertEquals(-1L, (long) offsets.get(group));
       s.confirm();
       await.until(() -> {
         assertFalse(s.isAssigned());
@@ -246,7 +248,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     } catch (Throwable e) {
       e.printStackTrace(System.out);
       System.out.println("assignment released: " + viewAtRelease); //TODO
-      System.out.println("fatal assignment: " + s.getElection().getLeaseView()); //TODO
+      after();
       System.exit(1);
     }
   }

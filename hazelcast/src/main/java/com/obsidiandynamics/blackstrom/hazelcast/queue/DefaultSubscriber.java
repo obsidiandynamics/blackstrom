@@ -33,9 +33,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private long lastConfirmedOffset = scheduledConfirmOffset;
   
-  private volatile long scheduledTouchTimestamp = 0;
+  private volatile long scheduledExtendTimestamp = 0;
   
-  private long lastTouchedTimestamp = scheduledTouchTimestamp;
+  private long lastExtendTimestamp = scheduledExtendTimestamp;
   
   private boolean active = true;
   
@@ -59,15 +59,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       final String leaseFQName = QNamespace.HAZELQ_META.qualify("lease." + streamConfig.getName());
       final IMap<String, byte[]> leaseTable = instance.getMap(leaseFQName);
       leaseCandidate = UUID.randomUUID();
-      election = new Election(config.getElectionConfig(), leaseTable, new LeaseChangeHandler() {
-        @Override public void onExpire(String resource, UUID tenant) {
-//          config.getLog().debug("Expired lease of {} held by {}", resource, tenant); //TODO
-        }
-        
-        @Override public void onAssign(String resource, UUID tenant) {
-//          config.getLog().debug("Assigned lease of {} to {}", resource, tenant); //TODO
-        }
-      });
+      election = new Election(config.getElectionConfig(), leaseTable, LeaseChangeHandler.nop());
       election.getRegistry().enroll(config.getGroup(), leaseCandidate);
       
       keeperThread = WorkerThread.builder()
@@ -132,7 +124,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         return RecordBatch.empty();
       } finally {
         if (isCurrentTenant) {
-          scheduledTouchTimestamp = System.currentTimeMillis();
+          scheduledExtendTimestamp = System.currentTimeMillis();
         }
       }
     } else {
@@ -214,7 +206,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private void keeperCycle(WorkerThread t) throws InterruptedException {
     final long scheduledConfirmOffset = this.scheduledConfirmOffset;
-    final long scheduledTouchTimestamp = this.scheduledTouchTimestamp;
+    final long scheduledExtendTimestamp = this.scheduledExtendTimestamp;
     
     boolean performedWork = false;
     synchronized (activeLock) {
@@ -224,18 +216,18 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       if (scheduledConfirmOffset != lastConfirmedOffset) {
         if (active) {
           performedWork = true;
-          confirmOffset(scheduledConfirmOffset);
+          putOffset(scheduledConfirmOffset);
         } else {
           lastConfirmedOffset = scheduledConfirmOffset;
         }
       }
       
-      if (scheduledTouchTimestamp != lastTouchedTimestamp) {
+      if (scheduledExtendTimestamp != lastExtendTimestamp) {
         if (active) {
           performedWork = true;
-          touchLease(scheduledTouchTimestamp);
+          extendLease(scheduledExtendTimestamp);
         } else {
-          lastTouchedTimestamp = scheduledTouchTimestamp;
+          lastExtendTimestamp = scheduledExtendTimestamp;
         }
       }
     }
@@ -245,11 +237,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     }
   }
   
-  private void confirmOffset(long offset) {
-    final LeaseView leaseView = election.getLeaseView();
-    if (leaseView.isCurrentTenant(config.getGroup(), leaseCandidate)) {
+  private void putOffset(long offset) {
+    if (isCurrentTenant()) {
       offsets.put(config.getGroup(), offset);
-      config.getLog().debug("Lease view {}", leaseView);
     } else {
       final String m = String.format("Failed confirming offset %s for stream %s: %s is not the current tenant for group %s",
                                      offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
@@ -258,13 +248,13 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     lastConfirmedOffset = offset;
   }
   
-  private void touchLease(long timestamp) {
+  private void extendLease(long timestamp) {
     try {
       election.touch(config.getGroup(), leaseCandidate);
     } catch (NotTenantException e) {
       config.getErrorHandler().onError("Failed to extend lease", e);
     }
-    lastTouchedTimestamp = timestamp;
+    lastExtendTimestamp = timestamp;
   }
   
   private boolean isCurrentTenant() {
