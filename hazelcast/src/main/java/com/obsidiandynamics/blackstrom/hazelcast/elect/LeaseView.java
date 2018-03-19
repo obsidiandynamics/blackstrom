@@ -2,9 +2,10 @@ package com.obsidiandynamics.blackstrom.hazelcast.elect;
 
 import java.util.*;
 
-@FunctionalInterface
 public interface LeaseView {
   Map<String, Lease> asMap();
+  
+  long getVersion();
   
   default Lease getLease(String resource) {
     return asMap().getOrDefault(resource, Lease.vacant());

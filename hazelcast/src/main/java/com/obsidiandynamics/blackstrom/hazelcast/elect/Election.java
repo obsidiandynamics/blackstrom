@@ -22,7 +22,9 @@ public final class Election implements Terminable, Joinable {
   
   private final Object scavengeLock = new Object();
   
-  private volatile LeaseViewImpl leaseView = new LeaseViewImpl();
+  private volatile LeaseViewImpl leaseView = new LeaseViewImpl(0);
+  
+  private long nextViewVersion = 1;
   
   public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, LeaseChangeHandler changeHandler) {
     this.config = config;
@@ -84,7 +86,7 @@ public final class Election implements Terminable, Joinable {
   
   private void reloadView() {
     synchronized (scavengeLock) {
-      final LeaseViewImpl newLeaseView = new LeaseViewImpl();
+      final LeaseViewImpl newLeaseView = new LeaseViewImpl(nextViewVersion++);
       for (Map.Entry<String, byte[]> leaseTableEntry : leaseTable.entrySet()) {
         final Lease lease = Lease.unpack(leaseTableEntry.getValue());
         newLeaseView.put(leaseTableEntry.getKey(), lease);
@@ -95,7 +97,7 @@ public final class Election implements Terminable, Joinable {
   
   private void updateViewWithLease(String resource, Lease lease) {
     synchronized (scavengeLock) {
-      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
+      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView, nextViewVersion++);
       newLeaseView.put(resource, lease);
       leaseView = newLeaseView;
     }
@@ -103,7 +105,7 @@ public final class Election implements Terminable, Joinable {
   
   private void updateViewRemoveLease(String resource) {
     synchronized (scavengeLock) {
-      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView);
+      final LeaseViewImpl newLeaseView = new LeaseViewImpl(leaseView, nextViewVersion++);
       newLeaseView.remove(resource);
       leaseView = newLeaseView;
     }
