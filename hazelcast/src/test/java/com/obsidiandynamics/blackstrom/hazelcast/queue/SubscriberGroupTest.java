@@ -19,7 +19,7 @@ import com.obsidiandynamics.junit.*;
 public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(1000);
+    return TestCycle.timesQuietly(100);
   }
   
   /**
@@ -257,7 +257,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
    *  is about to read from an offset that has already lapsed, throwing a {@link StaleSequenceException}
    *  in the background. (The store factory has to be disabled for this to happen.)<p>
    *  
-   *  When this error is detected, this test is also rigged to evict the subscriber's tenancy from the
+   *  When this error is detected, the test is also rigged to evict the subscriber's tenancy from the
    *  lease table, thereby creating a second error when a lease extension is attempted.
    *  
    *  @throws InterruptedException
