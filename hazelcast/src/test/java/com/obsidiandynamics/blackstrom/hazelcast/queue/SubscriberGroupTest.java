@@ -249,7 +249,6 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
       e.printStackTrace(System.out);
       System.out.println("assignment released: " + viewAtRelease); //TODO
       after();
-      System.exit(1);
     }
   }
   
