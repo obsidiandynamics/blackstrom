@@ -135,7 +135,7 @@ public final class ElectionTest {
     
     TestSupport.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
-    e.touch("resource", c);
+    e.extend("resource", c);
     await.until(() -> {
       final Lease lease = e.getLeaseView().asMap().get("resource");
       assertEquals(c, lease.getTenant());
@@ -191,7 +191,7 @@ public final class ElectionTest {
     
     TestSupport.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
-    e0.touch("resource", c);
+    e0.extend("resource", c);
     await.until(() -> {
       final Lease lease1 = e1.getLeaseView().asMap().get("resource");
       assertEquals(c, lease1.getTenant());
@@ -239,8 +239,8 @@ public final class ElectionTest {
     TestSupport.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
     final UUID tenant = e0.getLeaseView().getLease("resource").getTenant();
-    e0.touch("resource", tenant);
-    e1.touch("resource", tenant);
+    e0.extend("resource", tenant);
+    e1.extend("resource", tenant);
     await.until(() -> {
       final Lease lease0 = e0.getLeaseView().asMap().get("resource");
       assertEquals(tenant, lease0.getTenant());
@@ -281,13 +281,13 @@ public final class ElectionTest {
   }
 
   /**
-   *  Tests the touching of a lease from a node that wasn't the initiator of the election. This
+   *  Tests the extending of a lease from a node that wasn't the initiator of the election. This
    *  first requires that the node update its lease view.
    *  
    *  @throws NotTenantException
    */
   @Test
-  public void testSingleNodeElectFromOtherAndTouch() throws NotTenantException {
+  public void testSingleNodeElectFromOtherAndExtend() throws NotTenantException {
     final HazelcastInstance h = newInstance();
     final ScavengeWatcher handler = mockHandler();
     final int leaseDuration = 60_000;
@@ -307,7 +307,7 @@ public final class ElectionTest {
   }
   
   /**
-   *  Tests the touching of a lease by a consumer that doesn't hold the lease and, in fact, the tenancy
+   *  Tests the extending of a lease by a consumer that doesn't hold the lease and, in fact, the tenancy
    *  is vacant.
    *  
    *  @throws NotTenantException
@@ -319,11 +319,11 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig().withScavengeInterval(1), leaseTable(h), handler);
 
     final UUID c = UUID.randomUUID();
-    e.touch("resource", c);
+    e.extend("resource", c);
   }
 
   /**
-   *  Tests the touching of a lease by a consumer that doesn't hold the lease, which is held by another
+   *  Tests the extending of a lease by a consumer that doesn't hold the lease, which is held by another
    *  tenant.
    *  
    *  @throws NotTenantException
@@ -340,11 +340,11 @@ public final class ElectionTest {
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();
-    e.touch("resource", c1);
+    e.extend("resource", c1);
   }
 
   /**
-   *  Simulates a race condition where a tenant holding a lease attempts to touch it, but the lease
+   *  Simulates a race condition where a tenant holding a lease attempts to extend it, but the lease
    *  is transferred to another tenant behind the scenes. This tests the CAS operation that guards
    *  against the race condition.
    *  
@@ -376,7 +376,7 @@ public final class ElectionTest {
     
     // according to the view snapshot, c0 is the leader, but behind the scenes we've elected c1
     assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
-    e.touch("resource", c0);
+    e.extend("resource", c0);
   }
 
   /**

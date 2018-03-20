@@ -218,7 +218,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(1, b0.size());
     
-    // wait until the subscriber has touched its lease
+    // wait until the subscriber has extended its lease
     wait.until(() -> {
       final Lease lease1 = s.getElection().getLeaseView().getLease(group);
       assertNotEquals(new UUID(0, 0), lease1.getTenant());

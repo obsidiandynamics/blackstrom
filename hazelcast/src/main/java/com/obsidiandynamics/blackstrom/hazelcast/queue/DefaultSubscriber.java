@@ -245,7 +245,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private void extendLease(long timestamp) {
     try {
-      election.touch(config.getGroup(), leaseCandidate);
+      election.extend(config.getGroup(), leaseCandidate);
     } catch (NotTenantException e) {
       config.getErrorHandler().onError("Failed to extend lease", e);
     }

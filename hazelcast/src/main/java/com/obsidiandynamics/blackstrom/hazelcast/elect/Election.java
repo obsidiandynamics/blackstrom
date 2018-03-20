@@ -105,7 +105,7 @@ public final class Election implements Terminable, Joinable {
     return leaseView;
   }
   
-  public void touch(String resource, UUID tenant) throws NotTenantException {
+  public void extend(String resource, UUID tenant) throws NotTenantException {
     for (;;) {
       final Lease existingLease = checkCurrent(resource, tenant);
       final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
