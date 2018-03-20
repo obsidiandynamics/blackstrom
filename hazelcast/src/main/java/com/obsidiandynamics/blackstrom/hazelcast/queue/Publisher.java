@@ -8,6 +8,12 @@ public interface Publisher extends Terminable {
   
   void publishAsync(Record record, PublishCallback callback);
   
+  default FuturePublishCallback publishAsync(Record record) {
+    final FuturePublishCallback futureCallback = new FuturePublishCallback();
+    publishAsync(record, futureCallback);
+    return futureCallback;
+  }
+  
   static DefaultPublisher createDefault(HazelcastInstance instance, PublisherConfig config) {
     return new DefaultPublisher(instance, config);
   }

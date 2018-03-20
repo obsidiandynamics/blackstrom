@@ -107,7 +107,7 @@ public final class PubSubTest extends AbstractPubSubTest {
     
     final List<FuturePublishCallback> futures = new ArrayList<>(numMessages);
     for (int i = 0; i < numMessages; i++) {
-      p.publishAsync(new Record(new TestMessage(i).pack()), register(new FuturePublishCallback(), futures));
+      register(p.publishAsync(new Record(new TestMessage(i).pack())), futures);
     }
     
     // wait until all publish confirmations have been processed
