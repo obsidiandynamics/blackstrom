@@ -109,6 +109,35 @@ public final class PublisherTest extends AbstractPubSubTest {
     final List<byte[]> allItems = readRemaining(buffer, 0);
     assertEquals(initialMessages + furtherMessages, allItems.size());
   }
+  
+  /**
+   *  Tests direct publishing.
+   *  
+   *  @throws ExecutionException 
+   *  @throws InterruptedException 
+   */
+  @Test
+  public void testPublishDirect() throws InterruptedException, ExecutionException {
+    final String stream = "s";
+    final int capacity = 10;
+
+    final DefaultPublisher p =
+        configurePublisher(new PublisherConfig().withStreamConfig(new StreamConfig()
+                                                                  .withName(stream)
+                                                                  .withHeapCapacity(capacity)
+                                                                  .withStoreFactoryClass(new HeapRingbufferStore.Factory().getClass())));
+    final Ringbuffer<byte[]> buffer = p.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+
+    final long offset0 = p.publishDirect(new Record("h0".getBytes()));
+    assertEquals(0, offset0);
+    final long offset1 = p.publishDirect(new Record("h1".getBytes()));
+    assertEquals(1, offset1);
+
+    final List<byte[]> items = readRemaining(buffer, 0);
+    assertEquals(2, items.size());
+    assertEquals("h0", new String(items.get(0)));
+    assertEquals("h1", new String(items.get(1)));
+  }
 
   /**
    *  Tests publish failure by rigging a mock {@link Ringbuffer} to return a {@link CompletedFuture} with

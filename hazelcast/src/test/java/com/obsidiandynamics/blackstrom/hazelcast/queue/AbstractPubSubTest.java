@@ -42,7 +42,7 @@ public abstract class AbstractPubSubTest {
       auxLoadThreads.add(WorkerThread.builder().onCycle(t -> {}).buildAndStart());
     }
     
-    defaultProvider = new MockHazelcastProvider();
+    defaultProvider = new TestHazelcastProvider();
   }
   
   @After
