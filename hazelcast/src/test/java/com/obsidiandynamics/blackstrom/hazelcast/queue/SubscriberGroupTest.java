@@ -12,6 +12,7 @@ import org.junit.runners.*;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.junit.*;
 
@@ -394,8 +395,10 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 10;
 
-    final HazelcastInstance instance0 = newInstance();
-    final HazelcastInstance instance1 = newInstance();
+    final InstancePool instancePool = new InstancePool(2, this::newInstance);
+    instancePool.prestartAll();
+    final HazelcastInstance instance0 = instancePool.get();
+    final HazelcastInstance instance1 = instancePool.get();
     final Ringbuffer<byte[]> buffer = instance0.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final IMap<String, Long> offsets = instance0.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group, -1L);
@@ -502,8 +505,10 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group1 = randomGroup();
     final int capacity = 10;
 
-    final HazelcastInstance instance0 = newInstance();
-    final HazelcastInstance instance1 = newInstance();
+    final InstancePool instancePool = new InstancePool(2, this::newInstance);
+    instancePool.prestartAll();
+    final HazelcastInstance instance0 = instancePool.get();
+    final HazelcastInstance instance1 = instancePool.get();
     final Ringbuffer<byte[]> buffer = instance0.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final IMap<String, Long> offsets = instance0.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group0, -1L);
@@ -569,8 +574,10 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 10;
 
-    final HazelcastInstance instance0 = newInstance();
-    final HazelcastInstance instance1 = newInstance();
+    final InstancePool instancePool = new InstancePool(2, this::newInstance);
+    instancePool.prestartAll();
+    final HazelcastInstance instance0 = instancePool.get();
+    final HazelcastInstance instance1 = instancePool.get();
     final Ringbuffer<byte[]> buffer0 = instance0.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream0));
     final Ringbuffer<byte[]> buffer1 = instance1.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream1));
     

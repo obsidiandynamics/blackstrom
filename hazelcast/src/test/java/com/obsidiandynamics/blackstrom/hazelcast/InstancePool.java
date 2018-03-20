@@ -30,6 +30,10 @@ public final class InstancePool {
     return instances.updateAndGet(index, instance -> instance != null ? instance : instanceSupplier.get());
   }
   
+  public void prestartAll() {
+    prestart(size());
+  }
+  
   public void prestart(int numInstances) {
     ParallelJob.blocking(numInstances, i -> get(i % size())).run();
   }
