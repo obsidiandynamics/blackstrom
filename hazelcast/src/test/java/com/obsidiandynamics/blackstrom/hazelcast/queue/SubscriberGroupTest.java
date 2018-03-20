@@ -19,7 +19,7 @@ import com.obsidiandynamics.junit.*;
 public final class SubscriberGroupTest extends AbstractPubSubTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(100); //TODO
+    return TestCycle.timesQuietly(1);
   }
   
   /**
