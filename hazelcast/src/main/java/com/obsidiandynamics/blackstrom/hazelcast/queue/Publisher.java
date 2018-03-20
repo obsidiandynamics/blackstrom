@@ -5,6 +5,8 @@ import com.obsidiandynamics.blackstrom.worker.*;
 
 public interface Publisher extends Terminable {
   PublisherConfig getConfig();
+
+  long publishDirect(Record record);
   
   void publishAsync(Record record, PublishCallback callback);
   

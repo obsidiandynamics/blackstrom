@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
+import static java.util.concurrent.TimeUnit.*;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import org.HdrHistogram.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -26,37 +28,37 @@ import com.obsidiandynamics.indigo.util.*;
 public final class PubSubTest extends AbstractPubSubTest {
   private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
   
-  private static class TestMessage {
-    final long id;
+  private static class LongMessage {
+    final long value;
 
-    TestMessage(long id) { this.id = id; }
+    LongMessage(long value) { this.value = value; }
     
     byte[] pack() {
       final ByteBuffer buf = ByteBuffer.allocate(8);
-      buf.putLong(id);
+      buf.putLong(value);
       return buf.array();
     }
     
-    static TestMessage unpack(byte[] bytes) {
-      return new TestMessage(ByteBuffer.wrap(bytes).getLong());
+    static LongMessage unpack(byte[] bytes) {
+      return new LongMessage(ByteBuffer.wrap(bytes).getLong());
     }
 
     @Override
     public String toString() {
-      return TestMessage.class.getSimpleName() + " [id=" + id + "]";
+      return LongMessage.class.getSimpleName() + " [id=" + value + "]";
     }
   }
   
   private static class TestHandler implements RecordHandler {
-    private final List<TestMessage> received = new CopyOnWriteArrayList<>();
+    private final List<LongMessage> received = new CopyOnWriteArrayList<>();
     
     private volatile long lastId = -1;
     private volatile AssertionError error;
 
     @Override
     public void onRecord(Record record) {
-      final TestMessage message = TestMessage.unpack(record.getData());
-      final long id = message.id;
+      final LongMessage message = LongMessage.unpack(record.getData());
+      final long id = message.value;
       if (lastId == -1) {
         lastId = id;
       } else {
@@ -117,7 +119,7 @@ public final class PubSubTest extends AbstractPubSubTest {
     
     final List<FuturePublishCallback> futures = new ArrayList<>(numMessages);
     for (int i = 0; i < numMessages; i++) {
-      register(p.publishAsync(new Record(new TestMessage(i).pack())), futures);
+      register(p.publishAsync(new Record(new LongMessage(i).pack())), futures);
     }
     
     // wait until all publish confirmations have been processed
@@ -148,8 +150,8 @@ public final class PubSubTest extends AbstractPubSubTest {
           assertNull(handler.error);
           assertEquals(numMessages, handler.received.size());
           long index = 0;
-          for (TestMessage m  : handler.received) {
-            assertEquals(index, m.id);
+          for (LongMessage m  : handler.received) {
+            assertEquals(index, m.value);
             index++;
           }
         }
@@ -161,7 +163,7 @@ public final class PubSubTest extends AbstractPubSubTest {
                           numReceivers, numMessages, instancePool.size(), group);
         for (TestHandler handler : handlers) {
           System.out.println("---");
-          for (TestMessage m : handler.received) {
+          for (LongMessage m : handler.received) {
             System.out.println("- " + m);
           }
         }
@@ -178,13 +180,12 @@ public final class PubSubTest extends AbstractPubSubTest {
   
   @Test
   public void testOneWayBenchmark() {
-    Testmark.ifEnabled("one-way with grid", () -> {
+    Testmark.ifEnabled("one-way over grid", () -> {
       final OneWayOptions options = new OneWayOptions() {{
         verbose = true;
         printBacklog = false;
       }};
-      final Supplier<HazelcastInstance> instanceSupplier = () -> newInstance(GridHazelcastProvider.getInstance());
-      final Supplier<InstancePool> poolSupplier = () -> new InstancePool(4, instanceSupplier);
+      final Supplier<InstancePool> poolSupplier = () -> new InstancePool(4, this::newGridInstance);
       final int messageSize = 100;
       
       testOneWay(1, 1, 2_000_000 * SCALE, messageSize, poolSupplier.get(), options);
@@ -303,6 +304,126 @@ public final class PubSubTest extends AbstractPubSubTest {
       System.out.format("%,d msgs took %,d ms, %,.0f msg/s, %s\n", totalMessages, took, rate, Bandwidth.translate(bps));
     }
     verifyNoError(eh);
+    
+    afterBase();
+    beforeBase();
+  }
+  
+  @Test
+  public void testRoundTripAsync() {
+    testRoundTrip(100 * SCALE, false, new InstancePool(2, this::newInstance), new RoundTripOptions());
+  }
+  
+  @Test
+  public void testRoundTripDirect() {
+    testRoundTrip(100 * SCALE, true, new InstancePool(2, this::newInstance), new RoundTripOptions());
+  }
+  
+  @Test
+  public void testRoundTripAsyncBenchmark() {
+    Testmark.ifEnabled("round trip async over grid", () -> {
+      final RoundTripOptions options = new RoundTripOptions() {{
+        verbose = true;
+      }};
+      testRoundTrip(100_000 * SCALE, false, new InstancePool(2, this::newGridInstance), options);
+    });
+  }
+  
+  @Test
+  public void testRoundTripDirectBenchmark() {
+    Testmark.ifEnabled("round trip direct over grid", () -> {
+      final RoundTripOptions options = new RoundTripOptions() {{
+        verbose = true;
+      }};
+      testRoundTrip(100_000 * SCALE, true, new InstancePool(2, this::newGridInstance), options);
+    });
+  }
+  
+  private static class RoundTripOptions {
+    boolean verbose;
+  }
+  
+  @FunctionalInterface
+  private interface PublishStrategy {
+    void go(Publisher publisher, Record record);
+  }
+  
+  private final void testRoundTrip(int numMessages, boolean direct, InstancePool instancePool, RoundTripOptions options) {
+    final String streamRequest = "request";
+    final String streamReply = "reply";
+    final int capacity = numMessages;
+    final int pollTimeoutMillis = 100;
+    final int backlogTarget = 0;
+    final PublishStrategy publishMechanic = (publisher, record) -> {
+      if (direct) publisher.publishDirect(record);
+      else publisher.publishAsync(record, PublishCallback.nop());
+    };
+    
+    // common configuration for the request and response streams
+    final StreamConfig requestStreamConfig = new StreamConfig()
+        .withName(streamRequest)
+        .withHeapCapacity(capacity);
+    final StreamConfig replyStreamConfig = new StreamConfig()
+        .withName(streamReply)
+        .withHeapCapacity(capacity);
+    
+    if (options.verbose) System.out.format("Prestarting instances... ");
+    final int prestartInstances = Math.min(4, instancePool.size());
+    instancePool.prestart(prestartInstances);
+    if (options.verbose) System.out.format("ready (x%d). Starting run...\n", prestartInstances);
+    
+    // create publishers
+    final PublisherConfig requestPubConfig = new PublisherConfig()
+        .withStreamConfig(requestStreamConfig);
+    final PublisherConfig replyPubConfig = new PublisherConfig()
+        .withStreamConfig(replyStreamConfig);
+    final DefaultPublisher requestPub = configurePublisher(instancePool.get(), requestPubConfig);
+    final DefaultPublisher replyPub = configurePublisher(instancePool.get(), replyPubConfig);
+
+    // create subscribers with receivers
+    final ErrorHandler eh = mockErrorHandler();
+    final SubscriberConfig requestSubConfig = new SubscriberConfig()
+        .withErrorHandler(eh)
+        .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+        .withStreamConfig(requestStreamConfig);
+    final SubscriberConfig replySubConfig = new SubscriberConfig()
+        .withErrorHandler(eh)
+        .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+        .withStreamConfig(replyStreamConfig);
+    
+    createReceiver(configureSubscriber(instancePool.get(), requestSubConfig), record -> {
+      publishMechanic.go(replyPub, record);
+    }, pollTimeoutMillis);
+    
+    final AtomicInteger received = new AtomicInteger();
+    final Histogram hist = new Histogram(NANOSECONDS.toNanos(10), SECONDS.toNanos(10), 5);
+    createReceiver(configureSubscriber(instancePool.get(), replySubConfig), record -> {
+      final LongMessage m = LongMessage.unpack(record.getData());
+      final long latency = System.nanoTime() - m.value;
+      hist.recordValue(latency);
+      received.incrementAndGet();
+    }, pollTimeoutMillis);
+    
+    // send the messages
+    for (int i = 0; i < numMessages; i++) {
+      publishMechanic.go(requestPub, new Record(new LongMessage(System.nanoTime()).pack()));
+      while (i - received.get() >= backlogTarget) {
+        Thread.yield();
+      }
+    }
+    
+    wait.until(() -> assertEquals(numMessages, received.get()));
+    
+    if (options.verbose) {
+      final long min = hist.getMinValue();
+      final double mean = hist.getMean();
+      final long p50 = hist.getValueAtPercentile(50.0);
+      final long p95 = hist.getValueAtPercentile(95.0);
+      final long p99 = hist.getValueAtPercentile(99.0);
+      final long max = hist.getMaxValue();
+      System.out.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d (ns)\n", 
+                        min, mean, p50, p95, p99, max);
+    }
     
     afterBase();
     beforeBase();

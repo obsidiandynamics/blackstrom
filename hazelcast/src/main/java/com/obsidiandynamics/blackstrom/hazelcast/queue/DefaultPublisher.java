@@ -82,6 +82,13 @@ final class DefaultPublisher implements Publisher, Joinable {
       }
     });
   }
+  
+  @Override
+  public long publishDirect(Record record) {
+    final long sequence = buffer.add(record.getData());
+    record.setOffset(sequence);
+    return sequence;
+  }
 
   @Override
   public void publishAsync(Record record, PublishCallback callback) {

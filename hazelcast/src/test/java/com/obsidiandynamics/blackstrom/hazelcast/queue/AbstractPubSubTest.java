@@ -55,6 +55,10 @@ public abstract class AbstractPubSubTest {
     auxLoadThreads.forEach(t -> t.joinQuietly());
   }
   
+  protected final HazelcastInstance newGridInstance() {
+    return newInstance(GridHazelcastProvider.getInstance());
+  }
+  
   protected final HazelcastInstance newInstance() {
     return newInstance(defaultProvider);
   }
