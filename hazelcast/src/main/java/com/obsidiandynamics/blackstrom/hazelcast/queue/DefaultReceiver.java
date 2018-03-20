@@ -28,7 +28,6 @@ public final class DefaultReceiver implements Receiver {
     for (Record record : batch) {
       recordHandler.onRecord(record);
     }
-    Thread.sleep(pollTimeoutMillis);
   }
   
   @Override

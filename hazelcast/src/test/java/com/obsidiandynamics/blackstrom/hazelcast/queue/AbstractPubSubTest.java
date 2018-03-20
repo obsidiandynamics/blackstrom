@@ -36,7 +36,7 @@ public abstract class AbstractPubSubTest {
   protected final Timesert wait = Wait.SHORT;
   
   @Before
-  public void before() {
+  public void beforeBase() {
     final int auxThreads = (int) (Math.random() * (MAX_AUX_LOAD_THREADS - MIN_AUX_LOAD_THREADS + 1)) + MIN_AUX_LOAD_THREADS;
     for (int i = 0; i < auxThreads; i++) {
       auxLoadThreads.add(WorkerThread.builder().onCycle(t -> {}).buildAndStart());
@@ -46,12 +46,12 @@ public abstract class AbstractPubSubTest {
   }
   
   @After
-  public void after() {
+  public void afterBase() {
     final Set<Joinable> joinables = terminables.stream()
         .map(t -> t.terminate()).collect(Collectors.toSet());
     auxLoadThreads.forEach(t -> t.terminate());
     joinables.forEach(s -> s.joinQuietly());
-    instances.forEach(h -> h.shutdown());
+    instances.forEach(h -> h.getLifecycleService().terminate());
     auxLoadThreads.forEach(t -> t.joinQuietly());
   }
   

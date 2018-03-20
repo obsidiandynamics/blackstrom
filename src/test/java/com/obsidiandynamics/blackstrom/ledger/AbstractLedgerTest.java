@@ -143,7 +143,6 @@ public abstract class AbstractLedgerTest implements TestSupport {
   private final void testOneWay(int producers, int consumers, int messagesPerProducer) {
     useLedger(createLedger());
     
-    final AtomicLong totalSent = new AtomicLong();
     final int backlogTarget = 10_000;
     final int checkInterval = backlogTarget;
     final AtomicLong[] receivedArray = new AtomicLong[consumers];
@@ -177,6 +176,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       return smallest;
     };
 
+    final AtomicLong totalSent = new AtomicLong();
     final long took = TestSupport.took(() -> {
       ParallelJob.blocking(producers, threadNo -> {
         for (int i = 0; i < messagesPerProducer; i++) {
