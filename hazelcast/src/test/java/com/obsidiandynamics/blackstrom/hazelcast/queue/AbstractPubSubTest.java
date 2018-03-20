@@ -33,7 +33,7 @@ public abstract class AbstractPubSubTest {
   
   protected final Set<Terminable> terminables = new HashSet<>();
 
-  protected final Timesert await = Wait.SHORT;
+  protected final Timesert wait = Wait.SHORT;
   
   @Before
   public void before() {

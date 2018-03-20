@@ -67,7 +67,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final RecordBatch b0 = s.poll(1);
     assertEquals(0, b0.size());
     
-    await.untilTrue(s::isAssigned);
+    wait.untilTrue(s::isAssigned);
     final RecordBatch b1 = s.poll(1);
     assertEquals(0, b1.size());
     
@@ -115,7 +115,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // publish a pair of messages and wait until the subscriber is elected
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
-    await.untilTrue(s::isAssigned);
+    wait.untilTrue(s::isAssigned);
     
     // capture the original lease expiry so that it can be compared with the extended lease
     final long expiry0 = s.getElection().getLeaseView().getLease(group).getExpiry();
@@ -130,10 +130,10 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // confirm offsets and check in the map
     s.confirm();
-    await.until(() -> assertEquals(1, (long) offsets.get(group)));
+    wait.until(() -> assertEquals(1, (long) offsets.get(group)));
     
     // polling would also have extended the lease -- check the expiry
-    await.until(() -> {
+    wait.until(() -> {
       final long expiry1 = s.getElection().getLeaseView().getLease(group).getExpiry();
       assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 >= expiry0 + sleepTime);
     });
@@ -210,7 +210,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // write some data so that we can read at least one record (otherwise we can't confirm an offset)
     buffer.add("hello".getBytes());
-    await.untilTrue(s::isAssigned);
+    wait.untilTrue(s::isAssigned);
     final long expiry0 = s.getElection().getLeaseView().getLease(group).getExpiry();
 
     Thread.sleep(10);
@@ -218,7 +218,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     assertEquals(1, b0.size());
     
     // wait until the subscriber has touched its lease
-    await.until(() -> {
+    wait.until(() -> {
       final Lease lease1 = s.getElection().getLeaseView().getLease(group);
       assertNotEquals(new UUID(0, 0), lease1.getTenant());
       final long expiry1 = lease1.getExpiry();
@@ -227,11 +227,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // forcibly take the lease away and confirm that the subscriber has seen this 
     leaseTable.put(group, Lease.forever(new UUID(0, 0)).pack());
-    await.until(() -> assertFalse(s.isAssigned()));
+    wait.until(() -> assertFalse(s.isAssigned()));
     
     // schedule a confirmation and verify that it has failed
     s.confirm();
-    await.until(() -> {
+    wait.until(() -> {
       assertFalse(s.isAssigned());
       assertEquals(-1L, (long) offsets.get(group));
       verify(errorHandler).onError(isNotNull(), isNull());
@@ -239,7 +239,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // try deactivating (can only happen for a current tenant) and verify failure
     s.deactivate();
-    await.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
+    wait.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
   }
   
   /**
@@ -275,7 +275,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
-    await.untilTrue(s::isAssigned);
+    wait.untilTrue(s::isAssigned);
     
     // when an error occurs, forcibly reassign the lease
     doAnswer(invocation -> leaseTable.put(group, Lease.forever(UUID.randomUUID()).pack()))
@@ -287,7 +287,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     assertEquals(0, b.size());
     
     // there should be two errors -- the first for the stale read, the second for the failed lease extension
-    await.until(() -> verify(errorHandler, times(2)).onError(isNotNull(), (Exception) isNotNull()));
+    wait.until(() -> verify(errorHandler, times(2)).onError(isNotNull(), (Exception) isNotNull()));
   }
   
   /**
@@ -316,7 +316,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
-    await.untilTrue(s::isAssigned);
+    wait.untilTrue(s::isAssigned);
     
     final RecordBatch b = s.poll(1_000);
     assertEquals(2, b.size());
@@ -350,7 +350,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
-    await.untilTrue(s::isAssigned);
+    wait.untilTrue(s::isAssigned);
     
     final RecordBatch b = s.poll(10);
     assertEquals(0, b.size());
@@ -413,7 +413,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
-    await.untilTrue(s0::isAssigned);
+    wait.untilTrue(s0::isAssigned);
     
     final ErrorHandler eh1 = mockErrorHandler();
     final DefaultSubscriber s1 = 
@@ -436,7 +436,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // confirm offsets and check in the map
     s0.confirm();
-    await.until(() -> assertEquals(1, (long) offsets.get(group)));
+    wait.until(() -> assertEquals(1, (long) offsets.get(group)));
     
     // consume from s1 -- should return an empty batch
     final RecordBatch s1_b0 = s0.poll(10);
@@ -456,12 +456,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // deactivate s0 -- it will eventually lose the ability to consume messages
     s0.deactivate();
-    await.until(() -> assertFalse(s0.isAssigned()));
+    wait.until(() -> assertFalse(s0.isAssigned()));
     final RecordBatch s0_b2 = s0.poll(10);
     assertEquals(0, s0_b2.size());
     
     // s1 will eventually take tenancy
-    await.untilTrue(s1::isAssigned);
+    wait.untilTrue(s1::isAssigned);
     
     // consuming now from s1 should fetch the last two records (the first two were already confirmed)
     final RecordBatch s1_b2 = s1.poll(1_000);
@@ -471,12 +471,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // confirm h2 only and switch tenancy back to s0
     s1.confirm(2);
-    await.until(() -> assertEquals(2, (long) offsets.get(group)));
+    wait.until(() -> assertEquals(2, (long) offsets.get(group)));
     s1.deactivate();
     s0.reactivate();
     
     // consuming now from s0 should only fetch h3, as h2 was confirmed
-    await.until(() -> {
+    wait.until(() -> {
       final RecordBatch s0_b3;
       try {
         s0_b3 = s0.poll(1);
@@ -485,7 +485,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
       assertArrayEquals("h3".getBytes(), s0_b3.all().get(0).getData());
     });
     
-    await.until(() -> assertFalse(s1.isAssigned()));
+    wait.until(() -> assertFalse(s1.isAssigned()));
     verifyNoError(eh0, eh1);
   }
   
@@ -532,8 +532,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
-    await.untilTrue(s0::isAssigned);
-    await.untilTrue(s1::isAssigned);
+    wait.untilTrue(s0::isAssigned);
+    wait.untilTrue(s1::isAssigned);
 
     // consume from s0 and s1, and verify that both received the same messages
     final RecordBatch s0_b0 = s0.poll(1_000);
@@ -596,8 +596,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                                               .withName(stream1)
                                               .withHeapCapacity(capacity)));
     // both subscribers should assume leadership -- each for its own stream
-    await.untilTrue(s0::isAssigned);
-    await.untilTrue(s1::isAssigned);
+    wait.untilTrue(s0::isAssigned);
+    wait.untilTrue(s1::isAssigned);
 
     // publish to s0's stream buffer
     buffer0.add("s0h0".getBytes());

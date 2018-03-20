@@ -56,7 +56,7 @@ public final class PublisherTest extends AbstractPubSubTest {
 
     assertEquals(initialMessages, records.size());
     assertEquals(initialMessages, callbacks.size());
-    await.until(() -> assertEquals(initialMessages, completed(callbacks).size()));
+    wait.until(() -> assertEquals(initialMessages, completed(callbacks).size()));
     for (int i = 0; i < initialMessages; i++) {
       assertEquals(i, records.get(i).getOffset());
     }
@@ -67,7 +67,7 @@ public final class PublisherTest extends AbstractPubSubTest {
     final int furtherMessages = 20;
     publish(furtherMessages, p, records, callbacks);
 
-    await.until(() -> assertEquals(initialMessages + furtherMessages, completed(callbacks).size()));
+    wait.until(() -> assertEquals(initialMessages + furtherMessages, completed(callbacks).size()));
     assertEquals(capacity, buffer.size());
     final List<byte[]> allItems = readRemaining(buffer, 15);
     assertEquals(capacity, allItems.size());
@@ -96,7 +96,7 @@ public final class PublisherTest extends AbstractPubSubTest {
     final int initialMessages = 5;
     publish(initialMessages, p, records, callbacks);
 
-    await.until(() -> assertEquals(initialMessages, completed(callbacks).size()));
+    wait.until(() -> assertEquals(initialMessages, completed(callbacks).size()));
     assertEquals(initialMessages, buffer.size());
     final List<byte[]> initialItems = readRemaining(buffer, 0);
     assertEquals(initialMessages, initialItems.size());
@@ -104,7 +104,7 @@ public final class PublisherTest extends AbstractPubSubTest {
     final int furtherMessages = 20;
     publish(furtherMessages, p, records, callbacks);
 
-    await.until(() -> assertEquals(initialMessages + furtherMessages, completed(callbacks).size()));
+    wait.until(() -> assertEquals(initialMessages + furtherMessages, completed(callbacks).size()));
     assertEquals(capacity, buffer.size());
     final List<byte[]> allItems = readRemaining(buffer, 0);
     assertEquals(initialMessages + furtherMessages, allItems.size());
@@ -141,7 +141,7 @@ public final class PublisherTest extends AbstractPubSubTest {
     final List<TestCallback> callbacks = new ArrayList<>();
 
     publish(1, p, records, callbacks);
-    await.until(() -> assertEquals(1, completed(callbacks).size()));
+    wait.until(() -> assertEquals(1, completed(callbacks).size()));
     assertEquals(Record.UNASSIGNED_OFFSET, records.get(0).getOffset());
     assertEquals(Record.UNASSIGNED_OFFSET, callbacks.get(0).offset);
     assertEquals(cause, callbacks.get(0).error);

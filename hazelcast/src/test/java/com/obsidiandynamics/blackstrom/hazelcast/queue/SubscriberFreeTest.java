@@ -339,7 +339,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
     
-    await.until(() -> {
+    wait.until(() -> {
       try {
         verify(handler, times(2)).onRecord(isNotNull());
       } catch (InterruptedException e) {}
