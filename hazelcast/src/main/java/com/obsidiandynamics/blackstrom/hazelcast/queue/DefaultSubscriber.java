@@ -212,24 +212,20 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     synchronized (activeLock) {
       // avoid confirming offsets or extending the lease if this subscriber has been deactivated,
       // but update the timestamps to thwart future attempts
-    
-      if (scheduledConfirmOffset != lastConfirmedOffset) {
-        if (active) {
+      if (active) {
+        if (scheduledConfirmOffset != lastConfirmedOffset) {
           performedWork = true;
           putOffset(scheduledConfirmOffset);
-        } else {
-          lastConfirmedOffset = scheduledConfirmOffset;
         }
-      }
-      
-      if (scheduledExtendTimestamp != lastExtendTimestamp) {
-        if (active) {
+        
+        if (scheduledExtendTimestamp != lastExtendTimestamp) {
           performedWork = true;
           extendLease(scheduledExtendTimestamp);
-        } else {
-          lastExtendTimestamp = scheduledExtendTimestamp;
         }
       }
+
+      lastConfirmedOffset = scheduledConfirmOffset;
+      lastExtendTimestamp = scheduledExtendTimestamp;
     }
     
     if (! performedWork) {
@@ -245,7 +241,6 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
                                      offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
       config.getErrorHandler().onError(m, null);
     }
-    lastConfirmedOffset = offset;
   }
   
   private void extendLease(long timestamp) {
@@ -254,7 +249,6 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     } catch (NotTenantException e) {
       config.getErrorHandler().onError("Failed to extend lease", e);
     }
-    lastExtendTimestamp = timestamp;
   }
   
   private boolean isCurrentTenant() {
