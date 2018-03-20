@@ -10,6 +10,7 @@ import java.util.stream.*;
 import org.junit.*;
 
 import com.hazelcast.core.*;
+import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.blackstrom.util.*;
@@ -81,8 +82,7 @@ public final class PubSubTest extends AbstractPubSubTest {
         .withName(stream);
     
     // create the pooled instances (shared by both publishers and subscribers)
-    final List<HazelcastInstance> instances = IntStream.range(0, pooledInstances).boxed()
-        .map(i -> newInstance()).collect(Collectors.toList());
+    final InstancePool instances = new InstancePool(pooledInstances, this::newInstance);
 
     // create subscribers with receivers
     final ErrorHandler eh = mockErrorHandler();
@@ -94,7 +94,7 @@ public final class PubSubTest extends AbstractPubSubTest {
         
     final List<TestHandler> handlers = new ArrayList<>(numReceivers);
     for (int i = 0; i < numReceivers; i++) {
-      final HazelcastInstance instance = instances.get(i % pooledInstances);
+      final HazelcastInstance instance = instances.get();
       final Subscriber s = configureSubscriber(instance, subConfig);
       createReceiver(s, register(new TestHandler(), handlers), 10);
     }
@@ -102,7 +102,7 @@ public final class PubSubTest extends AbstractPubSubTest {
     // create a publisher and publish the messages
     final PublisherConfig pubConfig = new PublisherConfig()
         .withStreamConfig(streamConfig);
-    final HazelcastInstance instance = instances.get(pooledInstances - 1);
+    final HazelcastInstance instance = instances.get();
     final Publisher p = configurePublisher(instance, pubConfig);
     
     final List<FuturePublishCallback> futures = new ArrayList<>(numMessages);
