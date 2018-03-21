@@ -17,7 +17,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class KafkaBankTransferIT extends AbstractBankTransferTest {
+public final class KafkaJacksonBankTransferIT extends AbstractBankTransferTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -31,7 +31,7 @@ public final class KafkaBankTransferIT extends AbstractBankTransferTest {
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
   
   private static String getTopic(Guidance guidance) {
-    return TestTopic.of(KafkaBankTransferIT.class, "json", JacksonMessageCodec.ENCODING_VERSION, guidance);
+    return TestTopic.of(KafkaJacksonBankTransferIT.class, "json", JacksonMessageCodec.ENCODING_VERSION, guidance);
   }
   
   @Before

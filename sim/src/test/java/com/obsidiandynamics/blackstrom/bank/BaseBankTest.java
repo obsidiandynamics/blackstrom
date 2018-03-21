@@ -28,7 +28,7 @@ public abstract class BaseBankTest {
   protected abstract Timesert getWait();
   
   @After
-  public final void after() {
+  public final void afterBase() {
     if (manifold != null) manifold.dispose();
   }
 
