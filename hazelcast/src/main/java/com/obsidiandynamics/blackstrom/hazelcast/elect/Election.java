@@ -5,14 +5,20 @@ import java.util.*;
 import org.slf4j.*;
 
 import com.hazelcast.core.*;
+import com.obsidiandynamics.blackstrom.hazelcast.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class Election implements Terminable, Joinable {
   private static final Logger log = LoggerFactory.getLogger(Election.class);
+
+  private static final HazelcastRetry retry = new HazelcastRetry()
+      .withAttempts(Integer.MAX_VALUE)
+      .withBackoffMillis(100)
+      .withLog(log);
   
   private final ElectionConfig config;
   
-  private final IMap<String, byte[]> leaseTable;
+  private final RetryableMap<String, byte[]> leaseTable;
   
   private final ScavengeWatcher scavengeWatcher;
   
@@ -34,7 +40,7 @@ public final class Election implements Terminable, Joinable {
   
   Election(ElectionConfig config, IMap<String, byte[]> leaseTable, ScavengeWatcher scavengeWatcher) {
     this.config = config;
-    this.leaseTable = leaseTable;
+    this.leaseTable = new RetryableMap<>(retry, leaseTable);
     this.scavengeWatcher = scavengeWatcher;
     registry = new Registry(config.getInitialRegistry());
     

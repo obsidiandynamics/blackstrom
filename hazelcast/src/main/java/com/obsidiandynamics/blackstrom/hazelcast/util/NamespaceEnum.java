@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.hazelcast;
+package com.obsidiandynamics.blackstrom.hazelcast.util;
 
 public interface NamespaceEnum {
   default String qualify(String objectName) {

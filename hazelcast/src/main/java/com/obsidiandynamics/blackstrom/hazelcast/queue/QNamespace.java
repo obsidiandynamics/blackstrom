@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-import com.obsidiandynamics.blackstrom.hazelcast.*;
+import com.obsidiandynamics.blackstrom.hazelcast.util.*;
 
 public enum QNamespace implements NamespaceEnum {
   HAZELQ_META,
