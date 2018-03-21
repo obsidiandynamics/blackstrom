@@ -248,7 +248,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       });
     });
                                      
-    System.out.format("Two-way: %,d took %,d ms, %,d msgs/sec\n", numMessages, took, numMessages / took * 1000);
+    System.out.format("Two-way: %,d took %,d ms, %,d msg/s\n", numMessages, took, numMessages / took * 1000);
   }
   
   private void appendMessage(String source, Object objective) {

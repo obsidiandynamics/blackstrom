@@ -12,6 +12,7 @@ dependencies {
 
 task addBenchmarks() {
   project(":").benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.ledger.HazelQLedgerTest"
   project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubOneWayTest"
   project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubRoundTripTest"
 }
