@@ -29,7 +29,8 @@ public final class RetryTest {
   @Test
   public void testSuccess() {
     final Logger log = mock(Logger.class);
-    new Retry().withExceptionClass(TestRuntimeException.class).withAttempts(1).withLog(log).run(() -> {});
+    final int answer = new Retry().withExceptionClass(TestRuntimeException.class).withAttempts(1).withLog(log).run(() -> 42);
+    assertEquals(42, answer);
     verifyNoMoreInteractions(log);
   }
   
