@@ -18,7 +18,7 @@ final class AccumulatorConsumer implements Disposable {
     this.accumulator = accumulator;
     this.handler = handler;
     thread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withDaemon(true))
+        .withOptions(new WorkerOptions().daemon().withName(AccumulatorConsumer.class))
         .onCycle(this::cycle)
         .buildAndStart();
     final Object handlerId = this;

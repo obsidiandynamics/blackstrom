@@ -47,7 +47,7 @@ public final class Election implements Terminable, Joinable {
     registry = new Registry(config.getInitialRegistry());
     
     scavengerThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withName(Election.class, "scavenger").withDaemon(true))
+        .withOptions(new WorkerOptions().daemon().withName(Election.class, "scavenger"))
         .onCycle(this::scavegerCycle)
         .buildAndStart();
   }

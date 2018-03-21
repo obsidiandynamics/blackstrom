@@ -70,9 +70,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       election.getRegistry().enrol(config.getGroup(), leaseCandidate);
       
       keeperThread = WorkerThread.builder()
-          .withOptions(new WorkerOptions()
-                       .withDaemon(true)
-                       .withName(Subscriber.class, streamConfig.getName(), "keeper"))
+          .withOptions(new WorkerOptions().daemon().withName(Subscriber.class, streamConfig.getName(), "keeper"))
           .onCycle(this::keeperCycle)
           .buildAndStart();
     } else {

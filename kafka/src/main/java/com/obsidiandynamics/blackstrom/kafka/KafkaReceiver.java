@@ -37,7 +37,7 @@ public final class KafkaReceiver<K, V> implements Terminable, Joinable {
     this.recordHandler = recordHandler;
     this.errorHandler = errorHandler;
     thread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withName(threadName).withDaemon(true))
+        .withOptions(new WorkerOptions().daemon().withName(threadName))
         .onCycle(this::cycle)
         .onShutdown(this::shutdown)
         .buildAndStart();

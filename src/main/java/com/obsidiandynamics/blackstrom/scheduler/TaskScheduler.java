@@ -59,9 +59,7 @@ public final class TaskScheduler implements Terminable, Joinable {
   
   public TaskScheduler(String threadName) {
     executor = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withName(threadName)
-                     .withDaemon(true))
+        .withOptions(new WorkerOptions().daemon().withName(threadName))
         .onCycle(this::cycle)
         .build();
   }

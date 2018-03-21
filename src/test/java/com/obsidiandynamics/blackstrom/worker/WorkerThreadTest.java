@@ -322,4 +322,10 @@ public final class WorkerThreadTest {
         .withName(WorkerThreadTest.class, 1, 2, 3);
     assertEquals(WorkerThreadTest.class.getSimpleName() + "-1-2-3", opts.getName());
   }
+  
+  @Test
+  public void testDaemon() {
+    final WorkerOptions opts = new WorkerOptions().daemon();
+    assertTrue(opts.isDaemon());
+  }
 }

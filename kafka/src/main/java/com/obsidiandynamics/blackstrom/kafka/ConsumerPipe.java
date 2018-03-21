@@ -19,7 +19,7 @@ public final class ConsumerPipe<K, V> implements Terminable, Joinable {
     queue = new LinkedBlockingQueue<>(config.getBacklogBatches());
     if (config.isAsync()) {
       thread = WorkerThread.builder()
-          .withOptions(new WorkerOptions().withDaemon(true).withName(threadName))
+          .withOptions(new WorkerOptions().daemon().withName(threadName))
           .onCycle(this::cycle)
           .buildAndStart();
     } else {

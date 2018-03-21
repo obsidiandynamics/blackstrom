@@ -86,9 +86,7 @@ public final class KafkaLedger implements Ledger {
     attachRetries = config.getAttachRetries();
     codecLocator = CodecRegistry.register(config.getCodec());
     retryThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withDaemon(true)
-                     .withName(KafkaLedger.class, "retry", topic))
+        .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
         .onCycle(this::onRetry)
         .buildAndStart();
 

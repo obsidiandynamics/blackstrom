@@ -34,7 +34,7 @@ public final class BalancedLedgerView implements Ledger {
       }
       
       thread = WorkerThread.builder()
-          .withOptions(new WorkerOptions().withDaemon(true).withName(BalancedLedgerView.class, handlerId))
+          .withOptions(new WorkerOptions().daemon().withName(BalancedLedgerView.class, handlerId))
           .onCycle(this::cycle)
           .build();
     }

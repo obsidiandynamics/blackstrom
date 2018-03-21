@@ -51,7 +51,7 @@ public final class SingleNodeQueueLedger implements Ledger {
     maxYields = config.maxYields;
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withDaemon(true)
+                     .daemon()
                      .withName(SingleNodeQueueLedger.class, Integer.toHexString(System.identityHashCode(this))))
         .onCycle(this::cycle)
         .buildAndStart();

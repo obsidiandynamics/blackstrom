@@ -58,7 +58,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     
     final long started = System.currentTimeMillis();
     final WorkerThread progressMonitorThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().withDaemon(true).withName(AbstractBankTransferTest.class, "progress"))
+        .withOptions(new WorkerOptions().daemon().withName(AbstractBankTransferTest.class, "progress"))
         .onCycle(__thread -> {
           Thread.sleep(2000);
           final int c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;

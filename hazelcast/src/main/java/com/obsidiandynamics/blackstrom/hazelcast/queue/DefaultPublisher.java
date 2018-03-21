@@ -48,9 +48,7 @@ final class DefaultPublisher implements Publisher, Joinable {
     buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
     
     publishThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withDaemon(true)
-                     .withName(Publisher.class, streamConfig.getName(), "publisher"))
+        .withOptions(new WorkerOptions().daemon().withName(Publisher.class, streamConfig.getName(), "publisher"))
         .onCycle(this::publisherCycle)
         .buildAndStart();
   }

@@ -59,8 +59,8 @@ public final class MonitorEngine implements Disposable {
     if (trackingEnabled) {
       gcThread = WorkerThread.builder()
           .withOptions(new WorkerOptions()
-                       .withName(MonitorEngine.class, groupId, "gc", Integer.toHexString(System.identityHashCode(this)))
-                       .withDaemon(true))
+                       .daemon()
+                       .withName(MonitorEngine.class, groupId, "gc", Integer.toHexString(System.identityHashCode(this))))
           .onCycle(this::gcCycle)
           .buildAndStart();
     } else {
@@ -69,8 +69,8 @@ public final class MonitorEngine implements Disposable {
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(MonitorEngine.class, groupId, "timeout", Integer.toHexString(System.identityHashCode(this)))
-                     .withDaemon(true))
+                     .daemon()
+                     .withName(MonitorEngine.class, groupId, "timeout", Integer.toHexString(System.identityHashCode(this))))
         .onCycle(this::timeoutCycle)
         .buildAndStart();
   }

@@ -22,9 +22,7 @@ public final class Flow implements Terminable, Joinable {
   
   public Flow(FiringStrategy.Factory firingStrategyFactory, String threadName) {
     executor = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withDaemon(true)
-                     .withName(threadName))
+        .withOptions(new WorkerOptions().daemon().withName(threadName))
         .onCycle(firingStrategyFactory.create(this, tail))
         .buildAndStart();
   }

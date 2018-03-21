@@ -40,6 +40,15 @@ public final class WorkerOptions {
   public boolean isDaemon() {
     return daemon;
   }
+  
+  /**
+   *  A shortcut way of calling {@code withDaemon(true)}.
+   *  
+   *  @return This {@link WorkerOptions} instance for fluent chaining.
+   */
+  public WorkerOptions daemon() {
+    return withDaemon(true);
+  }
 
   public WorkerOptions withDaemon(boolean daemon) {
     this.daemon = daemon;

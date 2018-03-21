@@ -44,9 +44,7 @@ public final class BankBranch implements Cohort {
     balance = initialBalance;
     
     gcThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions()
-                     .withName(BankBranch.class, "gc", branchId)
-                     .withDaemon(true))
+        .withOptions(new WorkerOptions().daemon().withName(BankBranch.class, "gc", branchId))
         .onCycle(this::gcCycle)
         .build();
     if (idempotencyEnabled) gcThread.start();
