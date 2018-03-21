@@ -5,6 +5,8 @@ dependencies {
   compile project(":")
   compile "com.hazelcast:hazelcast:3.9.3"
   
+  testCompile project(":blackstrom-codec-kryo")
+  testCompile project(":blackstrom-codec-kryo").sourceSets.test.output
   testCompile "com.hazelcast:hazelcast:3.9.3:tests"
 }
 

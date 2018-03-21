@@ -20,7 +20,7 @@ import com.obsidiandynamics.indigo.util.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractLedgerTest implements TestSupport {
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
-  private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1000);
+  private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1_000);
 
   private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
   
@@ -197,7 +197,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     });
                                      
     final long totalMessages = (long) producers * messagesPerProducer * consumers;
-    System.out.format("One-way: %d/%d prd/cns, %,d msgs took %,d ms, %,.0f msgs/sec\n", 
+    System.out.format("One-way: %d/%d prd/cns, %,d msgs took %,d ms, %,.0f msg/s\n", 
                       producers, consumers, totalMessages, took, (double) totalMessages / took * 1000);
   }
   
