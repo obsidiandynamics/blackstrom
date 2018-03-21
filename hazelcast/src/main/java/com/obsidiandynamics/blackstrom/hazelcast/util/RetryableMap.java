@@ -15,10 +15,6 @@ public final class RetryableMap<K, V> {
     this.map = map;
   }
   
-  public IMap<K, V> getMap() {
-    return map;
-  }
-  
   public V putIfAbsent(K key, V value) {
     return retry.run(() -> map.putIfAbsent(key, value));
   }

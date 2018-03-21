@@ -14,10 +14,6 @@ public final class RetryableRingbuffer<E> {
     this.ringbuffer = ringbuffer;
   }
   
-  public Ringbuffer<E> getRingbuffer() {
-    return ringbuffer;
-  }
-
   public ICompletableFuture<Long> addAsync(E item, OverflowPolicy overflowPolicy) {
     return retry.run(() -> ringbuffer.addAsync(item, overflowPolicy));
   }
