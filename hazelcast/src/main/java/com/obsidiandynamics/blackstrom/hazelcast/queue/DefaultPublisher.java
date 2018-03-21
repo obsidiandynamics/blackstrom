@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.obsidiandynamics.blackstrom.hazelcast.util.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
@@ -29,7 +30,7 @@ final class DefaultPublisher implements Publisher, Joinable {
   
   private final QueueConsumer<AsyncRecord> queueConsumer = queue.consumer();
   
-  private final Ringbuffer<byte[]> buffer;
+  private final RetryableRingbuffer<byte[]> buffer;
   
   private int yields;
 
@@ -37,7 +38,12 @@ final class DefaultPublisher implements Publisher, Joinable {
     this.instance = instance;
     this.config = config;
     final StreamConfig streamConfig = config.getStreamConfig();
-    buffer = StreamHelper.getRingbuffer(instance, streamConfig);
+
+    final HazelcastRetry retry = new HazelcastRetry()
+        .withAttempts(Integer.MAX_VALUE)
+        .withBackoffMillis(100)
+        .withLog(config.getLog());
+    buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
     
     publishThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()

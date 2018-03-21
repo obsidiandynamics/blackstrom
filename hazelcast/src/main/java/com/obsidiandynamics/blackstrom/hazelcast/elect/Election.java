@@ -10,11 +10,6 @@ import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class Election implements Terminable, Joinable {
   private static final Logger log = LoggerFactory.getLogger(Election.class);
-
-  private static final HazelcastRetry retry = new HazelcastRetry()
-      .withAttempts(Integer.MAX_VALUE)
-      .withBackoffMillis(100)
-      .withLog(log);
   
   private final ElectionConfig config;
   
@@ -40,6 +35,11 @@ public final class Election implements Terminable, Joinable {
   
   Election(ElectionConfig config, IMap<String, byte[]> leaseTable, ScavengeWatcher scavengeWatcher) {
     this.config = config;
+
+    final HazelcastRetry retry = new HazelcastRetry()
+        .withAttempts(Integer.MAX_VALUE)
+        .withBackoffMillis(100)
+        .withLog(log);
     this.leaseTable = new RetryableMap<>(retry, leaseTable);
     this.scavengeWatcher = scavengeWatcher;
     registry = new Registry(config.getInitialRegistry());

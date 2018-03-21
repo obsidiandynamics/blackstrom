@@ -33,4 +33,12 @@ public final class RetryableMap<K, V> {
   public boolean remove(Object key, Object value) {
     return retry.run(() -> map.remove(key, value));
   }
+
+  public V get(Object key) {
+    return retry.run(() -> map.get(key));
+  }
+
+  public V put(K key, V value) {
+    return retry.run(() -> map.put(key, value));
+  }
 }

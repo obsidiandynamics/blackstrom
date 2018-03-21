@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
+import com.obsidiandynamics.blackstrom.hazelcast.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
@@ -15,9 +16,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private final SubscriberConfig config;
   
-  private final Ringbuffer<byte[]> buffer;
+  private final RetryableRingbuffer<byte[]> buffer;
   
-  private final IMap<String, Long> offsets;
+  private final RetryableMap<String, Long> offsets;
   
   private final Election election;
   
@@ -46,7 +47,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     this.config = config;
     
     final StreamConfig streamConfig = config.getStreamConfig();
-    buffer = StreamHelper.getRingbuffer(instance, streamConfig);
+    final HazelcastRetry retry = new HazelcastRetry()
+        .withAttempts(Integer.MAX_VALUE)
+        .withBackoffMillis(100)
+        .withLog(config.getLog());
+    buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
     
     if (config.hasGroup()) {
       // checks for IllegalArgumentException; no initial assignment is made until poll() is called
@@ -54,7 +59,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       nextReadOffset = Record.UNASSIGNED_OFFSET;
       
       final String offsetsFQName = QNamespace.HAZELQ_META.qualify("offsets." + streamConfig.getName());
-      offsets = instance.getMap(offsetsFQName);
+      offsets = new RetryableMap<>(retry, instance.getMap(offsetsFQName));
       
       final String leaseFQName = QNamespace.HAZELQ_META.qualify("lease." + streamConfig.getName());
       final IMap<String, byte[]> leaseTable = instance.getMap(leaseFQName);
