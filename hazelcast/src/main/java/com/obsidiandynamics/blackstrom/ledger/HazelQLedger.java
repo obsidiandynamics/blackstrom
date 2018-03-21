@@ -160,7 +160,9 @@ public final class HazelQLedger implements Ledger {
   
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
-    //TODO
+    final Subscriber subscriber = groupSubscribers.get(handlerId);
+    final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
+    subscriber.confirm(defaultMessageId.getOffset());
   }
   
   @Override

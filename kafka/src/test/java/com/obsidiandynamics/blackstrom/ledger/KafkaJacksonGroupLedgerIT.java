@@ -15,7 +15,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class KafkaGroupLedgerIT extends AbstractGroupLedgerTest {
+public final class KafkaJacksonGroupLedgerIT extends AbstractGroupLedgerTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -28,7 +28,7 @@ public final class KafkaGroupLedgerIT extends AbstractGroupLedgerTest {
   
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
   
-  private final String topic = TestTopic.of(KafkaGroupLedgerIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);
+  private final String topic = TestTopic.of(KafkaJacksonGroupLedgerIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);
   
   @Before
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
