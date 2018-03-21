@@ -14,7 +14,7 @@ public final class LedgerTest {
   @Test
   public void testExceptionLoggingAppendCallback() throws IOException {
     final PrintStream stream = mock(PrintStream.class);
-    final AppendCallback c = Ledger.exceptionLoggingAppendCallback(stream);
+    final AppendCallback c = Ledger.errorLoggingAppendCallback(stream);
     c.onAppend(null, null);
     verifyNoMoreInteractions(stream);
     

@@ -8,15 +8,15 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public interface Ledger extends Disposable.Default {
-  static AppendCallback SYS_ERR_APPEND_CALLBACK = exceptionLoggingAppendCallback(System.err);
+  static AppendCallback SYS_ERR_APPEND_CALLBACK = errorLoggingAppendCallback(System.err);
   
-  static AppendCallback exceptionLoggingAppendCallback(PrintStream stream) {
-    return appendExceptionHandler(x -> x.printStackTrace(stream));
+  static AppendCallback errorLoggingAppendCallback(PrintStream stream) {
+    return appendErrorHandler(x -> x.printStackTrace(stream));
   }
   
-  static AppendCallback appendExceptionHandler(Consumer<Exception> exceptionHandler) {
+  static AppendCallback appendErrorHandler(Consumer<Throwable> errorHandler) {
     return (id, x) -> { 
-      if (x != null) exceptionHandler.accept(x);
+      if (x != null) errorHandler.accept(x);
     };
   }
   
