@@ -59,7 +59,7 @@ public final class MonitorEngine implements Disposable {
     if (trackingEnabled) {
       gcThread = WorkerThread.builder()
           .withOptions(new WorkerOptions()
-                       .withName(nameThread(groupId, "gc"))
+                       .withName(MonitorEngine.class, groupId, "gc", Integer.toHexString(System.identityHashCode(this)))
                        .withDaemon(true))
           .onCycle(this::gcCycle)
           .buildAndStart();
@@ -69,14 +69,10 @@ public final class MonitorEngine implements Disposable {
     
     timeoutThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(nameThread(groupId, "timeout"))
+                     .withName(MonitorEngine.class, groupId, "timeout", Integer.toHexString(System.identityHashCode(this)))
                      .withDaemon(true))
         .onCycle(this::timeoutCycle)
         .buildAndStart();
-  }
-  
-  private String nameThread(String groupId, String role) {
-    return MonitorEngine.class.getSimpleName() + "-" + groupId + "-" + role + "-" + Integer.toHexString(System.identityHashCode(this));
   }
   
   private void gcCycle(WorkerThread thread) throws InterruptedException {

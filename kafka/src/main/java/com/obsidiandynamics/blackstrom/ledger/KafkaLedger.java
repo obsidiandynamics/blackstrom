@@ -88,7 +88,7 @@ public final class KafkaLedger implements Ledger {
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
                      .withDaemon(true)
-                     .withName(KafkaLedger.class.getSimpleName() + "-retry-" + topic))
+                     .withName(KafkaLedger.class, "retry", topic))
         .onCycle(this::onRetry)
         .buildAndStart();
 

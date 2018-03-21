@@ -116,7 +116,7 @@ public final class MultiNodeQueueLedger implements Ledger {
     
     final WorkerThread thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(MultiNodeQueueLedger.class.getSimpleName() + "-" + handler.getGroupId())
+                     .withName(MultiNodeQueueLedger.class, handler.getGroupId())
                      .withDaemon(true))
         .onCycle(new NodeWorker(handler, handler.getGroupId(), queue.consumer()))
         .buildAndStart();

@@ -45,7 +45,7 @@ public final class BankBranch implements Cohort {
     
     gcThread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
-                     .withName(BankBranch.class.getSimpleName() + "-gc-" + branchId)
+                     .withName(BankBranch.class, "gc", branchId)
                      .withDaemon(true))
         .onCycle(this::gcCycle)
         .build();
