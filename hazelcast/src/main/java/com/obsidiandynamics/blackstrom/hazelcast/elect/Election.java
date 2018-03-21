@@ -6,6 +6,7 @@ import org.slf4j.*;
 
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class Election implements Terminable, Joinable {
@@ -36,7 +37,8 @@ public final class Election implements Terminable, Joinable {
   Election(ElectionConfig config, IMap<String, byte[]> leaseTable, ScavengeWatcher scavengeWatcher) {
     this.config = config;
 
-    final HazelcastRetry retry = new HazelcastRetry()
+    final Retry retry = new Retry()
+        .withExceptionClass(HazelcastException.class)
         .withAttempts(Integer.MAX_VALUE)
         .withBackoffMillis(100)
         .withLog(log);

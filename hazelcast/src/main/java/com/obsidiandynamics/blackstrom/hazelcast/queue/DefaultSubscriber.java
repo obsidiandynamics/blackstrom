@@ -7,6 +7,7 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
@@ -47,7 +48,8 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     this.config = config;
     
     final StreamConfig streamConfig = config.getStreamConfig();
-    final HazelcastRetry retry = new HazelcastRetry()
+    final Retry retry = new Retry()
+        .withExceptionClass(HazelcastException.class)
         .withAttempts(Integer.MAX_VALUE)
         .withBackoffMillis(100)
         .withLog(config.getLog());

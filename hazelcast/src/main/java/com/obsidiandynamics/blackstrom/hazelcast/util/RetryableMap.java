@@ -3,13 +3,14 @@ package com.obsidiandynamics.blackstrom.hazelcast.util;
 import java.util.*;
 
 import com.hazelcast.core.*;
+import com.obsidiandynamics.blackstrom.util.*;
 
 public final class RetryableMap<K, V> {
-  private final HazelcastRetry retry;
+  private final Retry retry;
   
   private final IMap<K, V> map;
 
-  public RetryableMap(HazelcastRetry retry, IMap<K, V> map) {
+  public RetryableMap(Retry retry, IMap<K, V> map) {
     this.retry = retry;
     this.map = map;
   }

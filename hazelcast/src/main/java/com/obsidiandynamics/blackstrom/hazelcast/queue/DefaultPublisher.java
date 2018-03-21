@@ -4,6 +4,7 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 final class DefaultPublisher implements Publisher, Joinable {
@@ -39,7 +40,8 @@ final class DefaultPublisher implements Publisher, Joinable {
     this.config = config;
     final StreamConfig streamConfig = config.getStreamConfig();
 
-    final HazelcastRetry retry = new HazelcastRetry()
+    final Retry retry = new Retry()
+        .withExceptionClass(HazelcastException.class)
         .withAttempts(Integer.MAX_VALUE)
         .withBackoffMillis(100)
         .withLog(config.getLog());

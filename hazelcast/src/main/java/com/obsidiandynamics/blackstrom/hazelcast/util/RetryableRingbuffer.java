@@ -2,13 +2,14 @@ package com.obsidiandynamics.blackstrom.hazelcast.util;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.obsidiandynamics.blackstrom.util.*;
 
 public final class RetryableRingbuffer<E> {
-  private final HazelcastRetry retry;
+  private final Retry retry;
   
   private final Ringbuffer<E> ringbuffer;
 
-  public RetryableRingbuffer(HazelcastRetry retry, Ringbuffer<E> ringbuffer) {
+  public RetryableRingbuffer(Retry retry, Ringbuffer<E> ringbuffer) {
     this.retry = retry;
     this.ringbuffer = ringbuffer;
   }
