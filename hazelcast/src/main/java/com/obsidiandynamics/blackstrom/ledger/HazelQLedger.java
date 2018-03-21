@@ -159,6 +159,11 @@ public final class HazelQLedger implements Ledger {
   }
   
   @Override
+  public void confirm(Object handlerId, MessageId messageId) {
+    //TODO
+  }
+  
+  @Override
   public void dispose() {
     final List<Terminable> terminables = new ArrayList<>();
     terminables.add(publisher);
