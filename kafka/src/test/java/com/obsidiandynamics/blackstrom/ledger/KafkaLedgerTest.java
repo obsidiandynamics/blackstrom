@@ -179,14 +179,6 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testConfirmDirectNoHandlerId() {
-    final Kafka<String, Message> kafka = new MockKafka<>();
-    final Logger log = mock(Logger.class);
-    ledger = createLedger(kafka, false, true, 10, log);
-    ledger.confirm(null, null);
-  }
-  
-  @Test
   public void testAppendAfterDispose() {
     ledger = MockKafkaLedger.create();
     ledger.dispose();

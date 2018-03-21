@@ -270,14 +270,12 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
-    if (handlerId != null) {
-      final ConsumerOffsets consumer = consumers.get(handlerId);
-      final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
-      final TopicPartition tp = new TopicPartition(topic, defaultMessageId.getShard());
-      final OffsetAndMetadata om = new OffsetAndMetadata(defaultMessageId.getOffset());
-      synchronized (consumer.lock) {
-        consumer.offsets.put(tp, om);
-      }
+    final ConsumerOffsets consumer = consumers.get(handlerId);
+    final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
+    final TopicPartition tp = new TopicPartition(topic, defaultMessageId.getShard());
+    final OffsetAndMetadata om = new OffsetAndMetadata(defaultMessageId.getOffset());
+    synchronized (consumer.lock) {
+      consumer.offsets.put(tp, om);
     }
   }
 

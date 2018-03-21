@@ -17,7 +17,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class HazelQLedgerTest extends AbstractLedgerTest {  
+public final class HazelQKryoLedgerTest extends AbstractLedgerTest {  
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -56,6 +56,6 @@ public final class HazelQLedgerTest extends AbstractLedgerTest {
   
   public static void main(String[] args) {
     Testmark.enable();
-    JUnitCore.runClasses(HazelQLedgerTest.class);
+    JUnitCore.runClasses(HazelQKryoLedgerTest.class);
   }
 }
