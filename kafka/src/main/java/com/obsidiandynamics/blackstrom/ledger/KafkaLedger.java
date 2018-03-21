@@ -233,7 +233,6 @@ public final class KafkaLedger implements Ledger {
         }
 
         if (enqueued) {
-          yields = 0;
           break;
         } else if (yields < PIPELINE_MAX_YIELDS) {
           yields++;
