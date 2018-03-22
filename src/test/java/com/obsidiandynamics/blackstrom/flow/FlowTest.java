@@ -29,7 +29,7 @@ public final class FlowTest {
 
   @After
   public void after() {
-    if (flow != null) flow.terminate().joinQuietly();
+    if (flow != null) flow.terminate().joinSilently();
   }
 
   private void createFlow(FiringStrategy.Factory firingStrategyFactory) {

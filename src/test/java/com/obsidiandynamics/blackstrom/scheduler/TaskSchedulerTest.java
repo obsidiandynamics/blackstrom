@@ -65,13 +65,13 @@ public final class TaskSchedulerTest implements TestSupport {
   
   @After
   public void teardown() throws InterruptedException {
-    scheduler.terminate().joinQuietly();
+    scheduler.terminate().joinSilently();
     scheduler.join(); // should be a no-op
   }
   
   void resetTaskScheduler(TaskScheduler scheduler) {
     if (this.scheduler != null) {
-      this.scheduler.terminate().joinQuietly();
+      this.scheduler.terminate().joinSilently();
     }
     this.scheduler = scheduler;
     scheduler.start();
@@ -245,7 +245,7 @@ public final class TaskSchedulerTest implements TestSupport {
       scheduler.schedule(task);
     }
     
-    scheduler.terminate().joinQuietly();
+    scheduler.terminate().joinSilently();
     assertEquals(0, executed.get());
   }
 

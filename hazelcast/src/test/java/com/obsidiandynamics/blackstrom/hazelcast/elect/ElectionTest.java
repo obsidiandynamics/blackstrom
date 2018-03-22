@@ -41,7 +41,7 @@ public final class ElectionTest {
   @After
   public void after() {
     elections.forEach(e -> e.terminate());
-    elections.forEach(e -> e.joinQuietly());
+    elections.forEach(e -> e.joinSilently());
     instances.forEach(h -> h.shutdown());
   }
   

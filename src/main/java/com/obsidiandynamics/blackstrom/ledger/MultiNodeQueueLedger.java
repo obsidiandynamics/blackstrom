@@ -139,6 +139,6 @@ public final class MultiNodeQueueLedger implements Ledger {
   @Override
   public void dispose() {
     threads.forEach(t -> t.terminate());
-    threads.forEach(t -> t.joinQuietly());
+    threads.forEach(t -> t.joinSilently());
   }
 }

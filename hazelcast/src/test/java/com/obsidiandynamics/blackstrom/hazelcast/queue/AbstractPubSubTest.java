@@ -50,9 +50,9 @@ public abstract class AbstractPubSubTest {
     final Set<Joinable> joinables = terminables.stream()
         .map(t -> t.terminate()).collect(Collectors.toSet());
     auxLoadThreads.forEach(t -> t.terminate());
-    joinables.forEach(s -> s.joinQuietly());
+    joinables.forEach(s -> s.joinSilently());
     instances.forEach(h -> h.getLifecycleService().terminate());
-    auxLoadThreads.forEach(t -> t.joinQuietly());
+    auxLoadThreads.forEach(t -> t.joinSilently());
   }
   
   protected final HazelcastInstance newGridInstance() {

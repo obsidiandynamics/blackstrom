@@ -37,7 +37,7 @@ public interface Joinable {
    *  @param timeoutMillis The time to wait. {@code 0} means wait forever.
    *  @return True if this entity was terminated, false if the wait timed out.
    */
-  default boolean joinQuietly(long timeoutMillis) {
+  default boolean joinSilently(long timeoutMillis) {
     try {
       return join(timeoutMillis);
     } catch (InterruptedException e) {
@@ -52,8 +52,8 @@ public interface Joinable {
    *  This variant suppresses an {@link InterruptedException} and will re-assert the interrupt 
    *  prior to returning.
    */
-  default void joinQuietly() {
-    joinQuietly(0);
+  default void joinSilently() {
+    joinSilently(0);
   }
   
   static boolean joinAll(long timeoutMillis, Joinable... joinables) throws InterruptedException {

@@ -66,7 +66,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
  
   @Override
   public void dispose() {
-    scheduler.terminate().joinQuietly();
+    scheduler.terminate().joinSilently();
     backingFactor.dispose();
   }
 

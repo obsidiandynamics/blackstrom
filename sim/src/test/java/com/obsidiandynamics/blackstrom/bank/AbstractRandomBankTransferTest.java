@@ -122,7 +122,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           }
         }
       }
-      progressMonitorThread.terminate().joinQuietly();
+      progressMonitorThread.terminate().joinSilently();
       
       wait.until(() -> {
         assertEquals(runs, commits.get() + aborts.get() + timeouts.get());

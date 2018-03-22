@@ -21,7 +21,7 @@ public final class ConsumerPipeTest {
   
   @After
   public void after() {
-    if (pipe != null) pipe.terminate().joinQuietly();
+    if (pipe != null) pipe.terminate().joinSilently();
   }
   
   private static ConsumerRecords<String, Message> records(ConsumerRecord<String, Message> record) {

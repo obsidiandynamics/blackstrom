@@ -181,7 +181,7 @@ public final class BankBranch implements Cohort {
   
   @Override
   public void dispose() {
-    gcThread.terminate().joinQuietly();
+    gcThread.terminate().joinSilently();
   }
 
   @Override

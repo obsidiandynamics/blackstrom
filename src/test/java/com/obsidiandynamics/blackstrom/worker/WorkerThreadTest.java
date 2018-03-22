@@ -44,7 +44,7 @@ public final class WorkerThreadTest {
     assertEquals(WorkerState.CONCEIVED, thread.getState());
     thread.start();
     
-    final boolean joined = thread.joinQuietly(60_000);
+    final boolean joined = thread.joinSilently(60_000);
     assertTrue(joined);
     assertEquals(1, counter.get());
     TestSupport.sleep(10);
@@ -64,7 +64,7 @@ public final class WorkerThreadTest {
         })
         .onShutdown(onShutdown)
         .buildAndStart();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertEquals(WorkerState.TERMINATED, thread.getState());
     assertEquals(1, counter.get());
@@ -84,7 +84,7 @@ public final class WorkerThreadTest {
         .onUncaughtException((t, x) -> {})
         .build();
     thread.start();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertEquals(WorkerState.TERMINATED, thread.getState());
     assertFalse(thread.getDriverThread().isAlive());
@@ -105,7 +105,7 @@ public final class WorkerThreadTest {
     wait.until(() -> {
       verify(onStartup).handle(eq(thread));
     });
-    thread.terminate().joinQuietly();
+    thread.terminate().joinSilently();
     verify(onShutdown).handle(eq(thread), any());
   }
   
@@ -148,10 +148,10 @@ public final class WorkerThreadTest {
         .build();
     thread.start();
     Thread.currentThread().interrupt();
-    thread.joinQuietly();
+    thread.joinSilently();
     assertTrue(Thread.interrupted());
     
-    thread.terminate().joinQuietly();
+    thread.terminate().joinSilently();
   }
   
   @Test
@@ -220,7 +220,7 @@ public final class WorkerThreadTest {
         .build();
 
     thread.start();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertEquals(1, handler.exceptions.size());
     assertEquals(causeOnStartup, handler.exceptions.get(0));
@@ -238,7 +238,7 @@ public final class WorkerThreadTest {
         .build();
 
     thread.start();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertEquals(1, handler.exceptions.size());
     assertEquals(causeOnCycle, handler.exceptions.get(0));
@@ -260,7 +260,7 @@ public final class WorkerThreadTest {
         .build();
 
     thread.start();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertEquals(2, handler.exceptions.size());
     assertEquals(causeOnCycle, handler.exceptions.get(0));
@@ -285,7 +285,7 @@ public final class WorkerThreadTest {
     final AtomicReference<Throwable> driverExceptionHandler = new AtomicReference<>();
     thread.getDriverThread().setUncaughtExceptionHandler((t, x) -> driverExceptionHandler.set(x));
     thread.start();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertEquals(1, handler.exceptions.size());
     assertEquals(causeOnCycle, handler.exceptions.get(0));
@@ -304,7 +304,7 @@ public final class WorkerThreadTest {
     .build();
     
     thread.start();
-    thread.joinQuietly();
+    thread.joinSilently();
     
     assertTrue(baos.toByteArray().length > 0);
   }

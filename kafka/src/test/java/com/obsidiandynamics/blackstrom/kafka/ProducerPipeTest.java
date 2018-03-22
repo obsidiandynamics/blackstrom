@@ -23,7 +23,7 @@ public final class ProducerPipeTest {
   
   @After
   public void after() {
-    if (pipe != null) pipe.terminate().joinQuietly();
+    if (pipe != null) pipe.terminate().joinSilently();
   }
   
   @Test

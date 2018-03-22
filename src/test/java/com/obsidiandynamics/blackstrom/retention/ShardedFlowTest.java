@@ -29,7 +29,7 @@ public class ShardedFlowTest {
   @After
   public void after() {
     if (flow != null) {
-      flow.terminate().joinQuietly();
+      flow.terminate().joinSilently();
     }
   }
 

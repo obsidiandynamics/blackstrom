@@ -173,6 +173,6 @@ public final class HazelQLedger implements Ledger {
     terminables.addAll(allSubscribers);
     terminables.addAll(flows);
     final List<Joinable> joinables = terminables.stream().map(t -> t.terminate()).collect(Collectors.toList());
-    joinables.forEach(j -> j.joinQuietly());
+    joinables.forEach(j -> j.joinSilently());
   }
 }
