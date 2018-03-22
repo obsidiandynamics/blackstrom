@@ -40,7 +40,6 @@ allprojects {
   }
   
   dependencies {
-    testCompile "com.obsidiandynamics.indigo:indigo-assurance:${indigoVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-assert:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-await:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-junit:${fulcrumVersion}"
@@ -120,6 +119,7 @@ dependencies {
   compile "org.slf4j:slf4j-api:1.7.25"
   compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
   compile "com.obsidiandynamics.fulcrum:fulcrum-concat:${fulcrumVersion}"
+  compile "com.obsidiandynamics.indigo:indigo-assurance:${indigoVersion}"
   compile "org.apache.commons:commons-lang3:3.7"
 }
 
