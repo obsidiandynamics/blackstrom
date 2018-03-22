@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 
+import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class KafkaSamplePubSub {
@@ -18,7 +19,7 @@ public final class KafkaSamplePubSub {
   private static final Kafka<String, String> KAFKA = MOCK 
       ? new MockKafka<>() 
       : new KafkaCluster<>(new KafkaClusterConfig()
-          .withCommonProps(new PropertiesBuilder().with("bootstrap.servers", BROKERS).build()));
+          .withCommonProps(new PropsBuilder().with("bootstrap.servers", BROKERS).build()));
   
   private static final class SamplePublisher extends Thread implements TestSupport {
     private static Properties getProps() {

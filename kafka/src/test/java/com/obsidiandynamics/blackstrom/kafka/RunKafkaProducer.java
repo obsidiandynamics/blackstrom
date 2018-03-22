@@ -6,9 +6,11 @@ import java.util.concurrent.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 
+import com.obsidiandynamics.blackstrom.util.props.*;
+
 public final class RunKafkaProducer {
   public static void main(String[] args) throws InterruptedException, ExecutionException {
-    final Properties props = new PropertiesBuilder()
+    final Properties props = new PropsBuilder()
         .with("bootstrap.servers", "localhost:9092")
         .with("key.serializer", StringSerializer.class.getName())
         .with("value.serializer", StringSerializer.class.getName())

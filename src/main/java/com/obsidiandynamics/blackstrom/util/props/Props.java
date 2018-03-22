@@ -2,10 +2,10 @@ package com.obsidiandynamics.blackstrom.util.props;
 
 import java.util.*;
 
-public final class PropertyManip {
-  private PropertyManip() {}
+public final class Props {
+  private Props() {}
   
-  public static Properties mergeProps(Properties... propertiesArray) {
+  public static Properties merge(Properties... propertiesArray) {
     final Properties merged = new Properties();
     for (Properties props : propertiesArray) {
       Collections.list(props.propertyNames()).stream()

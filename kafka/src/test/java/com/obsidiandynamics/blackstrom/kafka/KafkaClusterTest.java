@@ -11,17 +11,19 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 import org.junit.*;
 
+import com.obsidiandynamics.blackstrom.util.props.*;
+
 public class KafkaClusterTest {
   private static <K, V> KafkaCluster<K, V> createCluster() {
     final KafkaClusterConfig config = new KafkaClusterConfig()
-        .withCommonProps(new PropertiesBuilder()
+        .withCommonProps(new PropsBuilder()
                          .with("bootstrap.servers", "localhost:9092")
                          .build())
-        .withProducerProps(new PropertiesBuilder()
+        .withProducerProps(new PropsBuilder()
                            .with("key.serializer", StringSerializer.class.getName())
                            .with("value.serializer", StringSerializer.class.getName())
                            .build())
-        .withConsumerProps(new PropertiesBuilder()
+        .withConsumerProps(new PropsBuilder()
                            .with("key.deserializer", StringDeserializer.class.getName())
                            .with("value.deserializer", StringDeserializer.class.getName())
                            .build());
@@ -41,8 +43,8 @@ public class KafkaClusterTest {
   public void testDescribeProducer() {
     final LogLine logLine = mock(LogLine.class);
     createCluster().describeProducer(logLine, 
-                                     new PropertiesBuilder().with("default", "1").build(),
-                                     new PropertiesBuilder().with("overriden", "2").build());
+                                     new PropsBuilder().with("default", "1").build(),
+                                     new PropsBuilder().with("overriden", "2").build());
     verify(logLine, atLeastOnce()).accept(any());
   }
   
@@ -56,8 +58,8 @@ public class KafkaClusterTest {
   public void testDescribeConsumer() {
     final LogLine logLine = mock(LogLine.class);
     createCluster().describeConsumer(logLine, 
-                                     new PropertiesBuilder().with("default", "1").build(),
-                                     new PropertiesBuilder().with("overriden", "2").build());
+                                     new PropsBuilder().with("default", "1").build(),
+                                     new PropsBuilder().with("overriden", "2").build());
     verify(logLine, atLeastOnce()).accept(any());
   }
 }

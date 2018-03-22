@@ -8,9 +8,11 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
 
+import com.obsidiandynamics.blackstrom.util.props.*;
+
 public final class RunKafkaConsumer {
   public static void main(String[] args) {
-    final Properties props = new PropertiesBuilder()
+    final Properties props = new PropsBuilder()
         .with("bootstrap.servers", "localhost:9092")
         .with("group.id", "sample")
         .with("auto.offset.reset", "earliest")

@@ -18,6 +18,7 @@ import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
 public final class KafkaLedger implements Ledger {
@@ -91,7 +92,7 @@ public final class KafkaLedger implements Ledger {
         .buildAndStart();
 
     // may be user-specified in config
-    final Properties producerDefaults = new PropertiesBuilder()
+    final Properties producerDefaults = new PropsBuilder()
         .withSystemDefault("batch.size", 1 << 18)
         .withSystemDefault("linger.ms", 1)
         .withSystemDefault("compression.type", "lz4")
@@ -100,7 +101,7 @@ public final class KafkaLedger implements Ledger {
         .build();
 
     // set by the application — required for correctness (overrides user config)
-    final Properties producerOverrides = new PropertiesBuilder()
+    final Properties producerOverrides = new PropsBuilder()
         .with("key.serializer", StringSerializer.class.getName())
         .with("value.serializer", KafkaMessageSerializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
@@ -140,14 +141,14 @@ public final class KafkaLedger implements Ledger {
     }
     
     // may be user-specified in config
-    final Properties consumerDefaults = new PropertiesBuilder()
+    final Properties consumerDefaults = new PropsBuilder()
         .withSystemDefault("session.timeout.ms", 6_000)
         .withSystemDefault("heartbeat.interval.ms", 2_000)
         .withSystemDefault("max.poll.records", 10_000)
         .build();
 
     // set by the application — required for correctness (overrides user config)
-    final Properties consumerOverrides = new PropertiesBuilder()
+    final Properties consumerOverrides = new PropsBuilder()
         .with("group.id", consumerGroupId)
         .with("auto.offset.reset", autoOffsetReset)
         .with("enable.auto.commit", false)

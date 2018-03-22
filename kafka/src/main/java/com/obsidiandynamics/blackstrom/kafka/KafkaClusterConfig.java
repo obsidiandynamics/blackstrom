@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.kafka;
 
 import java.util.*;
 
+import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y(KafkaClusterConfig.Mapper.class)
@@ -9,15 +10,15 @@ public final class KafkaClusterConfig {
   public static final class Mapper implements TypeMapper {
     @Override public Object map(YObject y, Class<?> type) {
       return new KafkaClusterConfig()
-          .withCommonProps(y.mapAttribute("common", PropertiesBuilder.class).build())
-          .withProducerProps(y.mapAttribute("producer", PropertiesBuilder.class).build())
-          .withConsumerProps(y.mapAttribute("consumer", PropertiesBuilder.class).build());
+          .withCommonProps(y.mapAttribute("common", PropsBuilder.class).build())
+          .withProducerProps(y.mapAttribute("producer", PropsBuilder.class).build())
+          .withConsumerProps(y.mapAttribute("consumer", PropsBuilder.class).build());
     }
   }
   
   public static final String CONFIG_BOOTSTRAP_SERVERS = "bootstrap.servers";
   
-  private Properties common = new PropertiesBuilder()
+  private Properties common = new PropsBuilder()
       .withSystemDefault(CONFIG_BOOTSTRAP_SERVERS, null)
       .build();
 

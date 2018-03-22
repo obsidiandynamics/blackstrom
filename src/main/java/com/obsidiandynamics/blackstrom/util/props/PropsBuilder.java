@@ -1,14 +1,14 @@
-package com.obsidiandynamics.blackstrom.kafka;
+package com.obsidiandynamics.blackstrom.util.props;
 
 import java.util.*;
 
 import com.obsidiandynamics.yconf.*;
 
-@Y(PropertiesBuilder.Mapper.class)
-public final class PropertiesBuilder {
+@Y(PropsBuilder.Mapper.class)
+public final class PropsBuilder {
   public static final class Mapper implements TypeMapper {
     @Override public Object map(YObject y, Class<?> type) {
-      final PropertiesBuilder builder = new PropertiesBuilder();
+      final PropsBuilder builder = new PropsBuilder();
       for (Map.Entry<String, YObject> entry : y.asMap().entrySet()) {
         builder.with(entry.getKey(), entry.getValue().map(Object.class));
       }
@@ -18,7 +18,7 @@ public final class PropertiesBuilder {
   
   private final Properties properties = new Properties();
   
-  public PropertiesBuilder with(String key, Object value) {
+  public PropsBuilder with(String key, Object value) {
     if (value != null) properties.put(key, value.toString());
     return this;
   }
@@ -31,7 +31,7 @@ public final class PropertiesBuilder {
    *  @param defaultValue The default value, if the entry isn't in {@code System#getProperties()}.
    *  @return This builder, for fluent chaining.
    */
-  public PropertiesBuilder withSystemDefault(String key, Object defaultValue) {
+  public PropsBuilder withSystemDefault(String key, Object defaultValue) {
     return withDefault(key, System.getProperties(), defaultValue);
   }
   
@@ -44,7 +44,7 @@ public final class PropertiesBuilder {
    *  @param defaultValue The default value, if the entry isn't in {@code defaultProperties}.
    *  @return This builder, for fluent chaining.
    */
-  public PropertiesBuilder withDefault(String key, Properties defaultProperties, Object defaultValue) {
+  public PropsBuilder withDefault(String key, Properties defaultProperties, Object defaultValue) {
     return with(key, defaultProperties.getProperty(key, defaultValue != null ? defaultValue.toString() : null));
   }
   

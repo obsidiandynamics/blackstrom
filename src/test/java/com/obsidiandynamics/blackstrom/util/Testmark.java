@@ -36,6 +36,10 @@ public final class Testmark {
     return new FluentTestmark();
   }
   
+  public static void reset() {
+    Resolver.reset(TestmarkConfig.class);
+  }
+  
   public static boolean isEnabled() {
     return Resolver.lookup(TestmarkConfig.class, TestmarkConfig::new).get().enabled;
   }

@@ -41,7 +41,8 @@ public final class KafkaRig {
   }
   
   private static void printProps(Properties props) {
-    PropertyFormat.printStandard(log::info, "Rig properties", props, "rig.");
+    log.info("Rig properties:");
+    PropsFormat.printStandard(log::info, props, 25, "rig.");
   }
   
   private static Ledger createLedger() {

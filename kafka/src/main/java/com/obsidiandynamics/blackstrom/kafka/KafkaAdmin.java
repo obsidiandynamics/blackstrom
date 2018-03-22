@@ -12,6 +12,8 @@ import org.apache.kafka.common.*;
 import org.apache.kafka.common.errors.*;
 import org.slf4j.*;
 
+import com.obsidiandynamics.blackstrom.util.props.*;
+
 public final class KafkaAdmin implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(KafkaAdmin.class);
   
@@ -23,7 +25,7 @@ public final class KafkaAdmin implements AutoCloseable {
   
   public static KafkaAdmin forConfig(KafkaClusterConfig config, Function<Properties, AdminClient> adminClientFactory) {
     final String bootstrapServers = config.getCommonProps().getProperty(CONFIG_BOOTSTRAP_SERVERS);
-    final Properties props = new PropertiesBuilder()
+    final Properties props = new PropsBuilder()
         .with(CONFIG_BOOTSTRAP_SERVERS, bootstrapServers)
         .build();
     final AdminClient admin = adminClientFactory.apply(props);

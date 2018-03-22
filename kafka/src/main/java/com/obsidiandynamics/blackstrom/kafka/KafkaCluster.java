@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
-import static com.obsidiandynamics.blackstrom.util.props.PropertyFormat.*;
+import static com.obsidiandynamics.blackstrom.util.props.PropsFormat.*;
 
 import java.util.*;
 
@@ -24,7 +24,7 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   }
   
   private Properties mergeProducerProps(Properties defaults, Properties overrides) {
-    return PropertyManip.mergeProps(defaults, config.getProducerCombinedProps(), overrides);
+    return Props.merge(defaults, config.getProducerCombinedProps(), overrides);
   }
 
   @Override
@@ -34,16 +34,16 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
 
   @Override
   public void describeProducer(java.util.function.Consumer<String> logLine, Properties defaults, Properties overrides) {
-    PropertyFormat.printTitle(logLine, "Producer properties");
-    PropertyFormat.printProps(logLine, 
+    logLine.accept("Producer properties:");
+    PropsFormat.printProps(logLine, 
                               mergeProducerProps(defaults, overrides),
-                              s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad().apply(s),
+                              s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
                               prefix(" "), 
                               any());
   }
   
   private Properties mergeConsumerProps(Properties defaults, Properties overrides) {
-    return PropertyManip.mergeProps(defaults, config.getConsumerCombinedProps(), overrides);
+    return Props.merge(defaults, config.getConsumerCombinedProps(), overrides);
   }
 
   @Override
@@ -53,10 +53,10 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
 
   @Override
   public void describeConsumer(java.util.function.Consumer<String> logLine, Properties defaults, Properties overrides) {
-    PropertyFormat.printTitle(logLine, "Consumer properties");
-    PropertyFormat.printProps(logLine, 
+    logLine.accept("Consumer properties:");
+    PropsFormat.printProps(logLine, 
                               mergeConsumerProps(defaults, overrides),
-                              s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad().apply(s),
+                              s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
                               prefix(" "), 
                               any());
   }

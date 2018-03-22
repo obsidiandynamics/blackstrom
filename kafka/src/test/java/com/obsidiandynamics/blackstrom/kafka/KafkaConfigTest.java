@@ -8,6 +8,7 @@ import java.util.*;
 import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
+import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.yconf.*;
 
 public final class KafkaConfigTest {
@@ -23,16 +24,16 @@ public final class KafkaConfigTest {
     
     final KafkaClusterConfig config = ((KafkaCluster<?, ?>) kafka).getConfig();
     assertNotNull(config);
-    assertEquals(new PropertiesBuilder().with(KafkaClusterConfig.CONFIG_BOOTSTRAP_SERVERS, "10.20.30.40:9092").build(),
+    assertEquals(new PropsBuilder().with(KafkaClusterConfig.CONFIG_BOOTSTRAP_SERVERS, "10.20.30.40:9092").build(),
                  config.getCommonProps());
     Assertions.assertToStringOverride(config);
   }
   
   @Test
   public void testApi() {
-    final Properties commonProps = new PropertiesBuilder().with("common", "COMMON").build();
-    final Properties producerProps = new PropertiesBuilder().with("producer", "PRODUCER").build();
-    final Properties consumerProps = new PropertiesBuilder().with("consumer", "CONSUMER").build();
+    final Properties commonProps = new PropsBuilder().with("common", "COMMON").build();
+    final Properties producerProps = new PropsBuilder().with("producer", "PRODUCER").build();
+    final Properties consumerProps = new PropsBuilder().with("consumer", "CONSUMER").build();
     
     final KafkaClusterConfig config = new KafkaClusterConfig()
         .withCommonProps(commonProps)

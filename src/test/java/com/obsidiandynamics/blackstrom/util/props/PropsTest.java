@@ -8,10 +8,10 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
-public final class PropertyManipTest {
+public final class PropsTest {
   @Test
   public void testConformance() throws Exception {
-    Assertions.assertUtilityClassWellDefined(PropertyManip.class);
+    Assertions.assertUtilityClassWellDefined(Props.class);
   }
   
   @Test
@@ -20,7 +20,7 @@ public final class PropertyManipTest {
     a.setProperty("a", "A");
     final Properties b = new Properties();
     b.setProperty("b", "B");
-    final Properties merged = PropertyManip.mergeProps(a, b);
+    final Properties merged = Props.merge(a, b);
     assertEquals("A", merged.getProperty("a"));
     assertEquals("B", merged.getProperty("b"));
   }
