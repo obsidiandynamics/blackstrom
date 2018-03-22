@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.obsidiandynamics.blackstrom.resolver.*;
 import com.obsidiandynamics.indigo.util.*;
 
 public final class Launcher {
@@ -22,53 +23,53 @@ public final class Launcher {
     void run(String className) throws Exception;
   }
   
-  private int packageCompressLevel = PropertyUtils.get("launcher.package.compress.level", Integer::parseInt, 0);
-  
-  private String partialClassName = PropertyUtils.get("launcher.class", String::valueOf, null);
-  
-  public Launcher withPackageCompressLevel(int packageCompressLevel) {
-    this.packageCompressLevel = packageCompressLevel;
-    return this;
+  public static class Options {
+    public int packageCompressLevel = PropertyUtils.get("launcher.package.compress.level", Integer::parseInt, 0);
+    
+    public String partialClassName = PropertyUtils.get("launcher.class", String::valueOf, null);
+    
+    public ConsoleWriter out = System.out::printf;
+    
+    public ConsoleWriter err = System.err::printf;
+    
+    public ConsoleReader in = getSystemInReader()::readLine;
+    
+    public ClassRunner runner = Launcher::run;
   }
 
-  public Launcher withPartialClassName(String partialClassName) {
-    this.partialClassName = partialClassName;
-    return this;
-  }
-
-  public void run(String[] classes, ConsoleWriter out, ConsoleWriter err, ConsoleReader in, ClassRunner runner) throws Exception {
+  public static void run(Options options, String... classes) throws Exception {
     Arrays.sort(classes);
-    if (partialClassName != null) {
-      final String className = matchClass(partialClassName, classes);
+    if (options.partialClassName != null) {
+      final String className = matchClass(options.partialClassName, classes);
       if (className != null) {
-        out.printf("Running %s...\n", className);
-        runner.run(className);
+        options.out.printf("Running %s...\n", className);
+        options.runner.run(className);
       } else {
-        err.printf("Error: could not match class '%s'\n", partialClassName);
+        options.err.printf("Error: could not match class '%s'\n", options.partialClassName);
       }
     } else {
-      out.printf("Select class to run\n");
+      options.out.printf("Select class to run\n");
       for (int i = 0; i < classes.length; i++) {
-        out.printf("[%2d] %s\n", i + 1, formatClass(classes[i], packageCompressLevel));
+        options.out.printf("[%2d] %s\n", i + 1, formatClass(classes[i], options.packageCompressLevel));
       }
       
-      final String read = in.readLine();
+      final String read = options.in.readLine();
       if (read != null && ! read.trim().isEmpty()) {
         final int index;
         try {
           index = Integer.parseInt(read.trim()) - 1;
         } catch (NumberFormatException e) {
-          err.printf("Invalid selection '%s'\n", read.trim());
+          options.err.printf("Invalid selection '%s'\n", read.trim());
           return;
         }
         if (index < 0 || index >= classes.length) {
-          err.printf("Invalid selection '%s'\n", read.trim());
+          options.err.printf("Invalid selection '%s'\n", read.trim());
           return;
         }
-        out.printf("Running %s...\n", classes[index]);
-        runner.run(classes[index]);
+        options.out.printf("Running %s...\n", classes[index]);
+        options.runner.run(classes[index]);
       } else {
-        out.printf("Exiting\n");
+        options.out.printf("Exiting\n");
       }
     }
   }
@@ -77,7 +78,7 @@ public final class Launcher {
     return Arrays.stream(classes).filter(c -> c.endsWith(partialClassName)).findAny().orElse(null);
   }
   
-  static CharSequence formatClass(String className, int packageCompressLevel) {
+  static String formatClass(String className, int packageCompressLevel) {
     final String[] frags = className.split("\\.");
     final StringBuilder formatted = new StringBuilder();
     for (int i = 0; i < frags.length; i++) {
@@ -88,7 +89,7 @@ public final class Launcher {
         formatted.append(frags[i]);
       }
     }
-    return formatted;
+    return formatted.toString();
   }
   
   static void run(String className) throws Exception {
@@ -101,16 +102,19 @@ public final class Launcher {
     return new BufferedReader(new InputStreamReader(System.in));
   }
   
-  public static void main(String[] args) {
-    final ConsoleWriter out = System.out::printf;
-    final ConsoleWriter err = System.err::printf;
-    final ConsoleReader in = getSystemInReader()::readLine;
-    final ClassRunner runner = Launcher::run;
+  static void runAndLogException(ThrowingRunnable runnable, PrintStream err) {
     try {
-      new Launcher().run(args, out, err, in, runner);
+      runnable.run();
     } catch (Exception e) {
       err.printf("Error: %s\n", e);
-      e.printStackTrace();
+      e.printStackTrace(err);
     }
+  }
+  
+  private Launcher() {}
+  
+  public static void main(String[] args) {
+    final Options options = Resolver.lookup(Options.class, Options::new).get();
+    runAndLogException(() -> Launcher.run(options, args), System.err);
   }
 }
