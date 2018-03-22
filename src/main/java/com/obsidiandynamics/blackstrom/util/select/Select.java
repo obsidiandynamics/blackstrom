@@ -35,6 +35,12 @@ public final class Select<V, R> implements SelectRoot<R> {
     return otherwise().thenReturn(action);
   }
   
+  public Select<V, R> otherwiseThrow(Supplier<? extends RuntimeException> exceptionSupplier) {
+    return otherwise(__value -> {
+      throw exceptionSupplier.get();
+    });
+  }
+  
   public ValueThen<Select<V, R>, V, R> otherwise() {
     return when(alwaysTrue());
   }
@@ -60,6 +66,10 @@ public final class Select<V, R> implements SelectRoot<R> {
     
     public <X extends Exception> Select<V, R>.Checked otherwiseReturn(CheckedFunction<? super V, ? extends R, X> action) throws X {
       return otherwise().thenReturn(action);
+    }
+    
+    public <X extends Exception> Select<V, R>.Checked otherwiseThrow(Supplier<X> exceptionSupplier) throws X {
+      return otherwise().thenThrow(exceptionSupplier);
     }
     
     public ValueThen<Select<V, R>.Checked, V, R>.Checked otherwise() {
@@ -116,6 +126,22 @@ public final class Select<V, R> implements SelectRoot<R> {
   
   public static <V> Predicate<V> alwaysTrue() {
     return v -> true;
+  }
+  
+  public static <V, X extends Exception> CheckedConsumer<V, X> throwCheckedFromConsumer(Supplier<? extends X> exceptionSupplier) {
+    return __v -> { throw exceptionSupplier.get(); };
+  }
+  
+  public static <V, X extends RuntimeException> Consumer<V> throwFromConsumer(Supplier<? extends X> exceptionSupplier) {
+    return __v -> { throw exceptionSupplier.get(); };
+  }
+  
+  public static <X extends Exception> CheckedRunnable<X> throwCheckedFromRunnable(Supplier<? extends X> exceptionSupplier) {
+    return () -> { throw exceptionSupplier.get(); };
+  }
+  
+  public static <X extends RuntimeException> Runnable throwFromRunnable(Supplier<? extends X> exceptionSupplier) {
+    return () -> { throw exceptionSupplier.get(); };
   }
   
   public static class Returning<R> {

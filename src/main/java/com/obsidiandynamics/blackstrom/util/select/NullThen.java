@@ -27,6 +27,10 @@ public final class NullThen<S extends SelectRoot<R>, R> {
     return select;
   }
   
+  public S thenThrow(Supplier<? extends RuntimeException> exceptionSupplier) {
+    return then(Select.throwFromRunnable(exceptionSupplier));
+  }
+  
   public final class Checked {
     Checked() {}
     
@@ -42,6 +46,10 @@ public final class NullThen<S extends SelectRoot<R>, R> {
         select.setReturn(action.get());
       }
       return select;
+    }
+    
+    public <X extends Exception> S thenThrow(Supplier<X> exceptionSupplier) throws X {
+      return then(Select.throwCheckedFromRunnable(exceptionSupplier));
     }
   }
   

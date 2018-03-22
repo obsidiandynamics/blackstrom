@@ -5,7 +5,6 @@ import static java.util.function.Predicate.*;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.*;
-import java.util.function.*;
 
 import org.junit.*;
 
@@ -53,18 +52,62 @@ public final class SelectTest {
     private static final long serialVersionUID = 1L;
   }
   
-  private static <T, X extends Exception> CheckedConsumer<T, X> doThrow(Supplier<X> generator) {
-    return t -> {throw generator.get();};
+  private static class TestRuntimeExceptionFoo extends RuntimeException {
+    private static final long serialVersionUID = 1L;
   }
-
+  
+  private static class TestRuntimeExceptionBar extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+  }
+  
+  @Test(expected=TestRuntimeExceptionBar.class)
+  public void testWhenWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
+    Select.from("bar")
+    .whenNull().thenThrow(TestRuntimeExceptionFoo::new)
+    .when(isEqual("foo")).thenThrow(TestRuntimeExceptionFoo::new)
+    .when(isEqual("bar")).thenThrow(TestRuntimeExceptionBar::new)
+    .when(isEqual("baz")).then(CheckedConsumer::nop)
+    .otherwiseThrow(TestRuntimeExceptionFoo::new);
+  }
+  
+  @Test(expected=TestRuntimeExceptionFoo.class)
+  public void testWhenNullWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
+    Select.from(null)
+    .when(isEqual("bar")).thenThrow(TestRuntimeExceptionBar::new)
+    .whenNull().thenThrow(TestRuntimeExceptionFoo::new)
+    .otherwise(obj -> {});
+  }
+  
+  @Test(expected=TestRuntimeExceptionBar.class)
+  public void testOtherwiseWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
+    Select.from(null)
+    .when(isEqual("foo")).thenThrow(TestRuntimeExceptionFoo::new)
+    .otherwiseThrow(TestRuntimeExceptionBar::new);
+  }
+  
   @Test(expected=TestCheckedExceptionBar.class)
   public void testWhenCheckedWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
     Select.from("bar").checked()
-    .whenNull().then(CheckedRunnable::nop)
-    .when(isEqual("foo")).then(doThrow(TestCheckedExceptionFoo::new))
-    .when(isEqual("bar")).then(doThrow(TestCheckedExceptionBar::new))
+    .whenNull().thenThrow(TestCheckedExceptionFoo::new)
+    .when(isEqual("foo")).thenThrow(TestCheckedExceptionFoo::new)
+    .when(isEqual("bar")).thenThrow(TestCheckedExceptionBar::new)
     .when(isEqual("baz")).then(CheckedConsumer::nop)
+    .otherwiseThrow(TestCheckedExceptionFoo::new);
+  }
+  
+  @Test(expected=TestCheckedExceptionFoo.class)
+  public void testWhenCheckedNullWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
+    Select.from(null).checked()
+    .when(isEqual("bar")).thenThrow(TestCheckedExceptionBar::new)
+    .whenNull().thenThrow(TestCheckedExceptionFoo::new)
     .otherwise(obj -> {});
+  }
+  
+  @Test(expected=TestCheckedExceptionBar.class)
+  public void testOtherwiseCheckedWithThrow() throws TestCheckedExceptionBar, TestCheckedExceptionFoo {
+    Select.from(null).checked()
+    .when(isEqual("foo")).thenThrow(TestCheckedExceptionFoo::new)
+    .otherwiseThrow(TestCheckedExceptionBar::new);
   }
 
   @Test
@@ -104,6 +147,18 @@ public final class SelectTest {
   }
 
   @Test
+  public void testNotEqualsExceptionOtherwise() {
+    final Once<String> branch = new Once<>();
+    Select.from("bar")
+    .whenNull().then(() -> branch.assign("null"))
+    .when(not(isEqual("bar"))).then(obj -> branch.assign("not_bar"))
+    .when(not(isEqual("foo"))).then(obj -> branch.assign("not_foo"))
+    .otherwiseThrow(IllegalStateException::new);
+
+    assertEquals("not_foo", branch.get());
+  }
+
+  @Test
   public void testNotEqualsChecked() {
     final Once<String> branch = new Once<>();
     Select.from("bar").checked()
@@ -111,6 +166,18 @@ public final class SelectTest {
     .when(not(isEqual("bar"))).then(obj -> branch.assign("not_bar"))
     .when(not(isEqual("foo"))).then(obj -> branch.assign("not_foo"))
     .otherwise(obj -> branch.assign("otherwise"));
+
+    assertEquals("not_foo", branch.get());
+  }
+
+  @Test
+  public void testNotEqualsCheckedOtherwiseThrow() {
+    final Once<String> branch = new Once<>();
+    Select.from("bar").checked()
+    .whenNull().then(() -> branch.assign("null"))
+    .when(not(isEqual("bar"))).then(obj -> branch.assign("not_bar"))
+    .when(not(isEqual("foo"))).then(obj -> branch.assign("not_foo"))
+    .otherwiseThrow(IllegalStateException::new);
 
     assertEquals("not_foo", branch.get());
   }

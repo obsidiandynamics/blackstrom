@@ -29,6 +29,10 @@ public final class ValueThen<S extends SelectRoot<R>, V, R> {
     return select;
   }
   
+  public S thenThrow(Supplier<? extends RuntimeException> exceptionSupplier) {
+    return then(Select.throwFromConsumer(exceptionSupplier));
+  }
+  
   public <W> ValueThen<S, W, R> transform(Function<? super V, ? extends W> transform) {
     final W newValue = fire ? transform.apply(value) : null;
     return new ValueThen<>(select, newValue, fire);
@@ -49,6 +53,10 @@ public final class ValueThen<S extends SelectRoot<R>, V, R> {
         select.setReturn(action.apply(value));
       }
       return select;
+    }
+    
+    public <X extends Exception> S thenThrow(Supplier<X> exceptionSupplier) throws X {
+      return then(Select.throwCheckedFromConsumer(exceptionSupplier));
     }
     
     public <W, X extends Exception> ValueThen<S, W, R>.Checked transform(CheckedFunction<? super V, ? extends W, X> transform) throws X {
