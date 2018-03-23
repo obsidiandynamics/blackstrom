@@ -3,47 +3,17 @@ package com.obsidiandynamics.blackstrom.worker;
 import java.util.*;
 import java.util.stream.*;
 
-public final class Terminator implements Terminable {
-  private final Set<Terminable> terminables = new HashSet<>();
-  
+/**
+ *  An accumulator for composing operations over instances of type {@link Terminable}. Rather than terminating
+ *  each individual instance, the latter can be added to this accumulator (itself being a {@link Terminable}) 
+ *  and collectively terminated with a single method call.
+ */
+public final class Terminator extends FluentOperatingSet<Terminable, Terminator> implements Terminable {
   private Terminator() {}
   
-  public Terminator add(Collection<Terminable> terminables) {
-    terminables.forEach(this::add);
-    return this;
-  }
-  
-  public Terminator add(Terminable... terminables) {
-    return add(Arrays.asList(terminables));
-  }
-  
-  public Terminator add(Terminable terminable) {
-    terminables.add(terminable);
-    return this;
-  }
-  
-  public Terminator add(Optional<Terminable> terminableOpt) {
-    terminableOpt.ifPresent(this::add);
-    return this;
-  }
-  
-  public Terminator remove(Terminable terminable) {
-    terminables.remove(terminable);
-    return this;
-  }
-  
-  public Collection<Terminable> view() {
-    return Collections.unmodifiableCollection(new HashSet<>(terminables));
-  }
-  
-  @Override
-  public String toString() {
-    return terminables.toString();
-  }
-
   @Override
   public Joinable terminate() {
-    final List<Joinable> joinables = terminables.stream().map(t -> t.terminate()).collect(Collectors.toList());
+    final List<Joinable> joinables = elements.stream().map(t -> t.terminate()).collect(Collectors.toList());
     return timeoutMillis -> Joinable.joinAll(timeoutMillis, joinables);
   }
   

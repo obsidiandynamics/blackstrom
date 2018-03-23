@@ -301,6 +301,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return keeperThread != null ? Joinable.joinAll(timeoutMillis, keeperThread, election) : true;
+    return Joiner.blank()
+    .add(Optional.ofNullable(keeperThread))
+    .add(Optional.ofNullable(election))
+    .join(timeoutMillis);
   }
 }
