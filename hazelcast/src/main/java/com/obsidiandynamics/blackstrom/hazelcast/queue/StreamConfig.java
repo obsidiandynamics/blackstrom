@@ -103,7 +103,7 @@ public final class StreamConfig {
 
   @Override
   public String toString() {
-    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity + ", residualCapacity=" + storeCapacity
+    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity + ", storeCapacity=" + storeCapacity
            + ", storeRetentionMillis=" + storeRetentionMillis + ", storeFactoryClass=" + storeFactoryClass
            + ", syncReplicas=" + syncReplicas + ", asyncReplicas=" + asyncReplicas + "]";
   }
