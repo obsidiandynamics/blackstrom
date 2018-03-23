@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
@@ -11,6 +10,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 /**
  *  A high-performance, lock-free, unbounded MPMC (multi-producer, multi-consumer) queue
@@ -50,7 +50,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   /** Tracks presence of group members. */
   private final Set<String> groups = new HashSet<>();
   
-  private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
+  private final List<WorkerThread> threads = new ArrayList<>();
   
   private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
 
@@ -91,7 +91,7 @@ public final class MultiNodeQueueLedger implements Ledger {
       } else if (yields++ < maxYields) {
         Thread.yield();
       } else {
-        // resetting yields here appears counterintuitive (it makes more sense to reset it on a hit than a miss),
+        // resetting yields here appears counterintuitive (it makes more sense to reset it on a hit than a miss);
         // however, this technique avoids writing to an instance field from a hotspot, markedly improving performance
         // at the expense of (1) prematurely sleeping on the next miss and (2) yielding after a sleep
         yields = 0;
@@ -138,7 +138,6 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   @Override
   public void dispose() {
-    threads.forEach(t -> t.terminate());
-    threads.forEach(t -> t.joinSilently());
+    Terminator.of(threads).terminate().joinSilently();
   }
 }

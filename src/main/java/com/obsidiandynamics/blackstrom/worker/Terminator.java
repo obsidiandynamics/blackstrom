@@ -17,7 +17,7 @@ public final class Terminator extends FluentOperatingSet<Terminable, Terminator>
     return timeoutMillis -> Joinable.joinAll(timeoutMillis, joinables);
   }
   
-  public static Terminator of(Collection<Terminable> terminables) {
+  public static Terminator of(Collection<? extends Terminable> terminables) {
     return new Terminator().add(terminables);
   }
   

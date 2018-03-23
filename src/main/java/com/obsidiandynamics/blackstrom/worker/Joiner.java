@@ -15,7 +15,7 @@ public final class Joiner extends FluentOperatingSet<Joinable, Joiner> implement
     return Joinable.joinAll(timeoutMillis, elements);
   }
   
-  public static Joiner of(Collection<Joinable> joinables) {
+  public static Joiner of(Collection<? extends Joinable> joinables) {
     return new Joiner().add(joinables);
   }
   
