@@ -17,6 +17,28 @@ public final class TerminatorTest {
   }
   
   @Test
+  public void testConstructWithArray() {
+    final Terminable t0 = () -> null;
+    final Terminable t1 = () -> null;
+    final Terminator terminator = Terminator.of(t0, t1);
+    final Collection<Terminable> view = terminator.view();
+    assertEquals(2, view.size());
+    assertTrue(view.contains(t0));
+    assertTrue(view.contains(t1));
+  }
+  
+  @Test
+  public void testConstructWithCollection() {
+    final Terminable t0 = () -> null;
+    final Terminable t1 = () -> null;
+    final Terminator terminator = Terminator.of(Arrays.asList(t0, t1));
+    final Collection<Terminable> view = terminator.view();
+    assertEquals(2, view.size());
+    assertTrue(view.contains(t0));
+    assertTrue(view.contains(t1));
+  }
+  
+  @Test
   public void testAddRemove() {
     final Terminable t0 = () -> null;
     final Terminable t1 = () -> null;
@@ -33,6 +55,12 @@ public final class TerminatorTest {
   }
   
   @Test
+  public void addOptional() {
+    final Terminator terminator = Terminator.blank().add(Optional.ofNullable(null));
+    assertEquals(0, terminator.view().size());
+  }
+  
+  @Test
   public void testTerminateAndJoin() throws InterruptedException {
     final Terminable t = mock(Terminable.class);
     final Joinable j = mock(Joinable.class);
@@ -46,5 +74,17 @@ public final class TerminatorTest {
     joinable.joinSilently();
     assertFalse(Thread.interrupted());
     verify(j).join(anyLong());
+  }
+  
+  @Test
+  public void testTerminateAndJoinBlank() throws InterruptedException {
+    final Terminator terminator = Terminator.blank();
+
+    final Joinable joinable = terminator.terminate();
+    assertNotNull(joinable);
+    
+    final boolean joined = joinable.joinSilently(10_000);
+    assertFalse(Thread.interrupted());
+    assertTrue(joined);
   }
 }

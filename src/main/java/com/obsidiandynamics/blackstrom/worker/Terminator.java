@@ -22,6 +22,11 @@ public final class Terminator implements Terminable {
     return this;
   }
   
+  public Terminator add(Optional<Terminable> terminableOpt) {
+    terminableOpt.ifPresent(this::add);
+    return this;
+  }
+  
   public Terminator remove(Terminable terminable) {
     terminables.remove(terminable);
     return this;
@@ -42,11 +47,15 @@ public final class Terminator implements Terminable {
     return timeoutMillis -> Joinable.joinAll(timeoutMillis, joinables);
   }
   
+  public static Terminator of(Collection<Terminable> terminables) {
+    return new Terminator().add(terminables);
+  }
+  
   public static Terminator of(Terminable... terminables) {
     return new Terminator().add(terminables);
   }
   
   public static Terminator blank() {
-    return of();
+    return new Terminator();
   }
 }
