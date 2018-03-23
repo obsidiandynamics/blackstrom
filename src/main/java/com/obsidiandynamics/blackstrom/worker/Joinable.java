@@ -3,8 +3,8 @@ package com.obsidiandynamics.blackstrom.worker;
 import java.util.*;
 
 /**
- *  Definition of a concurrent entity that can be waited upon to
- *  have completed carrying out its work.
+ *  Definition of an active entity (one that is performing work in the background) that can be waited 
+ *  upon to have completed carrying out its work.
  */
 @FunctionalInterface
 public interface Joinable {
@@ -56,10 +56,30 @@ public interface Joinable {
     joinSilently(0);
   }
   
+  /**
+   *  Helper for joining on all provided {@link Joinable} instances, using {@code timeoutMillis} as
+   *  the upper bound on the join timeout.
+   *  
+   *  @param timeoutMillis The time to wait. {@code 0} means wait forever.
+   *  @param joinables The instances to join on.
+   *  @return True if <em>all</em> instances were joined on successfully within the timeout, false if at
+   *          least one join timed out.
+   *  @throws InterruptedException If the thread is interrupted.
+   */  
   static boolean joinAll(long timeoutMillis, Joinable... joinables) throws InterruptedException {
     return joinAll(timeoutMillis, Arrays.asList(joinables));
   }
  
+  /**
+   *  Helper for joining on all provided {@link Joinable} instances, using {@code timeoutMillis} as
+   *  the upper bound on the join timeout.
+   *  
+   *  @param timeoutMillis The time to wait. {@code 0} means wait forever.
+   *  @param joinables The instances to join on.
+   *  @return True if <em>all</em> instances were joined on successfully within the timeout, false if at
+   *          least one join timed out.
+   *  @throws InterruptedException If the thread is interrupted.
+   */
   static boolean joinAll(long timeoutMillis, Collection<? extends Joinable> joinables) throws InterruptedException {
     final long deadline = timeoutMillis != 0 ? System.currentTimeMillis() + timeoutMillis : Long.MAX_VALUE;
     for (Joinable joinable : joinables) {
