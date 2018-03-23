@@ -12,10 +12,7 @@ import com.obsidiandynamics.yconf.*;
 public final class NopRingbufferStoreTest {
   @Test
   public void testConfig() throws Exception {
-    final Object mapped = new MappingContext()
-        .withParser(new SnakeyamlParser()).fromString("type: " + Factory.class.getName()).map(Object.class);
-    assertNotNull(mapped);
-    assertEquals(Factory.class, mapped.getClass());
+    assertNotNull(new MappingContext().withParser(__reader -> new Object()).fromString("").map(Factory.class));
   }
   
   @Test
