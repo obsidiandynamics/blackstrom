@@ -2,7 +2,6 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.nio.*;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import org.slf4j.*;
@@ -30,13 +29,13 @@ public final class HazelQLedger implements Ledger {
   
   private final MessageCodec codec;
   
-  private final List<Subscriber> allSubscribers = new CopyOnWriteArrayList<>();
+  private final List<Subscriber> allSubscribers = new ArrayList<>();
   
-  private final Map<Integer, Subscriber> groupSubscribers = new ConcurrentHashMap<>();
+  private final Map<Integer, Subscriber> groupSubscribers = new HashMap<>();
   
-  private final List<Receiver> receivers = new CopyOnWriteArrayList<>();
+  private final List<Receiver> receivers = new ArrayList<>();
   
-  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
+  private final List<ShardedFlow> flows = new ArrayList<>(); 
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
