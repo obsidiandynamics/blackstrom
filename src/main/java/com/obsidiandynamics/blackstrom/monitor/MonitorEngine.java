@@ -217,9 +217,10 @@ public final class MonitorEngine implements Disposable {
     
   @Override
   public void dispose() {
-    if (trackingEnabled) gcThread.terminate();
-    timeoutThread.terminate();
-    if (trackingEnabled) gcThread.joinSilently();
-    timeoutThread.joinSilently();
+    Terminator.blank()
+    .add(Optional.ofNullable(gcThread))
+    .add(timeoutThread)
+    .terminate()
+    .joinSilently();
   }
 }

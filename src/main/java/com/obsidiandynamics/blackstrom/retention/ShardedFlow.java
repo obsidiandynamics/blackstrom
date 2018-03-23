@@ -64,17 +64,17 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
       // as flows are created lazily, it's possible that some flows are created after termination of
       // this container; this flag ensures that new flows are stillborn
       terminated = true;
-      createdFlows.forEach(f -> f.terminate());
+      Terminator.of(createdFlows).terminate();
     }
     return this;
   }
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    final List<Flow> createdFlowsCopy; 
+    final Joiner joiner = Joiner.blank();
     synchronized (terminateLock) {
-      createdFlowsCopy = new ArrayList<>(createdFlows);
+      joiner.add(createdFlows);
     }
-    return Joinable.joinAll(timeoutMillis, createdFlowsCopy);
+    return joiner.join(timeoutMillis);
   }
 }

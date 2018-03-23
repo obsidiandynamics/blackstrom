@@ -20,6 +20,11 @@ public final class JoinableTest {
   }
   
   @Test
+  public void testJoinAllEmptyPass() throws InterruptedException {
+    assertTrue(Joinable.joinAll(1_000));
+  }
+  
+  @Test
   public void testJoinAllPass() throws InterruptedException {
     final Joinable j = new TestJoinable(true);
     assertTrue(Joinable.joinAll(1_000, j));

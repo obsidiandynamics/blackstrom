@@ -15,6 +15,7 @@ import com.hazelcast.core.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -40,8 +41,7 @@ public final class ElectionTest {
   
   @After
   public void after() {
-    elections.forEach(e -> e.terminate());
-    elections.forEach(e -> e.joinSilently());
+    Terminator.of(elections).terminate().joinSilently();
     instances.forEach(h -> h.shutdown());
   }
   

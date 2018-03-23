@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import org.apache.kafka.clients.consumer.*;
@@ -42,15 +43,15 @@ public final class ConsumerPipe<K, V> implements Terminable, Joinable {
       handler.onReceive(records);
     }
   }
-
-  @Override
-  public boolean join(long timeoutMillis) throws InterruptedException {
-    return thread != null ? thread.join(timeoutMillis) : true;
-  }
   
   @Override
   public Joinable terminate() {
-    if (thread != null) thread.terminate();
+    Terminator.blank().add(Optional.ofNullable(thread)).terminate();
     return this;
+  }
+
+  @Override
+  public boolean join(long timeoutMillis) throws InterruptedException {
+    return Joiner.blank().add(Optional.ofNullable(thread)).join(timeoutMillis);
   }
 }

@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
-import java.util.stream.*;
 
 import org.junit.*;
 import org.junit.runners.*;
@@ -17,6 +16,7 @@ import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractPubSubTest {
@@ -47,12 +47,12 @@ public abstract class AbstractPubSubTest {
   
   @After
   public final void afterBase() {
-    final Set<Joinable> joinables = terminables.stream()
-        .map(t -> t.terminate()).collect(Collectors.toSet());
-    auxLoadThreads.forEach(t -> t.terminate());
-    joinables.forEach(s -> s.joinSilently());
+    Terminator.blank()
+    .add(terminables)
+    .add(auxLoadThreads)
+    .terminate()
+    .joinSilently();
     instances.forEach(h -> h.getLifecycleService().terminate());
-    auxLoadThreads.forEach(t -> t.joinSilently());
   }
   
   protected final HazelcastInstance newGridInstance() {
