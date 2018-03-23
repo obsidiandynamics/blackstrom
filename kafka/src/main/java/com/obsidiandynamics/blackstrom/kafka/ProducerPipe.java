@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import java.util.*;
+
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.*;
 
@@ -79,7 +81,7 @@ public final class ProducerPipe<K, V> implements Terminable, Joinable {
   
   @Override
   public Joinable terminate() {
-    if (thread != null) thread.terminate();
+    Terminator.blank().add(Optional.ofNullable(thread)).terminate();
     closeProducer();
     return this;
   }
@@ -91,6 +93,6 @@ public final class ProducerPipe<K, V> implements Terminable, Joinable {
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    return thread != null ? thread.join(timeoutMillis) : true;
+    return Joiner.blank().add(Optional.ofNullable(thread)).join(timeoutMillis);
   }
 }
