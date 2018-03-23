@@ -126,8 +126,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     Thread.sleep(sleepTime);
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(2, b0.size());
-    assertArrayEquals("h0".getBytes(), b0.all().get(0).getData());
-    assertArrayEquals("h1".getBytes(), b0.all().get(1).getData());
+    assertArrayEquals("h0".getBytes(), b0.toList().get(0).getData());
+    assertArrayEquals("h1".getBytes(), b0.toList().get(1).getData());
     
     // confirm offsets and check in the map
     s.confirm();
@@ -434,8 +434,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // consume from s0 -- should succeed
     final RecordBatch s0_b0 = s0.poll(1_000);
     assertEquals(2, s0_b0.size());
-    assertArrayEquals("h0".getBytes(), s0_b0.all().get(0).getData());
-    assertArrayEquals("h1".getBytes(), s0_b0.all().get(1).getData());
+    assertArrayEquals("h0".getBytes(), s0_b0.toList().get(0).getData());
+    assertArrayEquals("h1".getBytes(), s0_b0.toList().get(1).getData());
     
     // confirm offsets and check in the map
     s0.confirm();
@@ -451,8 +451,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
 
     final RecordBatch s0_b1 = s0.poll(1_000);
     assertEquals(2, s0_b1.size());
-    assertArrayEquals("h2".getBytes(), s0_b1.all().get(0).getData());
-    assertArrayEquals("h3".getBytes(), s0_b1.all().get(1).getData());
+    assertArrayEquals("h2".getBytes(), s0_b1.toList().get(0).getData());
+    assertArrayEquals("h3".getBytes(), s0_b1.toList().get(1).getData());
 
     final RecordBatch s1_b1 = s1.poll(10);
     assertEquals(0, s1_b1.size());
@@ -469,8 +469,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // consuming now from s1 should fetch the last two records (the first two were already confirmed)
     final RecordBatch s1_b2 = s1.poll(1_000);
     assertEquals(2, s1_b2.size());
-    assertArrayEquals("h2".getBytes(), s1_b2.all().get(0).getData());
-    assertArrayEquals("h3".getBytes(), s1_b2.all().get(1).getData());
+    assertArrayEquals("h2".getBytes(), s1_b2.toList().get(0).getData());
+    assertArrayEquals("h3".getBytes(), s1_b2.toList().get(1).getData());
     
     // confirm h2 only and switch tenancy back to s0
     s1.confirm(2);
@@ -485,7 +485,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
         s0_b3 = s0.poll(1);
       } catch (InterruptedException e) { return; }
       assertEquals(1, s0_b3.size());
-      assertArrayEquals("h3".getBytes(), s0_b3.all().get(0).getData());
+      assertArrayEquals("h3".getBytes(), s0_b3.toList().get(0).getData());
     });
     
     wait.until(() -> assertFalse(s1.isAssigned()));
@@ -543,13 +543,13 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // consume from s0 and s1, and verify that both received the same messages
     final RecordBatch s0_b0 = s0.poll(1_000);
     assertEquals(2, s0_b0.size());
-    assertArrayEquals("h0".getBytes(), s0_b0.all().get(0).getData());
-    assertArrayEquals("h1".getBytes(), s0_b0.all().get(1).getData());
+    assertArrayEquals("h0".getBytes(), s0_b0.toList().get(0).getData());
+    assertArrayEquals("h1".getBytes(), s0_b0.toList().get(1).getData());
 
     final RecordBatch s1_b0 = s1.poll(1_000);
     assertEquals(2, s1_b0.size());
-    assertArrayEquals("h0".getBytes(), s1_b0.all().get(0).getData());
-    assertArrayEquals("h1".getBytes(), s1_b0.all().get(1).getData());
+    assertArrayEquals("h0".getBytes(), s1_b0.toList().get(0).getData());
+    assertArrayEquals("h1".getBytes(), s1_b0.toList().get(1).getData());
     
     // consume again from s0 and s1 should result in an empty batch
     final RecordBatch s0_b1 = s0.poll(10);
@@ -613,8 +613,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // consume from s0
     final RecordBatch s0_b0 = s0.poll(1_000);
     assertEquals(2, s0_b0.size());
-    assertArrayEquals("s0h0".getBytes(), s0_b0.all().get(0).getData());
-    assertArrayEquals("s0h1".getBytes(), s0_b0.all().get(1).getData());
+    assertArrayEquals("s0h0".getBytes(), s0_b0.toList().get(0).getData());
+    assertArrayEquals("s0h1".getBytes(), s0_b0.toList().get(1).getData());
     
     // consumer again from s0 -- should get an empty batch
     final RecordBatch s0_b1 = s0.poll(10);
@@ -627,8 +627,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // consume from s1
     final RecordBatch s1_b0 = s1.poll(1_000);
     assertEquals(2, s1_b0.size());
-    assertArrayEquals("s1h0".getBytes(), s1_b0.all().get(0).getData());
-    assertArrayEquals("s1h1".getBytes(), s1_b0.all().get(1).getData());
+    assertArrayEquals("s1h0".getBytes(), s1_b0.toList().get(0).getData());
+    assertArrayEquals("s1h1".getBytes(), s1_b0.toList().get(1).getData());
     
     // consumer again from s1 -- should get an empty batch
     final RecordBatch s1_b1 = s1.poll(10);

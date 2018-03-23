@@ -119,7 +119,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
 
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(1, b0.size());
-    assertArrayEquals("hello".getBytes(), b0.all().get(0).getData());
+    assertArrayEquals("hello".getBytes(), b0.toList().get(0).getData());
 
     final RecordBatch b1 = s.poll(10);
     assertEquals(0, b1.size());
@@ -151,8 +151,8 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(2, b0.size());
-    assertArrayEquals("h0".getBytes(), b0.all().get(0).getData());
-    assertArrayEquals("h1".getBytes(), b0.all().get(1).getData());
+    assertArrayEquals("h0".getBytes(), b0.toList().get(0).getData());
+    assertArrayEquals("h1".getBytes(), b0.toList().get(1).getData());
     
     final RecordBatch b1 = s.poll(10);
     assertEquals(0, b1.size());
@@ -186,7 +186,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     s.seek(1);
     final RecordBatch b0 = s.poll(1_000);
     assertEquals(1, b0.size());
-    assertArrayEquals("h1".getBytes(), b0.all().get(0).getData());
+    assertArrayEquals("h1".getBytes(), b0.toList().get(0).getData());
     
     verifyNoError(eh);
   }

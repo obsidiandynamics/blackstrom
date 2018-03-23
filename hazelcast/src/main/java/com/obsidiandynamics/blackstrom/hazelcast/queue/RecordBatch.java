@@ -2,37 +2,36 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import java.util.*;
 
-public final class RecordBatch implements Iterable<Record> {
-  private static final RecordBatch empty = new RecordBatch(Collections.emptyList());
+public interface RecordBatch extends Iterable<Record> {
+  final RecordBatch empty = new RecordBatch() {
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    public Iterator<Record> iterator() {
+      return Collections.emptyIterator();
+    }
+  };
   
   public static RecordBatch empty() { return empty; }
+
+  int size();
+
+  Iterator<Record> iterator();
   
-  private final List<Record> records;
-  
-  RecordBatch(List<Record> records) {
-    this.records = records;
-  }
-  
-  public boolean isEmpty() {
+  default boolean isEmpty() {
     return size() == 0;
   }
-
-  public int size() {
-    return records.size();
-  }
   
-  public List<Record> all() {
-    final List<Record> list = new ArrayList<>();
+  default List<Record> toList() {
+    final List<Record> list = new ArrayList<>(size());
     readInto(list);
     return list;
   }
   
-  public void readInto(Collection<? super Record> sink) {
-    sink.addAll(records);
-  }
-
-  @Override
-  public Iterator<Record> iterator() {
-    return all().iterator();
+  default void readInto(Collection<? super Record> sink) {
+    iterator().forEachRemaining(sink::add);
   }
 }

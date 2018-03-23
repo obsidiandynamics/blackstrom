@@ -166,7 +166,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     for (byte[] result : resultSet) {
       records.add(new Record(result, offset++));
     }
-    return new RecordBatch(records);
+    return new ListRecordBatch(records);
   }
   
   private void ensureGroupMode() {
