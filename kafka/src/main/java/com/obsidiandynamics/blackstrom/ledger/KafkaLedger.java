@@ -43,11 +43,11 @@ public final class KafkaLedger implements Ledger {
 
   private final ProducerPipe<String, Message> producerPipe;
 
-  private final List<KafkaReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
+  private final List<KafkaReceiver<String, Message>> receivers = new ArrayList<>();
 
-  private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
+  private final List<ConsumerPipe<String, Message>> consumerPipes = new ArrayList<>();
   
-  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
+  private final List<ShardedFlow> flows = new ArrayList<>(); 
   
   private final boolean printConfig;
   
