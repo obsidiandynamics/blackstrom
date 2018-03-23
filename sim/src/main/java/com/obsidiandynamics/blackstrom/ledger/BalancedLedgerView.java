@@ -7,19 +7,23 @@ import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class BalancedLedgerView implements Ledger {
   private final BalancedLedgerHub hub;
   
-  private class Consumer {
+  private final List<ShardedFlow> flows = new ArrayList<>(); 
+  
+  private final Accumulator[] accumulators;
+  
+  private class Consumer implements Terminable {
     private static final int CONSUME_WAIT_MILLIS = 1;
     
     private final MessageHandler handler;
     private final ConsumerGroup group;
     private final Object handlerId = UUID.randomUUID();
     private final WorkerThread thread;
-    private final ShardedFlow flow = new ShardedFlow();
-    private final MessageContext context = new DefaultMessageContext(BalancedLedgerView.this, handlerId, flow);
+    private final MessageContext context;
     private long[] nextReadOffsets = new long[accumulators.length];
     
     private final List<Message> sink = new ArrayList<>();
@@ -27,11 +31,17 @@ public final class BalancedLedgerView implements Ledger {
     Consumer(MessageHandler handler, ConsumerGroup group) {
       this.handler = handler;
       this.group = group;
+      final Retention retention;
       if (group != null) {
         group.join(handlerId);
+        final ShardedFlow flow = new ShardedFlow();
+        flows.add(flow);
+        retention = flow;
       } else {
         Arrays.setAll(nextReadOffsets, shard -> accumulators[shard].getNextOffset());
-      }
+        retention = NopRetention.getInstance();
+      } 
+      context = new DefaultMessageContext(BalancedLedgerView.this, handlerId, retention);
       
       thread = WorkerThread.builder()
           .withOptions(new WorkerOptions().daemon().withName(BalancedLedgerView.class, handlerId))
@@ -70,11 +80,14 @@ public final class BalancedLedgerView implements Ledger {
         Thread.sleep(CONSUME_WAIT_MILLIS);
       }
     }
+
+    @Override
+    public Joinable terminate() {
+      return thread.terminate();
+    }
   }
   
   private final Map<Object, Consumer> consumers = new HashMap<>();
-  
-  private final Accumulator[] accumulators;
   
   private boolean detached;
   
@@ -117,9 +130,13 @@ public final class BalancedLedgerView implements Ledger {
   public void dispose() {
     hub.removeView(this);
     final Collection<Consumer> consumers = this.consumers.values();
-    final Terminator terminator = Terminator.blank();
-    consumers.forEach(c -> terminator.add(c.thread, c.flow));
-    terminator.terminate().joinSilently();
+    
+    Terminator.blank()
+    .add(consumers)
+    .add(flows)
+    .terminate()
+    .joinSilently();
+
     consumers.stream().filter(c -> c.group != null).forEach(c -> c.group.leave(c.handlerId));
     
     if (! detached) {
