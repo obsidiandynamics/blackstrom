@@ -7,7 +7,7 @@ import com.obsidiandynamics.yconf.*;
 
 @Y
 public final class SubscriberConfig {
-  private Logger log = LoggerFactory.getLogger(DefaultSubscriber.class);
+  private Logger log = LoggerFactory.getLogger(Subscriber.class);
   
   private ErrorHandler errorHandler = new LogAwareErrorHandler(this::getLog);
   
@@ -79,5 +79,12 @@ public final class SubscriberConfig {
   public SubscriberConfig withElectionConfig(ElectionConfig electionConfig) {
     this.electionConfig = electionConfig;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler + ", streamConfig=" + streamConfig
+           + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme + ", electionConfig=" + electionConfig
+           + "]";
   }
 }

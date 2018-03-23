@@ -6,7 +6,7 @@ import com.obsidiandynamics.yconf.*;
 
 @Y
 public final class PublisherConfig {
-  private Logger log = LoggerFactory.getLogger(DefaultPublisher.class);
+  private Logger log = LoggerFactory.getLogger(Publisher.class);
   
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
