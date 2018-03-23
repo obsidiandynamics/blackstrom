@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
 
@@ -20,6 +19,7 @@ import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
@@ -74,7 +74,7 @@ public final class KafkaLedger implements Ledger {
   }
 
   /** Maps handler IDs to consumer offsets. */
-  private final Map<Integer, ConsumerOffsets> consumers = new ConcurrentHashMap<>();
+  private final Map<Integer, ConsumerOffsets> consumers = new HashMap<>();
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
 
