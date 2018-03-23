@@ -4,7 +4,6 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.stream.*;
 
 import org.slf4j.*;
 
@@ -16,7 +15,7 @@ import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.model.Message;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class HazelQLedger implements Ledger {
   private final HazelcastInstance instance;
@@ -167,12 +166,12 @@ public final class HazelQLedger implements Ledger {
   
   @Override
   public void dispose() {
-    final List<Terminable> terminables = new ArrayList<>();
-    terminables.add(publisher);
-    terminables.addAll(receivers);
-    terminables.addAll(allSubscribers);
-    terminables.addAll(flows);
-    final List<Joinable> joinables = terminables.stream().map(t -> t.terminate()).collect(Collectors.toList());
-    joinables.forEach(j -> j.joinSilently());
+    Terminator.blank()
+    .add(publisher)
+    .add(receivers)
+    .add(allSubscribers)
+    .add(flows)
+    .terminate()
+    .joinSilently();
   }
 }

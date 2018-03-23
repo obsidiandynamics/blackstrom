@@ -286,16 +286,14 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void dispose() {
-    retryThread.terminate();
-    receivers.forEach(t -> t.terminate());
-    consumerPipes.forEach(t -> t.terminate());
-    producerPipe.terminate();
-    flows.forEach(t -> t.terminate());
-    retryThread.joinSilently();
-    receivers.forEach(t -> t.joinSilently());
-    consumerPipes.forEach(t -> t.joinSilently());
-    producerPipe.joinSilently();
-    flows.forEach(t -> t.joinSilently());
+    Terminator.blank()
+    .add(retryThread)
+    .add(receivers)
+    .add(consumerPipes)
+    .add(producerPipe)
+    .add(flows)
+    .terminate()
+    .joinSilently();
     CodecRegistry.deregister(codecLocator);
   }
 }
