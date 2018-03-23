@@ -13,6 +13,7 @@ import org.junit.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.hazelcast.util.executor.*;
+import com.obsidiandynamics.blackstrom.hazelcast.queue.store.*;
 
 public final class PublisherTest extends AbstractPubSubTest {
   private static class TestCallback implements PublishCallback {

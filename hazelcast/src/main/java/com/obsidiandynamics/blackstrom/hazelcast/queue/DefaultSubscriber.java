@@ -112,7 +112,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         lastReadOffset = nextReadOffset - 1;
       }
       
-      final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextReadOffset, 1, 1_000, StreamHelper.NOT_NULL);
+      final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextReadOffset, 1, 1_000, StreamHelper::isNotNull);
       try {
         final ReadResultSet<byte[]> resultSet = f.get(timeoutMillis, TimeUnit.MILLISECONDS);
         lastReadOffset = resultSet.getSequence(resultSet.size() - 1);

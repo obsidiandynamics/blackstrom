@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.hazelcast.queue;
+package com.obsidiandynamics.blackstrom.hazelcast.queue.store;
 
 import java.io.*;
 import java.util.*;

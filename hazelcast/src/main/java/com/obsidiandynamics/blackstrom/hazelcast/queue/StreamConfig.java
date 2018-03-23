@@ -5,6 +5,7 @@ import java.util.concurrent.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
+import com.obsidiandynamics.blackstrom.hazelcast.queue.store.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
