@@ -292,6 +292,10 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
 
   @Override
   public Joinable terminate() {
+    if (leaseCandidate != null) {
+      deactivate();
+    }
+    
     Terminator.blank()
     .add(Optional.ofNullable(keeperThread))
     .add(Optional.ofNullable(election))
