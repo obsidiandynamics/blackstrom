@@ -33,43 +33,54 @@ public final class HazelQRig {
   
   private static HazelcastInstance instance;
   
+  private static final Object instanceLock = new Object();
+  
+  private static void configureHazelcastInstanceAsync() {
+    new Thread(HazelQRig::configureHazelcastInstance, "hazelcast-configure").start();
+  }
+  
   private static void configureHazelcastInstance() {
-    shutdownHazelcastInstance();
-    log.info("Creating Hazelcast instance");
-    final Config config = new Config()
-        .setProperty("hazelcast.logging.type", "none")
-        .setProperty("hazelcast.shutdownhook.enabled", "false")
-        .setNetworkConfig(new NetworkConfig()
-                          .setJoin(new JoinConfig()
-                                   .setMulticastConfig(new MulticastConfig()
-                                                       .setMulticastTimeoutSeconds(1))
-                                   .setTcpIpConfig(new TcpIpConfig()
-                                                   .setEnabled(false))));
-    instance = GridHazelcastProvider.getInstance().createInstance(config);
-    log.info("Hazelcast instance ready");
+    synchronized (instanceLock) {
+      shutdownHazelcastInstance();
+      log.info("Creating Hazelcast instance");
+      final Config config = new Config()
+          .setProperty("hazelcast.logging.type", "none")
+          .setProperty("hazelcast.shutdownhook.enabled", "false")
+          .setNetworkConfig(new NetworkConfig()
+                            .setJoin(new JoinConfig()
+                                     .setMulticastConfig(new MulticastConfig()
+                                                         .setMulticastTimeoutSeconds(1))
+                                     .setTcpIpConfig(new TcpIpConfig()
+                                                     .setEnabled(false))));
+      instance = GridHazelcastProvider.getInstance().createInstance(config);
+      log.info("Hazelcast instance ready");
+    }
   }
   
   private static void shutdownHazelcastInstance() {
-    if (instance != null) {
-      log.info("Shutting down existing Hazelcast instance");
-      instance.shutdown();
-      instance = null;
+    synchronized (instanceLock) {
+      if (instance != null) {
+        log.info("Shutting down existing Hazelcast instance");
+        instance.shutdown();
+        instance = null;
+      }
     }
   }
   
   private static Ledger createLedger() {
-    configureHazelcastInstance();
-    final StreamConfig streamConfig = new StreamConfig()
-        .withName("rig")
-        .withSyncReplicas(1)
-        .withAsyncReplicas(0)
-        .withHeapCapacity(100_000);
-    return new HazelQLedger(instance, 
-                            new HazelQLedgerConfig()
-                            .withElectionConfig(new ElectionConfig()
-                                                .withScavengeInterval(100))
-                            .withStreamConfig(streamConfig)
-                            .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));
+    synchronized (instanceLock) {
+      final StreamConfig streamConfig = new StreamConfig()
+          .withName("rig")
+          .withSyncReplicas(1)
+          .withAsyncReplicas(0)
+          .withHeapCapacity(100_000);
+      return new HazelQLedger(instance, 
+                              new HazelQLedgerConfig()
+                              .withElectionConfig(new ElectionConfig()
+                                                  .withScavengeInterval(100))
+                              .withStreamConfig(streamConfig)
+                              .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));
+    }
   }
   
   private static JChannel createChannel() throws Exception {
@@ -83,6 +94,7 @@ public final class HazelQRig {
       final int _backlogTarget = getOrSet(props, "rig.backlog", Integer::valueOf, 10_000);
       final int cycles = getOrSet(props, "rig.cycles", Integer::valueOf, 1);
       printProps(props);
+      configureHazelcastInstanceAsync();
       
       for (int cycle = 0; cycle < cycles; cycle++) {
         if (cycles != 1) {
@@ -110,6 +122,7 @@ public final class HazelQRig {
       final String _branchId = getOrSet(props, "rig.branch.id", String::valueOf, null);
       assertNotNull("rig.branch.id not set", _branchId);
       printProps(props);
+      configureHazelcastInstanceAsync();
       
       new CohortRig.Config() {{
         log = HazelQRig.log;
@@ -125,6 +138,7 @@ public final class HazelQRig {
   
   public static final class Monitor {
     public static void main(String[] args) throws Exception {
+      configureHazelcastInstanceAsync();
       new MonitorRig.Config() {{
         log = HazelQRig.log;
         ledgerFactory = HazelQRig::createLedger;
