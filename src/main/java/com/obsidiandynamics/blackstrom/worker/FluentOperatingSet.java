@@ -11,7 +11,7 @@ import java.util.*;
  *  @param <O> The type of this set for fluent chaining.
  */
 public abstract class FluentOperatingSet<E, O extends FluentOperatingSet<E, O>> {
-  protected final Set<E> elements = new HashSet<>();
+  protected final Set<E> elements = new LinkedHashSet<>();
   
   protected FluentOperatingSet() {}
   

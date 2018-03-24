@@ -29,7 +29,13 @@ public abstract class BaseBankTest {
   
   @After
   public final void afterBase() {
-    if (manifold != null) manifold.dispose();
+    if (manifold != null) {
+      try {
+        manifold.dispose();
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   protected final void buildCoordinatedManifold(MonitorEngineConfig engineConfig, Initiator initiator, Factor... branches) {

@@ -238,9 +238,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
       verify(errorHandler).onError(isNotNull(), isNull());
     });
     
-    // try deactivating (can only happen for a current tenant) and verify failure
+    // try deactivating (yield will only happen for a current tenant)
     s.deactivate();
-    wait.until(() -> verify(errorHandler).onError(isNotNull(), isNull()));
   }
   
   /**

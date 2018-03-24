@@ -42,7 +42,9 @@ public final class HazelQKryoRandomBankTransferTest extends AbstractRandomBankTr
   @After
   public void after() {
     afterBase();
-    if (instance != null) instance.getLifecycleService().terminate();
+    if (instance != null) {
+      instance.getLifecycleService().terminate();
+    }
   }
   
   @Override

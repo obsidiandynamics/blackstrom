@@ -267,14 +267,20 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   @Override
   public void deactivate() {
+    deactivate(false);
+  }
+  
+  private void deactivate(boolean suppressError) {
     ensureGroupMode();
     
     synchronized (activeLock) {
       election.getRegistry().unenrol(config.getGroup(), leaseCandidate);
-      try {
-        election.yield(config.getGroup(), leaseCandidate);
-      } catch (NotTenantException e) {
-        config.getErrorHandler().onError("Failed to yield lease", e);
+      if (isCurrentTenant()) {
+        try {
+          election.yield(config.getGroup(), leaseCandidate);
+        } catch (NotTenantException e) {
+          if (! suppressError) config.getErrorHandler().onError("Failed to yield lease", e);
+        }
       }
       active = false;
     }
@@ -293,7 +299,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   @Override
   public Joinable terminate() {
     if (leaseCandidate != null) {
-      deactivate();
+      deactivate(true);
     }
     
     Terminator.blank()
