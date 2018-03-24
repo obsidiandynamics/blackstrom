@@ -69,6 +69,7 @@ public final class MonitorRig implements Disposable {
         .withLedger(ledger)
         .withFactors(monitor)
         .build();
+    config.log.info("Monitor: manifold ready");
   }
   
   private void cleanupExisting() {

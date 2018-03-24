@@ -26,7 +26,6 @@ import com.obsidiandynamics.indigo.util.*;
 
 public final class InitiatorRig {
   private static final int GROUP_VIEW_WAIT_MILLIS = 300_000;
-  private static final int GROUP_ANNOUNCE_WAIT_MILLIS = 1_000;
   private static final int GROUP_ANNOUNCE_ATTEMPTS = 10;
   private static final int PROPOSAL_TIMEOUT_MILLIS = 30_000;
   private static final int BENCHMARK_FINALISE_MILLIS = PROPOSAL_TIMEOUT_MILLIS * 2;
@@ -39,6 +38,7 @@ public final class InitiatorRig {
     double pAbort = 0.1;
     int backlogTarget = 10_000;
     boolean histogram;
+    int groupAnnounceWaitMillis = 5_000;
     
     @Override void validate() {
       super.validate();
@@ -74,7 +74,7 @@ public final class InitiatorRig {
         final Future<?> f = group.gather(groupSize - 1,
                                          new AnnouncePacket(UUID.randomUUID(), sandboxKey), Flag.DONT_BUNDLE);
         try { 
-          f.get(GROUP_ANNOUNCE_WAIT_MILLIS, MILLISECONDS);
+          f.get(config.groupAnnounceWaitMillis, MILLISECONDS);
           break;
         } catch (TimeoutException e) {
           config.log.warn("Initiator: timed out {}", sandboxKey);

@@ -73,6 +73,7 @@ public final class CohortRig implements Disposable {
         .withLedger(ledger)
         .withFactors(branch)
         .build();
+    config.log.info("Cohort {}: manifold ready", config.branchId);
   }
   
   private void cleanupExisting() {
