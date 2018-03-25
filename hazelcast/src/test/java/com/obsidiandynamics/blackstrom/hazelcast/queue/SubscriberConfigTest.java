@@ -12,7 +12,7 @@ public final class SubscriberConfigTest {
   @Test
   public void testConfig() {
     final ElectionConfig electionConfig = new ElectionConfig();
-    final ErrorHandler errorHandler = (m, e) -> {};
+    final ErrorHandler errorHandler = ErrorHandler.nop();
     final String group = "group";
     final InitialOffsetScheme initialOffsetScheme = InitialOffsetScheme.EARLIEST;
     final Logger log = LoggerFactory.getLogger(SubscriberConfigTest.class);

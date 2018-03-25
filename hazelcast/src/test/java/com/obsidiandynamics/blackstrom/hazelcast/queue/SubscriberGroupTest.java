@@ -185,12 +185,13 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   }
   
   /**
-   *  Tests the failure of a deactivation when the subscriber isn't the current tenant.
+   *  Tests the failure of a confirmation when the subscriber isn't the current tenant,
+   *  followed by a deactivate which should err internally but stay silent.
    *  
    *  @throws InterruptedException
    */
   @Test
-  public void testConfirmAndDeactivateFailureNotAssigned() throws InterruptedException {
+  public void testConfirmFailureAndDeactivateSuppression() throws InterruptedException {
     final String stream = "s";
     final String group = randomGroup();
     final int capacity = 10;
@@ -240,6 +241,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // try deactivating (yield will only happen for a current tenant)
     s.deactivate();
+    verifyNoMoreInteractions(errorHandler);
   }
   
   /**

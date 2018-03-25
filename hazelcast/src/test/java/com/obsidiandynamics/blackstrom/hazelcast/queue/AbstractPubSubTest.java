@@ -52,7 +52,10 @@ public abstract class AbstractPubSubTest {
     .add(auxLoadThreads)
     .terminate()
     .joinSilently();
+    terminables.clear();
+    auxLoadThreads.clear();
     instances.forEach(h -> h.getLifecycleService().terminate());
+    instances.clear();
   }
   
   protected final HazelcastInstance newGridInstance() {

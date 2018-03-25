@@ -30,11 +30,8 @@ public abstract class BaseBankTest {
   @After
   public final void afterBase() {
     if (manifold != null) {
-      try {
-        manifold.dispose();
-      } catch (Throwable e) {
-        e.printStackTrace();
-      }
+      manifold.dispose();
+      manifold = null;
     }
   }
 

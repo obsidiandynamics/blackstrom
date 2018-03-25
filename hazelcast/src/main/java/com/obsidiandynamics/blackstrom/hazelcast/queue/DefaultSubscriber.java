@@ -8,7 +8,9 @@ import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
   private static final int KEEPER_BACKOFF_MILLIS = 1;
@@ -240,7 +242,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private void putOffset(long offset) {
     if (isCurrentTenant()) {
-      offsets.put(config.getGroup(), offset);
+      doWithErrorHandler(() -> offsets.put(config.getGroup(), offset), 
+                         config.getErrorHandler(), 
+                         "Failed to update offset");
     } else {
       final String m = String.format("Failed confirming offset %s for stream %s: %s is not the current tenant for group %s",
                                      offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
@@ -249,11 +253,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   }
   
   private void extendLease(long timestamp) {
-    try {
-      election.extend(config.getGroup(), leaseCandidate);
-    } catch (NotTenantException e) {
-      config.getErrorHandler().onError("Failed to extend lease", e);
-    }
+    doWithErrorHandler(() -> election.extend(config.getGroup(), leaseCandidate), 
+                       config.getErrorHandler(), 
+                       "Failed to extend lease");
   }
   
   private boolean isCurrentTenant() {
@@ -267,22 +269,28 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   @Override
   public void deactivate() {
-    deactivate(false);
+    deactivate(config.getErrorHandler());
   }
   
-  private void deactivate(boolean suppressError) {
+  private void deactivate(ErrorHandler errorHandler) {
     ensureGroupMode();
     
     synchronized (activeLock) {
       election.getRegistry().unenrol(config.getGroup(), leaseCandidate);
       if (isCurrentTenant()) {
-        try {
-          election.yield(config.getGroup(), leaseCandidate);
-        } catch (NotTenantException e) {
-          if (! suppressError) config.getErrorHandler().onError("Failed to yield lease", e);
-        }
+        doWithErrorHandler(() -> election.yield(config.getGroup(), leaseCandidate), 
+                           errorHandler, 
+                           "Failed to yield lease");
       }
       active = false;
+    }
+  }
+  
+  private static void doWithErrorHandler(CheckedRunnable<?> r, ErrorHandler errorHandler, String message) {
+    try {
+      r.run();
+    } catch (Throwable e) {
+      errorHandler.onError(message, e);
     }
   }
   
@@ -299,7 +307,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   @Override
   public Joinable terminate() {
     if (leaseCandidate != null) {
-      deactivate(true);
+      deactivate(ErrorHandler.nop());
     }
     
     Terminator.blank()
