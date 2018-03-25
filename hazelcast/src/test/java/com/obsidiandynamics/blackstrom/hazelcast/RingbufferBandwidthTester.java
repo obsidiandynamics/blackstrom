@@ -10,12 +10,12 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public class PubSubBandwidthTester {
-  private static final Logger log = LoggerFactory.getLogger(PubSubBandwidthTester.class);
+public class RingbufferBandwidthTester {
+  private static final Logger log = LoggerFactory.getLogger(RingbufferBandwidthTester.class);
   
   private final int messages;
   
-  private PubSubBandwidthTester(int messages) {
+  private RingbufferBandwidthTester(int messages) {
     this.messages = messages;
   }
   
@@ -111,7 +111,7 @@ public class PubSubBandwidthTester {
     instancePool.prestartAll();
     log.info("Instances prestarted");
     
-    new PubSubBandwidthTester(messages) {{
+    new RingbufferBandwidthTester(messages) {{
       new TestPublisher(instancePool::get, pubIntervalMillis, bytes);
       new TestSubscriber(instancePool::get, pollTimeoutMillis);
       new TestSubscriber(instancePool::get, pollTimeoutMillis);
