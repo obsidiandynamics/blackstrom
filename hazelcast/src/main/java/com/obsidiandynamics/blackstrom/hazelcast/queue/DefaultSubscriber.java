@@ -56,6 +56,10 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         .withBackoffMillis(100)
         .withLog(config.getLog());
     buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
+    config.getLog().info("Subscriber: serviceName={}, partitionKey={}", 
+                         buffer.getRingbuffer().getServiceName(), buffer.getRingbuffer().getPartitionKey());
+    final Partition partition = instance.getPartitionService().getPartition(buffer.getRingbuffer().getName());
+    config.getLog().info("Subscriber: partitionId={}, owner={}", partition.getPartitionId(), partition.getOwner());
     
     if (config.hasGroup()) {
       // checks for IllegalArgumentException; no initial assignment is made until poll() is called
@@ -124,6 +128,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         final String m = String.format("Error reading at offset %d from stream %s",
                                        nextReadOffset, config.getStreamConfig().getName());
         config.getErrorHandler().onError(m, e);
+        config.getLog().info("Subscriber: serviceName={}, partitionKey={}", 
+                             buffer.getRingbuffer().getServiceName(), buffer.getRingbuffer().getPartitionKey());
+        final Partition partition = instance.getPartitionService().getPartition(buffer.getRingbuffer().getName());
+        config.getLog().info("Subscriber: partitionId={}, owner={}", partition.getPartitionId(), partition.getOwner());
+        Thread.sleep(1000);//TODO
         f.cancel(true);
         return RecordBatch.empty();
       } catch (TimeoutException e) {

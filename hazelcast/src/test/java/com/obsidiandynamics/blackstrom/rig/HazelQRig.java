@@ -16,6 +16,7 @@ import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.indigo.util.*;
 
@@ -44,9 +45,10 @@ public final class HazelQRig {
       shutdownHazelcastInstance();
       log.info("Creating Hazelcast instance");
       final Config config = new Config()
-          .setProperty("hazelcast.logging.type", "none")
+          .setProperty("hazelcast.logging.type", "slf4j") //TODO
           .setProperty("hazelcast.shutdownhook.enabled", "false")
           .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(5))
+          .setProperty("hazelcast.partition.count", String.valueOf(7)) //TODO
           .setNetworkConfig(new NetworkConfig()
                             .setJoin(new JoinConfig()
                                      .setMulticastConfig(new MulticastConfig()
@@ -54,6 +56,17 @@ public final class HazelQRig {
                                      .setTcpIpConfig(new TcpIpConfig()
                                                      .setEnabled(false))));
       instance = GridHazelcastProvider.getInstance().createInstance(config);
+      instance.getPartitionService().addMigrationListener(new MigrationListener() {
+        @Override public void migrationStarted(MigrationEvent migrationEvent) {}
+
+        @Override public void migrationCompleted(MigrationEvent migrationEvent) {
+          log.info("Migration compeleted {}", migrationEvent);
+        }
+
+        @Override public void migrationFailed(MigrationEvent migrationEvent) {
+          log.info("Migration failed {}", migrationEvent);
+        }
+      });
       log.info("Hazelcast instance ready");
     }
   }
@@ -62,6 +75,7 @@ public final class HazelQRig {
     synchronized (instanceLock) {
       if (instance != null) {
         log.info("Shutting down existing Hazelcast instance");
+        Wait.SHORT.untilTrue(instance.getPartitionService()::isClusterSafe);
         instance.shutdown();
         instance = null;
       }
