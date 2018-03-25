@@ -46,6 +46,7 @@ public final class HazelQRig {
       final Config config = new Config()
           .setProperty("hazelcast.logging.type", "none")
           .setProperty("hazelcast.shutdownhook.enabled", "false")
+          .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(5))
           .setNetworkConfig(new NetworkConfig()
                             .setJoin(new JoinConfig()
                                      .setMulticastConfig(new MulticastConfig()
@@ -111,8 +112,8 @@ public final class HazelQRig {
           backlogTarget = _backlogTarget;
           groupAnnounceWaitMillis = 10_000;
         }}.create().run();
-        shutdownHazelcastInstance();
       }
+      shutdownHazelcastInstance();
     }
   }
   

@@ -10,12 +10,12 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
-public class RingbufferBandwidthTester {
-  private static final Logger log = LoggerFactory.getLogger(RingbufferBandwidthTester.class);
+public class RingbufferBandwidthSim {
+  private static final Logger log = LoggerFactory.getLogger(RingbufferBandwidthSim.class);
   
   private final int messages;
   
-  private RingbufferBandwidthTester(int messages) {
+  private RingbufferBandwidthSim(int messages) {
     this.messages = messages;
   }
   
@@ -95,6 +95,9 @@ public class RingbufferBandwidthTester {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "none")
         .setProperty("hazelcast.shutdownhook.enabled", "false")
+        .setProperty("hazelcast.graceful.shutdown.max.wait", String.valueOf(5))
+        .setProperty("hazelcast.wait.seconds.before.join", String.valueOf(0))
+        .setProperty("hazelcast.max.wait.seconds.before.join", String.valueOf(0))
         .setNetworkConfig(new NetworkConfig()
                           .setJoin(new JoinConfig()
                                    .setMulticastConfig(new MulticastConfig()
@@ -102,7 +105,8 @@ public class RingbufferBandwidthTester {
                                                        .setMulticastTimeoutSeconds(1))
                                    .setTcpIpConfig(new TcpIpConfig()
                                                    .setEnabled(false))))
-        .addRingBufferConfig(new RingbufferConfig().setName("default")
+        .addRingBufferConfig(new RingbufferConfig()
+                             .setName("default")
                              .setBackupCount(0)
                              .setAsyncBackupCount(0));
 
@@ -111,7 +115,7 @@ public class RingbufferBandwidthTester {
     instancePool.prestartAll();
     log.info("Instances prestarted");
     
-    new RingbufferBandwidthTester(messages) {{
+    new RingbufferBandwidthSim(messages) {{
       new TestPublisher(instancePool::get, pubIntervalMillis, bytes);
       new TestSubscriber(instancePool::get, pollTimeoutMillis);
       new TestSubscriber(instancePool::get, pollTimeoutMillis);
