@@ -25,6 +25,8 @@ public final class HazelQRig {
   
   private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
   
+  private static final boolean debugMigrations = getOrSet(base, "rig.debug.migrations", Boolean::parseBoolean, false);
+  
   private static final Logger log = LoggerFactory.getLogger(HazelQRig.class);
   
   private static void printProps(Properties props) {
@@ -56,17 +58,19 @@ public final class HazelQRig {
                                      .setTcpIpConfig(new TcpIpConfig()
                                                      .setEnabled(false))));
       instance = GridHazelcastProvider.getInstance().createInstance(config);
-      instance.getPartitionService().addMigrationListener(new MigrationListener() {
-        @Override public void migrationStarted(MigrationEvent migrationEvent) {}
-
-        @Override public void migrationCompleted(MigrationEvent migrationEvent) {
-          log.info("Migration compeleted {}", migrationEvent);
-        }
-
-        @Override public void migrationFailed(MigrationEvent migrationEvent) {
-          log.info("Migration failed {}", migrationEvent);
-        }
-      });
+      if (debugMigrations) {
+        instance.getPartitionService().addMigrationListener(new MigrationListener() {
+          @Override public void migrationStarted(MigrationEvent migrationEvent) {}
+  
+          @Override public void migrationCompleted(MigrationEvent migrationEvent) {
+            log.info("Migration compeleted {}", migrationEvent);
+          }
+  
+          @Override public void migrationFailed(MigrationEvent migrationEvent) {
+            log.info("Migration failed {}", migrationEvent);
+          }
+        });
+      }
       log.info("Hazelcast instance ready");
     }
   }
