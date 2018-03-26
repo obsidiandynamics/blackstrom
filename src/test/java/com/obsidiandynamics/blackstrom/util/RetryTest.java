@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.io.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import org.junit.*;
@@ -79,10 +81,14 @@ public final class RetryTest {
     }
   }
   
-  @Test(expected=Exception.class)
+  private static int throwCheckedException() throws IOException, TimeoutException {
+    throw new IOException("test exception");
+  }
+  
+  @Test(expected=IOException.class)
   public void testUncaughtCheckedException() throws Exception {
     final Logger log = mock(Logger.class);
-    final CheckedSupplier<Integer, Exception> supplier = () -> { throw new Exception("test exception"); };
+    final CheckedSupplier<Integer, Exception> supplier = RetryTest::throwCheckedException;
     try {
       new Retry().withExceptionClass(TestRuntimeException.class).withBackoffMillis(0).withAttempts(1).withLog(log).run(supplier);
     } finally {
