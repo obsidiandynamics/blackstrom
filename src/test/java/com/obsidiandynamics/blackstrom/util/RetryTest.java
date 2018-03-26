@@ -96,6 +96,18 @@ public final class RetryTest {
     }
   }
   
+  @Test(expected=InterruptedException.class)
+  public void testUncaughtInterruptedException() throws InterruptedException {
+    final Logger log = mock(Logger.class);
+    final CheckedSupplier<Integer, InterruptedException> supplier = () -> { throw new InterruptedException("test"); };
+    try {
+      new Retry().withExceptionClass(TestRuntimeException.class).withBackoffMillis(0).withAttempts(1).withLog(log).run(supplier);
+    } finally {
+      verifyNoMoreInteractions(log);
+      assertFalse(Thread.interrupted());
+    }
+  }
+  
   @Test(expected=IllegalStateException.class) 
   public void testUncaughtRuntimeException() {
     final Logger log = mock(Logger.class);
