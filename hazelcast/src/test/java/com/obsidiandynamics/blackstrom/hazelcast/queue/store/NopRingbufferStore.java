@@ -4,17 +4,9 @@ import java.io.*;
 import java.util.*;
 
 import com.hazelcast.core.*;
-import com.obsidiandynamics.yconf.*;
 
 public final class NopRingbufferStore implements RingbufferStore<byte[]> {
-  @Y(Factory.Mapper.class)
   public static final class Factory implements RingbufferStoreFactory<byte[]>, Serializable {
-    public static final class Mapper implements TypeMapper {
-      @Override public Object map(YObject y, Class<?> type) {
-        return instance;
-      }
-    }
-    
     private static final long serialVersionUID = 1L;
     
     private static final Factory instance = new Factory();
