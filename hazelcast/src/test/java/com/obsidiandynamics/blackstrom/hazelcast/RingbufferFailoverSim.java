@@ -9,8 +9,19 @@ import org.slf4j.*;
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.obsidiandynamics.blackstrom.hazelcast.queue.store.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 
+/**
+ *  Uses a {@link NopRingbufferStore} to simulate a ringbuffer failover with loss of data.
+ *  Specifically, data is migrated from one member to another, but because 
+ *  {@link RingbufferStore#getLargestSequence()} returns {@code -1}, the read from the ringbuffer
+ *  fails with a {@link IllegalArgumentException}. (The data is technically there, but the head and
+ *  tail sequences have been lost.)<p>
+ *  
+ *  Depending on how the ringbuffer gets mapped to a partition owner, this simulation may take a
+ *  few cycles before data loss is observed.
+ */
 public class RingbufferFailoverSim {
   private static final Logger log = LoggerFactory.getLogger(RingbufferFailoverSim.class);
   
@@ -126,10 +137,11 @@ public class RingbufferFailoverSim {
   }
   
   public static void main(String[] args) {
-    final int messages = 100;
+    final int messages = 10;
     final int pubIntervalMillis = 10;
     final int bytes = 10;
-    final int pollTimeoutMillis = 1_000;
+    final int pollTimeoutMillis = 100;
+    final int cycles = 100;
     
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "none")
@@ -145,9 +157,12 @@ public class RingbufferFailoverSim {
                                    .setTcpIpConfig(new TcpIpConfig()
                                                    .setEnabled(false))))
         .addRingBufferConfig(new RingbufferConfig()
-                             .setName("default")
-                             .setBackupCount(0)
-                             .setAsyncBackupCount(0));
+                             .setName(BUFFER_NAME)
+                             .setBackupCount(1)
+                             .setAsyncBackupCount(0)
+                             .setRingbufferStoreConfig(new RingbufferStoreConfig()
+                                                       .setEnabled(true)
+                                                       .setFactoryClassName(NopRingbufferStore.Factory.class.getName())));
 
     final Supplier<HazelcastInstance> instanceSupplier = () -> GridHazelcastProvider.getInstance().createInstance(config);
 
@@ -160,12 +175,11 @@ public class RingbufferFailoverSim {
     instancePool.prestartAll();
     log.info("Instances prestarted");
     
-    final int runs = 5;
     new RingbufferFailoverSim(messages) {{
       new TestSubscriber(instancePool::get, pollTimeoutMillis, false);
       new TestSubscriber(instancePool::get, pollTimeoutMillis, false);
       
-      for (int i = 0; i < runs; i++) {
+      for (int i = 0; i < cycles; i++) {
         if (instance.get() == null) {
           log.info("Creating publisher instance...");
           instance.set(instanceSupplier.get());
