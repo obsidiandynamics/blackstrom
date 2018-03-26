@@ -1,8 +1,8 @@
 package com.obsidiandynamics.blackstrom.util;
 
-import java.util.function.*;
-
 import org.slf4j.*;
+
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class Retry {
   private static final Logger defaultLog = LoggerFactory.getLogger(Retry.class);
@@ -38,18 +38,18 @@ public final class Retry {
         + ", log=" + log + ", exceptionClass=" + exceptionClass.getSimpleName() + "]";
   }
   
-  public void run(Runnable operation) {
+  public <X extends Exception> void run(CheckedRunnable<X> operation) throws X {
     run(toVoidSupplier(operation));
   }
   
-  private static Supplier<Void> toVoidSupplier(Runnable r) {
+  private static <X extends Exception> CheckedSupplier<Void, X> toVoidSupplier(CheckedRunnable<X> r) {
     return () -> {
       r.run();
       return null;
     };
   }
   
-  public <T> T run(Supplier<? extends T> operation) {
+  public <T, X extends Exception> T run(CheckedSupplier<? extends T, X> operation) throws X {
     for (int attempt = 0;; attempt++) {
       try {
         return operation.get();

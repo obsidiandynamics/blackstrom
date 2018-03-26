@@ -11,6 +11,7 @@ import org.mockito.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.assertion.*;
+import com.obsidiandynamics.blackstrom.util.throwing.*;
 
 public final class RetryTest {
   private static class TestRuntimeException extends RuntimeException {
@@ -18,7 +19,7 @@ public final class RetryTest {
     TestRuntimeException(String m) { super(m); }
   }
   
-  private static Runnable failFor(int attempts) {
+  private static CheckedRunnable<RuntimeException> failFor(int attempts) {
     final AtomicInteger calls = new AtomicInteger();
     return () -> {
       final int call = calls.incrementAndGet();
@@ -74,6 +75,17 @@ public final class RetryTest {
       final ArgumentCaptor<Throwable> errorCaptor = ArgumentCaptor.forClass(Throwable.class);
       verify(log).error(any(), errorCaptor.capture());
       assertEquals(1, errorCaptor.getAllValues().size());
+      verifyNoMoreInteractions(log);
+    }
+  }
+  
+  @Test(expected=Exception.class)
+  public void testUncaughtCheckedException() throws Exception {
+    final Logger log = mock(Logger.class);
+    final CheckedSupplier<Integer, Exception> supplier = () -> { throw new Exception("test exception"); };
+    try {
+      new Retry().withExceptionClass(TestRuntimeException.class).withBackoffMillis(0).withAttempts(1).withLog(log).run(supplier);
+    } finally {
       verifyNoMoreInteractions(log);
     }
   }
