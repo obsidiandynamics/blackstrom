@@ -56,10 +56,6 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         .withBackoffMillis(100)
         .withLog(config.getLog());
     buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
-    config.getLog().info("Subscriber: serviceName={}, partitionKey={}", 
-                         buffer.getRingbuffer().getServiceName(), buffer.getRingbuffer().getPartitionKey());
-    final Partition partition = instance.getPartitionService().getPartition(buffer.getRingbuffer().getName());
-    config.getLog().info("Subscriber: partitionId={}, owner={}", partition.getPartitionId(), partition.getOwner());
     
     if (config.hasGroup()) {
       // checks for IllegalArgumentException; no initial assignment is made until poll() is called
@@ -106,6 +102,12 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   Election getElection() {
     return election;
   }
+  
+  private String getServiceInfo(DistributedObject obj) {
+    final Partition partition = instance.getPartitionService().getPartition(obj.getPartitionKey());
+    return String.format("serviceName=%s, partitionId=%d, owner=%s", 
+                         obj.getServiceName(), partition.getPartitionId(), partition.getOwner());
+  }
 
   @Override
   public RecordBatch poll(long timeoutMillis) throws InterruptedException {
@@ -125,15 +127,12 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         nextReadOffset = lastReadOffset + 1;
         return readBatch(resultSet);
       } catch (ExecutionException e) {
-        final String m = String.format("Error reading at offset %d from stream %s",
-                                       nextReadOffset, config.getStreamConfig().getName());
+        final String serviceInfo = getServiceInfo(buffer.getRingbuffer());
+        final String m = String.format("Error reading at offset %d from stream %s (%s)",
+                                       nextReadOffset, config.getStreamConfig().getName(), serviceInfo);
         config.getErrorHandler().onError(m, e);
-        config.getLog().info("Subscriber: serviceName={}, partitionKey={}", 
-                             buffer.getRingbuffer().getServiceName(), buffer.getRingbuffer().getPartitionKey());
-        final Partition partition = instance.getPartitionService().getPartition(buffer.getRingbuffer().getName());
-        config.getLog().info("Subscriber: partitionId={}, owner={}", partition.getPartitionId(), partition.getOwner());
-        Thread.sleep(1000);//TODO
         f.cancel(true);
+        Thread.sleep(timeoutMillis);
         return RecordBatch.empty();
       } catch (TimeoutException e) {
         f.cancel(true);
