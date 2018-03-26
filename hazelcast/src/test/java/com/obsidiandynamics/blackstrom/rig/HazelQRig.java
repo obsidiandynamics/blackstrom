@@ -25,7 +25,13 @@ public final class HazelQRig {
   
   private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
   
-  private static final boolean debugMigrations = getOrSet(base, "rig.debug.migrations", Boolean::parseBoolean, false);
+  private static final String hazelcastLogging = getOrSet(base, "rig.hazelcast.logging", String::valueOf, "slf4j");
+  
+  private static final int hazelcastPartitions = getOrSet(base, "rig.hazelcast.partitions", Integer::valueOf, 7);
+   
+  private static final boolean hazelcastDebugMigrations = getOrSet(base, "rig.hazelcast.debug.migrations", Boolean::parseBoolean, false);
+  
+  private static final boolean hazelcastCleanShutdown = getOrSet(base, "rig.hazelcast.clean.shutdown", Boolean::parseBoolean, true);
   
   private static final Logger log = LoggerFactory.getLogger(HazelQRig.class);
   
@@ -47,10 +53,10 @@ public final class HazelQRig {
       shutdownHazelcastInstance();
       log.info("Creating Hazelcast instance");
       final Config config = new Config()
-          .setProperty("hazelcast.logging.type", "slf4j") //TODO
+          .setProperty("hazelcast.logging.type", hazelcastLogging)
           .setProperty("hazelcast.shutdownhook.enabled", "false")
           .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(5))
-          .setProperty("hazelcast.partition.count", String.valueOf(7)) //TODO
+          .setProperty("hazelcast.partition.count", String.valueOf(hazelcastPartitions))
           .setNetworkConfig(new NetworkConfig()
                             .setJoin(new JoinConfig()
                                      .setMulticastConfig(new MulticastConfig()
@@ -58,7 +64,7 @@ public final class HazelQRig {
                                      .setTcpIpConfig(new TcpIpConfig()
                                                      .setEnabled(false))));
       instance = GridHazelcastProvider.getInstance().createInstance(config);
-      if (debugMigrations) {
+      if (hazelcastDebugMigrations) {
         instance.getPartitionService().addMigrationListener(new MigrationListener() {
           @Override public void migrationStarted(MigrationEvent migrationEvent) {}
   
@@ -131,7 +137,7 @@ public final class HazelQRig {
           groupAnnounceWaitMillis = 10_000;
         }}.create().run();
       }
-      shutdownHazelcastInstance();
+      if (hazelcastCleanShutdown) shutdownHazelcastInstance();
     }
   }
   
@@ -143,13 +149,17 @@ public final class HazelQRig {
       printProps(props);
       configureHazelcastInstanceAsync();
       
-      new CohortRig.Config() {{
+      final CohortRig cohortRig = new CohortRig.Config() {{
         log = HazelQRig.log;
         ledgerFactory = HazelQRig::createLedger;
         channelFactory = HazelQRig::createChannel;
         clusterName = HazelQRig.cluster;
         branchId = _branchId;
       }}.create();
+      if (hazelcastCleanShutdown) Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        cohortRig.dispose();
+        shutdownHazelcastInstance();
+      }));
       
       TestSupport.sleep(Integer.MAX_VALUE);
     }
@@ -157,13 +167,19 @@ public final class HazelQRig {
   
   public static final class Monitor {
     public static void main(String[] args) throws Exception {
+      final Properties props = new Properties(base);
+      printProps(props);
       configureHazelcastInstanceAsync();
-      new MonitorRig.Config() {{
+      final MonitorRig monitorRig = new MonitorRig.Config() {{
         log = HazelQRig.log;
         ledgerFactory = HazelQRig::createLedger;
         channelFactory = HazelQRig::createChannel;
         clusterName = HazelQRig.cluster;
       }}.create();
+      if (hazelcastCleanShutdown) Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        monitorRig.dispose();
+        shutdownHazelcastInstance();
+      }));
       
       TestSupport.sleep(Integer.MAX_VALUE);
     }
