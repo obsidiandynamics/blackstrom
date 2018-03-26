@@ -55,13 +55,17 @@ public final class Retry {
         return operation.get();
       } catch (RuntimeException e) {
         if (exceptionClass.isInstance(e)) {
-          final String message = String.format("Error: (attempt #%,d of %,d)", attempt + 1, attempts);
+          final String message = String.format("Fault: (attempt #%,d of %,d)", attempt + 1, attempts);
           if (attempt == attempts - 1) {
             log.error(message, e);
             throw e;
           } else {
-            log.warn(message, e);
-            sleepWithInterrupt(backoffMillis);
+            if (sleepWithInterrupt(backoffMillis)) {
+              log.warn(message, e);
+            } else {
+              log.error(message, e);
+              throw e;
+            }
           }
         } else {
           throw e;
@@ -70,13 +74,17 @@ public final class Retry {
     }
   }
   
-  public static void sleepWithInterrupt(long millis) {
+  public static boolean sleepWithInterrupt(long millis) {
     if (millis > 0) {
       try {
         Thread.sleep(millis);
+        return true;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
+        return false;
       }
+    } else {
+      return ! Thread.currentThread().isInterrupted();
     }
   }
 }

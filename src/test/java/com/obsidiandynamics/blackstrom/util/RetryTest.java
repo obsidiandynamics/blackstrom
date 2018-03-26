@@ -41,6 +41,25 @@ public final class RetryTest {
     final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
     verify(log).warn(any(), captor.capture());
     assertEquals(1, captor.getAllValues().size());
+    verifyNoMoreInteractions(log);
+  }
+  
+  @Test
+  public void testFailureAndInterrupt() {
+    final Logger log = mock(Logger.class);
+    try {
+      Thread.currentThread().interrupt();
+      new Retry().withExceptionClass(TestRuntimeException.class).withBackoffMillis(0).withAttempts(2).withLog(log).run(failFor(1));
+      fail("Did not throw expected exception");
+    } catch (TestRuntimeException e) {
+      assertTrue(Thread.interrupted());
+      final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
+      verify(log).error(any(), captor.capture());
+      assertEquals(1, captor.getAllValues().size());
+      verifyNoMoreInteractions(log);
+    } finally {
+      Thread.interrupted();
+    }
   }
   
   @Test(expected=TestRuntimeException.class)
@@ -55,6 +74,7 @@ public final class RetryTest {
       final ArgumentCaptor<Throwable> errorCaptor = ArgumentCaptor.forClass(Throwable.class);
       verify(log).error(any(), errorCaptor.capture());
       assertEquals(1, errorCaptor.getAllValues().size());
+      verifyNoMoreInteractions(log);
     }
   }
   
@@ -78,14 +98,25 @@ public final class RetryTest {
   }
   
   @Test
-  public void testNoSleep() {
-    Retry.sleepWithInterrupt(0);
+  public void testNoSleepUninterrupted() {
+    assertTrue(Retry.sleepWithInterrupt(0));
     assertFalse(Thread.interrupted());
   }
   
   @Test
+  public void testNoSleepInterrupted() {
+    try {
+      Thread.currentThread().interrupt();
+      assertFalse(Retry.sleepWithInterrupt(0));
+      assertTrue(Thread.interrupted());
+    } finally {
+      Thread.interrupted();
+    }
+  }
+  
+  @Test
   public void testSleepUninterrupted() {
-    Retry.sleepWithInterrupt(1);
+    assertTrue(Retry.sleepWithInterrupt(1));
     assertFalse(Thread.interrupted());
   }
   
@@ -93,7 +124,7 @@ public final class RetryTest {
   public void testSleepInterrupted() {
     try {
       Thread.currentThread().interrupt();
-      Retry.sleepWithInterrupt(1);
+      assertFalse(Retry.sleepWithInterrupt(1));
       assertTrue(Thread.interrupted());
     } finally {
       Thread.interrupted();
