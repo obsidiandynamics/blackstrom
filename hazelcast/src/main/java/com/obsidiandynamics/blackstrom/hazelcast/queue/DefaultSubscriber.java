@@ -129,11 +129,15 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
           return readBatch(resultSet);
         } catch (ExecutionException e) {
           if (e.getCause() instanceof StaleSequenceException) {
-            config.getLog().warn("Sequence {} was stale", nextReadOffset);
+            // if a stale sequence exception is encountered, fast-forward the sequence to the last known head
+            // sequence and add a further 'safety margin' so that the next read doesn't hit another stale offset
             final double safetyMarginFrac = config.getStaleReadSafetyMargin();
             final long headSeq = ((StaleSequenceException) e.getCause()).getHeadSeq();
             final long safetyMargin = (long) (config.getStreamConfig().getHeapCapacity() * safetyMarginFrac);
-            nextReadOffset = headSeq + safetyMargin;
+            final long ffNextReadOffset = headSeq + safetyMargin;
+            config.getLog().warn("Sequence {} was stale (head already at {}), fast-forwarding to {}", 
+                                 nextReadOffset, headSeq, ffNextReadOffset);
+            nextReadOffset = ffNextReadOffset;
             continue;
           } else {
             final String serviceInfo = getServiceInfo(buffer.getRingbuffer());
