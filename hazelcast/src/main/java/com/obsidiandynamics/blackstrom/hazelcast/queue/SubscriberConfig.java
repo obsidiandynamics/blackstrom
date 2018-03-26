@@ -23,6 +23,9 @@ public final class SubscriberConfig {
   @YInject
   private ElectionConfig electionConfig = new ElectionConfig();
   
+  @YInject
+  private double staleReadSafetyMargin = 0.1;
+  
   Logger getLog() {
     return log;
   }
@@ -81,10 +84,20 @@ public final class SubscriberConfig {
     return this;
   }
 
+  double getStaleReadSafetyMargin() {
+    return staleReadSafetyMargin;
+  }
+  
+  public SubscriberConfig withStaleReadSafetyMargin(double staleReadSafetyMargin) {
+    this.staleReadSafetyMargin = staleReadSafetyMargin;
+    return this;
+  }
+
   @Override
   public String toString() {
     return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler + ", streamConfig=" + streamConfig
-           + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme + ", electionConfig=" + electionConfig
+           + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme 
+           + ", electionConfig=" + electionConfig + ", staleReadSafetyMargin=" + staleReadSafetyMargin
            + "]";
   }
 }

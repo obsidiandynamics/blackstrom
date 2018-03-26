@@ -120,26 +120,37 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
         lastReadOffset = nextReadOffset - 1;
       }
       
-      final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextReadOffset, 1, 1_000, StreamHelper::isNotNull);
-      try {
-        final ReadResultSet<byte[]> resultSet = f.get(timeoutMillis, TimeUnit.MILLISECONDS);
-        lastReadOffset = resultSet.getSequence(resultSet.size() - 1);
-        nextReadOffset = lastReadOffset + 1;
-        return readBatch(resultSet);
-      } catch (ExecutionException e) {
-        final String serviceInfo = getServiceInfo(buffer.getRingbuffer());
-        final String m = String.format("Error reading at offset %d from stream %s (%s)",
-                                       nextReadOffset, config.getStreamConfig().getName(), serviceInfo);
-        config.getErrorHandler().onError(m, e);
-        f.cancel(true);
-        Thread.sleep(timeoutMillis);
-        return RecordBatch.empty();
-      } catch (TimeoutException e) {
-        f.cancel(true);
-        return RecordBatch.empty();
-      } finally {
-        if (isCurrentTenant) {
-          scheduledExtendTimestamp = System.currentTimeMillis();
+      for (;;) {
+        final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextReadOffset, 1, 1_000, StreamHelper::isNotNull);
+        try {
+          final ReadResultSet<byte[]> resultSet = f.get(timeoutMillis, TimeUnit.MILLISECONDS);
+          lastReadOffset = resultSet.getSequence(resultSet.size() - 1);
+          nextReadOffset = lastReadOffset + 1;
+          return readBatch(resultSet);
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof StaleSequenceException) {
+            config.getLog().warn("Sequence {} was stale", nextReadOffset);
+            final double safetyMarginFrac = config.getStaleReadSafetyMargin();
+            final long headSeq = ((StaleSequenceException) e.getCause()).getHeadSeq();
+            final long safetyMargin = (long) (config.getStreamConfig().getHeapCapacity() * safetyMarginFrac);
+            nextReadOffset = headSeq + safetyMargin;
+            continue;
+          } else {
+            final String serviceInfo = getServiceInfo(buffer.getRingbuffer());
+            final String m = String.format("Error reading at offset %d from stream %s [%s]",
+                                           nextReadOffset, config.getStreamConfig().getName(), serviceInfo);
+            config.getErrorHandler().onError(m, e.getCause());
+            f.cancel(true);
+            Thread.sleep(timeoutMillis);
+            return RecordBatch.empty();
+          }
+        } catch (TimeoutException e) {
+          f.cancel(true);
+          return RecordBatch.empty();
+        } finally {
+          if (isCurrentTenant) {
+            scheduledExtendTimestamp = System.currentTimeMillis();
+          }
         }
       }
     } else {

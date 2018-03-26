@@ -70,7 +70,7 @@ public final class PublisherTest extends AbstractPubSubTest {
 
     wait.until(() -> assertEquals(initialMessages + furtherMessages, completed(callbacks).size()));
     assertEquals(capacity, buffer.size());
-    final List<byte[]> allItems = readRemaining(buffer, 15);
+    final List<byte[]> allItems = readRemaining(buffer, 0);
     assertEquals(capacity, allItems.size());
   }
   
@@ -187,13 +187,36 @@ public final class PublisherTest extends AbstractPubSubTest {
     }
   }
 
+  
+  /**
+   *  Reads the remaining contents of the ringbuffer from a given starting point, automatically fast-forwarding 
+   *  the starting point if a {@link StaleSequenceException} is caught.
+   *  
+   *  @param buffer
+   *  @param startSequence
+   *  @return
+   *  @throws InterruptedException
+   *  @throws ExecutionException
+   */
   private static List<byte[]> readRemaining(Ringbuffer<byte[]> buffer, long startSequence) throws InterruptedException, ExecutionException {
-    final ReadResultSet<byte[]> results = buffer
-        .readManyAsync(startSequence, 0, 1000, null)
-        .get();
-    final List<byte[]> items = new ArrayList<>(results.size());
-    results.forEach(items::add);
-    return items;
+    long adjStartSequence = startSequence;
+    for (;;) {
+      final ReadResultSet<byte[]> results;
+      try {
+        results = buffer.readManyAsync(adjStartSequence, 0, 1000, null).get();
+      } catch (ExecutionException e) {
+        if (e.getCause() instanceof StaleSequenceException) {
+          System.out.format("SSE: fast-forwarding start sequence to %d\n", buffer.headSequence());
+          adjStartSequence = buffer.headSequence();
+          continue;
+        } else {
+          throw e;
+        }
+      }
+      final List<byte[]> items = new ArrayList<>(results.size());
+      results.forEach(items::add);
+      return items;
+    }
   }
 
   private static List<TestCallback> completed(List<TestCallback> callbacks) {

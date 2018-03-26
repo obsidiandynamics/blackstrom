@@ -5,7 +5,6 @@ import java.util.concurrent.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
-import com.obsidiandynamics.blackstrom.hazelcast.queue.store.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
@@ -23,7 +22,7 @@ public final class StreamConfig {
   private long storeRetentionMillis = TimeUnit.DAYS.toMillis(7);
   
   @YInject
-  private Class<? extends RingbufferStoreFactory<byte[]>> storeFactoryClass = NopRingbufferStore.Factory.class;
+  private Class<? extends RingbufferStoreFactory<byte[]>> storeFactoryClass = null;
   
   @YInject
   private int syncReplicas = RingbufferConfig.DEFAULT_SYNC_BACKUP_COUNT;

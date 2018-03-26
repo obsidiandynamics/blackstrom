@@ -12,6 +12,7 @@ import org.junit.runners.*;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.hazelcast.util.executor.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.junit.*;
@@ -245,9 +246,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
   }
   
   /**
-   *  Tests the failure of a read by creating a buffer overflow condition, where the subscriber
-   *  is about to read from an offset that has already lapsed, throwing a {@link StaleSequenceException}
-   *  in the background. (The store factory has to be disabled for this to happen.)<p>
+   *  Tests read failure by rigging the ringbuffer to throw an exception when reading.<p>
    *  
    *  When this error is detected, the test is also rigged to evict the subscriber's tenancy from the
    *  lease table, thereby creating a second error when a lease extension is attempted.
@@ -260,15 +259,32 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 1;
     
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ErrorHandler eh = mock(ErrorHandler.class);
+    
+    final HazelcastInstance realInstance = newInstance();
+    final HazelcastInstance mockInstance = mock(HazelcastInstance.class);
+    when(mockInstance.getConfig()).thenReturn(realInstance.getConfig());
+    when(mockInstance.getMap(any())).thenAnswer(invocation -> realInstance.getMap(invocation.getArgument(0)));
+    final PartitionService partitionService = mock(PartitionService.class);
+    when(mockInstance.getPartitionService()).thenReturn(partitionService);
+    final Partition partition = mock(Partition.class);
+    when(partitionService.getPartition(any())).thenReturn(partition);
+    @SuppressWarnings("unchecked")
+    final Ringbuffer<Object> ringbuffer = mock(Ringbuffer.class);
+    when(mockInstance.getRingbuffer(any())).thenReturn(ringbuffer);
+    
+    final Exception cause = new Exception("simulated error");
+    when(ringbuffer.readManyAsync(anyLong(), anyInt(), anyInt(), any()))
+    .thenReturn(new CompletedFuture<>(null, cause, null));
+    
     final DefaultSubscriber s = 
-        configureSubscriber(new SubscriberConfig()
+        configureSubscriber(mockInstance,
+                            new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(errorHandler)
+                            .withErrorHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
-                                              .withStoreFactoryClass(null)
                                               .withHeapCapacity(capacity)));
     final IMap<String, byte[]> leaseTable = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
@@ -281,7 +297,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // when an error occurs, forcibly reassign the lease
     doAnswer(invocation -> leaseTable.put(group, Lease.forever(UUID.randomUUID()).pack()))
-    .when(errorHandler).onError(any(), any());
+    .when(eh).onError(any(), any());
     
     // simulate an error by reading stale items
     Thread.sleep(10);
@@ -289,7 +305,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     assertEquals(0, b.size());
     
     // there should be two errors -- the first for the stale read, the second for the failed lease extension
-    wait.until(() -> verify(errorHandler, times(2)).onError(isNotNull(), (Exception) isNotNull()));
+    wait.until(() -> verify(eh).onError(isNotNull(), eq(cause)));
+    wait.until(() -> verify(eh).onError(isNotNull(), any(NotTenantException.class)));
   }
   
   /**

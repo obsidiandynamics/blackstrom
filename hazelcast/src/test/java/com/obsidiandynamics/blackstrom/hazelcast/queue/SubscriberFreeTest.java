@@ -12,6 +12,7 @@ import org.junit.runners.*;
 
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
+import com.hazelcast.util.executor.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.junit.*;
 
@@ -209,8 +210,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   }
   
   /**
-   *  Tests read failure. This is achieved by simulating a buffer overflow with no backing
-   *  storage, so that the subscriber consumes from a stale sequence.
+   *  Tests read failure by rigging the ringbuffer to throw an exception when reading.
    *  
    *  @throws InterruptedException
    */
@@ -218,22 +218,66 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testReadFailure() throws InterruptedException {
     final String stream = "s";
     final int capacity = 1;
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ErrorHandler eh = mock(ErrorHandler.class);
+
+    final HazelcastInstance realInstance = newInstance();
+    final HazelcastInstance mockInstance = mock(HazelcastInstance.class);
+    when(mockInstance.getConfig()).thenReturn(realInstance.getConfig());
+    when(mockInstance.getMap(any())).thenAnswer(invocation -> realInstance.getMap(invocation.getArgument(0)));
+    final PartitionService partitionService = mock(PartitionService.class);
+    when(mockInstance.getPartitionService()).thenReturn(partitionService);
+    final Partition partition = mock(Partition.class);
+    when(partitionService.getPartition(any())).thenReturn(partition);
+    @SuppressWarnings("unchecked")
+    final Ringbuffer<Object> ringbuffer = mock(Ringbuffer.class);
+    when(mockInstance.getRingbuffer(any())).thenReturn(ringbuffer);
+    
+    final Exception cause = new Exception("simulated error");
+    when(ringbuffer.readManyAsync(anyLong(), anyInt(), anyInt(), any()))
+    .thenReturn(new CompletedFuture<>(null, cause, null));
+    
+    final DefaultSubscriber s =
+        configureSubscriber(mockInstance,
+                            new SubscriberConfig()
+                            .withErrorHandler(eh)
+                            .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
+    final RecordBatch b = s.poll(1_000);
+    assertEquals(0, b.size());
+    verify(eh).onError(isNotNull(), eq(cause));
+  }
+  
+  /**
+   *  Tests stale reads. This is achieved by simulating a buffer overflow with no backing
+   *  storage, so that the subscriber consumes from a stale sequence. The subscriber, having
+   *  noticed the stale offset, should fast-forward the next read offset to the next safe read
+   *  position, plus a small safety buffer (which for this test we've set to be zero).
+   *  
+   *  @throws InterruptedException
+   */
+  @Test
+  public void testStaleRead() throws InterruptedException {
+    final String stream = "s";
+    final int capacity = 1;
+    final ErrorHandler eh = mockErrorHandler();
 
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(errorHandler)
+                            .withErrorHandler(eh)
+                            .withStaleReadSafetyMargin(0)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
-                                              .withHeapCapacity(capacity)
-                                              .withStoreFactoryClass(null)));
+                                              .withHeapCapacity(capacity)));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
 
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
     final RecordBatch b = s.poll(1_000);
-    assertEquals(0, b.size());
-    verify(errorHandler).onError(isNotNull(), (Exception) isNotNull());
+    assertEquals(1, b.size());
+    assertArrayEquals("h1".getBytes(), b.toList().get(0).getData());
+    verifyNoError(eh);
   }
 
   /**
