@@ -10,8 +10,8 @@ public final class ElectionConfig {
   @YInject
   private int leaseDurationMillis = 60_000;
   
-  private Registry initialRegistry = new Registry();
-
+  private ScavengeWatcher scavengeWatcher = ScavengeWatcher.nop();
+  
   int getScavengeInterval() {
     return scavengeIntervalMillis;
   }
@@ -30,18 +30,18 @@ public final class ElectionConfig {
     return this;
   }
   
-  Registry getInitialRegistry() {
-    return initialRegistry;
+  ScavengeWatcher getScavengeWatcher() {
+    return scavengeWatcher;
   }
-  
-  public ElectionConfig withInitialRegistry(Registry initialRegistry) {
-    this.initialRegistry = initialRegistry;
+
+  ElectionConfig withScavengeWatcher(ScavengeWatcher scavengeWatcher) {
+    this.scavengeWatcher = scavengeWatcher;
     return this;
   }
 
   @Override
   public String toString() {
     return ElectionConfig.class.getSimpleName() + " [scavengeIntervalMillis=" + scavengeIntervalMillis + 
-        ", leaseDurationMillis=" + leaseDurationMillis + ", initialRegistry=" + initialRegistry + "]";
+        ", leaseDurationMillis=" + leaseDurationMillis + "]";
   }
 }

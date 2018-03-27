@@ -68,8 +68,8 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       final String leaseFQName = QNamespace.HAZELQ_META.qualify("lease." + streamConfig.getName());
       final IMap<String, byte[]> leaseTable = instance.getMap(leaseFQName);
       leaseCandidate = UUID.randomUUID();
-      election = new Election(config.getElectionConfig(), leaseTable);
-      election.getRegistry().enrol(config.getGroup(), leaseCandidate);
+      final Registry initialRegistry = new Registry().withCandidate(config.getGroup(), leaseCandidate);
+      election = new Election(config.getElectionConfig(), leaseTable, initialRegistry);
       
       keeperThread = WorkerThread.builder()
           .withOptions(new WorkerOptions().daemon().withName(Subscriber.class, streamConfig.getName(), "keeper"))

@@ -16,8 +16,6 @@ public final class Election implements Terminable, Joinable {
   
   private final RetryableMap<String, byte[]> leaseTable;
   
-  private final ScavengeWatcher scavengeWatcher;
-  
   private final Registry registry;
   
   private final WorkerThread scavengerThread;
@@ -31,10 +29,10 @@ public final class Election implements Terminable, Joinable {
   private long nextViewVersion = 1;
   
   public Election(ElectionConfig config, IMap<String, byte[]> leaseTable) {
-    this(config, leaseTable, ScavengeWatcher.nop());
+    this(config, leaseTable, new Registry());
   }
   
-  Election(ElectionConfig config, IMap<String, byte[]> leaseTable, ScavengeWatcher scavengeWatcher) {
+  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, Registry initialRegistry) {
     this.config = config;
 
     final Retry retry = new Retry()
@@ -43,8 +41,7 @@ public final class Election implements Terminable, Joinable {
         .withBackoffMillis(100)
         .withLog(log);
     this.leaseTable = new RetryableMap<>(retry, leaseTable);
-    this.scavengeWatcher = scavengeWatcher;
-    registry = new Registry(config.getInitialRegistry());
+    registry = new Registry(initialRegistry);
     
     scavengerThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(Election.class, "scavenger"))
@@ -72,7 +69,7 @@ public final class Election implements Terminable, Joinable {
           if (existingLease.isVacant()) {
             log.debug("Lease of {} is vacant", resource); 
           } else {
-            scavengeWatcher.onExpire(resource, existingLease.getTenant());
+            config.getScavengeWatcher().onExpire(resource, existingLease.getTenant());
             log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), Lease.formatExpiry(existingLease.getExpiry()));
           }
           
@@ -90,7 +87,7 @@ public final class Election implements Terminable, Joinable {
             if (success) {
               log.debug("New lease of {} by {} until {}", resource, nextCandidate, Lease.formatExpiry(newLease.getExpiry()));
               reloadView();
-              scavengeWatcher.onAssign(resource, nextCandidate);
+              config.getScavengeWatcher().onAssign(resource, nextCandidate);
             }
           }
         }
