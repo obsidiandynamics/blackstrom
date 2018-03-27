@@ -17,7 +17,8 @@ public final class StreamConfig {
   @YInject
   private int asyncReplicas = RingbufferConfig.DEFAULT_ASYNC_BACKUP_COUNT;
 
-  private RingbufferStoreConfig ringbufferStoreConfig = new RingbufferStoreConfig();
+  @YInject
+  private RingbufferStoreConfig ringbufferStoreConfig = new RingbufferStoreConfig().setEnabled(false);
 
   String getName() {
     return name;

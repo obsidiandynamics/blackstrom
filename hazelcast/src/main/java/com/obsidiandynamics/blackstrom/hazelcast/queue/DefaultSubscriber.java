@@ -62,14 +62,12 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       getInitialOffset(true);
       nextReadOffset = Record.UNASSIGNED_OFFSET;
       
-      final String offsetsFQName = QNamespace.HAZELQ_META.qualify("offsets." + streamConfig.getName());
-      offsets = new RetryableMap<>(retry, instance.getMap(offsetsFQName));
+      offsets = new RetryableMap<>(retry, StreamHelper.getOffsetsMap(instance, streamConfig, config.getMapStoreConfig()));
       
-      final String leaseFQName = QNamespace.HAZELQ_META.qualify("lease." + streamConfig.getName());
-      final IMap<String, byte[]> leaseTable = instance.getMap(leaseFQName);
+      final IMap<String, byte[]> leaseMap = StreamHelper.getLeaseMap(instance, streamConfig, config.getMapStoreConfig());
       leaseCandidate = UUID.randomUUID();
       final Registry initialRegistry = new Registry().withCandidate(config.getGroup(), leaseCandidate);
-      election = new Election(config.getElectionConfig(), leaseTable, initialRegistry);
+      election = new Election(config.getElectionConfig(), leaseMap, initialRegistry);
       
       keeperThread = WorkerThread.builder()
           .withOptions(new WorkerOptions().daemon().withName(Subscriber.class, streamConfig.getName(), "keeper"))

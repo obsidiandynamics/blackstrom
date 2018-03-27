@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import org.slf4j.*;
 
+import com.hazelcast.config.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.yconf.*;
 
@@ -28,6 +29,9 @@ public final class SubscriberConfig {
   
   @YInject
   private int minLeaseExtendIntervalMillis = 1_000;
+  
+  @YInject
+  private MapStoreConfig mapStoreConfig = new MapStoreConfig().setEnabled(false);
   
   Logger getLog() {
     return log;
@@ -104,12 +108,22 @@ public final class SubscriberConfig {
     this.minLeaseExtendIntervalMillis = minLeaseExtendIntervalMillis;
     return this;
   }
+  
+  MapStoreConfig getMapStoreConfig() {
+    return mapStoreConfig;
+  }
+
+  public SubscriberConfig withMapStoreConfig(MapStoreConfig mapStoreConfig) {
+    this.mapStoreConfig = mapStoreConfig;
+    return this;
+  }
 
   @Override
   public String toString() {
     return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler + ", streamConfig=" + streamConfig
            + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme 
            + ", electionConfig=" + electionConfig + ", staleReadSafetyMargin=" + staleReadSafetyMargin
-           + ", minLeaseExtendInterval=" + minLeaseExtendIntervalMillis + "]";
+           + ", minLeaseExtendInterval=" + minLeaseExtendIntervalMillis 
+           + ", mapStoreConfig=" + mapStoreConfig + "]";
   }
 }

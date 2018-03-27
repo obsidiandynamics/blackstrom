@@ -14,7 +14,7 @@ public final class Election implements Terminable, Joinable {
   
   private final ElectionConfig config;
   
-  private final RetryableMap<String, byte[]> leaseTable;
+  private final RetryableMap<String, byte[]> leases;
   
   private final Registry registry;
   
@@ -28,7 +28,7 @@ public final class Election implements Terminable, Joinable {
   
   private long nextViewVersion = 1;
   
-  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, Registry initialRegistry) {
+  public Election(ElectionConfig config, IMap<String, byte[]> leases, Registry initialRegistry) {
     this.config = config;
 
     final Retry retry = new Retry()
@@ -36,7 +36,7 @@ public final class Election implements Terminable, Joinable {
         .withAttempts(Integer.MAX_VALUE)
         .withBackoffMillis(100)
         .withLog(log);
-    this.leaseTable = new RetryableMap<>(retry, leaseTable);
+    this.leases = new RetryableMap<>(retry, leases);
     registry = new Registry(initialRegistry);
     
     scavengerThread = WorkerThread.builder()
@@ -74,10 +74,10 @@ public final class Election implements Terminable, Joinable {
             final boolean success;
             final Lease newLease = new Lease(nextCandidate, System.currentTimeMillis() + config.getLeaseDuration());
             if (existingLease.isVacant()) {
-              final byte[] previous = leaseTable.putIfAbsent(resource, newLease.pack());
+              final byte[] previous = leases.putIfAbsent(resource, newLease.pack());
               success = previous == null;
             } else {
-              success = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
+              success = leases.replace(resource, existingLease.pack(), newLease.pack());
             }
             
             if (success) {
@@ -94,7 +94,7 @@ public final class Election implements Terminable, Joinable {
   private void reloadView() {
     synchronized (viewLock) {
       final LeaseViewImpl newLeaseView = new LeaseViewImpl(nextViewVersion++);
-      for (Map.Entry<String, byte[]> leaseTableEntry : leaseTable.entrySet()) {
+      for (Map.Entry<String, byte[]> leaseTableEntry : leases.entrySet()) {
         final Lease lease = Lease.unpack(leaseTableEntry.getValue());
         newLeaseView.put(leaseTableEntry.getKey(), lease);
       }
@@ -110,7 +110,7 @@ public final class Election implements Terminable, Joinable {
     for (;;) {
       final Lease existingLease = checkCurrent(resource, tenant);
       final Lease newLease = new Lease(tenant, System.currentTimeMillis() + config.getLeaseDuration());
-      final boolean extended = leaseTable.replace(resource, existingLease.pack(), newLease.pack());
+      final boolean extended = leases.replace(resource, existingLease.pack(), newLease.pack());
       if (extended) {
         reloadView();
         return;
@@ -123,7 +123,7 @@ public final class Election implements Terminable, Joinable {
   public void yield(String resource, UUID tenant) throws NotTenantException {
     for (;;) {
       final Lease existingLease = checkCurrent(resource, tenant);
-      final boolean removed = leaseTable.remove(resource, existingLease.pack());
+      final boolean removed = leases.remove(resource, existingLease.pack());
       if (removed) {
         reloadView();
         return;

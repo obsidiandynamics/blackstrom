@@ -29,7 +29,7 @@ public final class ElectionConfig {
     this.leaseDurationMillis = leaseDurationMillis;
     return this;
   }
-  
+
   ScavengeWatcher getScavengeWatcher() {
     return scavengeWatcher;
   }

@@ -57,8 +57,8 @@ public final class ElectionTest {
     return instance;
   }
   
-  private Election newElection(ElectionConfig config, IMap<String, byte[]> leaseTable, Registry initialRegistry) {
-    final Election election = new Election(config, leaseTable, initialRegistry);
+  private Election newElection(ElectionConfig config, IMap<String, byte[]> leases, Registry initialRegistry) {
+    final Election election = new Election(config, leases, initialRegistry);
     elections.add(election);
     return election;
   }
@@ -67,7 +67,7 @@ public final class ElectionTest {
     return mock(ScavengeWatcher.class);
   }
   
-  private static IMap<String, byte[]> leaseTable(HazelcastInstance instance) {
+  private static IMap<String, byte[]> leases(HazelcastInstance instance) {
     return instance.getMap("sys.lease");
   }
 
@@ -81,7 +81,7 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(h), 
+                                   leases(h), 
                                    new Registry());
     
     TestSupport.sleep(10);
@@ -98,12 +98,12 @@ public final class ElectionTest {
     final HazelcastInstance instance = newInstance();
     final ScavengeWatcher scanvengeWatcher = mockScavengeWatcher();
     final UUID o = UUID.randomUUID();
-    leaseTable(instance).put("resource", new Lease(o, 0).pack());
+    leases(instance).put("resource", new Lease(o, 0).pack());
     final UUID c = UUID.randomUUID();
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withScavengeWatcher(scanvengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    new Registry());
     doAnswer(invocation -> {
       e.getRegistry().unenrol("resource", c);
@@ -130,7 +130,7 @@ public final class ElectionTest {
                                    .withScavengeInterval(1)
                                    .withLeaseDuration(leaseDuration)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    new Registry());
     
     final UUID c = UUID.randomUUID();
@@ -183,7 +183,7 @@ public final class ElectionTest {
                                     .withScavengeInterval(1)
                                     .withLeaseDuration(leaseDuration)
                                     .withScavengeWatcher(scavengeWatcher0), 
-                                    leaseTable(instance0), 
+                                    leases(instance0), 
                                     new Registry());
 
     final HazelcastInstance instance1 = instancePool.get();
@@ -192,7 +192,7 @@ public final class ElectionTest {
                                     .withScavengeInterval(1)
                                     .withLeaseDuration(leaseDuration)
                                     .withScavengeWatcher(scavengeWatcher1), 
-                                    leaseTable(instance1), 
+                                    leases(instance1), 
                                     new Registry());
     
     final UUID c = UUID.randomUUID();
@@ -239,7 +239,7 @@ public final class ElectionTest {
                                     .withScavengeInterval(1)
                                     .withLeaseDuration(leaseDuration)
                                     .withScavengeWatcher(scavengeWatcher0), 
-                                    leaseTable(instance0), 
+                                    leases(instance0), 
                                     new Registry());
 
     final HazelcastInstance instance1 = instancePool.get();
@@ -248,7 +248,7 @@ public final class ElectionTest {
                                     .withScavengeInterval(1)
                                     .withLeaseDuration(leaseDuration)
                                     .withScavengeWatcher(scavengeWatcher1), 
-                                    leaseTable(instance1), 
+                                    leases(instance1), 
                                     new Registry());
     
     final UUID c0 = UUID.randomUUID();
@@ -299,21 +299,21 @@ public final class ElectionTest {
     final HazelcastInstance instance = newInstance();
     final ScavengeWatcher scavengeWatcher = mockScavengeWatcher();
     final int leaseDuration = 60_000;
-    final IMap<String, byte[]> leaseTable = leaseTable(instance);
+    final IMap<String, byte[]> leases = leases(instance);
     
-    final IMap<String, byte[]> leaseTableSpied = spy(leaseTable);
+    final IMap<String, byte[]> leasesSpied = spy(leases);
     // intercept putIfAbsent() and make it fail by pretending that a value was set
-    doAnswer(invocation -> new byte[0]).when(leaseTableSpied).putIfAbsent(any(), any());
+    doAnswer(invocation -> new byte[0]).when(leasesSpied).putIfAbsent(any(), any());
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withLeaseDuration(leaseDuration)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTableSpied, 
+                                   leasesSpied, 
                                    new Registry());
     
     final UUID c = UUID.randomUUID();
     e.getRegistry().enrol("resource", c);
-    await.until(() -> verify(leaseTableSpied, atLeast(2)).putIfAbsent(any(), any()));
+    await.until(() -> verify(leasesSpied, atLeast(2)).putIfAbsent(any(), any()));
   }
 
   /**
@@ -327,12 +327,12 @@ public final class ElectionTest {
     final HazelcastInstance instance = newInstance();
     final ScavengeWatcher scavengeWatcher = mockScavengeWatcher();
     final int leaseDuration = 60_000;
-    leaseTable(instance).put("resource", new Lease(UUID.randomUUID(), 0).pack());
+    leases(instance).put("resource", new Lease(UUID.randomUUID(), 0).pack());
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withLeaseDuration(leaseDuration)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    new Registry());
     
     final UUID c = UUID.randomUUID();
@@ -359,7 +359,7 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance),
+                                   leases(instance),
                                    new Registry());
 
     final UUID c = UUID.randomUUID();
@@ -379,7 +379,7 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    new Registry());
     
     final UUID c0 = UUID.randomUUID();
@@ -413,14 +413,14 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(scavengeInterval)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    initialRegistry);
     
     await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();
-    leaseTable(instance).put("resource", Lease.forever(c1).pack());
+    leases(instance).put("resource", Lease.forever(c1).pack());
     
     // according to the view snapshot, c0 is the leader, but behind the scenes we've elected c1
     assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
@@ -440,7 +440,7 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(1)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    new Registry());
 
     final UUID c = UUID.randomUUID();
@@ -469,14 +469,14 @@ public final class ElectionTest {
     final Election e = newElection(new ElectionConfig()
                                    .withScavengeInterval(scavengeInterval)
                                    .withScavengeWatcher(scavengeWatcher), 
-                                   leaseTable(instance), 
+                                   leases(instance), 
                                    initialRegistry);
     
     await.until(() -> assertTrue(e.getLeaseView().isCurrentTenant("resource", c0)));
     assertEquals(1, e.getLeaseView().asMap().size());
 
     final UUID c1 = UUID.randomUUID();
-    leaseTable(instance).put("resource", Lease.forever(c1).pack());
+    leases(instance).put("resource", Lease.forever(c1).pack());
     
     // according to the view snapshot, c0 is the leader, but behind the scenes we've elected c1
     assertTrue(e.getLeaseView().isCurrentTenant("resource", c0));
