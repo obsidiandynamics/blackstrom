@@ -105,6 +105,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withGroup(group)
                             .withErrorHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                            .withMinLeaseExtendInterval(0)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -203,6 +204,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withGroup(group)
                             .withErrorHandler(errorHandler)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                            .withMinLeaseExtendInterval(0)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));

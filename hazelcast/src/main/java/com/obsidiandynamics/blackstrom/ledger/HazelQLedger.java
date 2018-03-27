@@ -4,12 +4,9 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
-import org.slf4j.*;
-
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.model.Message;
@@ -19,11 +16,7 @@ import com.obsidiandynamics.blackstrom.worker.Terminator;
 public final class HazelQLedger implements Ledger {
   private final HazelcastInstance instance;
   
-  private final Logger log;
-  
-  private final StreamConfig streamConfig;
-  
-  private final ElectionConfig electionConfig;
+  private final HazelQLedgerConfig config;
   
   private final Publisher publisher;
   
@@ -41,13 +34,11 @@ public final class HazelQLedger implements Ledger {
   
   public HazelQLedger(HazelcastInstance instance, HazelQLedgerConfig config) {
     this.instance = instance;
-    log = config.getLog();
-    streamConfig = config.getStreamConfig();
-    electionConfig = config.getElectionConfig();
+    this.config = config;
     codec = config.getCodec();
     final PublisherConfig pubConfig = new PublisherConfig()
-        .withLog(log)
-        .withStreamConfig(streamConfig);
+        .withLog(config.getLog())
+        .withStreamConfig(config.getStreamConfig());
     publisher = Publisher.createDefault(instance, pubConfig);
   }
   
@@ -55,9 +46,9 @@ public final class HazelQLedger implements Ledger {
   public void attach(MessageHandler handler) {
     final String group = handler.getGroupId();
     final SubscriberConfig subConfig = new SubscriberConfig()
-        .withLog(log)
-        .withStreamConfig(streamConfig)
-        .withElectionConfig(electionConfig)
+        .withLog(config.getLog())
+        .withStreamConfig(config.getStreamConfig())
+        .withElectionConfig(config.getElectionConfig())
         .withGroup(group);
     final Subscriber subscriber = Subscriber.createDefault(instance, subConfig);
     allSubscribers.add(subscriber);
@@ -82,12 +73,12 @@ public final class HazelQLedger implements Ledger {
       try {
         message = deserialize(record.getData());
       } catch (Exception e) {
-        log.error(String.format("Could not decode message at offset %,d", record.getOffset()), e);
+        config.getLog().error(String.format("Could not decode message at offset %,d", record.getOffset()), e);
         return;
       }
       message.setMessageId(messageId);
       handler.onMessage(context, message);
-    });
+    }, config.getPollInterval());
     receivers.add(receiver);
   }
 

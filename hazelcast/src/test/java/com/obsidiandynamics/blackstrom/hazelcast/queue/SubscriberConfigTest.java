@@ -18,6 +18,7 @@ public final class SubscriberConfigTest {
     final Logger log = LoggerFactory.getLogger(SubscriberConfigTest.class);
     final StreamConfig streamConfig = new StreamConfig();
     final double staleReadSafetyMargin = 0.5;
+    final int minLeaseExtendIntervalMillis = 500;
     
     final SubscriberConfig config = new SubscriberConfig()
         .withElectionConfig(electionConfig)
@@ -26,7 +27,8 @@ public final class SubscriberConfigTest {
         .withInitialOffsetScheme(initialOffsetScheme)
         .withLog(log)
         .withStreamConfig(streamConfig)
-        .withStaleReadSafetyMargin(staleReadSafetyMargin);
+        .withStaleReadSafetyMargin(staleReadSafetyMargin)
+        .withMinLeaseExtendInterval(minLeaseExtendIntervalMillis);
     assertEquals(electionConfig, config.getElectionConfig());
     assertEquals(errorHandler, config.getErrorHandler());
     assertEquals(group, config.getGroup());
@@ -34,6 +36,7 @@ public final class SubscriberConfigTest {
     assertEquals(log, config.getLog());
     assertEquals(streamConfig, config.getStreamConfig());
     assertEquals(staleReadSafetyMargin, config.getStaleReadSafetyMargin(), Double.MIN_VALUE);
+    assertEquals(minLeaseExtendIntervalMillis, config.getMinLeaseExtendInterval());
     
     Assertions.assertToStringOverride(config);
   }

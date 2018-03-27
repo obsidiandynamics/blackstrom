@@ -26,6 +26,9 @@ public final class SubscriberConfig {
   @YInject
   private double staleReadSafetyMargin = 0.1;
   
+  @YInject
+  private int minLeaseExtendIntervalMillis = 1_000;
+  
   Logger getLog() {
     return log;
   }
@@ -92,12 +95,21 @@ public final class SubscriberConfig {
     this.staleReadSafetyMargin = staleReadSafetyMargin;
     return this;
   }
+  
+  int getMinLeaseExtendInterval() {
+    return minLeaseExtendIntervalMillis;
+  }
+
+  public SubscriberConfig withMinLeaseExtendInterval(int minLeaseExtendIntervalMillis) {
+    this.minLeaseExtendIntervalMillis = minLeaseExtendIntervalMillis;
+    return this;
+  }
 
   @Override
   public String toString() {
     return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler + ", streamConfig=" + streamConfig
            + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme 
            + ", electionConfig=" + electionConfig + ", staleReadSafetyMargin=" + staleReadSafetyMargin
-           + "]";
+           + ", minLeaseExtendInterval=" + minLeaseExtendIntervalMillis + "]";
   }
 }

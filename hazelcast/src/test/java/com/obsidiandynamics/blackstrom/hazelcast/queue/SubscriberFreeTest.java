@@ -253,7 +253,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
    *  Tests stale reads. This is achieved by simulating a buffer overflow with no backing
    *  storage, so that the subscriber consumes from a stale sequence. The subscriber, having
    *  noticed the stale offset, should fast-forward the next read offset to the next safe read
-   *  position, plus a small safety buffer (which for this test we've set to be zero).
+   *  position, plus a small safety buffer (which for this test we've set to zero).
    *  
    *  @throws InterruptedException
    */
@@ -312,7 +312,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   }
   
   /**
-   *  Tests initialising to the latest offest.
+   *  Tests initialising to the latest offset.
    *  
    *  @throws InterruptedException
    */

@@ -102,8 +102,9 @@ public final class HazelQRig {
       return new HazelQLedger(instance, 
                               new HazelQLedgerConfig()
                               .withElectionConfig(new ElectionConfig()
-                                                  .withScavengeInterval(100))
+                                                  .withScavengeInterval(1000))
                               .withStreamConfig(streamConfig)
+                              .withPollInterval(1000)
                               .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));
     }
   }

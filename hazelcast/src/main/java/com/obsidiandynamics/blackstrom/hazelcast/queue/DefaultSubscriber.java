@@ -240,22 +240,27 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     
     boolean performedWork = false;
     synchronized (activeLock) {
-      // avoid confirming offsets or extending the lease if this subscriber has been deactivated,
-      // but update the timestamps to thwart future attempts
       if (active) {
         if (scheduledConfirmOffset != lastConfirmedOffset) {
           performedWork = true;
           putOffset(scheduledConfirmOffset);
+          lastConfirmedOffset = scheduledConfirmOffset;
         }
         
         if (scheduledExtendTimestamp != lastExtendTimestamp) {
-          performedWork = true;
-          extendLease(scheduledExtendTimestamp);
+          final long timeSinceLastExtend = System.currentTimeMillis() - lastExtendTimestamp;
+          if (timeSinceLastExtend >= config.getMinLeaseExtendInterval()) {
+            performedWork = true;
+            extendLease(scheduledExtendTimestamp);
+            lastExtendTimestamp = scheduledExtendTimestamp;
+          }
         }
+      } else {
+        // avoid confirming offsets or extending the lease if this subscriber has been deactivated,
+        // but update the timestamps to thwart future attempts
+        lastConfirmedOffset = scheduledConfirmOffset;
+        lastExtendTimestamp = scheduledExtendTimestamp;
       }
-
-      lastConfirmedOffset = scheduledConfirmOffset;
-      lastExtendTimestamp = scheduledExtendTimestamp;
     }
     
     if (! performedWork) {

@@ -20,6 +20,9 @@ public final class HazelQLedgerConfig {
   
   @YInject
   private ElectionConfig electionConfig = new ElectionConfig();
+  
+  @YInject
+  private int pollIntervalMillis = 100;
 
   MessageCodec getCodec() {
     return codec;
@@ -54,6 +57,15 @@ public final class HazelQLedgerConfig {
   
   public HazelQLedgerConfig withElectionConfig(ElectionConfig electionConfig) {
     this.electionConfig = electionConfig;
+    return this;
+  }
+
+  int getPollInterval() {
+    return pollIntervalMillis;
+  }
+
+  public HazelQLedgerConfig withPollInterval(int pollIntervalMillis) {
+    this.pollIntervalMillis = pollIntervalMillis;
     return this;
   }
 }
