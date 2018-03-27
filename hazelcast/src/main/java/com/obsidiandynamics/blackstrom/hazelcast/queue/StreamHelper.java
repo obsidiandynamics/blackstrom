@@ -19,14 +19,8 @@ final class StreamHelper {
         .setBackupCount(streamConfig.getSyncReplicas())
         .setAsyncBackupCount(streamConfig.getAsyncReplicas())
         .setCapacity(streamConfig.getHeapCapacity())
-        .setRingbufferStoreConfig(new RingbufferStoreConfig()
-                                  .setFactoryClassName(getClassName(streamConfig.getStoreFactoryClass()))
-                                  .setProperties(streamConfig.getStoreFactoryProps()));
+        .setRingbufferStoreConfig(streamConfig.getRingbufferStoreConfig());
     instance.getConfig().addRingBufferConfig(ringbufferConfig);
     return instance.getRingbuffer(streamFQName);
-  }
-  
-  private static String getClassName(Class<?> storeFactoryClass) {
-    return storeFactoryClass != null ? storeFactoryClass.getName() : null;
   }
 }

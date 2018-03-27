@@ -7,8 +7,6 @@ import org.junit.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
-import com.obsidiandynamics.blackstrom.hazelcast.queue.store.*;
-import com.obsidiandynamics.blackstrom.util.props.*;
 
 public final class StreamHelperTest {
   @Test
@@ -23,13 +21,15 @@ public final class StreamHelperTest {
     final Config config = new Config();
     when(instance.getConfig()).thenReturn(config);
     
+    final RingbufferStoreConfig ringbufferStoreConfig = new RingbufferStoreConfig()
+        .setEnabled(true)
+        .setClassName("TestClass");
     final StreamConfig streamConfig = new StreamConfig()
         .withName("stream")
         .withAsyncReplicas(3)
         .withSyncReplicas(2)
         .withHeapCapacity(100)
-        .withStoreFactoryClass(HeapRingbufferStore.Factory.class);
-    streamConfig.getStoreFactoryProps().put("foo", "bar");
+        .withRingbufferStoreConfig(ringbufferStoreConfig);
     
     StreamHelper.getRingbuffer(instance, streamConfig);
     verify(instance).getConfig();
@@ -38,7 +38,6 @@ public final class StreamHelperTest {
     assertEquals(streamConfig.getAsyncReplicas(), r.getAsyncBackupCount());
     assertEquals(streamConfig.getSyncReplicas(), r.getBackupCount());
     assertEquals(streamConfig.getHeapCapacity(), r.getCapacity());
-    assertEquals(streamConfig.getStoreFactoryClass().getName(), r.getRingbufferStoreConfig().getFactoryClassName());
-    assertEquals(new PropsBuilder().with("foo", "bar").build(), r.getRingbufferStoreConfig().getProperties());
+    assertEquals(streamConfig.getRingbufferStoreConfig(), r.getRingbufferStoreConfig());
   }
 }

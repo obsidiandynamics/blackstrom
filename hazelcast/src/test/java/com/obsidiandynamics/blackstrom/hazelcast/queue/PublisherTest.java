@@ -10,6 +10,7 @@ import java.util.stream.*;
 
 import org.junit.*;
 
+import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.hazelcast.util.executor.*;
@@ -86,10 +87,12 @@ public final class PublisherTest extends AbstractPubSubTest {
     final int capacity = 10;
 
     final DefaultPublisher p =
-        configurePublisher(new PublisherConfig().withStreamConfig(new StreamConfig()
-                                                                  .withName(stream)
-                                                                  .withHeapCapacity(capacity)
-                                                                  .withStoreFactoryClass(new HeapRingbufferStore.Factory().getClass())));
+        configurePublisher(new PublisherConfig()
+                           .withStreamConfig(new StreamConfig()
+                                             .withName(stream)
+                                             .withHeapCapacity(capacity)
+                                             .withRingbufferStoreConfig(new RingbufferStoreConfig()
+                                                                        .setFactoryClassName(HeapRingbufferStore.Factory.class.getName()))));
     final Ringbuffer<byte[]> buffer = p.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final List<Record> records = new ArrayList<>();
     final List<TestCallback> callbacks = new ArrayList<>();
@@ -123,10 +126,12 @@ public final class PublisherTest extends AbstractPubSubTest {
     final int capacity = 10;
 
     final DefaultPublisher p =
-        configurePublisher(new PublisherConfig().withStreamConfig(new StreamConfig()
-                                                                  .withName(stream)
-                                                                  .withHeapCapacity(capacity)
-                                                                  .withStoreFactoryClass(new HeapRingbufferStore.Factory().getClass())));
+        configurePublisher(new PublisherConfig()
+                           .withStreamConfig(new StreamConfig()
+                                             .withName(stream)
+                                             .withHeapCapacity(capacity)
+                                             .withRingbufferStoreConfig(new RingbufferStoreConfig()
+                                                                        .setFactoryClassName(HeapRingbufferStore.Factory.class.getName()))));
     final Ringbuffer<byte[]> buffer = p.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
 
     final long offset0 = p.publishDirect(new Record("h0".getBytes()));
@@ -166,7 +171,8 @@ public final class PublisherTest extends AbstractPubSubTest {
                            .withStreamConfig(new StreamConfig()
                                              .withName(stream)
                                              .withHeapCapacity(capacity)
-                                             .withStoreFactoryClass(new HeapRingbufferStore.Factory().getClass())));
+                                             .withRingbufferStoreConfig(new RingbufferStoreConfig()
+                                                                        .setFactoryClassName(HeapRingbufferStore.Factory.class.getName()))));
     final List<Record> records = new ArrayList<>();
     final List<TestCallback> callbacks = new ArrayList<>();
 

@@ -1,10 +1,6 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-import java.util.*;
-import java.util.concurrent.*;
-
 import com.hazelcast.config.*;
-import com.hazelcast.core.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
@@ -16,22 +12,12 @@ public final class StreamConfig {
   private int heapCapacity = RingbufferConfig.DEFAULT_CAPACITY;
   
   @YInject
-  private long storeCapacity = Long.MAX_VALUE;
-  
-  @YInject
-  private long storeRetentionMillis = TimeUnit.DAYS.toMillis(7);
-  
-  @YInject
-  private Class<? extends RingbufferStoreFactory<byte[]>> storeFactoryClass = null;
-  
-  @YInject
   private int syncReplicas = RingbufferConfig.DEFAULT_SYNC_BACKUP_COUNT;
   
   @YInject
   private int asyncReplicas = RingbufferConfig.DEFAULT_ASYNC_BACKUP_COUNT;
 
-  @YInject
-  private Properties storeFactoryProps = new Properties();
+  private RingbufferStoreConfig ringbufferStoreConfig = new RingbufferStoreConfig();
 
   String getName() {
     return name;
@@ -51,37 +37,6 @@ public final class StreamConfig {
     return this;
   }
 
-  long getStoreCapacity() {
-    return storeCapacity;
-  }
-
-  public StreamConfig withStoreCapacity(long storeCapacity) {
-    this.storeCapacity = storeCapacity;
-    return this;
-  }
-
-  long getStoreRetention() {
-    return storeRetentionMillis;
-  }
-
-  public StreamConfig withStoreRetention(long storeRetentionMillis) {
-    this.storeRetentionMillis = storeRetentionMillis;
-    return this;
-  }
-
-  Class<? extends RingbufferStoreFactory<byte[]>> getStoreFactoryClass() {
-    return storeFactoryClass;
-  }
-
-  public StreamConfig withStoreFactoryClass(Class<? extends RingbufferStoreFactory<byte[]>> storeFactoryClass) {
-    this.storeFactoryClass = storeFactoryClass;
-    return this;
-  }
-
-  Properties getStoreFactoryProps() {
-    return storeFactoryProps;
-  }
-
   int getSyncReplicas() {
     return syncReplicas;
   }
@@ -99,11 +54,20 @@ public final class StreamConfig {
     this.asyncReplicas = asyncReplicas;
     return this;
   }
+  
+  RingbufferStoreConfig getRingbufferStoreConfig() {
+    return ringbufferStoreConfig;
+  }
+  
+  public StreamConfig withRingbufferStoreConfig(RingbufferStoreConfig ringbufferStoreConfig) {
+    this.ringbufferStoreConfig = ringbufferStoreConfig;
+    return this;
+  }
 
   @Override
   public String toString() {
-    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity + ", storeCapacity=" + storeCapacity
-           + ", storeRetentionMillis=" + storeRetentionMillis + ", storeFactoryClass=" + storeFactoryClass
-           + ", syncReplicas=" + syncReplicas + ", asyncReplicas=" + asyncReplicas + "]";
+    return StreamConfig.class.getSimpleName() + " [name=" + name + ", heapCapacity=" + heapCapacity
+           + ", syncReplicas=" + syncReplicas + ", asyncReplicas=" + asyncReplicas 
+           + ", ringbufferStoreConfig=" + ringbufferStoreConfig + "]";
   }
 }
