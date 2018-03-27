@@ -28,10 +28,6 @@ public final class Election implements Terminable, Joinable {
   
   private long nextViewVersion = 1;
   
-  public Election(ElectionConfig config, IMap<String, byte[]> leaseTable) {
-    this(config, leaseTable, new Registry());
-  }
-  
   public Election(ElectionConfig config, IMap<String, byte[]> leaseTable, Registry initialRegistry) {
     this.config = config;
 
