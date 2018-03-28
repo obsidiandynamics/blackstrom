@@ -40,4 +40,26 @@ public final class StreamHelperTest {
     assertEquals(streamConfig.getHeapCapacity(), r.getCapacity());
     assertEquals(streamConfig.getRingbufferStoreConfig(), r.getRingbufferStoreConfig());
   }
+  
+  @Test
+  public void testGetMap() {
+    final HazelcastInstance instance = mock(HazelcastInstance.class);
+    final Config config = new Config();
+    when(instance.getConfig()).thenReturn(config);
+    
+    final MapStoreConfig mapStoreConfig = new MapStoreConfig()
+        .setEnabled(true)
+        .setClassName("TestClass");
+    final StreamConfig streamConfig = new StreamConfig()
+        .withName("stream")
+        .withAsyncReplicas(3)
+        .withSyncReplicas(2)
+        .withHeapCapacity(100);
+    
+    StreamHelper.getMap(instance, "map", streamConfig, mapStoreConfig);
+    final MapConfig m = config.getMapConfig("map");
+    assertEquals(streamConfig.getAsyncReplicas(), m.getAsyncBackupCount());
+    assertEquals(streamConfig.getSyncReplicas(), m.getBackupCount());
+    assertEquals(mapStoreConfig, m.getMapStoreConfig());
+  }
 }
