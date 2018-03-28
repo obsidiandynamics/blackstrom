@@ -151,7 +151,7 @@ public final class Election implements Terminable, Joinable {
     }
   }
 
-  public void setScavengeWatcher(ScavengeWatcher scavengeWatcher) {
+  void setScavengeWatcher(ScavengeWatcher scavengeWatcher) {
     this.scavengeWatcher = scavengeWatcher;
   }
   
