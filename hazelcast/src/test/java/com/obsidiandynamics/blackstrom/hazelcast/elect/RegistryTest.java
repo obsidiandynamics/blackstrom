@@ -15,9 +15,11 @@ public final class RegistryTest {
   }
   
   @Test
-  public void testWithInitial() {
+  public void testEnrolAll() {
     final UUID c = UUID.randomUUID();
-    final Registry r = new Registry(new Registry().withCandidate("resource", c));
+    final Registry source = new Registry().withCandidate("resource", c);
+    final Registry r = new Registry();
+    r.enrolAll(source);
     assertEquals(Collections.singleton(c), r.getCandidatesView().get("resource"));
     assertEquals(1, r.getCandidatesView().size());
     assertEquals(Collections.singleton("resource"), r.getResourcesView());

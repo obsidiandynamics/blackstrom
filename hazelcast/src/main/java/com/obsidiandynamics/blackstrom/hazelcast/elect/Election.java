@@ -24,11 +24,13 @@ public final class Election implements Terminable, Joinable {
   
   private final Object viewLock = new Object();
   
+  private ScavengeWatcher scavengeWatcher = ScavengeWatcher.nop();
+  
   private volatile LeaseViewImpl leaseView = new LeaseViewImpl(0);
   
   private long nextViewVersion = 1;
   
-  public Election(ElectionConfig config, IMap<String, byte[]> leases, Registry initialRegistry) {
+  public Election(ElectionConfig config, IMap<String, byte[]> leases) {
     this.config = config;
 
     final Retry retry = new Retry()
@@ -37,12 +39,17 @@ public final class Election implements Terminable, Joinable {
         .withBackoffMillis(100)
         .withLog(log);
     this.leases = new RetryableMap<>(retry, leases);
-    registry = new Registry(initialRegistry);
+    registry = new Registry();
     
     scavengerThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(Election.class, "scavenger"))
         .onCycle(this::scavegerCycle)
-        .buildAndStart();
+        .build();
+  }
+  
+  public Election start() {
+    scavengerThread.start();
+    return this;
   }
   
   public Registry getRegistry() {
@@ -65,7 +72,7 @@ public final class Election implements Terminable, Joinable {
           if (existingLease.isVacant()) {
             log.debug("Lease of {} is vacant", resource); 
           } else {
-            config.getScavengeWatcher().onExpire(resource, existingLease.getTenant());
+            scavengeWatcher.onExpire(resource, existingLease.getTenant());
             log.debug("Lease of {} by {} expired at {}", resource, existingLease.getTenant(), Lease.formatExpiry(existingLease.getExpiry()));
           }
           
@@ -83,7 +90,7 @@ public final class Election implements Terminable, Joinable {
             if (success) {
               log.debug("New lease of {} by {} until {}", resource, nextCandidate, Lease.formatExpiry(newLease.getExpiry()));
               reloadView();
-              config.getScavengeWatcher().onAssign(resource, nextCandidate);
+              scavengeWatcher.onAssign(resource, nextCandidate);
             }
           }
         }
@@ -142,6 +149,10 @@ public final class Election implements Terminable, Joinable {
     } else {
       return existingLease;
     }
+  }
+
+  public void setScavengeWatcher(ScavengeWatcher scavengeWatcher) {
+    this.scavengeWatcher = scavengeWatcher;
   }
   
   @Override

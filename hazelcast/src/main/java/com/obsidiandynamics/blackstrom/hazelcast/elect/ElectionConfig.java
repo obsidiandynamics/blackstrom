@@ -10,8 +10,6 @@ public final class ElectionConfig {
   @YInject
   private int leaseDurationMillis = 60_000;
   
-  private ScavengeWatcher scavengeWatcher = ScavengeWatcher.nop();
-  
   int getScavengeInterval() {
     return scavengeIntervalMillis;
   }
@@ -27,15 +25,6 @@ public final class ElectionConfig {
 
   public ElectionConfig withLeaseDuration(int leaseDurationMillis) {
     this.leaseDurationMillis = leaseDurationMillis;
-    return this;
-  }
-
-  ScavengeWatcher getScavengeWatcher() {
-    return scavengeWatcher;
-  }
-
-  ElectionConfig withScavengeWatcher(ScavengeWatcher scavengeWatcher) {
-    this.scavengeWatcher = scavengeWatcher;
     return this;
   }
 

@@ -6,17 +6,15 @@ public final class Registry {
   private final Map<String, Set<UUID>> candidates = new HashMap<>();
   private final Object lock = new Object();
   
-  public Registry() {}
-  
-  public Registry(Registry initial) {
-    candidates.putAll(initial.getCandidatesView());
-  }
-  
   public Registry withCandidate(String resource, UUID candidate) {
     enrol(resource, candidate);
     return this;
   }
   
+  public void enrolAll(Registry source) {
+    candidates.putAll(source.getCandidatesView());
+  }
+
   public void enrol(String resource, UUID candidate) {
     synchronized (lock) {
       final Set<UUID> candidatesForResource = candidates.computeIfAbsent(resource, k -> new HashSet<>());

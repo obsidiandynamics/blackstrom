@@ -66,8 +66,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       
       final IMap<String, byte[]> leaseMap = StreamHelper.getLeaseMap(instance, streamConfig, config.getMapStoreConfig());
       leaseCandidate = UUID.randomUUID();
-      final Registry initialRegistry = new Registry().withCandidate(config.getGroup(), leaseCandidate);
-      election = new Election(config.getElectionConfig(), leaseMap, initialRegistry);
+      election = new Election(config.getElectionConfig(), leaseMap);
+      election.getRegistry().enrol(config.getGroup(), leaseCandidate);
+      election.start();
       
       keeperThread = WorkerThread.builder()
           .withOptions(new WorkerOptions().daemon().withName(Subscriber.class, streamConfig.getName(), "keeper"))

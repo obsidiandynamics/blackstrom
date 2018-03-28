@@ -8,8 +8,10 @@ import com.obsidiandynamics.yconf.*;
 
 @Y
 public final class SubscriberConfig {
+  @YInject
   private Logger log = LoggerFactory.getLogger(Subscriber.class);
   
+  @YInject
   private ErrorHandler errorHandler = new LogAwareErrorHandler(this::getLog);
   
   @YInject
