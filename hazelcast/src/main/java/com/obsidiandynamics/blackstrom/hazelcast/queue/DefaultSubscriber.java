@@ -64,9 +64,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
       
       offsets = new RetryableMap<>(retry, StreamHelper.getOffsetsMap(instance, streamConfig, config.getMapStoreConfig()));
       
-      final IMap<String, byte[]> leaseMap = StreamHelper.getLeaseMap(instance, streamConfig, config.getMapStoreConfig());
+      final IMap<String, byte[]> leases = StreamHelper.getLeaseMap(instance, streamConfig, config.getMapStoreConfig());
       leaseCandidate = UUID.randomUUID();
-      election = new Election(config.getElectionConfig(), leaseMap);
+      election = new Election(config.getElectionConfig(), leases);
       election.getRegistry().enrol(config.getGroup(), leaseCandidate);
       election.start();
       
