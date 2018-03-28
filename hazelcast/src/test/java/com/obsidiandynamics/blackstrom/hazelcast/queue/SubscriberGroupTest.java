@@ -95,8 +95,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final HazelcastInstance instance = newInstance();
     
     // start with an expired lease -- the new subscriber should take over it
-    final IMap<String, byte[]> leaseTable = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
-    leaseTable.put(group, Lease.expired(UUID.randomUUID()).pack());
+    final IMap<String, byte[]> leases = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    leases.put(group, Lease.expired(UUID.randomUUID()).pack());
 
     final ErrorHandler eh = mockErrorHandler();
     final DefaultSubscriber s = 
@@ -140,6 +140,97 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
       final long expiry1 = s.getElection().getLeaseView().getLease(group).getExpiry();
       assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 >= expiry0 + sleepTime);
     });
+    
+    // another publish and poll to test that the lease will be extended again
+    final long expiry2 = s.getElection().getLeaseView().getLease(group).getExpiry();
+    buffer.add("h2".getBytes());
+    buffer.add("h3".getBytes());
+    Thread.sleep(sleepTime);
+    final RecordBatch b1 = s.poll(1_000);
+    assertEquals(2, b1.size());
+    assertArrayEquals("h2".getBytes(), b1.toList().get(0).getData());
+    assertArrayEquals("h3".getBytes(), b1.toList().get(1).getData());
+    
+    // we've set minLeaseExtendInterval=0, so expect the least to be extended
+    wait.until(() -> {
+      final long expiry3 = s.getElection().getLeaseView().getLease(group).getExpiry();
+      assertTrue("expiry2=" + expiry2 + ", expiry3=" + expiry3, expiry3 >= expiry2 + sleepTime);
+    });
+    
+    verifyNoError(eh);
+  }
+
+  /**
+   *  Tests consuming of messages, and that {@code Subscriber#poll(long)} extends
+   *  the lease in the background, subject to the constraints of {@code minLeaseExtendInterval},
+   *  which should prevent the least from being extended unnecessarily during aggressive polling.
+   *  
+   *  @throws InterruptedException
+   */
+  @Test
+  public void testConsumeExtendLeaseMinInterval() throws InterruptedException {
+    final String stream = "s";
+    final String group = randomGroup();
+    final int capacity = 10;
+
+    final HazelcastInstance instance = newInstance();
+    
+    // start with an expired lease -- the new subscriber should take over it
+    final IMap<String, byte[]> leases = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    leases.put(group, Lease.expired(UUID.randomUUID()).pack());
+
+    final ErrorHandler eh = mockErrorHandler();
+    final DefaultSubscriber s = 
+        configureSubscriber(instance,
+                            new SubscriberConfig()
+                            .withGroup(group)
+                            .withErrorHandler(eh)
+                            .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                            .withMinLeaseExtendInterval(60_000)
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
+    final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    final IMap<String, Long> offsets = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
+    
+    // start with the earliest offset
+    offsets.put(group, -1L);
+    
+    // publish a pair of messages and wait until the subscriber is elected
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    wait.untilTrue(s::isAssigned);
+    
+    // capture the original lease expiry so that it can be compared with the extended lease
+    final long expiry0 = s.getElection().getLeaseView().getLease(group).getExpiry();
+    
+    // sleep and then consume messages -- this will eventually extend the lease
+    final long sleepTime = 10;
+    Thread.sleep(sleepTime);
+    final RecordBatch b0 = s.poll(1_000);
+    assertEquals(2, b0.size());
+    assertArrayEquals("h0".getBytes(), b0.toList().get(0).getData());
+    assertArrayEquals("h1".getBytes(), b0.toList().get(1).getData());
+    
+    // polling would have extended the lease -- check the expiry
+    wait.until(() -> {
+      final long expiry1 = s.getElection().getLeaseView().getLease(group).getExpiry();
+      assertTrue("expiry0=" + expiry0 + ", expiry1=" + expiry1, expiry1 >= expiry0 + sleepTime);
+    });
+    
+    // another publish and poll to test that the least isn't extended due to a large minLeaseExtendInterval
+    final long expiry2 = s.getElection().getLeaseView().getLease(group).getExpiry();
+    buffer.add("h2".getBytes());
+    buffer.add("h3".getBytes());
+    Thread.sleep(sleepTime);
+    final RecordBatch b1 = s.poll(1_000);
+    assertEquals(2, b1.size());
+    assertArrayEquals("h2".getBytes(), b1.toList().get(0).getData());
+    assertArrayEquals("h3".getBytes(), b1.toList().get(1).getData());
+    
+    Thread.sleep(10);
+    final long expiry3 = s.getElection().getLeaseView().getLease(group).getExpiry();
+    assertEquals(expiry3, expiry2);
     
     verifyNoError(eh);
   }
@@ -208,7 +299,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
-    final IMap<String, byte[]> leaseTable = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    final IMap<String, byte[]> leases = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final IMap<String, Long> offsets = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group, -1L);
@@ -231,7 +322,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     });
     
     // forcibly take the lease away and confirm that the subscriber has seen this 
-    leaseTable.put(group, Lease.forever(new UUID(0, 0)).pack());
+    leases.put(group, Lease.forever(new UUID(0, 0)).pack());
     wait.until(() -> assertFalse(s.isAssigned()));
     
     // schedule a confirmation and verify that it has failed
@@ -251,7 +342,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
    *  Tests read failure by rigging the ringbuffer to throw an exception when reading.<p>
    *  
    *  When this error is detected, the test is also rigged to evict the subscriber's tenancy from the
-   *  lease table, thereby creating a second error when a lease extension is attempted.
+   *  lease map, thereby creating a second error when a lease extension is attempted.
    *  
    *  @throws InterruptedException
    */
@@ -288,7 +379,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
-    final IMap<String, byte[]> leaseTable = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    final IMap<String, byte[]> leases = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
     final IMap<String, Long> offsets = s.getInstance().getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group, -1L);
@@ -298,7 +389,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     wait.untilTrue(s::isAssigned);
     
     // when an error occurs, forcibly reassign the lease
-    doAnswer(invocation -> leaseTable.put(group, Lease.forever(UUID.randomUUID()).pack()))
+    doAnswer(invocation -> leases.put(group, Lease.forever(UUID.randomUUID()).pack()))
     .when(eh).onError(any(), any());
     
     // simulate an error by reading stale items

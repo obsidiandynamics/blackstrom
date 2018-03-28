@@ -290,7 +290,7 @@ public final class ElectionTest {
 
   /**
    *  Election of a single candidate from a clean slate, where a simulated background election (by
-   *  a competing process) changes the contents of the lease table and thereby fails the CAS operation
+   *  a competing process) changes the contents of the lease map and thereby fails the CAS operation
    *  on the {@link IMap}. In other words, this simulates the race condition that a CAS is supposed to
    *  guard against.
    *  
