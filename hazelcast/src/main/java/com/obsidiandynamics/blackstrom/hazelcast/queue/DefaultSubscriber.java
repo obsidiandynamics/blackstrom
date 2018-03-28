@@ -14,6 +14,8 @@ import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
   private static final int KEEPER_BACKOFF_MILLIS = 1;
+
+  private static final int MAX_UNASSIGNED_SLEEP_MILLIS = 10;
   
   private final HazelcastInstance instance;
   
@@ -107,22 +109,28 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     return String.format("serviceName=%s, partitionId=%d, owner=%s", 
                          obj.getServiceName(), partition.getPartitionId(), partition.getOwner());
   }
+  
+  private static final long computeWait(long wakeTime, long maxSleepMillis) {
+    return Math.min(Math.max(0, wakeTime - System.currentTimeMillis()), maxSleepMillis);
+  }
 
   @Override
   public RecordBatch poll(long timeoutMillis) throws InterruptedException {
     final boolean isGroupSubscriber = leaseCandidate != null;
-    final boolean isCurrentTenant = isGroupSubscriber && isCurrentTenant();
     
-    if (! isGroupSubscriber || isCurrentTenant) {
-      if (nextReadOffset == Record.UNASSIGNED_OFFSET) {
-        nextReadOffset = loadConfirmedOffset() + 1;
-        lastReadOffset = nextReadOffset - 1;
-      }
+    final long wake = System.currentTimeMillis() + timeoutMillis;
+    for (;;) {
+      final boolean isCurrentTenant = isGroupSubscriber && isCurrentTenant();
       
-      for (;;) {
+      if (! isGroupSubscriber || isCurrentTenant) {
+        if (nextReadOffset == Record.UNASSIGNED_OFFSET) {
+          nextReadOffset = loadConfirmedOffset() + 1;
+          lastReadOffset = nextReadOffset - 1;
+        }
+      
         final ICompletableFuture<ReadResultSet<byte[]>> f = buffer.readManyAsync(nextReadOffset, 1, 1_000, StreamHelper::isNotNull);
         try {
-          final ReadResultSet<byte[]> resultSet = f.get(timeoutMillis, TimeUnit.MILLISECONDS);
+          final ReadResultSet<byte[]> resultSet = f.get(computeWait(wake, Long.MAX_VALUE), TimeUnit.MILLISECONDS);
           lastReadOffset = resultSet.getSequence(resultSet.size() - 1);
           nextReadOffset = lastReadOffset + 1;
           return readBatch(resultSet);
@@ -137,7 +145,6 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
             config.getLog().warn("Sequence {} was stale (head already at {}), fast-forwarding to {}", 
                                  nextReadOffset, headSeq, ffNextReadOffset);
             nextReadOffset = ffNextReadOffset;
-            continue;
           } else {
             final String serviceInfo = getServiceInfo(buffer.getRingbuffer());
             final String m = String.format("Error reading at offset %d from stream %s [%s]",
@@ -155,11 +162,15 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
             scheduledExtendTimestamp = System.currentTimeMillis();
           }
         }
+      } else {
+        nextReadOffset = Record.UNASSIGNED_OFFSET;
+        final long sleep = computeWait(wake, MAX_UNASSIGNED_SLEEP_MILLIS);
+        if (sleep > 0) {
+          Thread.sleep(sleep);
+        } else {
+          return RecordBatch.empty();
+        }
       }
-    } else {
-      nextReadOffset = Record.UNASSIGNED_OFFSET;
-      Thread.sleep(timeoutMillis);
-      return RecordBatch.empty();
     }
   }
   
