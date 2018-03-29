@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import org.junit.*;
 import org.junit.runner.*;
@@ -15,6 +16,7 @@ import com.hazelcast.ringbuffer.*;
 import com.hazelcast.util.executor.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
+import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
@@ -75,6 +77,70 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     assertEquals(0, offsets.size());
     s.confirm();
+    
+    verifyNoError(eh);
+  }
+  
+  /**
+   *  Tests consumption when the subscriber is not assigned (due to an existing lease), resulting in an 
+   *  empty batch.<p>
+   *  
+   *  The subscriber is then allowed to take over the lease while it is in a middle of a long poll. The
+   *  test verifies the responsiveness of {@code poll()} during a lease transfer. (Behind the scenes, the
+   *  long poll should be split into a series of short polls if the subscriber is unassigned, so that
+   *  assignment is quickly picked up by the poller.)
+   *  
+   *  @throws InterruptedException
+   */
+  @Test
+  public void testNotAssignedFollowedByAssignment() throws InterruptedException {
+    final String stream = "s";
+    final String group = randomGroup();
+    final int capacity = 10;
+    final ErrorHandler eh = mockErrorHandler();
+    
+    // start with an existing lease
+    final HazelcastInstance instance = newInstance();
+    final IMap<String, byte[]> leases = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
+    leases.put(group, Lease.forever(UUID.randomUUID()).pack());
+    final DefaultSubscriber s = 
+        configureSubscriber(instance,
+                            new SubscriberConfig()
+                            .withGroup(group)
+                            .withErrorHandler(eh)
+                            .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
+                            .withStreamConfig(new StreamConfig()
+                                              .withName(stream)
+                                              .withHeapCapacity(capacity)));
+    final Ringbuffer<byte[]> buffer = s.getInstance().getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream));
+    buffer.add("h0".getBytes());
+    buffer.add("h1".getBytes());
+    
+    // shouldn't be able to consume any messages
+    assertFalse(s.isAssigned());
+    final RecordBatch b0 = s.poll(1);
+    assertEquals(0, b0.size());
+    
+    // clear the lease behind the scenes, so that the subscriber can eventually take over
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    new Thread(() -> {
+      TestSupport.await(barrier);
+      TestSupport.sleep(10);
+      leases.remove(group);
+    }, "unblocker").start();
+    
+    TestSupport.await(barrier);
+    
+    // enter a long poll and verify that:
+    // - the subscriber ends up consuming the messages;
+    // - the assignment is picked up quickly (the poll returns in a short time)
+    // - the subscriber is indicating that it is the assignee
+    final long pollStarted = System.currentTimeMillis();
+    final RecordBatch b1 = s.poll(60_000);
+    final long pollTook = System.currentTimeMillis() - pollStarted;
+    assertTrue("pollTook=" + pollTook, pollTook < 10_000);
+    assertEquals(2, b1.size());
+    assertTrue(s.isAssigned());
     
     verifyNoError(eh);
   }

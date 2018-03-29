@@ -40,19 +40,23 @@ public final class HazelQLedgerTest {
     
     verify(callback).onAppend(isNull(), eq(cause));
   }
-//TODO
-//  @Test
-//  public void testReceivePackError() throws Exception {
-//    final MessageCodec codec = new IdentityMessageCodec();
-//    final Logger log = mock(Logger.class);
-//    final Message m = new Proposal("100", new String[0], null, 0);
-//    final Record record = new Record(MessagePacker.pack(codec, m));
-//    final MessageHandler handler = mock(MessageHandler.class);
-//    final MessageContext context = mock(MessageContext.class);
-//    HazelQLedger.receive(codec, record, log, handler, context);
-//    
-//    verify(log).error(isNotNull(), isA(UnsupportedOperationException.class));
-//    verifyNoMoreInteractions(handler);
-//    verifyNoMoreInteractions(context);
-//  }
+
+  @Test
+  public void testReceivePackError() throws Exception {
+    final Exception cause = new Exception("test exception");
+    final MessageCodec codec = mock(MessageCodec.class);
+    when(codec.encode(any())).thenReturn(new byte[0]);
+    when(codec.decode(any())).thenThrow(cause);
+    
+    final Logger log = mock(Logger.class);
+    final Message m = new Proposal("100", new String[0], null, 0);
+    final Record record = new Record(MessagePacker.pack(codec, m));
+    final MessageHandler handler = mock(MessageHandler.class);
+    final MessageContext context = mock(MessageContext.class);
+    HazelQLedger.receive(codec, record, log, handler, context);
+    
+    verify(log).error(isNotNull(), eq(cause));
+    verifyNoMoreInteractions(handler);
+    verifyNoMoreInteractions(context);
+  }
 }

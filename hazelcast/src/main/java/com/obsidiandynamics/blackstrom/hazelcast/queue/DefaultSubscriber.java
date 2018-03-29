@@ -13,8 +13,11 @@ import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
+  /** Cycle backoff for the keeper thread. */
   private static final int KEEPER_BACKOFF_MILLIS = 1;
 
+  /** The maximum amount of time an unassigned subscriber is allowed to sleep before re-checking the
+   *  assignment status. */
   private static final int MAX_UNASSIGNED_SLEEP_MILLIS = 10;
   
   private final HazelcastInstance instance;
