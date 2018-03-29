@@ -3,6 +3,8 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
+import org.slf4j.*;
+
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
@@ -66,32 +68,42 @@ public final class HazelQLedger implements Ledger {
     }
 
     final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
-    final Receiver receiver = subscriber.createReceiver(record -> {
-      final DefaultMessageId messageId = new DefaultMessageId(0, record.getOffset());
-      final Message message;
-      try {
-        message = MessagePacker.unpack(codec, record.getData());
-      } catch (Exception e) {
-        config.getLog().error(String.format("Could not decode message at offset %,d", record.getOffset()), e);
-        return;
-      }
-      message.setMessageId(messageId);
-      handler.onMessage(context, message);
-    }, config.getPollInterval());
+    final Receiver receiver = subscriber.createReceiver(record -> receive(codec, record, config.getLog(), handler, context), 
+                                                        config.getPollInterval());
     receivers.add(receiver);
+  }
+  
+  static void receive(MessageCodec codec, Record record, Logger log, MessageHandler handler, MessageContext context) {
+    final DefaultMessageId messageId = new DefaultMessageId(0, record.getOffset());
+    final Message message;
+    try {
+      message = MessagePacker.unpack(codec, record.getData());
+    } catch (Exception e) {
+      log.error(String.format("Could not decode message at offset %,d", record.getOffset()), e);
+      return;
+    }
+    message.setMessageId(messageId);
+    handler.onMessage(context, message);
   }
 
   @Override
   public void append(Message message, AppendCallback callback) {
+    appendWithCallback(codec, publisher, message, callback);
+  }
+  
+  static void appendWithCallback(MessageCodec codec, Publisher publisher, Message message, AppendCallback callback) {
+    final byte[] bytes;
     try {
-      final byte[] bytes = MessagePacker.pack(codec, message);
-      publisher.publishAsync(new Record(bytes), (offset, error) -> {
-        final MessageId messageId = offset != Record.UNASSIGNED_OFFSET ? new DefaultMessageId(0, offset) : null;
-        callback.onAppend(messageId, error);
-      });
+      bytes = MessagePacker.pack(codec, message);
     } catch (Exception e) {
       callback.onAppend(null, e);
+      return;
     }
+    
+    publisher.publishAsync(new Record(bytes), (offset, error) -> {
+      final MessageId messageId = offset != Record.UNASSIGNED_OFFSET ? new DefaultMessageId(0, offset) : null;
+      callback.onAppend(messageId, error);
+    });
   }
   
   @Override
