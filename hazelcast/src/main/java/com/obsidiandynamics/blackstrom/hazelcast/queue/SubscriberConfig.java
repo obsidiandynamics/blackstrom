@@ -10,44 +10,44 @@ import com.obsidiandynamics.yconf.*;
 public final class SubscriberConfig {
   @YInject
   private Logger log = LoggerFactory.getLogger(Subscriber.class);
-  
+
   @YInject
   private ErrorHandler errorHandler = new LogAwareErrorHandler(this::getLog);
-  
+
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
-  
+
   @YInject
   private String group = null;
-  
+
   @YInject
   private InitialOffsetScheme initialOffsetScheme = InitialOffsetScheme.AUTO;
-  
+
   @YInject
   private ElectionConfig electionConfig = new ElectionConfig();
-  
+
   @YInject
   private double staleReadSafetyMargin = 0.1;
-  
+
   @YInject
   private int minLeaseExtendIntervalMillis = 1_000;
-  
+
   @YInject
   private MapStoreConfig mapStoreConfig = new MapStoreConfig().setEnabled(false);
-  
+
   Logger getLog() {
     return log;
   }
-  
+
   public SubscriberConfig withLog(Logger log) {
     this.log = log;
     return this;
   }
-  
+
   ErrorHandler getErrorHandler() {
     return errorHandler;
   }
-  
+
   public SubscriberConfig withErrorHandler(ErrorHandler errorHandler) {
     this.errorHandler = errorHandler;
     return this;
@@ -61,7 +61,7 @@ public final class SubscriberConfig {
     this.streamConfig = streamConfig;
     return this;
   }
-  
+
   boolean hasGroup() {
     return group != null;
   }
@@ -74,11 +74,11 @@ public final class SubscriberConfig {
     this.group = group;
     return this;
   }
-  
+
   InitialOffsetScheme getInitialOffsetScheme() {
     return initialOffsetScheme;
   }
-  
+
   public SubscriberConfig withInitialOffsetScheme(InitialOffsetScheme initialOffsetScheme) {
     this.initialOffsetScheme = initialOffsetScheme;
     return this;
@@ -96,12 +96,12 @@ public final class SubscriberConfig {
   double getStaleReadSafetyMargin() {
     return staleReadSafetyMargin;
   }
-  
+
   public SubscriberConfig withStaleReadSafetyMargin(double staleReadSafetyMargin) {
     this.staleReadSafetyMargin = staleReadSafetyMargin;
     return this;
   }
-  
+
   int getMinLeaseExtendInterval() {
     return minLeaseExtendIntervalMillis;
   }
@@ -110,7 +110,7 @@ public final class SubscriberConfig {
     this.minLeaseExtendIntervalMillis = minLeaseExtendIntervalMillis;
     return this;
   }
-  
+
   MapStoreConfig getMapStoreConfig() {
     return mapStoreConfig;
   }
@@ -122,10 +122,11 @@ public final class SubscriberConfig {
 
   @Override
   public String toString() {
-    return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler + ", streamConfig=" + streamConfig
-           + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme 
-           + ", electionConfig=" + electionConfig + ", staleReadSafetyMargin=" + staleReadSafetyMargin
-           + ", minLeaseExtendInterval=" + minLeaseExtendIntervalMillis 
-           + ", mapStoreConfig=" + mapStoreConfig + "]";
+    return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler 
+        + ", streamConfig=" + streamConfig
+        + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme 
+        + ", electionConfig=" + electionConfig + ", staleReadSafetyMargin=" + staleReadSafetyMargin
+        + ", minLeaseExtendInterval=" + minLeaseExtendIntervalMillis 
+        + ", mapStoreConfig=" + mapStoreConfig + "]";
   }
 }

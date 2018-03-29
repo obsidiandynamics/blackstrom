@@ -68,4 +68,10 @@ public final class HazelQLedgerConfig {
     this.pollIntervalMillis = pollIntervalMillis;
     return this;
   }
+
+  @Override
+  public String toString() {
+    return HazelQLedgerConfig.class.getSimpleName() + " [codec=" + codec + ", log=" + log + ", streamConfig=" + streamConfig
+        + ", electionConfig=" + electionConfig + ", pollInterval=" + pollIntervalMillis + "]";
+  }
 }
