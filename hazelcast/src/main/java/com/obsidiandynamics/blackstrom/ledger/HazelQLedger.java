@@ -1,6 +1,5 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
-import java.nio.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -71,7 +70,7 @@ public final class HazelQLedger implements Ledger {
       final DefaultMessageId messageId = new DefaultMessageId(0, record.getOffset());
       final Message message;
       try {
-        message = deserialize(record.getData());
+        message = MessagePacker.unpack(codec, record.getData());
       } catch (Exception e) {
         config.getLog().error(String.format("Could not decode message at offset %,d", record.getOffset()), e);
         return;
@@ -85,7 +84,7 @@ public final class HazelQLedger implements Ledger {
   @Override
   public void append(Message message, AppendCallback callback) {
     try {
-      final byte[] bytes = serialize(message);
+      final byte[] bytes = MessagePacker.pack(codec, message);
       publisher.publishAsync(new Record(bytes), (offset, error) -> {
         final MessageId messageId = offset != Record.UNASSIGNED_OFFSET ? new DefaultMessageId(0, offset) : null;
         callback.onAppend(messageId, error);
@@ -93,58 +92,6 @@ public final class HazelQLedger implements Ledger {
     } catch (Exception e) {
       callback.onAppend(null, e);
     }
-  }
-  
-  private static final byte[] emptyBytes = {};
-  
-  private byte[] serialize(Message message) throws Exception {
-    final String shardKey = message.getShardKey();
-    final byte[] shardKeyBytes = shardKey != null ? shardKey.getBytes() : emptyBytes;
-    final byte shardKeyLength = (byte) (shardKeyBytes != null ? shardKeyBytes.length : -1);
-    
-    final byte[] payload = codec.encode(message);
-    final int payloadLength = payload.length;
-    
-    final int totalLength = 
-        1 + shardKeyBytes.length + 
-        4 + payload.length;
-    final ByteBuffer buf = ByteBuffer.allocate(totalLength);
-    buf.put(shardKeyLength);
-    buf.put(shardKeyBytes);
-    buf.putInt(payloadLength);
-    buf.put(payload);
-    return buf.array();
-  }
-  
-  private static class DeserializationException extends Exception {
-    private static final long serialVersionUID = 1L;
-    DeserializationException(String m) { super(m); }
-  }
-  
-  private Message deserialize(byte[] bytes) throws Exception {
-    final ByteBuffer buf = ByteBuffer.wrap(bytes);
-    
-    final byte shardKeyLength = buf.get();
-    final String shardKey;
-    if (shardKeyLength != -1) {
-      final byte[] shardKeyBytes = new byte[shardKeyLength];
-      buf.get(shardKeyBytes);
-      shardKey = new String(shardKeyBytes);
-    } else {
-      shardKey = null;
-    }
-    
-    final int payloadLength = buf.getInt();
-    final byte[] payloadBytes = new byte[payloadLength];
-    buf.get(payloadBytes);
-    if (buf.remaining() != 0) {
-      throw new DeserializationException(String.format("%,d unread bytes remaining", buf.remaining()));
-    }
-    
-    final Message message = codec.decode(payloadBytes);
-    message.setShardKey(shardKey);
-    message.setShard(0);
-    return message;
   }
   
   @Override
