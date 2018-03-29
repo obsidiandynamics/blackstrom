@@ -35,7 +35,7 @@ public final class ProducerPipeTest {
 
     pipe.closeProducer();
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);
-    final ProducerRecord<String, Message> rec = new  ProducerRecord<>("test", proposal);
+    final ProducerRecord<String, Message> rec = new ProducerRecord<>("test", proposal);
     pipe.send(rec, null);
     
     TestSupport.sleep(10);
@@ -52,7 +52,8 @@ public final class ProducerPipeTest {
     final Consumer<String, Message> consumer = kafka.getConsumer(TestProps.consumer());
     consumer.subscribe(Arrays.asList("test"));
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);
-    final ProducerRecord<String, Message> rec = new  ProducerRecord<>("test", proposal);
+    final ProducerRecord<String, Message> rec = new ProducerRecord<>("test", proposal);
+    TestSupport.sleep(10); // give the thread an opportunity to yield and sleep
     pipe.send(rec, null);
     
     wait.until(() -> {
@@ -70,7 +71,7 @@ public final class ProducerPipeTest {
     final Consumer<String, Message> consumer = kafka.getConsumer(TestProps.consumer());
     consumer.subscribe(Arrays.asList("test"));
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);
-    final ProducerRecord<String, Message> rec = new  ProducerRecord<>("test", proposal);
+    final ProducerRecord<String, Message> rec = new ProducerRecord<>("test", proposal);
     pipe.send(rec, null);
     
     wait.until(() -> {
@@ -87,7 +88,7 @@ public final class ProducerPipeTest {
     pipe = new ProducerPipe<>(new ProducerPipeConfig().withAsync(false), producer, ProducerPipe.class.getSimpleName(), log);
 
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);
-    final ProducerRecord<String, Message> rec = new  ProducerRecord<>("test", proposal);
+    final ProducerRecord<String, Message> rec = new ProducerRecord<>("test", proposal);
     pipe.send(rec, null);
     
     wait.until(() -> {
