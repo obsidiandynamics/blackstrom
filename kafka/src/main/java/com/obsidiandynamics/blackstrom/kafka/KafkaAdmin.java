@@ -12,7 +12,7 @@ import org.apache.kafka.common.*;
 import org.apache.kafka.common.errors.*;
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class KafkaAdmin implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(KafkaAdmin.class);

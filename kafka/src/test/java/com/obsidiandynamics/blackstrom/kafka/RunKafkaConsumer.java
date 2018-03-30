@@ -8,7 +8,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class RunKafkaConsumer {
   public static void main(String[] args) {

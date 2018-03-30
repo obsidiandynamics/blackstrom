@@ -2,8 +2,8 @@ package com.obsidiandynamics.blackstrom.kafka;
 
 import java.util.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.yconf.props.*;
 
 @Y(KafkaClusterConfig.Mapper.class)
 public final class KafkaClusterConfig {

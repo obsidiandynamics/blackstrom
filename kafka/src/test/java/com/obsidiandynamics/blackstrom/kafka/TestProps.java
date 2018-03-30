@@ -5,7 +5,7 @@ import java.util.*;
 import org.apache.kafka.common.serialization.*;
 
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.util.props.*;
+import com.obsidiandynamics.yconf.props.*;
 
 final class TestProps {
   private TestProps() {}

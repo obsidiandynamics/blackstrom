@@ -11,7 +11,7 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 import org.junit.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public class KafkaClusterTest {
   private static <K, V> KafkaCluster<K, V> createCluster() {

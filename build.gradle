@@ -36,7 +36,7 @@ allprojects {
   ext {
     indigoVersion = "1.1.0"
     fulcrumVersion = "0.4.0"
-    yconfVersion = "0.2.1"
+    yconfVersion = "0.3.0"
   }
   
   dependencies {

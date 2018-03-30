@@ -7,8 +7,8 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class KafkaSamplePubSub {
   private static final boolean MOCK = false;

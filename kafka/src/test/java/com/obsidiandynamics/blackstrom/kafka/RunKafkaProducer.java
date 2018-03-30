@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class RunKafkaProducer {
   public static void main(String[] args) throws InterruptedException, ExecutionException {

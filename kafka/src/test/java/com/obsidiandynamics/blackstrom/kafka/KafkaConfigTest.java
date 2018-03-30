@@ -8,8 +8,8 @@ import java.util.*;
 import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
-import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class KafkaConfigTest {
   @Test

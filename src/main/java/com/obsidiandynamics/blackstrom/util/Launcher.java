@@ -6,6 +6,7 @@ import java.util.*;
 
 import com.obsidiandynamics.blackstrom.resolver.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class Launcher {
   @FunctionalInterface
@@ -24,9 +25,9 @@ public final class Launcher {
   }
   
   public static class Options {
-    public int packageCompressLevel = PropertyUtils.get("launcher.package.compress.level", Integer::parseInt, 0);
+    public int packageCompressLevel = Props.get("launcher.package.compress.level", Integer::parseInt, 0);
     
-    public String partialClassName = PropertyUtils.get("launcher.class", String::valueOf, null);
+    public String partialClassName = Props.get("launcher.class", String::valueOf, null);
     
     public ConsoleWriter out = System.out::printf;
     

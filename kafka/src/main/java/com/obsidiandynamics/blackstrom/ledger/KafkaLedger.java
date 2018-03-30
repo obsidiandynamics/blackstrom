@@ -17,9 +17,9 @@ import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.yconf.props.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;

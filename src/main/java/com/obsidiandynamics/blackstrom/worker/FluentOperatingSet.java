@@ -20,7 +20,8 @@ public abstract class FluentOperatingSet<E, O extends FluentOperatingSet<E, O>> 
     return self();
   }
   
-  public final O add(@SuppressWarnings("unchecked") E... elements) {
+  @SuppressWarnings("unchecked") 
+  public final O add(E... elements) {
     return add(Arrays.asList(elements));
   }
   

@@ -1,28 +1,28 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
-import static com.obsidiandynamics.blackstrom.util.props.PropsFormat.*;
+import static com.obsidiandynamics.yconf.props.PropsFormat.*;
 
 import java.util.*;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 
-import com.obsidiandynamics.blackstrom.util.props.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.yconf.props.*;
 
 @Y
 public final class KafkaCluster<K, V> implements Kafka<K, V> {
   private final KafkaClusterConfig config;
-  
+
   public KafkaCluster(@YInject(name="clusterConfig") KafkaClusterConfig config) {
     config.validate();
     this.config = config;
   }
-  
+
   public KafkaClusterConfig getConfig() {
     return config;
   }
-  
+
   private Properties mergeProducerProps(Properties defaults, Properties overrides) {
     return Props.merge(defaults, config.getProducerCombinedProps(), overrides);
   }
@@ -36,12 +36,12 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   public void describeProducer(java.util.function.Consumer<String> logLine, Properties defaults, Properties overrides) {
     logLine.accept("Producer properties:");
     PropsFormat.printProps(logLine, 
-                              mergeProducerProps(defaults, overrides),
-                              s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
-                              prefix(" "), 
-                              any());
+                           mergeProducerProps(defaults, overrides),
+                           s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
+                           prefix(" "), 
+                           any());
   }
-  
+
   private Properties mergeConsumerProps(Properties defaults, Properties overrides) {
     return Props.merge(defaults, config.getConsumerCombinedProps(), overrides);
   }
@@ -55,10 +55,10 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   public void describeConsumer(java.util.function.Consumer<String> logLine, Properties defaults, Properties overrides) {
     logLine.accept("Consumer properties:");
     PropsFormat.printProps(logLine, 
-                              mergeConsumerProps(defaults, overrides),
-                              s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
-                              prefix(" "), 
-                              any());
+                           mergeConsumerProps(defaults, overrides),
+                           s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
+                           prefix(" "), 
+                           any());
   }
 
   @Override
