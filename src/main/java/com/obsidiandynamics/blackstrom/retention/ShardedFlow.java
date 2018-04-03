@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.flow.*;
+import com.obsidiandynamics.blackstrom.flow.Flow;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
