@@ -12,12 +12,12 @@ dependencies {
   testCompile "com.hazelcast:hazelcast:3.10-BETA-2:tests"
 }
 
-task addBenchmarks() {
-  project(":").benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.bank.HazelQKryoRandomBankTransferTest"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.ledger.HazelQKryoLedgerTest"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubOneWayTest"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubRoundTripTest"
+task addLauncherApps() {
+  project(":").launcherClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.HazelQKryoRandomBankTransferTest"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.HazelQKryoLedgerTest"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubOneWayTest"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubRoundTripTest"
 }
 
 jar {

@@ -6,12 +6,12 @@ dependencies {
   compile "org.jgroups:jgroups:4.0.10.Final"
 }
 
-task addBenchmarks() {
-  project(":").benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.bank.BalancedRandomBankTransferTest"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.bank.MultiNodeQueueRandomBankTransferTest"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.ledger.BalancedLedgerTest"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.rig.MultiNodeQueueRigTest"
+task addLauncherApps() {
+  project(":").launcherClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.BalancedRandomBankTransferTest"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.MultiNodeQueueRandomBankTransferTest"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.BalancedLedgerTest"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.rig.MultiNodeQueueRigTest"
 }
 
 jar {

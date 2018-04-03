@@ -14,12 +14,12 @@ dependencies {
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-docker-compose:${fulcrumVersion}"
 }
 
-task addBenchmarks() {
-  project(":").benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.bank.KafkaKryoRandomBankTransferIT"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.bank.KafkaJacksonRandomBankTransferIT"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.ledger.KafkaKryoLedgerIT"
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.ledger.KafkaJacksonLedgerIT"
+task addLauncherApps() {
+  project(":").launcherClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.KafkaKryoRandomBankTransferIT"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.KafkaJacksonRandomBankTransferIT"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.KafkaKryoLedgerIT"
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.KafkaJacksonLedgerIT"
 }
 
 task startKafka(type: JavaExec) {

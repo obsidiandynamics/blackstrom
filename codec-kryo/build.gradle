@@ -6,9 +6,9 @@ dependencies {
   compile "com.esotericsoftware:kryo:4.0.2"
 }
 
-task addBenchmarks() {
-  project(":").benchmarkClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  project(":").benchmarkClasses += "com.obsidiandynamics.blackstrom.codec.KryoMessageCodecTest"
+task addLauncherApps() {
+  project(":").launcherClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.codec.KryoMessageCodecTest"
 }
 
 jar {
