@@ -295,7 +295,7 @@ public final class MonitorEngineTest {
     wait.until(numTrackedOutcomesIs(0));
   }
   
-  private static class TestLedgerException extends Exception {
+  private static class TestLedgerException extends RuntimeException {
     private static final long serialVersionUID = 1L;
   }
   

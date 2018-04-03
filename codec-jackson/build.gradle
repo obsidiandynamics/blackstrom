@@ -3,8 +3,8 @@ version = project(":").version
 
 dependencies {
   compile project(":")
-  compile "com.fasterxml.jackson.core:jackson-core:2.9.3"
-  compile "com.fasterxml.jackson.core:jackson-databind:2.9.3"
+  compile "com.fasterxml.jackson.core:jackson-core:2.9.5"
+  compile "com.fasterxml.jackson.core:jackson-databind:2.9.5"
 }
 
 task addBenchmarks() {
