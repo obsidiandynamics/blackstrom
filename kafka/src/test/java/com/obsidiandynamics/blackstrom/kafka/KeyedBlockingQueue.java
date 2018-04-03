@@ -1,14 +1,25 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import com.obsidiandynamics.blackstrom.keyed.*;
-
-public final class KeyedBlockingQueue<K, E> extends Keyed<K, BlockingQueue<E>> {
+public final class KeyedBlockingQueue<K, E> {
+  private final ConcurrentHashMap<K, BlockingQueue<E>> map = new ConcurrentHashMap<>();
+  
+  private final Supplier<BlockingQueue<E>> partitionFactory;
+  
   public KeyedBlockingQueue(Supplier<BlockingQueue<E>> partitionFactory) {
-    super(k -> partitionFactory.get());
+    this.partitionFactory = partitionFactory;
+  }
+  
+  public BlockingQueue<E> forKey(K key) {
+    return map.computeIfAbsent(key, __key -> partitionFactory.get());
+  }
+  
+  public Map<K, BlockingQueue<E>> map() {
+    return map;
   }
 
   public int totalSize() {

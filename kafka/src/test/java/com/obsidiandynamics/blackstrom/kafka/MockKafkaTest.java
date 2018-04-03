@@ -100,8 +100,8 @@ public final class MockKafkaTest {
     } finally {
       for (TestConsumer<Integer, Integer> consumer : consumers) {
         assertEquals(expectedMessages, consumer.received.totalSize());
-        assertEquals(partitions, consumer.received.asMap().size());
-        for (Map.Entry<Integer, BlockingQueue<ConsumerRecord<Integer, Integer>>> entry : consumer.received.asMap().entrySet()) {
+        assertEquals(partitions, consumer.received.map().size());
+        for (Map.Entry<Integer, BlockingQueue<ConsumerRecord<Integer, Integer>>> entry : consumer.received.map().entrySet()) {
           final List<ConsumerRecord<Integer, Integer>> records = new ArrayList<>(entry.getValue());
           assertEquals(messages, records.size());
           for (int m = 0; m < messages; m++) {
