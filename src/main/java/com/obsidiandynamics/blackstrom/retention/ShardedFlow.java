@@ -1,12 +1,13 @@
 package com.obsidiandynamics.blackstrom.retention;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.keyed.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.blackstrom.worker.Terminator;
 
 public final class ShardedFlow implements Retention, Terminable, Joinable {
   private static class ConfirmTask implements Runnable {
@@ -24,7 +25,9 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
     }
   }
   
-  private final Keyed<Integer, Flow> flows;
+  private final FiringStrategy.Factory firingStrategyFactory;
+  
+  private final ConcurrentHashMap<Integer, Flow> flows = new ConcurrentHashMap<>();
   
   private final List<Flow> createdFlows = new ArrayList<>();
   
@@ -37,23 +40,23 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
   }
   
   public ShardedFlow(FiringStrategy.Factory firingStrategyFactory) {
-    flows = new Keyed<>(shard -> {
-      synchronized (terminateLock) {
-        final Flow flow = new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard-[" + shard + "]");
-        createdFlows.add(flow);
-        if (terminated) {
-          // the container was already terminated -- terminate the newly created flow; the resulting Confirmation
-          // objects won't do anything
-          flow.terminate();
-        }
-        return flow;
-      }
-    });
+    this.firingStrategyFactory = firingStrategyFactory;
   }
 
   @Override
   public Confirmation begin(MessageContext context, Message message) {
-    final Flow flow = flows.forKey(message.getShard());
+    final Flow flow = flows.computeIfAbsent(message.getShard(), shard -> {
+      final Flow newFlow = new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard-[" + shard + "]");
+      synchronized (terminateLock) {
+        createdFlows.add(newFlow);
+        if (terminated) {
+          // the container was already terminated -- terminate the newly created flow; the resulting Confirmation
+          // objects won't do anything
+          newFlow.terminate();
+        }
+      }
+      return newFlow;
+    });
     final MessageId messageId = message.getMessageId();
     return flow.begin(messageId, new ConfirmTask(context, messageId));
   }

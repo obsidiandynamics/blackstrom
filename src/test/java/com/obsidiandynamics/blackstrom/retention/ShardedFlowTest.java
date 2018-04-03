@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.flow.*;
@@ -15,8 +17,15 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.junit.*;
 
+@RunWith(Parameterized.class)
 public class ShardedFlowTest {
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   private final Timesert wait = Wait.SHORT;
   
   private ShardedFlow flow;
