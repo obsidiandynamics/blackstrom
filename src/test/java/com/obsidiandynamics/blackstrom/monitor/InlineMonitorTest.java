@@ -286,9 +286,20 @@ public final class InlineMonitorTest {
     assertEquals(ballotId, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
-    assertEquals(2, outcomes.get(0).getResponses().length);
-    assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
-    assertEquals(Intent.TIMEOUT, getResponseForCohort(outcomes.get(0), "b").getIntent());
+    
+    final int numOutcomes = outcomes.get(0).getResponses().length;
+    // depending on the timing of A's vote, it's possible that A has been timed out
+    if (numOutcomes == 1) {
+      // A has timed out, B was ignored 
+      // (would've also timed out, but A's timeout was sufficient to close the pending ballot)
+      assertEquals(Intent.TIMEOUT, getResponseForCohort(outcomes.get(0), "a").getIntent());
+    } else if (numOutcomes == 2) {
+      // A's vote has reached the monitor in time; B has timed out
+      assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
+      assertEquals(Intent.TIMEOUT, getResponseForCohort(outcomes.get(0), "b").getIntent());
+    } else {
+      fail("Unexpected number of outcomes " + numOutcomes);
+    }
     
     // subsequent votes should have no effect
     vote(ballotId, "b", Intent.ACCEPT);

@@ -17,6 +17,7 @@ import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.blackstrom.worker.*;
 import com.obsidiandynamics.blackstrom.worker.Terminator;
 import com.obsidiandynamics.yconf.props.*;
@@ -160,7 +161,7 @@ public final class KafkaLedger implements Ledger {
     
     if (printConfig) kafka.describeConsumer(log::info, consumerDefaults, consumerOverrides);
     final Consumer<String, Message> consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
-    KafkaRetry.run(attachRetries, log, () -> {
+    new Retry().withAttempts(attachRetries).withLog(log).run(() -> {
       if (groupId != null) {
         consumer.subscribe(Collections.singletonList(topic));
         log.debug("subscribed to topic {}", topic);
