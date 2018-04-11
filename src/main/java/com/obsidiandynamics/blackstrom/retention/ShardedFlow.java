@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.flow.*;
+import com.obsidiandynamics.flow.Flow;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 

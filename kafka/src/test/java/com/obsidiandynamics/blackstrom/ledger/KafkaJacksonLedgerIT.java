@@ -10,6 +10,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.testmark.*;
 
 public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   @BeforeClass

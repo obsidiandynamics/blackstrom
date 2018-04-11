@@ -10,6 +10,7 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.testmark.*;
 
 @RunWith(Parameterized.class)
 public final class MultiNodeQueueRandomBankTransferTest extends AbstractRandomBankTransferTest {
