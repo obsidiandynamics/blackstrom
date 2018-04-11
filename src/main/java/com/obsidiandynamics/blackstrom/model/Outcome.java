@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.*;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class Outcome extends FluentMessage<Outcome> {
   private final Resolution resolution;
@@ -47,7 +47,7 @@ public final class Outcome extends FluentMessage<Outcome> {
   }
   
   public <T> T getMetadata() {
-    return Cast.from(metadata);
+    return Classes.cast(metadata);
   }
 
   @Override

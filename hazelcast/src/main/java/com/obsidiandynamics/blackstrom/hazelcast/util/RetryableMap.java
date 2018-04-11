@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.util;
 import java.util.*;
 
 import com.hazelcast.core.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.retry.*;
 
 public final class RetryableMap<K, V> {
   private final Retry retry;

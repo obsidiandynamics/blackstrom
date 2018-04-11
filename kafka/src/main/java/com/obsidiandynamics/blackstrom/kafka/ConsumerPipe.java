@@ -6,7 +6,8 @@ import java.util.concurrent.*;
 import org.apache.kafka.clients.consumer.*;
 
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 public final class ConsumerPipe<K, V> implements Terminable, Joinable {
   private final BlockingQueue<ConsumerRecords<K, V>> queue;

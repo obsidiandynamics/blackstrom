@@ -1,7 +1,7 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import com.hazelcast.core.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 public interface Publisher extends Terminable {
   PublisherConfig getConfig();

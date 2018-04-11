@@ -7,10 +7,10 @@ import java.util.function.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedger.Config.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.nodequeue.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 /**
  *  A high-performance, lock-free, unbounded MPMC (multi-producer, multi-consumer) queue

@@ -15,8 +15,8 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractPubSubTest {

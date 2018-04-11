@@ -13,6 +13,7 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class BankBranchTest {
   private static final String BRANCH_ID = "branch";
@@ -198,7 +199,7 @@ public final class BankBranchTest {
   }
   
   private Vote voteAt(int index) {
-    return Cast.from(received.get(index));
+    return Classes.cast(received.get(index));
   }
   
   private Runnable received(int numMessages) {

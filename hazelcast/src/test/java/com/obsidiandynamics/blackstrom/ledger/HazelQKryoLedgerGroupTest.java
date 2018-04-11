@@ -15,6 +15,7 @@ import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.testmark.Testmark;
 
 @RunWith(Parameterized.class)
 public final class HazelQKryoLedgerGroupTest extends AbstractGroupLedgerTest {  

@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.*;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class Proposal extends FluentMessage<Proposal> {
   private final String[] cohorts;
@@ -27,7 +27,7 @@ public final class Proposal extends FluentMessage<Proposal> {
   }
 
   public <T> T getObjective() {
-    return Cast.from(objective);
+    return Classes.cast(objective);
   }
   
   public int getTtl() {

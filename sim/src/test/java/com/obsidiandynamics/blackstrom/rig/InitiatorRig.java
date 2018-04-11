@@ -15,14 +15,15 @@ import org.jgroups.Message.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.factor.*;
-import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.nanoclock.*;
+import com.obsidiandynamics.threads.*;
 
 public final class InitiatorRig {
   private static final int GROUP_VIEW_WAIT_MILLIS = 300_000;
@@ -132,7 +133,7 @@ public final class InitiatorRig {
           for (;;) {
             final int backlog = (int) (run - commits.get() - aborts.get() - timeouts.get());
             if (backlog >= backlogTarget) {
-              TestSupport.sleep(1);
+              Threads.sleep(1);
               if (System.currentTimeMillis() - lastLogTime > 5_000) {
                 config.log.debug(String.format("Initiator: throttling... backlog @ %,d (%,d txns)", backlog, run));
                 lastLogTime = System.currentTimeMillis();

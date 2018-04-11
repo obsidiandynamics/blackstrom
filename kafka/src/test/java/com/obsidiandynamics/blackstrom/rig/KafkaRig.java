@@ -11,10 +11,10 @@ import org.jgroups.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.props.*;
 
 public final class KafkaRig {
@@ -103,7 +103,7 @@ public final class KafkaRig {
         branchId = _branchId;
       }}.create();
       
-      TestSupport.sleep(Integer.MAX_VALUE);
+      Threads.sleep(Integer.MAX_VALUE);
     }
   }
   
@@ -118,7 +118,7 @@ public final class KafkaRig {
         clusterName = KafkaRig.cluster;
       }}.create();
       
-      TestSupport.sleep(Integer.MAX_VALUE);
+      Threads.sleep(Integer.MAX_VALUE);
     }
   }
 }

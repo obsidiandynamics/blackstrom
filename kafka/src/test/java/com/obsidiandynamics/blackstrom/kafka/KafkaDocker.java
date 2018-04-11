@@ -1,14 +1,18 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
 import java.io.*;
+import java.lang.invoke.*;
 import java.net.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.dockercompose.*;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.shell.*;
+import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaDocker {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private static final String PROJECT = "blackstrom";
   private static final String PATH = "/usr/local/bin";
   private static final int BROKER_AWAIT_MILLIS = 600_000;
@@ -17,7 +21,7 @@ public final class KafkaDocker {
       .withShell(new BourneShell().withPath(PATH))
       .withProject(PROJECT)
       .withEcho(true)
-      .withSink(TestSupport.LOG_STREAM::append)
+      .withSink(System.out::print)
       .withComposeFile("stack/docker-compose.yaml");
   
   private KafkaDocker() {}
@@ -35,34 +39,34 @@ public final class KafkaDocker {
   }
   
   public static void start() throws Exception {
-    TestSupport.LOG_STREAM.format("Starting Kafka stack...\n");
+    zlg.i("Starting Kafka stack...").log();
     if (isRunning()) {
-      TestSupport.LOG_STREAM.format("Kafka already running\n");
+      zlg.i("Kafka already running").log();
       return;
     }
 
     COMPOSE.checkInstalled();
-    final long tookStart = TestSupport.tookThrowing(COMPOSE::up);
-    TestSupport.LOG_STREAM.format("took %,d ms (now waiting for broker to come up...)\n", tookStart);
+    final long tookStartMillis = Threads.tookMillis(COMPOSE::up);
+    zlg.i("took %,d ms (now waiting for broker to come up...)").arg(tookStartMillis).log();
     final long tookAwait = awaitBroker();
-    TestSupport.LOG_STREAM.format("broker up, waited %,d ms\n", tookAwait);
+    zlg.i("broker up, waited %,d ms").arg(tookAwait).log();
   }
   
   private static long awaitBroker() {
-    return TestSupport.took(() -> Timesert.wait(BROKER_AWAIT_MILLIS).untilTrue(KafkaDocker::isRunning));
+    return Threads.tookMillis(() -> Timesert.wait(BROKER_AWAIT_MILLIS).untilTrue(KafkaDocker::isRunning));
   }
   
   public static void stop() throws Exception {
-    TestSupport.LOG_STREAM.format("Stopping Kafka stack...\n");
+    zlg.i("Stopping Kafka stack...").log();
     if (! isRunning()) {
-      TestSupport.LOG_STREAM.format("Kafka already stopped\n");
+      zlg.i("Kafka already stopped").log();
       return;
     }
     
-    final long took = TestSupport.tookThrowing(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       COMPOSE.stop(1);
       COMPOSE.down(true);
     });
-    TestSupport.LOG_STREAM.format("took %,d ms\n", took);
+    zlg.i("took %,d ms").arg(tookMillis).log();
   }
 }

@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.nanoclock.*;
 
 public final class MessageTest {
   private static final class UntypedMessage extends FluentMessage<UntypedMessage> {

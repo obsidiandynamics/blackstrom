@@ -12,7 +12,7 @@ import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.model.Message;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.worker.Terminator;
 
 public final class HazelQLedger implements Ledger {
   private final HazelcastInstance instance;

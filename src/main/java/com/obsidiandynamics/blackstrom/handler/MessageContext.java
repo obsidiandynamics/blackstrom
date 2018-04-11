@@ -1,9 +1,9 @@
 package com.obsidiandynamics.blackstrom.handler;
 
-import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.flow.*;
 
 public interface MessageContext {
   Ledger getLedger();

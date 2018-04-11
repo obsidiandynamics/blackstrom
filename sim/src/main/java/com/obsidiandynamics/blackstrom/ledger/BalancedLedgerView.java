@@ -6,8 +6,8 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 public final class BalancedLedgerView implements Ledger {
   private final BalancedLedgerHub hub;

@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.model;
 
 import org.apache.commons.lang3.builder.*;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.nanoclock.*;
 
 public abstract class Message {
   private static final int UNASSIGNED = -1;

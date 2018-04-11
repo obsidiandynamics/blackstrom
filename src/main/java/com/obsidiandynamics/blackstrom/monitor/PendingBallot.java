@@ -4,8 +4,8 @@ import java.util.*;
 
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.flow.*;
 
 final class PendingBallot {
   private final Proposal proposal;

@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import static junit.framework.TestCase.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -15,14 +16,18 @@ import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.testmark.*;
+import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public abstract class AbstractLedgerTest implements TestSupport {
+public abstract class AbstractLedgerTest {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1_000);
 
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   private class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -34,7 +39,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
     public void onMessage(MessageContext context, Message message) {
       if (! sandbox.contains(message)) return;
       
-      if (LOG) LOG_STREAM.format("Received %s\n", message);
+      zlg.t("Received %s").arg(message).log();
       final long ballotId = Long.parseLong(message.getBallotId());
       if (lastBallotId == -1) {
         lastBallotId = ballotId;
@@ -177,15 +182,15 @@ public abstract class AbstractLedgerTest implements TestSupport {
     };
 
     final AtomicLong totalSent = new AtomicLong();
-    final long took = TestSupport.took(() -> {
-      ParallelJob.blocking(producers, threadNo -> {
+    final long tookMillis = Threads.tookMillis(() -> {
+      Parallel.blocking(producers, threadNo -> {
         for (int i = 0; i < messagesPerProducer; i++) {
           appendMessage("test", TEST_OBJECTIVE);
           
           if (i != 0 && i % checkInterval == 0) {
             final long sent = totalSent.addAndGet(checkInterval);
             while (sent - smallestReceived.getAsLong() >= backlogTarget) {
-              TestSupport.sleep(1);
+              Threads.sleep(1);
             }
           }
         }
@@ -198,7 +203,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
                                      
     final long totalMessages = (long) producers * messagesPerProducer * consumers;
     System.out.format("One-way: %d/%d prd/cns, %,d msgs took %,d ms, %,.0f msg/s\n", 
-                      producers, consumers, totalMessages, took, (double) totalMessages / took * 1000);
+                      producers, consumers, totalMessages, tookMillis, (double) totalMessages / tookMillis * 1000);
   }
   
   @Test
@@ -232,14 +237,14 @@ public abstract class AbstractLedgerTest implements TestSupport {
     });
     ledger.init();
     
-    final long took = TestSupport.took(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       for (int i = 0; i < numMessages; i++) {
         appendMessage("source", TEST_OBJECTIVE);
         
         if (i != 0 && i % checkInterval == 0) {
           final long sent = totalSent.addAndGet(checkInterval);
           while (sent - received.get() > backlogTarget) {
-            TestSupport.sleep(1);
+            Threads.sleep(1);
           }
         }
       }
@@ -248,7 +253,7 @@ public abstract class AbstractLedgerTest implements TestSupport {
       });
     });
                                      
-    System.out.format("Two-way: %,d took %,d ms, %,d msg/s\n", numMessages, took, numMessages / took * 1000);
+    System.out.format("Two-way: %,d took %,d ms, %,d msg/s\n", numMessages, tookMillis, numMessages / tookMillis * 1000);
   }
   
   private void appendMessage(String source, Object objective) {

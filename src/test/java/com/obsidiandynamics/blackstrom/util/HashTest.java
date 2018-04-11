@@ -9,7 +9,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 
 public final class HashTest {
   @Test
-  public void testConformance() throws Exception {
+  public void testConformance() {
     Assertions.assertUtilityClassWellDefined(Hash.class);
   }
   

@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.model;
 
 import org.apache.commons.lang3.builder.*;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class Response {
   private final String cohort;
@@ -24,7 +24,7 @@ public final class Response {
   }
 
   public <T> T getMetadata() {
-    return Cast.from(metadata);
+    return Classes.cast(metadata);
   }
   
   @Override

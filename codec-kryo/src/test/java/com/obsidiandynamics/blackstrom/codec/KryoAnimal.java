@@ -2,14 +2,14 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import org.apache.commons.lang3.builder.*;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public abstract class KryoAnimal<A> {
   public KryoAnimal<?> friend;
   
   public A withFriend(KryoAnimal<?> friend) {
     this.friend = friend;
-    return Cast.from(this);
+    return Classes.cast(this);
   }
   
   @Override

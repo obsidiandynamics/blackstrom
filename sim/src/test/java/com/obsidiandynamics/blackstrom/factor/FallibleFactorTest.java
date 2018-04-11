@@ -19,8 +19,8 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class FallibleFactorTest {
@@ -187,13 +187,13 @@ public final class FallibleFactorTest {
         .withFactors(fc)
         .build();
     
-    final long took = TestSupport.took(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(1, c.proposals.size());
       });
     });
-    assertTrue("took=" + took, took >= delay);
+    assertTrue("tookMillis=" + tookMillis, tookMillis >= delay);
   }
   
   @Test
@@ -208,13 +208,13 @@ public final class FallibleFactorTest {
         .withFactors(fc)
         .build();
     
-    final long took = TestSupport.took(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(2, c.proposals.size());
       });
     });
-    assertTrue("took=" + took, took >= delay);
+    assertTrue("tookMillis=" + tookMillis, tookMillis >= delay);
   }
   
   @Test(expected=UnsupportedOperationException.class)
@@ -258,13 +258,13 @@ public final class FallibleFactorTest {
         .withFactors(fc, v)
         .build();
     
-    final long took = TestSupport.took(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(1, v.votes.size());
       });
     });
-    assertTrue("took=" + took, took >= delay);
+    assertTrue("tookMillis=" + tookMillis, tookMillis >= delay);
   }
   
   @Test
@@ -280,13 +280,13 @@ public final class FallibleFactorTest {
         .withFactors(fc, v)
         .build();
     
-    final long took = TestSupport.took(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       ledger.append(new Proposal(UUID.randomUUID().toString(), new String[] {"test"}, null, 1000));
       wait.until(() -> {
         assertEquals(2, v.votes.size());
       });
     });
-    assertTrue("took=" + took, took >= delay);
+    assertTrue("tookMillis=" + tookMillis, tookMillis >= delay);
   }
   
   @Test

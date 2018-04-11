@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.bank;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -9,10 +10,13 @@ import com.obsidiandynamics.blackstrom.cohort.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.nanoclock.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class BankBranch implements Cohort {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private final String branchId;
   
   private final Map<Object, Proposal> proposals = new HashMap<>();
@@ -74,7 +78,7 @@ public final class BankBranch implements Cohort {
         }
       }
 
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: reaped %,d lapsed outcomes\n", branchId, deathRow.size());
+      zlg.t("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow.size()).log();
     }
   }
   
@@ -100,10 +104,10 @@ public final class BankBranch implements Cohort {
       if (xfer == null) return; // settlement doesn't apply to this branch
     
       if (idempotencyEnabled) {
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: %s\n", branchId, proposal);
+        zlg.t("%s: %s").arg(branchId).arg(proposal).log();
         synchronized (lock) {
           if (decided.containsKey(proposal.getBallotId())) {
-            if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: ignoring, already decided\n", branchId);
+            zlg.t("%s: ignoring, already decided").arg(branchId).log();
             return;
           }
         }
@@ -119,13 +123,13 @@ public final class BankBranch implements Cohort {
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
-          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: accepting %s\n", branchId, proposal.getBallotId());
+          zlg.t("%s: accepting %s").arg(branchId).arg(proposal.getBallotId()).log();
         } else {
           intent = Intent.ACCEPT;
-          if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: retransmitting previous acceptance\n", branchId);
+          zlg.t("%s: retransmitting previous acceptance").arg(branchId).log();
         }
       } else {
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: rejecting %s, balance: %,d\n", branchId, proposal.getBallotId(), balance);
+        zlg.t("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal.getBallotId()).arg(balance).log();
         intent = Intent.REJECT;
       }
       
@@ -169,7 +173,7 @@ public final class BankBranch implements Cohort {
         balance += xferAmount;
       }
       
-      if (TestSupport.LOG) TestSupport.LOG_STREAM.format("%s: finalising %s\n", branchId, outcome);
+      zlg.t("%s: finalising %s").arg(branchId).arg(outcome).log();
     } finally {
       context.beginAndConfirm(outcome);
     }

@@ -21,8 +21,9 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class KafkaLedgerTest {
@@ -73,20 +74,20 @@ public final class KafkaLedgerTest {
     ledger.attach(new NullGroupMessageHandler() {
       @Override public void onMessage(MessageContext context, Message message) {
         if (received.get() == 0) {
-          TestSupport.await(barrierA);
-          TestSupport.await(barrierB);
+          Threads.await(barrierA);
+          Threads.await(barrierB);
         }
         received.incrementAndGet();
       }
     });
     
     ledger.append(new Proposal("B100", new String[0], null, 0));
-    TestSupport.await(barrierA);
+    Threads.await(barrierA);
     ledger.append(new Proposal("B200", new String[0], null, 0));
-    TestSupport.sleep(50);
+    Threads.sleep(50);
     ledger.append(new Proposal("B300", new String[0], null, 0));
-    TestSupport.sleep(50);
-    TestSupport.await(barrierB);
+    Threads.sleep(50);
+    Threads.await(barrierB);
     wait.until(() -> assertEquals(3, received.get()));
   }
   
@@ -120,7 +121,7 @@ public final class KafkaLedgerTest {
     final Logger log = mock(Logger.class);
     final Exception exception = new CorruptRecordException("testSendRetriableException");
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> exGen = ExceptionGenerator.times(exception, 2);
-    final ExceptionGenerator<ProducerRecord<String, Message>, Exception> mockExGen = Cast.from(mock(ExceptionGenerator.class));
+    final ExceptionGenerator<ProducerRecord<String, Message>, Exception> mockExGen = Classes.cast(mock(ExceptionGenerator.class));
     when(mockExGen.get(any())).thenAnswer(invocation -> exGen.get(invocation.getArgument(0)));
     
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
@@ -184,7 +185,7 @@ public final class KafkaLedgerTest {
     ledger.dispose();
     final AppendCallback callback = mock(AppendCallback.class);
     ledger.append(new Proposal("B100", new String[0], null, 0), callback);
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     verifyNoMoreInteractions(callback);
   }
 }

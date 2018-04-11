@@ -19,8 +19,10 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.nanoclock.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class MonitorEngineTest {
@@ -68,7 +70,7 @@ public final class MonitorEngineTest {
     setMonitorAndInit(new DefaultMonitor());
     setLedger(new SingleNodeQueueLedger());
     ledger.attach((NullGroupMessageHandler) (c, m) -> { 
-      (m.getMessageType() == MessageType.OUTCOME ? outcomes : votes).add(Cast.from(m));
+      (m.getMessageType() == MessageType.OUTCOME ? outcomes : votes).add(Classes.cast(m));
     });
     ledger.init();
     context = new DefaultMessageContext(ledger, null, NopRetention.getInstance());
@@ -210,11 +212,11 @@ public final class MonitorEngineTest {
     propose(ballotId, "a", "b", "c");
     vote(ballotId, "a", Intent.ACCEPT);
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     propose(ballotId, "a", "b", "c");
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Intent.ACCEPT);
 
@@ -240,7 +242,7 @@ public final class MonitorEngineTest {
     vote(ballotId, "a", Intent.ACCEPT);
     vote(ballotId, "a", Intent.REJECT);
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Intent.ACCEPT);
     vote(ballotId, "b", Intent.TIMEOUT);
@@ -263,7 +265,7 @@ public final class MonitorEngineTest {
     final String ballotId = UUID.randomUUID().toString();
     vote(ballotId, "a", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
   }
   
@@ -311,7 +313,7 @@ public final class MonitorEngineTest {
     propose(ballotId, "a");
     vote(ballotId, "a", Intent.ACCEPT);
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
   }
   
@@ -343,7 +345,7 @@ public final class MonitorEngineTest {
     // subsequent votes should have no effect
     vote(ballotId, "b", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(1, outcomes.size());
   }
   
@@ -355,7 +357,7 @@ public final class MonitorEngineTest {
     propose(ballotId, 10_000, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     assertEquals(0, votes.size());
     

@@ -18,7 +18,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.threads.*;
 
 
 public final class KafkaReceiverTest {
@@ -98,7 +98,7 @@ public final class KafkaReceiverTest {
                                               () -> new ConsumerRecords<>(Collections.emptyMap())));
     receiver = new KafkaReceiver<String, String>(consumer, 1, "TestThread", recordHandler, errorHandler);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     verify(recordHandler, never()).onReceive(any());
     verify(errorHandler, never()).onError(any());
   }

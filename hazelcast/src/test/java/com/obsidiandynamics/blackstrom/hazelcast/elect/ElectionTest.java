@@ -15,9 +15,9 @@ import com.hazelcast.core.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.worker.Terminator;
 
 @RunWith(Parameterized.class)
 public final class ElectionTest {
@@ -86,7 +86,7 @@ public final class ElectionTest {
                                    new Registry());
     e.setScavengeWatcher(scavengeWatcher);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, e.getLeaseView().asMap().size());
     verifyNoMoreInteractions(scavengeWatcher);
   }
@@ -147,7 +147,7 @@ public final class ElectionTest {
       assertTrue(lease.getExpiry() >= beforeElection + leaseDuration);
     });
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
     e.extend("resource", c);
     await.until(() -> {
@@ -164,7 +164,7 @@ public final class ElectionTest {
     });
     
     // should be no further elections, since we unenrolled before yielding
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, e.getLeaseView().asMap().size());
   }
   
@@ -213,7 +213,7 @@ public final class ElectionTest {
       assertTrue(lease1.getExpiry() >= beforeElection + leaseDuration);
     });
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
     e0.extend("resource", c);
     await.until(() -> {
@@ -270,7 +270,7 @@ public final class ElectionTest {
       assertTrue(lease1.getExpiry() >= beforeElection + leaseDuration);
     });
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     final long beforeTouch = System.currentTimeMillis();
     final UUID tenant = e0.getLeaseView().getLease("resource").getTenant();
     e0.extend("resource", tenant);

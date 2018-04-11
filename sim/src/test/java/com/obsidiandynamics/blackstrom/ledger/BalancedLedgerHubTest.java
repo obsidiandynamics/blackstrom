@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import static org.junit.Assert.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -15,8 +16,9 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 @RunWith(Parameterized.class)
 public final class BalancedLedgerHubTest {
@@ -24,6 +26,8 @@ public final class BalancedLedgerHubTest {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
+  
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
   
   private final Timesert wait = Wait.SHORT;
   
@@ -90,7 +94,7 @@ public final class BalancedLedgerHubTest {
 
       @Override
       public void onMessage(MessageContext context, Message message) {
-        TestSupport.logStatic("%d-%x got %s\n", viewId, System.identityHashCode(this),  message);
+        zlg.t("%d-%x got %s").arg(viewId).arg(System.identityHashCode(this)).arg(message).log();
         this.context = context;
         receivedByShard.get(message.getShard()).add(Long.parseLong(message.getBallotId()));
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);
@@ -222,7 +226,7 @@ public final class BalancedLedgerHubTest {
       view.attach(null);
     }));
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     
     views.forEach(view -> view.handlers.forEach(handler -> handler.receivedByShard.forEach(received -> {
       assertEquals(LongList.empty(), received);
@@ -400,7 +404,7 @@ public final class BalancedLedgerHubTest {
     
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
     
     v0.view.dispose();
@@ -428,7 +432,7 @@ public final class BalancedLedgerHubTest {
     
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
     
     v0.confirmFirst();
@@ -457,7 +461,7 @@ public final class BalancedLedgerHubTest {
     
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertNoneForEachShard(1, Collections.singletonList(v1), expectedFull).run();
     
     v0.confirmLast();

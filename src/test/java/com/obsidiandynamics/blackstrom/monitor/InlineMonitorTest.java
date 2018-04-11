@@ -17,8 +17,9 @@ import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.nanoclock.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class InlineMonitorTest {
@@ -210,11 +211,11 @@ public final class InlineMonitorTest {
     propose(ballotId, "a", "b", "c");
     vote(ballotId, "a", Intent.ACCEPT);
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     propose(ballotId, "a", "b", "c");
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Intent.ACCEPT);
 
@@ -242,7 +243,7 @@ public final class InlineMonitorTest {
     vote(ballotId, "a", Intent.ACCEPT);
     vote(ballotId, "a", Intent.REJECT);
 
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     vote(ballotId, "b", Intent.ACCEPT);
     vote(ballotId, "b", Intent.TIMEOUT);
@@ -267,7 +268,7 @@ public final class InlineMonitorTest {
     final String ballotId = UUID.randomUUID().toString();
     vote(ballotId, "a", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
   }
   
@@ -304,7 +305,7 @@ public final class InlineMonitorTest {
     // subsequent votes should have no effect
     vote(ballotId, "b", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(1, outcomes.size());
   }
   
@@ -316,7 +317,7 @@ public final class InlineMonitorTest {
     propose(ballotId, 10_000, "a", "b");
     vote(ballotId, "a", Intent.ACCEPT);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     assertEquals(0, outcomes.size());
     
     vote(ballotId, "b", Intent.ACCEPT);

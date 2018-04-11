@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 import com.hazelcast.core.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.threads.*;
 
 public final class InstancePool {
   private final Supplier<HazelcastInstance> instanceSupplier;
@@ -35,6 +35,6 @@ public final class InstancePool {
   }
   
   public void prestart(int numInstances) {
-    ParallelJob.blocking(numInstances, i -> get(i % size())).run();
+    Parallel.blocking(numInstances, i -> get(i % size())).run();
   }
 }

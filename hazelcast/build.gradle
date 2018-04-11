@@ -3,12 +3,14 @@ version = project(":").version
 
 dependencies {
   compile project(":")
+  compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.hazelcast:hazelcast:3.10-BETA-2"
   
   testCompile project(":blackstrom-codec-kryo")
   testCompile project(":blackstrom-codec-kryo").sourceSets.test.output
   testCompile project(":blackstrom-sim")
   testCompile project(":blackstrom-sim").sourceSets.test.output
+  testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
   testCompile "com.hazelcast:hazelcast:3.10-BETA-2:tests"
 }
 

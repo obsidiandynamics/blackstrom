@@ -3,6 +3,7 @@ package com.obsidiandynamics.blackstrom.codec;
 import static org.junit.Assert.*;
 
 import java.io.*;
+import java.lang.invoke.*;
 import java.util.*;
 
 import org.hamcrest.core.*;
@@ -12,9 +13,11 @@ import org.junit.rules.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonPayloadDeserializer.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.zerolog.*;
 
-public final class JacksonPayloadSerializationTest implements TestSupport {
+public final class JacksonPayloadSerializationTest {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private static ObjectMapper createObjectMapper() {
     final ObjectMapper mapper = new ObjectMapper();
     final SimpleModule m = new SimpleModule();
@@ -25,7 +28,7 @@ public final class JacksonPayloadSerializationTest implements TestSupport {
   }
   
   private static void logEncoded(String encoded) {
-    if (LOG) LOG_STREAM.format("encoded %s\n", encoded);
+    zlg.t("encoded %s").arg(encoded).log();
   }
   
   @Rule 

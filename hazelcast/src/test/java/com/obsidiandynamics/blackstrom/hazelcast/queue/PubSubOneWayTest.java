@@ -1,7 +1,8 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-import static junit.framework.TestCase.*;
+import static org.junit.Assert.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -15,12 +16,15 @@ import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
-import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.testmark.*;
+import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class PubSubOneWayTest extends AbstractPubSubTest {
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   @Test
   public void testOneWay() {
@@ -114,8 +118,8 @@ public final class PubSubOneWayTest extends AbstractPubSubTest {
         .map(i -> configurePublisher(instancePool.get(), pubConfig)).collect(Collectors.toList());
     
     final AtomicLong totalSent = new AtomicLong();
-    final long took = TestSupport.took(() -> {
-      ParallelJob.blocking(publishers, threadNo -> {
+    final long tookMillis = Threads.tookMillis(() -> {
+      Parallel.blocking(publishers, threadNo -> {
         final Publisher p = publishersList.get(threadNo);
         
         for (int i = 0; i < messagesPerPublisher; i++) {
@@ -127,9 +131,9 @@ public final class PubSubOneWayTest extends AbstractPubSubTest {
             for (;;) {
               final int backlog = (int) (sent - smallestReceived.getAsLong());
               if (backlog >= backlogTarget) {
-                TestSupport.sleep(1);
+                Threads.sleep(1);
                 if (options.printBacklog && System.currentTimeMillis() - lastLogTime > 5_000) {
-                  TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d messages)\n", backlog, sent);
+                  zlg.i("throttling... backlog @ %,d (%,d messages)").arg(backlog).arg(sent).log();
                   lastLogTime = System.currentTimeMillis();
                 }
               } else {
@@ -146,11 +150,11 @@ public final class PubSubOneWayTest extends AbstractPubSubTest {
     });
                                      
     final long totalMessages = (long) publishers * messagesPerPublisher * subscribers;
-    final double rate = (double) totalMessages / took * 1000;
+    final double rate = (double) totalMessages / tookMillis * 1000;
     final long bps = (long) (rate * messageSize * 8 * 2);
     
     if (options.verbose) {
-      System.out.format("%,d msgs took %,d ms, %,.0f msg/s, %s\n", totalMessages, took, rate, Bandwidth.translate(bps));
+      System.out.format("%,d msgs took %,d ms, %,.0f msg/s, %s\n", totalMessages, tookMillis, rate, Bandwidth.translate(bps));
     }
     verifyNoError(eh);
     

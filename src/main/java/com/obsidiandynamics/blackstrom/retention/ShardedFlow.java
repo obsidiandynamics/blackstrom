@@ -3,12 +3,11 @@ package com.obsidiandynamics.blackstrom.retention;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.obsidiandynamics.blackstrom.flow.*;
-import com.obsidiandynamics.blackstrom.flow.Flow;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.flow.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 public final class ShardedFlow implements Retention, Terminable, Joinable {
   private static class ConfirmTask implements Runnable {

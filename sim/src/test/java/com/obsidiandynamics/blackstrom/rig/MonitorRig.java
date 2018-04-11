@@ -1,15 +1,14 @@
 package com.obsidiandynamics.blackstrom.rig;
 
-import static org.jgroups.Message.Flag.*;
-
 import org.jgroups.*;
+import org.jgroups.Message.*;
 
 import com.obsidiandynamics.blackstrom.*;
-import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
-import com.obsidiandynamics.blackstrom.util.select.*;
+import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.select.*;
 
 public final class MonitorRig implements Disposable {
   public static class Config extends RigConfig {
@@ -37,7 +36,7 @@ public final class MonitorRig implements Disposable {
     this.config = config;
     
     group = new Group(config.channelFactory.get());
-    group.withHandler(this::onMessage);
+    group.withMessageHandler(this::onMessage);
     connect();
   }
   
@@ -50,7 +49,7 @@ public final class MonitorRig implements Disposable {
     Select.from(m.getObject()).checked()
     .whenInstanceOf(AnnouncePacket.class).then(p -> {
       build(p.getSandboxKey());
-      chan.send(new Message(m.getSrc(), Ack.of(p)).setFlag(DONT_BUNDLE));
+      chan.send(new Message(m.getSrc(), Ack.of(p)).setFlag(Flag.DONT_BUNDLE));
     });
   }
   

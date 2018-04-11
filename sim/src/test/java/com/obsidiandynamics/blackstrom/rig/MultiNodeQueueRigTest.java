@@ -11,11 +11,11 @@ import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.bank.*;
-import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.util.throwing.*;
+import com.obsidiandynamics.func.*;
+import com.obsidiandynamics.jgroups.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.testmark.*;
 
 @RunWith(Parameterized.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -25,7 +25,7 @@ public final class MultiNodeQueueRigTest {
     return TestCycle.timesQuietly(1);
   }
   
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   private final List<Disposable> cleanup = new ArrayList<>();
   

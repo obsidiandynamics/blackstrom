@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -9,11 +10,13 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
 
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.zerolog.*;
 
 @Y
-public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
+public final class MockKafka<K, V> implements Kafka<K, V> {
+  private final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private final int maxPartitions;
   
   private final int maxHistory;
@@ -198,7 +201,7 @@ public final class MockKafka<K, V> implements Kafka<K, V>, TestSupport {
       
       @Override public void subscribe(Collection<String> topics) {
         for (String topic : topics) {
-          log("MockConsumer: assigning %s\n", topic);
+          zlg.t("Assigning %s").arg(topic).tag("MockKafka").log();
           synchronized (lock) {
             final List<TopicPartition> partitions = new ArrayList<>(maxPartitions);
             final Map<TopicPartition, Long> offsetRecords = new HashMap<>();

@@ -6,8 +6,8 @@ import org.slf4j.*;
 
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
-import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.retry.*;
+import com.obsidiandynamics.worker.*;
 
 public final class Election implements Terminable, Joinable {
   private static final Logger log = LoggerFactory.getLogger(Election.class);
@@ -36,8 +36,9 @@ public final class Election implements Terminable, Joinable {
     final Retry retry = new Retry()
         .withExceptionClass(HazelcastException.class)
         .withAttempts(Integer.MAX_VALUE)
-        .withBackoffMillis(100)
-        .withLog(log);
+        .withBackoff(100)
+        .withFaultHandler(log::warn)
+        .withErrorHandler(log::error);
     this.leases = new RetryableMap<>(retry, leases);
     registry = new Registry();
     

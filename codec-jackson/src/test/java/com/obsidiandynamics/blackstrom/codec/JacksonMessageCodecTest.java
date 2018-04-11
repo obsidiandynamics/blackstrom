@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import static org.junit.Assert.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 
 import org.hamcrest.core.*;
@@ -14,22 +15,25 @@ import com.fasterxml.jackson.databind.*;
 import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonMessageDeserializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.testmark.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public final class JacksonMessageCodecTest implements TestSupport {
+public final class JacksonMessageCodecTest {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private static void logEncoded(String encoded) {
-    if (LOG) LOG_STREAM.format("encoded %s\n", encoded);
+    zlg.t("encoded %s").arg(encoded).log();
   }
   
   private static void logReencoded(String reencoded) {
-    if (LOG) LOG_STREAM.format("re-encoded %s\n", reencoded);
+    zlg.t("re-encoded %s").arg(reencoded).log();
   }
   
   private static void logDecoded(Message m, Object p) {
-    if (LOG) LOG_STREAM.format("decoded %s (type=%s)\n", m, (p != null ? p.getClass().getSimpleName() : "n/a"));
+    zlg.t("decoded %s (type=%s)").arg(m).arg(p != null ? p.getClass().getSimpleName() : "n/a").log();
   }
   
   @Rule 
@@ -90,7 +94,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
   }
   
   private static void cycle(int runs, MessageCodec c, Message m, String name) throws Exception {
-    final long tookSer = TestSupport.tookThrowing(() -> {
+    final long tookSer = Threads.tookMillis(() -> {
       for (int i = 0; i < runs; i++) {
         final byte[] encoded = c.encode(m);
         if (encoded == null) throw new AssertionError();
@@ -98,7 +102,7 @@ public final class JacksonMessageCodecTest implements TestSupport {
     });
     System.out.format("%s ser'n: %,d took %,d ms, %,.0f msgs/sec\n", name, runs, tookSer, (double) runs / tookSer * 1000);
     
-    final long tookDes = TestSupport.tookThrowing(() -> {
+    final long tookDes = Threads.tookMillis(() -> {
       final byte[] encoded = c.encode(m);
       for (int i = 0; i < runs; i++) {
         final Message d = c.decode(encoded);

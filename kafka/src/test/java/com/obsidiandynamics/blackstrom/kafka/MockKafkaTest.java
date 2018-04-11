@@ -15,8 +15,8 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class MockKafkaTest {  
@@ -84,7 +84,7 @@ public final class MockKafkaTest {
       }
       
       if (m != messages - 1 && sendIntervalMillis != 0) {
-        TestSupport.sleep(sendIntervalMillis);
+        Threads.sleep(sendIntervalMillis);
       }
     }
 

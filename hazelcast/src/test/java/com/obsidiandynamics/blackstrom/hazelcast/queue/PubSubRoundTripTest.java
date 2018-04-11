@@ -1,7 +1,7 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import static java.util.concurrent.TimeUnit.*;
-import static junit.framework.TestCase.*;
+import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.*;
 
@@ -12,11 +12,11 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.testmark.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class PubSubRoundTripTest extends AbstractPubSubTest {
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   @Test
   public void testRoundTripAsync() {

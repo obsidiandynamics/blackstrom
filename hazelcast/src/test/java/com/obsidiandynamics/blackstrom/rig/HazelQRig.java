@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.rig;
 
-import static com.obsidiandynamics.yconf.props.Props.*;
+import static com.obsidiandynamics.props.Props.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -11,13 +11,13 @@ import org.slf4j.*;
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.group.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.props.*;
 
 public final class HazelQRig {
@@ -162,7 +162,7 @@ public final class HazelQRig {
         shutdownHazelcastInstance();
       }));
       
-      TestSupport.sleep(Integer.MAX_VALUE);
+      Threads.sleep(Integer.MAX_VALUE);
     }
   }
   
@@ -182,7 +182,7 @@ public final class HazelQRig {
         shutdownHazelcastInstance();
       }));
       
-      TestSupport.sleep(Integer.MAX_VALUE);
+      Threads.sleep(Integer.MAX_VALUE);
     }
   }
 }

@@ -14,8 +14,9 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class ArrayListAccumulatorTest {
@@ -144,7 +145,7 @@ public final class ArrayListAccumulatorTest {
     final List<Long>[] received;
     
     BallotReceiver(int numProducers) {
-      received = Cast.from(new List[numProducers]);
+      received = Classes.cast(new List[numProducers]);
       Arrays.setAll(received, i -> new CopyOnWriteArrayList<>());
     }
 
@@ -197,10 +198,10 @@ public final class ArrayListAccumulatorTest {
       IntStream.range(0, numProducers).forEach(p -> {
         new Thread(() -> {
           expected.forEach(i -> a.append(new UnknownMessage(new ProducerBallotId(p, i).toString(), 0).withShard(0)));
-          TestSupport.await(barrier);
+          Threads.await(barrier);
         }).start();
       });
-      TestSupport.await(barrier);
+      Threads.await(barrier);
       
       final List<Message> sink = new ArrayList<>();
       a.retrieve(0, sink);
@@ -252,10 +253,10 @@ public final class ArrayListAccumulatorTest {
       IntStream.range(0, numProducers).forEach(p -> {
         new Thread(() -> {
           expected.forEach(i -> a.append(new UnknownMessage(new ProducerBallotId(p, i).toString(), 0).withShard(0)));
-          TestSupport.await(barrier);
+          Threads.await(barrier);
         }).start();
       });
-      TestSupport.await(barrier);
+      Threads.await(barrier);
       
       for (BallotReceiver receiver : receivers) {
         wait.until(receiver.receivedInOrder());

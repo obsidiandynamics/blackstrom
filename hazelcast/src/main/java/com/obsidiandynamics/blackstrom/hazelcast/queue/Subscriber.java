@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 public interface Subscriber extends Terminable {
   RecordBatch poll(long timeoutMillis) throws InterruptedException;

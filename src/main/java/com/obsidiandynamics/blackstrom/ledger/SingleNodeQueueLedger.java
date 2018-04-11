@@ -4,9 +4,9 @@ import java.util.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.nodequeue.*;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.nodequeue.*;
+import com.obsidiandynamics.worker.*;
 
 /**
  *  A high-performance, lock-free, unbounded MPSC (multi-producer, single-consumer) queue

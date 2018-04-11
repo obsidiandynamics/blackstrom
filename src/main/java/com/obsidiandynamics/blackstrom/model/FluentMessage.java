@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.model;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public abstract class FluentMessage<M extends FluentMessage<?>> extends Message {
   protected FluentMessage(String ballotId, long timestamp) {
@@ -34,6 +34,6 @@ public abstract class FluentMessage<M extends FluentMessage<?>> extends Message 
   }
   
   private M self() {
-    return Cast.from(this);
+    return Classes.cast(this);
   }
 }

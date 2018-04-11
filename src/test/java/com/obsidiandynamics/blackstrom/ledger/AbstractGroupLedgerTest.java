@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import static junit.framework.TestCase.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -11,9 +12,11 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.zerolog.*;
 
-public abstract class AbstractGroupLedgerTest implements TestSupport {
+public abstract class AbstractGroupLedgerTest {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   
   private class TestHandler implements MessageHandler {
@@ -31,7 +34,7 @@ public abstract class AbstractGroupLedgerTest implements TestSupport {
     public void onMessage(MessageContext context, Message message) {
       if (! sandbox.contains(message)) return;
       
-      if (LOG) LOG_STREAM.format("Received %s\n", message);
+      zlg.t("Received %s").arg(message).log();
       final long ballotId = Long.parseLong(message.getBallotId());
       if (ballotId > lastBallotId) {
         lastBallotId = ballotId;

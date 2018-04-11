@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import com.obsidiandynamics.blackstrom.flow.*;
+import com.obsidiandynamics.flow.*;
 
 public final class NopRetentionTest {
   @Test

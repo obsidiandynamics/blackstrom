@@ -37,8 +37,8 @@ allprojects {
   }
   
   ext {
-    indigoVersion = "1.1.0"
-    fulcrumVersion = "0.4.0"
+    zerologVersion = "0.2.0"
+    fulcrumVersion = "0.11.0"
     yconfVersion = "0.3.0"
   }
   
@@ -46,8 +46,11 @@ allprojects {
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-assert:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-await:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-junit:${fulcrumVersion}"
+    testCompile "com.obsidiandynamics.fulcrum:fulcrum-testmark:${fulcrumVersion}"
+    testCompile "com.obsidiandynamics.fulcrum:fulcrum-threads:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.yconf:yconf-snakeyaml:${yconfVersion}"
-    testCompile "org.mockito:mockito-core:2.17.0"
+    testCompile "junit:junit:4.12"
+    testCompile "org.mockito:mockito-core:2.18.0"
     testCompile "org.hdrhistogram:HdrHistogram:2.1.10"
 
     testRuntime "org.slf4j:slf4j-log4j12:1.7.25"
@@ -124,11 +127,21 @@ task jacocoRootReport(type: JacocoReport) {
 def packageName = "blackstrom-core"
 
 dependencies {
-  compile "org.slf4j:slf4j-api:1.7.25"
-  compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
   compile "com.obsidiandynamics.fulcrum:fulcrum-concat:${fulcrumVersion}"
-  compile "com.obsidiandynamics.indigo:indigo-assurance:${indigoVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-flow:${fulcrumVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-func:${fulcrumVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-nanoclock:${fulcrumVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-node-queue:${fulcrumVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-props:${fulcrumVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-scheduler:${fulcrumVersion}"
+  compile "com.obsidiandynamics.fulcrum:fulcrum-worker:${fulcrumVersion}"
+  compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
+  compile "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
+  compile "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
+  compile "org.slf4j:slf4j-api:1.7.25"
   compile "org.apache.commons:commons-lang3:3.7"
+  
+  testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
 
 project.ext.set("launcherClasspath", new org.gradle.api.internal.file.UnionFileCollection())
@@ -150,7 +163,7 @@ task launch() {
     javaexec {
       systemProperties = System.properties
       classpath = project(":").launcherClasspath
-      main = "com.obsidiandynamics.blackstrom.util.Launcher"
+      main = "com.obsidiandynamics.launcher.Launcher"
       args = project(":").launcherClasses
       jvmArgs = Arrays.asList baseJvmArgs.split(" ")
       standardInput = System.in

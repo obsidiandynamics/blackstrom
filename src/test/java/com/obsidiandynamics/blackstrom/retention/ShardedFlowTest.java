@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.retention;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -11,13 +12,13 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
-import com.obsidiandynamics.blackstrom.flow.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.flow.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public class ShardedFlowTest {
@@ -113,7 +114,7 @@ public class ShardedFlowTest {
     final MessageContext context = new DefaultMessageContext(ledger, null, flow);
     final Confirmation c = flow.begin(context, message(0, 0));
     c.confirm();
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     verify(ledger, never()).confirm(any(), any());
   }
 

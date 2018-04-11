@@ -7,10 +7,10 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
-import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.util.throwing.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.blackstrom.worker.Terminator;
+import com.obsidiandynamics.func.*;
+import com.obsidiandynamics.retry.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 public final class DefaultSubscriber implements Subscriber, Joinable {
   /** Cycle backoff for the keeper thread. */
@@ -58,8 +58,9 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     final Retry retry = new Retry()
         .withExceptionClass(HazelcastException.class)
         .withAttempts(Integer.MAX_VALUE)
-        .withBackoffMillis(100)
-        .withLog(config.getLog());
+        .withBackoff(100)
+        .withFaultHandler(config.getLog()::warn)
+        .withErrorHandler(config.getLog()::error);
     buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
     
     if (config.hasGroup()) {

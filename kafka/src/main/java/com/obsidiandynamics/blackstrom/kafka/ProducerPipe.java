@@ -5,8 +5,9 @@ import java.util.*;
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.nodequeue.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.nodequeue.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.worker.Terminator;
 
 public final class ProducerPipe<K, V> implements Terminable, Joinable {
   private static final int MAX_YIELDS = 100;

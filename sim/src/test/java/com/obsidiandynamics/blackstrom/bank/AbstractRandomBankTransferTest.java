@@ -1,8 +1,8 @@
 package com.obsidiandynamics.blackstrom.bank;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -14,12 +14,17 @@ import com.obsidiandynamics.blackstrom.initiator.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.worker.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.testmark.Scale;
+import com.obsidiandynamics.testmark.Testmark;
+import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.worker.*;
+import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.UNITY).magnitude();
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
+  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   private static final boolean LOG_BENCHMARK = false;
   
@@ -87,7 +92,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
                                branches);
     }
 
-    final long took = TestSupport.took(() -> {
+    final long tookMillis = Threads.tookMillis(() -> {
       String[] branchIds = null;
       BankSettlement settlement = null;
       if (! randomiseRuns) {
@@ -103,7 +108,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         }
         final Proposal p = new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
             .withShardKey(sandbox.key());
-        if (TestSupport.LOG) TestSupport.LOG_STREAM.format("proposing %s\n", p);
+        zlg.t("proposing %s").arg(p).log();
         ledger.append(p);
 
         if (run % backlogTarget == 0) {
@@ -111,9 +116,9 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           for (;;) {
             final int backlog = (int) (run - getMinOutcomes(branches));
             if (backlog >= backlogTarget) {
-              TestSupport.sleep(1);
+              Threads.sleep(1);
               if (loggingEnabled && System.currentTimeMillis() - lastLogTime > 5_000) {
-                TestSupport.LOG_STREAM.format("throttling... backlog @ %,d (%,d txns)\n", backlog, run);
+                zlg.i("throttling... backlog @ %,d (%,d txns)").arg(backlog).arg(run).log();
                 lastLogTime = System.currentTimeMillis();
               }
             } else {
@@ -133,7 +138,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
       });
     });
     System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts | %,d timeouts)\n", 
-                      runs, took, (double) runs / took * 1000, commits.get(), aborts.get(), timeouts.get());
+                      runs, tookMillis, (double) runs / tookMillis * 1000, commits.get(), aborts.get(), timeouts.get());
   }
   
   private long getMinOutcomes(BankBranch[] branches) {

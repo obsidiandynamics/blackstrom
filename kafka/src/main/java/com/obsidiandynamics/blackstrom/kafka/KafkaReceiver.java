@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom.kafka;
 import org.apache.kafka.clients.consumer.*;
 import org.slf4j.*;
 
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 public final class KafkaReceiver<K, V> implements Terminable, Joinable {
   @FunctionalInterface

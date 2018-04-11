@@ -3,9 +3,9 @@ package com.obsidiandynamics.blackstrom.hazelcast.queue;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
-import com.obsidiandynamics.blackstrom.nodequeue.*;
-import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.nodequeue.*;
+import com.obsidiandynamics.retry.*;
+import com.obsidiandynamics.worker.*;
 
 final class DefaultPublisher implements Publisher, Joinable {
   private static final int PUBLISH_MAX_YIELDS = 100;
@@ -43,8 +43,9 @@ final class DefaultPublisher implements Publisher, Joinable {
     final Retry retry = new Retry()
         .withExceptionClass(HazelcastException.class)
         .withAttempts(Integer.MAX_VALUE)
-        .withBackoffMillis(100)
-        .withLog(config.getLog());
+        .withBackoff(100)
+        .withFaultHandler(config.getLog()::warn)
+        .withErrorHandler(config.getLog()::error);
     buffer = new RetryableRingbuffer<>(retry, StreamHelper.getRingbuffer(instance, streamConfig));
     
     publishThread = WorkerThread.builder()

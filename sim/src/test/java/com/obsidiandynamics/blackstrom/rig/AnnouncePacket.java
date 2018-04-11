@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.rig;
 
 import java.io.*;
 
-import com.obsidiandynamics.blackstrom.group.*;
+import com.obsidiandynamics.jgroups.*;
 
 public final class AnnouncePacket extends SyncPacket {
   private static final long serialVersionUID = 1L;

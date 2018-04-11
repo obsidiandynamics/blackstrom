@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.hazelcast.queue;
 
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 public final class DefaultReceiver implements Receiver {
   private final Subscriber subscriber;

@@ -10,7 +10,7 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.store.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 /**
  *  Uses a {@link NopRingbufferStore} to simulate a ringbuffer failover with loss of data.

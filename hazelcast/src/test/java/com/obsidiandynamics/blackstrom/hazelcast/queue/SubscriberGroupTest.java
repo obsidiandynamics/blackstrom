@@ -16,8 +16,8 @@ import com.hazelcast.ringbuffer.*;
 import com.hazelcast.util.executor.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
-import com.obsidiandynamics.indigo.util.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public final class SubscriberGroupTest extends AbstractPubSubTest {
@@ -124,12 +124,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     // clear the lease behind the scenes, so that the subscriber can eventually take over
     final CyclicBarrier barrier = new CyclicBarrier(2);
     new Thread(() -> {
-      TestSupport.await(barrier);
-      TestSupport.sleep(10);
+      Threads.await(barrier);
+      Threads.sleep(10);
       leases.remove(group);
     }, "unblocker").start();
     
-    TestSupport.await(barrier);
+    Threads.await(barrier);
     
     // enter a long poll and verify that:
     // - the subscriber ends up consuming the messages;

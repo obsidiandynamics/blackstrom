@@ -13,6 +13,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class ConsumerPipeTest {
   private final Timesert wait = Wait.SHORT;
@@ -31,7 +32,7 @@ public final class ConsumerPipeTest {
   
   @Test
   public void testReceiveAsync() throws InterruptedException {
-    final RecordHandler<String, Message> handler = Cast.from(mock(RecordHandler.class));
+    final RecordHandler<String, Message> handler = Classes.cast(mock(RecordHandler.class));
     pipe = new ConsumerPipe<>(new ConsumerPipeConfig().withAsync(true), handler, ConsumerPipe.class.getSimpleName());
     
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);
@@ -49,7 +50,7 @@ public final class ConsumerPipeTest {
   
   @Test
   public void testReceiveSync() throws InterruptedException {
-    final RecordHandler<String, Message> handler = Cast.from(mock(RecordHandler.class));
+    final RecordHandler<String, Message> handler = Classes.cast(mock(RecordHandler.class));
     pipe = new ConsumerPipe<>(new ConsumerPipeConfig().withAsync(false), handler, ConsumerPipe.class.getSimpleName());
     
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);

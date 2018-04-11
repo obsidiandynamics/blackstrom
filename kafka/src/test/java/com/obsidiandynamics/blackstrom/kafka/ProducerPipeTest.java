@@ -14,7 +14,7 @@ import org.slf4j.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.threads.*;
 
 public final class ProducerPipeTest {
   private final Timesert wait = Wait.SHORT;
@@ -38,7 +38,7 @@ public final class ProducerPipeTest {
     final ProducerRecord<String, Message> rec = new ProducerRecord<>("test", proposal);
     pipe.send(rec, null);
     
-    TestSupport.sleep(10);
+    Threads.sleep(10);
     verifyNoMoreInteractions(log);
   }
   
@@ -53,7 +53,7 @@ public final class ProducerPipeTest {
     consumer.subscribe(Arrays.asList("test"));
     final Proposal proposal = new Proposal("B100", new String[0], null, 0);
     final ProducerRecord<String, Message> rec = new ProducerRecord<>("test", proposal);
-    TestSupport.sleep(10); // give the thread an opportunity to yield and sleep
+    Threads.sleep(10); // give the thread an opportunity to yield and sleep
     pipe.send(rec, null);
     
     wait.until(() -> {

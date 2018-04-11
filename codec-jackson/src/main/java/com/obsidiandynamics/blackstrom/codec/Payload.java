@@ -2,7 +2,7 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import org.apache.commons.lang3.builder.*;
 
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class Payload {
   private final Object value;
@@ -12,7 +12,7 @@ public final class Payload {
   }
   
   public <T> T unpack() {
-    return Cast.from(value);
+    return Classes.cast(value);
   }
   
   public static Payload pack(Object value) {
@@ -25,7 +25,7 @@ public final class Payload {
     } else if (obj.getClass() == Payload.class) {
       return ((Payload) obj).unpack();
     } else {
-      return Cast.from(obj);
+      return Classes.cast(obj);
     }
   }
   

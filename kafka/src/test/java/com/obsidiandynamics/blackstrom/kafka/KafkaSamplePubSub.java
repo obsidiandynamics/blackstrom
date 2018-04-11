@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.kafka;
 
+import java.lang.invoke.*;
 import java.text.*;
 import java.util.*;
 
@@ -7,10 +8,13 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 
-import com.obsidiandynamics.indigo.util.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.props.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaSamplePubSub {
+  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  
   private static final boolean MOCK = false;
   private static final String BROKERS = "localhost:9092";
   private static final String TOPIC = "test";
@@ -21,7 +25,7 @@ public final class KafkaSamplePubSub {
       : new KafkaCluster<>(new KafkaClusterConfig()
           .withCommonProps(new PropsBuilder().with("bootstrap.servers", BROKERS).build()));
   
-  private static final class SamplePublisher extends Thread implements TestSupport {
+  private static final class SamplePublisher extends Thread {
     private static Properties getProps() {
       final Properties props = new Properties();
       props.setProperty("key.serializer", StringSerializer.class.getName());
@@ -41,7 +45,7 @@ public final class KafkaSamplePubSub {
     @Override public void run() {
       while (running) {
         send();
-        if (PUBLISH_INTERVAL != 0) TestSupport.sleep(PUBLISH_INTERVAL);
+        if (PUBLISH_INTERVAL != 0) Threads.sleep(PUBLISH_INTERVAL);
       }
       producer.close();
     }
@@ -51,7 +55,7 @@ public final class KafkaSamplePubSub {
       final String msg = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date(now));
       final ProducerRecord<String, String> rec = new ProducerRecord<>(TOPIC, String.valueOf(now), msg);
       producer.send(rec, (metadata, exception) -> {
-        log("p: tx [%s], key: %s, value: %s\n", metadata, rec.key(), rec.value());
+        zlg.i("tx [%s], key: %s, value: %s").arg(metadata).arg(rec.key()).arg(rec.value()).tag("p").log();
       });
     }
     
@@ -60,7 +64,7 @@ public final class KafkaSamplePubSub {
     }
   }
   
-  private static final class SampleSubscriber implements TestSupport {
+  private static final class SampleSubscriber {
     private static Properties getProps() {
       final Properties props = new Properties();
       props.setProperty("group.id", CONSUMER_GROUP);
@@ -80,12 +84,14 @@ public final class KafkaSamplePubSub {
     
     private void onReceive(ConsumerRecords<String, String> records) {
       for (ConsumerRecord<String, String> record : records) {
-        log("c: rx [%s], key: %s, value: %s\n", formatMetadata(record.topic(), record.partition(), record.offset()), record.key(), record.value());
+        zlg.i("rx [%s], key: %s, value: %s")
+        .arg(formatMetadata(record.topic(), record.partition(), record.offset())).arg(record.key()).arg(record.value())
+        .tag("c").log();
       }
     }
     
     private void onError(Throwable cause) {
-      log("c: exception: %s\n", cause);
+      zlg.e("exception: %s").arg(cause).tag("c").log();
     }
     
     void close() {
@@ -99,10 +105,10 @@ public final class KafkaSamplePubSub {
   
   public static void main(String[] args) {
     final SamplePublisher pub = new SamplePublisher();
-    TestSupport.sleep(500);
+    Threads.sleep(500);
     final SampleSubscriber sub = new SampleSubscriber();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      TestSupport.logStatic("Shutting down\n");
+      zlg.i("Shutting down");
       try {
         pub.close();
         sub.close();
@@ -110,6 +116,6 @@ public final class KafkaSamplePubSub {
         e.printStackTrace();
       }
     }, "ShutdownHook"));
-    TestSupport.sleep(Long.MAX_VALUE);
+    Threads.sleep(Long.MAX_VALUE);
   }
 }

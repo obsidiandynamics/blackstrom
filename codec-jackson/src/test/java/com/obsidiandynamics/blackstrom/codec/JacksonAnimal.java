@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 @JsonTypeInfo(use=Id.NAME)
 @JsonSubTypes({
@@ -17,7 +17,7 @@ public abstract class JacksonAnimal<A> {
   
   public A withFriend(JacksonAnimal<?> friend) {
     this.friend = friend;
-    return Cast.from(this);
+    return Classes.cast(this);
   }
   
   @Override

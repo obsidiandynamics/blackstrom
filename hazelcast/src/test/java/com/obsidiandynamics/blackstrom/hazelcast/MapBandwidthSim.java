@@ -9,7 +9,7 @@ import org.slf4j.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 public class MapBandwidthSim {
   private static final Logger log = LoggerFactory.getLogger(MapBandwidthSim.class);

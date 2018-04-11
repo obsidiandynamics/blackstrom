@@ -6,7 +6,7 @@ import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.blackstrom.worker.*;
+import com.obsidiandynamics.worker.*;
 
 final class AccumulatorConsumer implements Disposable {
   private final Accumulator accumulator;
