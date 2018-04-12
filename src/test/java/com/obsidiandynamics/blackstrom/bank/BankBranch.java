@@ -78,7 +78,7 @@ public final class BankBranch implements Cohort {
         }
       }
 
-      zlg.t("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow.size()).log();
+      zlg.t("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow::size).log();
     }
   }
   
@@ -123,13 +123,13 @@ public final class BankBranch implements Cohort {
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
-          zlg.t("%s: accepting %s").arg(branchId).arg(proposal.getBallotId()).log();
+          zlg.t("%s: accepting %s").arg(branchId).arg(proposal::getBallotId).log();
         } else {
           intent = Intent.ACCEPT;
           zlg.t("%s: retransmitting previous acceptance").arg(branchId).log();
         }
       } else {
-        zlg.t("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal.getBallotId()).arg(balance).log();
+        zlg.t("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal::getBallotId).arg(balance).log();
         intent = Intent.REJECT;
       }
       

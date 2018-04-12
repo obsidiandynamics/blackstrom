@@ -55,7 +55,7 @@ public final class KafkaSamplePubSub {
       final String msg = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date(now));
       final ProducerRecord<String, String> rec = new ProducerRecord<>(TOPIC, String.valueOf(now), msg);
       producer.send(rec, (metadata, exception) -> {
-        zlg.i("tx [%s], key: %s, value: %s").arg(metadata).arg(rec.key()).arg(rec.value()).tag("p").log();
+        zlg.i("tx [%s], key: %s, value: %s").arg(metadata).arg(rec::key).arg(rec::value).tag("p").log();
       });
     }
     
@@ -85,10 +85,15 @@ public final class KafkaSamplePubSub {
     private void onReceive(ConsumerRecords<String, String> records) {
       for (ConsumerRecord<String, String> record : records) {
         zlg.i("rx [%s], key: %s, value: %s")
-        .arg(formatMetadata(record.topic(), record.partition(), record.offset())).arg(record.key()).arg(record.value())
+        .arg(record, SampleSubscriber::formatMetadata).arg(record::key).arg(record::value)
         .tag("c").log();
       }
     }
+    
+    private static String formatMetadata(ConsumerRecord<?, ?> rec) {
+      return String.format("%s-%d@%d", rec.topic(), rec.partition(), rec.offset());
+    }
+    
     
     private void onError(Throwable cause) {
       zlg.e("exception: %s").arg(cause).tag("c").log();
@@ -97,10 +102,6 @@ public final class KafkaSamplePubSub {
     void close() {
       receiver.terminate();
     }
-  }
-  
-  private static String formatMetadata(String topic, int partition, long offset) {
-    return String.format("%s-%d@%d", topic, partition, offset);
   }
   
   public static void main(String[] args) {
