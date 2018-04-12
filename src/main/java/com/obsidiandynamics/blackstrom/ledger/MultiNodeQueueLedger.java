@@ -2,12 +2,11 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import java.util.function.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedger.Config.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
@@ -22,9 +21,6 @@ public final class MultiNodeQueueLedger implements Ledger {
   private static final int POLL_BACKOFF_MILLIS = 1;
   
   public static final class Config {
-    @FunctionalInterface
-    public interface LogLine extends Consumer<String> {}
-    
     int maxYields = 100;
     
     int debugMessageCounts = 0;

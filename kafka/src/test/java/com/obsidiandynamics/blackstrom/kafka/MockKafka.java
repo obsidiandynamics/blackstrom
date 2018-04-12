@@ -4,12 +4,12 @@ import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
 
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.yconf.*;
 import com.obsidiandynamics.zerolog.*;
 
@@ -61,8 +61,8 @@ public final class MockKafka<K, V> implements Kafka<K, V> {
   }
 
   @Override
-  public void describeProducer(Consumer<String> logLine, Properties defaults, Properties overrides) {
-    logLine.accept("Mock producer");
+  public void describeProducer(LogLine logLine, Properties defaults, Properties overrides) {
+    logLine.println("Mock producer");
   }
   
   @Override
@@ -153,7 +153,7 @@ public final class MockKafka<K, V> implements Kafka<K, V> {
   }
 
   @Override
-  public void describeConsumer(Consumer<String> logLine, Properties defaults, Properties overrides) {
+  public void describeConsumer(LogLine logLine, Properties defaults, Properties overrides) {
     logLine.accept("Mock consumer");
   }
   

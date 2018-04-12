@@ -7,6 +7,7 @@ import java.util.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.yconf.*;
 import com.obsidiandynamics.yconf.props.*;
 
@@ -33,8 +34,8 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   }
 
   @Override
-  public void describeProducer(java.util.function.Consumer<String> logLine, Properties defaults, Properties overrides) {
-    logLine.accept("Producer properties:");
+  public void describeProducer(LogLine logLine, Properties defaults, Properties overrides) {
+    logLine.println("Producer properties:");
     PropsFormat.printProps(logLine, 
                            mergeProducerProps(defaults, overrides),
                            s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),
@@ -52,8 +53,8 @@ public final class KafkaCluster<K, V> implements Kafka<K, V> {
   }
 
   @Override
-  public void describeConsumer(java.util.function.Consumer<String> logLine, Properties defaults, Properties overrides) {
-    logLine.accept("Consumer properties:");
+  public void describeConsumer(LogLine logLine, Properties defaults, Properties overrides) {
+    logLine.println("Consumer properties:");
     PropsFormat.printProps(logLine, 
                            mergeConsumerProps(defaults, overrides),
                            s -> (overrides.containsKey(s) ? "* " : "- ") + rightPad(25).apply(s),

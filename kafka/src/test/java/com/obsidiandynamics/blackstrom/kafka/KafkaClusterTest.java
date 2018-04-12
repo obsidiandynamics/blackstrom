@@ -11,6 +11,7 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.*;
 import org.junit.*;
 
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.yconf.props.*;
 
 public class KafkaClusterTest {
@@ -36,8 +37,6 @@ public class KafkaClusterTest {
       assertNotNull(producer);
     }
   }
-  
-  private interface LogLine extends java.util.function.Consumer<String> {}
   
   @Test
   public void testDescribeProducer() {

@@ -14,9 +14,9 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedger.Config.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.testmark.*;
 
