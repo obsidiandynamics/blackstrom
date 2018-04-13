@@ -14,6 +14,7 @@ import org.apache.kafka.common.internals.*;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.kafka.KafkaAdmin.*;
+import com.obsidiandynamics.blackstrom.ledger.*;
 
 public final class KafkaAdminTest {
   private KafkaAdmin admin;

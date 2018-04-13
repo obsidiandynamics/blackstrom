@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.kafka;
+package com.obsidiandynamics.blackstrom.ledger;
 
 import org.apache.kafka.clients.admin.*;
 
