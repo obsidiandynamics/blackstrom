@@ -40,7 +40,7 @@ public final class KafkaJacksonGroupLedgerIT extends AbstractGroupLedgerTest {
   
   @Override
   protected Timesert getWait() {
-    return Wait.MEDIUM;
+    return Wait.LONG;
   }
   
   @Override

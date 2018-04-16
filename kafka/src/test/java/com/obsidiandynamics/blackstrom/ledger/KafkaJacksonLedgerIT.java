@@ -20,7 +20,7 @@ public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   
   @Override
   protected Timesert getWait() {
-    return Wait.MEDIUM;
+    return Wait.LONG;
   }
   
   private final String topic = TestTopic.of(KafkaJacksonLedgerIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);

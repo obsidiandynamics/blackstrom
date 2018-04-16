@@ -53,6 +53,6 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
 
   @Override
   protected Timesert getWait() {
-    return Wait.MEDIUM;
+    return Wait.LONG;
   }
 }

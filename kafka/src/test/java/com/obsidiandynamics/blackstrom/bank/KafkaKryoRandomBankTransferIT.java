@@ -57,7 +57,7 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
 
   @Override
   protected Timesert getWait() {
-    return Wait.MEDIUM;
+    return Wait.LONG;
   }
   
   public static void main(String[] args) {

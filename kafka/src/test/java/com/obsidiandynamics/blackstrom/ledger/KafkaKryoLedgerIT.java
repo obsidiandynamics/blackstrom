@@ -32,7 +32,7 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
   
   @Override
   protected Timesert getWait() {
-    return Wait.MEDIUM;
+    return Wait.LONG;
   }
   
   @Override

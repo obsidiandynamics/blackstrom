@@ -53,6 +53,6 @@ public final class KafkaJacksonBankTransferIT extends AbstractBankTransferTest {
 
   @Override
   protected Timesert getWait() {
-    return Wait.MEDIUM;
+    return Wait.LONG;
   }
 }
