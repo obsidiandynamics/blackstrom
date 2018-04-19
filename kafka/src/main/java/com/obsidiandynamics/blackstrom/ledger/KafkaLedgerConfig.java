@@ -19,10 +19,10 @@ public final class KafkaLedgerConfig {
   private MessageCodec codec;
   
   @YInject
-  private ProducerPipeConfig producerPipeConfig = new ProducerPipeConfig();
+  private ProducerPipeConfig producerPipeConfig = new ProducerPipeConfig().withAsync(false);
   
   @YInject
-  private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig();
+  private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true);
   
   @YInject
   private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
