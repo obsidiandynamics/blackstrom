@@ -17,8 +17,8 @@ import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.props.*;
 import com.obsidiandynamics.threads.*;
-import com.obsidiandynamics.yconf.props.*;
 
 public final class HazelQRig {
   private static final Properties base = new Properties(System.getProperties());

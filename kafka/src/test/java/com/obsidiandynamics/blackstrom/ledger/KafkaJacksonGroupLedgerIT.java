@@ -10,8 +10,8 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
@@ -23,7 +23,7 @@ public final class KafkaJacksonGroupLedgerIT extends AbstractGroupLedgerTest {
   
   @BeforeClass
   public static void beforeClass() throws Exception {
-    KafkaDocker.start();
+    new KafkaDocker().withComposeFile("stack/docker-compose.yaml").start();
   }
   
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");

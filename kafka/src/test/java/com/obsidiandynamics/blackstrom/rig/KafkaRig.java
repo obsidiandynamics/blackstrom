@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.rig;
 
-import static com.obsidiandynamics.yconf.props.Props.*;
+import static com.obsidiandynamics.props.Props.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -11,11 +11,11 @@ import org.jgroups.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
+import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.props.*;
 import com.obsidiandynamics.threads.*;
-import com.obsidiandynamics.yconf.props.*;
 
 public final class KafkaRig {
   private static final Properties base = new Properties(System.getProperties());

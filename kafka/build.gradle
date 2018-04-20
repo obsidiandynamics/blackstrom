@@ -1,9 +1,15 @@
 def packageName = "blackstrom-kafka"
 version = project(":").version
 
+  
+ext {
+  jackdawVersion = "0.3.0"
+}
+  
 dependencies {
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
+  compile "com.obsidiandynamics.jackdaw:jackdaw-core:${jackdawVersion}"
   compile "org.apache.kafka:kafka-clients:0.11.0.2"
   
   testCompile project(":blackstrom-codec-jackson")
@@ -14,6 +20,7 @@ dependencies {
   testCompile project(":blackstrom-sim").sourceSets.test.output
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-docker-compose:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
+  testCompile "com.obsidiandynamics.jackdaw:jackdaw-assurance:${jackdawVersion}"
 }
 
 task addLauncherApps() {

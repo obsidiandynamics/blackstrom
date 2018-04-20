@@ -3,8 +3,8 @@ package com.obsidiandynamics.blackstrom.ledger;
 import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y

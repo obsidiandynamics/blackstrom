@@ -94,7 +94,7 @@ public final class BalancedLedgerHubTest {
 
       @Override
       public void onMessage(MessageContext context, Message message) {
-        zlg.t("%d-%x got %s").arg(viewId).arg(System.identityHashCode(this)).arg(message).log();
+        zlg.t("%d-%x got %s", z -> z.arg(viewId).arg(System.identityHashCode(this)).arg(message));
         this.context = context;
         receivedByShard.get(message.getShard()).add(Long.parseLong(message.getBallotId()));
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);

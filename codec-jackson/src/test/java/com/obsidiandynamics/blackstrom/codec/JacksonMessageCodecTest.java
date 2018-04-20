@@ -25,15 +25,15 @@ public final class JacksonMessageCodecTest {
   private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
   
   private static void logEncoded(String encoded) {
-    zlg.t("encoded %s").arg(encoded).log();
+    zlg.t("encoded %s", z -> z.arg(encoded));
   }
   
   private static void logReencoded(String reencoded) {
-    zlg.t("re-encoded %s").arg(reencoded).log();
+    zlg.t("re-encoded %s", z -> z.arg(reencoded));
   }
   
   private static void logDecoded(Message m, Object p) {
-    zlg.t("decoded %s (type=%s)").arg(m).arg(p != null ? p.getClass().getSimpleName() : "n/a").log();
+    zlg.t("decoded %s (type=%s)", z -> z.arg(m).arg(p != null ? p.getClass().getSimpleName() : "n/a"));
   }
   
   @Rule 

@@ -12,15 +12,15 @@ import org.apache.kafka.common.serialization.*;
 import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
-import com.obsidiandynamics.blackstrom.kafka.KafkaReceiver.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.jackdaw.*;
+import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.retry.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
-import com.obsidiandynamics.yconf.props.*;
+import com.obsidiandynamics.yconf.util.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
@@ -44,7 +44,7 @@ public final class KafkaLedger implements Ledger {
 
   private final ProducerPipe<String, Message> producerPipe;
 
-  private final List<KafkaReceiver<String, Message>> receivers = new ArrayList<>();
+  private final List<AsyncReceiver<String, Message>> receivers = new ArrayList<>();
 
   private final List<ConsumerPipe<String, Message>> consumerPipes = new ArrayList<>();
   
@@ -116,7 +116,7 @@ public final class KafkaLedger implements Ledger {
     producer = kafka.getProducer(producerDefaults, producerOverrides);
     final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
-        new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log);
+        new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log::warn);
   }
   
   private void onRetry(WorkerThread t) throws InterruptedException {
@@ -248,8 +248,8 @@ public final class KafkaLedger implements Ledger {
     };
 
     final String threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
-    final KafkaReceiver<String, Message> receiver = new KafkaReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
-        threadName, recordHandler, KafkaReceiver.genericErrorLogger(log));
+    final AsyncReceiver<String, Message> receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
+        threadName, recordHandler, log::warn);
     receivers.add(receiver);
   }
 

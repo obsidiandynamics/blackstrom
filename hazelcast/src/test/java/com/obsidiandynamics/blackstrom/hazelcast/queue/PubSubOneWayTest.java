@@ -133,7 +133,7 @@ public final class PubSubOneWayTest extends AbstractPubSubTest {
               if (backlog >= backlogTarget) {
                 Threads.sleep(1);
                 if (options.printBacklog && System.currentTimeMillis() - lastLogTime > 5_000) {
-                  zlg.i("throttling... backlog @ %,d (%,d messages)").arg(backlog).arg(sent).log();
+                  zlg.i("throttling... backlog @ %,d (%,d messages)", z -> z.arg(backlog).arg(sent));
                   lastLogTime = System.currentTimeMillis();
                 }
               } else {

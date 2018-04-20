@@ -108,7 +108,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         }
         final Proposal p = new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
             .withShardKey(sandbox.key());
-        zlg.t("proposing %s").arg(p).log();
+        zlg.t("proposing %s", z -> z.arg(p));
         ledger.append(p);
 
         if (run % backlogTarget == 0) {
@@ -118,7 +118,8 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
             if (backlog >= backlogTarget) {
               Threads.sleep(1);
               if (loggingEnabled && System.currentTimeMillis() - lastLogTime > 5_000) {
-                zlg.i("throttling... backlog @ %,d (%,d txns)").arg(backlog).arg(run).log();
+                final int _run = run;
+                zlg.i("throttling... backlog @ %,d (%,d txns)", z -> z.arg(backlog).arg(_run));
                 lastLogTime = System.currentTimeMillis();
               }
             } else {

@@ -39,7 +39,7 @@ public abstract class AbstractLedgerTest {
     public void onMessage(MessageContext context, Message message) {
       if (! sandbox.contains(message)) return;
       
-      zlg.t("Received %s").arg(message).log();
+      zlg.t("Received %s", z -> z.arg(message));
       final long ballotId = Long.parseLong(message.getBallotId());
       if (lastBallotId == -1) {
         lastBallotId = ballotId;

@@ -18,10 +18,10 @@ import org.slf4j.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
+import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
 
@@ -122,7 +122,7 @@ public final class KafkaLedgerTest {
     final Exception exception = new CorruptRecordException("testSendRetriableException");
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> exGen = ExceptionGenerator.times(exception, 2);
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> mockExGen = Classes.cast(mock(ExceptionGenerator.class));
-    when(mockExGen.get(any())).thenAnswer(invocation -> exGen.get(invocation.getArgument(0)));
+    when(mockExGen.inspect(any())).thenAnswer(invocation -> exGen.inspect(invocation.getArgument(0)));
     
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendCallbackExceptionGenerator(mockExGen);
@@ -131,7 +131,7 @@ public final class KafkaLedgerTest {
     
     wait.until(() -> {
       verify(log, times(2)).warn(isNotNull(), eq(exception));
-      verify(mockExGen, times(3)).get(any());
+      verify(mockExGen, times(3)).inspect(any());
     });
   }
   
@@ -144,7 +144,7 @@ public final class KafkaLedgerTest {
     ledger = createLedger(kafka, false, true, 10, log);
     ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
     wait.until(() -> {
-      verify(log).error(isNotNull(), (Throwable) isNotNull());
+      verify(log).warn(isNotNull(), (Throwable) isNotNull());
     });
   }
   

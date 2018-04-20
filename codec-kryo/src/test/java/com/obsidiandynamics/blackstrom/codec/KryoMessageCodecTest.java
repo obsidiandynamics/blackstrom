@@ -25,15 +25,15 @@ public final class KryoMessageCodecTest {
   private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
   
   private static void logEncoded(byte[] encoded) {
-    zlg.t("encoded:\n%s").arg(BinaryUtils.dump(encoded)).log();
+    zlg.t("encoded:\n%s", z -> z.arg(BinaryUtils.dump(encoded)));
   }
   
   private static void logReencoded(byte[] reencoded) {
-    zlg.t("re-encoded:\n%s").arg(BinaryUtils.dump(reencoded)).log();
+    zlg.t("re-encoded:\n%s", z -> z.arg(BinaryUtils.dump(reencoded)));
   }
   
   private static void logDecoded(Message m, Object p) {
-    zlg.t("decoded %s (type=%s)").arg(m).arg(p != null ? p.getClass().getSimpleName() : "n/a").log();
+    zlg.t("decoded %s (type=%s)", z -> z.arg(m).arg(p != null ? p.getClass().getSimpleName() : "n/a"));
   }
   
   @Rule 

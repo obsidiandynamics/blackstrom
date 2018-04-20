@@ -10,7 +10,7 @@ import org.slf4j.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.kafka.*;
+import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.yconf.*;
 
 public final class KafkaLedgerConfigTest {

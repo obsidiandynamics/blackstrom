@@ -78,7 +78,7 @@ public final class BankBranch implements Cohort {
         }
       }
 
-      zlg.t("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow::size).log();
+      zlg.t("%s: reaped %,d lapsed outcomes", z -> z.arg(branchId).arg(deathRow::size));
     }
   }
   
@@ -104,10 +104,10 @@ public final class BankBranch implements Cohort {
       if (xfer == null) return; // settlement doesn't apply to this branch
     
       if (idempotencyEnabled) {
-        zlg.t("%s: %s").arg(branchId).arg(proposal).log();
+        zlg.t("%s: %s", z -> z.arg(branchId).arg(proposal));
         synchronized (lock) {
           if (decided.containsKey(proposal.getBallotId())) {
-            zlg.t("%s: ignoring, already decided").arg(branchId).log();
+            zlg.t("%s: ignoring, already decided", z -> z.arg(branchId));
             return;
           }
         }
@@ -123,13 +123,13 @@ public final class BankBranch implements Cohort {
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
-          zlg.t("%s: accepting %s").arg(branchId).arg(proposal::getBallotId).log();
+          zlg.t("%s: accepting %s", z -> z.arg(branchId).arg(proposal::getBallotId));
         } else {
           intent = Intent.ACCEPT;
-          zlg.t("%s: retransmitting previous acceptance").arg(branchId).log();
+          zlg.t("%s: retransmitting previous acceptance", z -> z.arg(branchId));
         }
       } else {
-        zlg.t("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal::getBallotId).arg(balance).log();
+        zlg.t("%s: rejecting %s, balance: %,d", z -> z.arg(branchId).arg(proposal::getBallotId).arg(balance));
         intent = Intent.REJECT;
       }
       
@@ -173,7 +173,7 @@ public final class BankBranch implements Cohort {
         balance += xferAmount;
       }
       
-      zlg.t("%s: finalising %s").arg(branchId).arg(outcome).log();
+      zlg.t("%s: finalising %s", z -> z.arg(branchId).arg(outcome));
     } finally {
       context.beginAndConfirm(outcome);
     }
