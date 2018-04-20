@@ -19,6 +19,7 @@ public interface RecordBatch extends Iterable<Record> {
 
   int size();
 
+  @Override
   Iterator<Record> iterator();
   
   default boolean isEmpty() {
