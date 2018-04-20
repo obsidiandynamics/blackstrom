@@ -14,6 +14,7 @@ import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
+import com.obsidiandynamics.func.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class PubSubTest extends AbstractPubSubTest {
@@ -65,10 +66,10 @@ public final class PubSubTest extends AbstractPubSubTest {
     instancePool.prestart(prestartInstances);
 
     // create subscribers with receivers
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final SubscriberConfig subConfig = new SubscriberConfig()
         .withGroup(group)
-        .withErrorHandler(eh)
+        .withExceptionHandler(eh)
         .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
         .withStreamConfig(streamConfig);
         

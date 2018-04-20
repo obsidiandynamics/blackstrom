@@ -4,6 +4,7 @@ import org.slf4j.*;
 
 import com.hazelcast.config.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
@@ -12,7 +13,7 @@ public final class SubscriberConfig {
   private Logger log = LoggerFactory.getLogger(Subscriber.class);
 
   @YInject
-  private ErrorHandler errorHandler = new LogAwareErrorHandler(this::getLog);
+  private ExceptionHandler exceptionHandler = new LogAwareExceptionHandler(this::getLog);
 
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
@@ -44,12 +45,12 @@ public final class SubscriberConfig {
     return this;
   }
 
-  ErrorHandler getErrorHandler() {
-    return errorHandler;
+  ExceptionHandler getExceptionHandler() {
+    return exceptionHandler;
   }
 
-  public SubscriberConfig withErrorHandler(ErrorHandler errorHandler) {
-    this.errorHandler = errorHandler;
+  public SubscriberConfig withExceptionHandler(ExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
     return this;
   }
 
@@ -122,7 +123,7 @@ public final class SubscriberConfig {
 
   @Override
   public String toString() {
-    return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", errorHandler=" + errorHandler 
+    return SubscriberConfig.class.getSimpleName() + " [log=" + log + ", exceptionHandler=" + exceptionHandler 
         + ", streamConfig=" + streamConfig
         + ", group=" + group + ", initialOffsetScheme=" + initialOffsetScheme 
         + ", electionConfig=" + electionConfig + ", staleReadSafetyMargin=" + staleReadSafetyMargin

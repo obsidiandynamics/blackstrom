@@ -6,14 +6,14 @@ import static org.mockito.Mockito.*;
 import org.junit.*;
 import org.slf4j.*;
 
-public final class LogAwareErrorHandlerTest {
+public final class LogAwareExceptionHandlerTest {
   @Test
   public void test() {
     final Logger log = mock(Logger.class);
-    final LogAwareErrorHandler handler = new LogAwareErrorHandler(() -> log);
+    final LogAwareExceptionHandler handler = new LogAwareExceptionHandler(() -> log);
     final String summary = "summary";
     final Throwable error = new RuntimeException("error");
-    handler.onError(summary, error);
+    handler.onException(summary, error);
     verify(log).warn(eq(summary), eq(error));
   }
 }

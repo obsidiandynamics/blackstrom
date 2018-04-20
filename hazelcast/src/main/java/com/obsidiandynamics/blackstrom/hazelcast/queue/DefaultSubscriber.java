@@ -153,7 +153,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
             final String serviceInfo = getServiceInfo(buffer.getRingbuffer());
             final String m = String.format("Error reading at offset %d from stream %s [%s]",
                                            nextReadOffset, config.getStreamConfig().getName(), serviceInfo);
-            config.getErrorHandler().onError(m, e.getCause());
+            config.getExceptionHandler().onException(m, e.getCause());
             f.cancel(true);
             Thread.sleep(timeoutMillis);
             return RecordBatch.empty();
@@ -284,19 +284,19 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   private void putOffset(long offset) {
     if (isCurrentTenant()) {
-      doWithErrorHandler(() -> offsets.put(config.getGroup(), offset), 
-                         config.getErrorHandler(), 
+      doWithExceptionHandler(() -> offsets.put(config.getGroup(), offset), 
+                         config.getExceptionHandler(), 
                          "Failed to update offset");
     } else {
       final String m = String.format("Failed confirming offset %s for stream %s: %s is not the current tenant for group %s",
                                      offset, config.getStreamConfig().getName(), leaseCandidate, config.getGroup());
-      config.getErrorHandler().onError(m, null);
+      config.getExceptionHandler().onException(m, null);
     }
   }
   
   private void extendLease(long timestamp) {
-    doWithErrorHandler(() -> election.extend(config.getGroup(), leaseCandidate), 
-                       config.getErrorHandler(), 
+    doWithExceptionHandler(() -> election.extend(config.getGroup(), leaseCandidate), 
+                       config.getExceptionHandler(), 
                        "Failed to extend lease");
   }
   
@@ -311,16 +311,16 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   
   @Override
   public void deactivate() {
-    deactivate(config.getErrorHandler());
+    deactivate(config.getExceptionHandler());
   }
   
-  private void deactivate(ErrorHandler errorHandler) {
+  private void deactivate(ExceptionHandler errorHandler) {
     ensureGroupMode();
     
     synchronized (activeLock) {
       election.getRegistry().unenrol(config.getGroup(), leaseCandidate);
       if (isCurrentTenant()) {
-        doWithErrorHandler(() -> election.yield(config.getGroup(), leaseCandidate), 
+        doWithExceptionHandler(() -> election.yield(config.getGroup(), leaseCandidate), 
                            errorHandler, 
                            "Failed to yield lease");
       }
@@ -328,11 +328,11 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
     }
   }
   
-  private static void doWithErrorHandler(CheckedRunnable<?> r, ErrorHandler errorHandler, String message) {
+  private static void doWithExceptionHandler(CheckedRunnable<?> r, ExceptionHandler errorHandler, String message) {
     try {
       r.run();
     } catch (Throwable e) {
-      errorHandler.onError(message, e);
+      errorHandler.onException(message, e);
     }
   }
   
@@ -349,7 +349,7 @@ public final class DefaultSubscriber implements Subscriber, Joinable {
   @Override
   public Joinable terminate() {
     if (leaseCandidate != null) {
-      deactivate(ErrorHandler.nop());
+      deactivate(ExceptionHandler.nop());
     }
     
     Terminator.blank()

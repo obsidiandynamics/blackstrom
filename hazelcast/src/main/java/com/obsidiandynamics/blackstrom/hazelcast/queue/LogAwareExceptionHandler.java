@@ -4,15 +4,17 @@ import java.util.function.*;
 
 import org.slf4j.*;
 
-final class LogAwareErrorHandler implements ErrorHandler {
+import com.obsidiandynamics.func.*;
+
+final class LogAwareExceptionHandler implements ExceptionHandler {
   private final Supplier<Logger> logSupplier;
   
-  LogAwareErrorHandler(Supplier<Logger> logSupplier) {
+  LogAwareExceptionHandler(Supplier<Logger> logSupplier) {
     this.logSupplier = logSupplier;
   }
 
   @Override
-  public void onError(String summary, Throwable error) {
+  public void onException(String summary, Throwable error) {
     logSupplier.get().warn(summary, error);
   }
 }

@@ -8,12 +8,13 @@ import org.slf4j.*;
 import com.hazelcast.config.*;
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
+import com.obsidiandynamics.func.*;
 
 public final class SubscriberConfigTest {
   @Test
   public void testConfig() {
     final ElectionConfig electionConfig = new ElectionConfig();
-    final ErrorHandler errorHandler = ErrorHandler.nop();
+    final ExceptionHandler exceptionHandler = ExceptionHandler.nop();
     final String group = "group";
     final InitialOffsetScheme initialOffsetScheme = InitialOffsetScheme.EARLIEST;
     final Logger log = LoggerFactory.getLogger(SubscriberConfigTest.class);
@@ -26,7 +27,7 @@ public final class SubscriberConfigTest {
     
     final SubscriberConfig config = new SubscriberConfig()
         .withElectionConfig(electionConfig)
-        .withErrorHandler(errorHandler)
+        .withExceptionHandler(exceptionHandler)
         .withGroup(group)
         .withInitialOffsetScheme(initialOffsetScheme)
         .withLog(log)
@@ -35,7 +36,7 @@ public final class SubscriberConfigTest {
         .withMinLeaseExtendInterval(minLeaseExtendIntervalMillis)
         .withMapStoreConfig(mapStoreConfig);
     assertEquals(electionConfig, config.getElectionConfig());
-    assertEquals(errorHandler, config.getErrorHandler());
+    assertEquals(exceptionHandler, config.getExceptionHandler());
     assertEquals(group, config.getGroup());
     assertEquals(initialOffsetScheme, config.getInitialOffsetScheme());
     assertEquals(log, config.getLog());

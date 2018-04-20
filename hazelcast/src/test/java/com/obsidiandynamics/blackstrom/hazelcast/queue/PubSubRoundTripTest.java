@@ -12,6 +12,7 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.testmark.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -90,13 +91,13 @@ public final class PubSubRoundTripTest extends AbstractPubSubTest {
     final DefaultPublisher replyPub = configurePublisher(instancePool.get(), replyPubConfig);
 
     // create subscribers with receivers
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final SubscriberConfig requestSubConfig = new SubscriberConfig()
-        .withErrorHandler(eh)
+        .withExceptionHandler(eh)
         .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
         .withStreamConfig(requestStreamConfig);
     final SubscriberConfig replySubConfig = new SubscriberConfig()
-        .withErrorHandler(eh)
+        .withExceptionHandler(eh)
         .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
         .withStreamConfig(replyStreamConfig);
     

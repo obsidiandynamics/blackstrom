@@ -15,6 +15,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 
@@ -102,23 +103,23 @@ public abstract class AbstractPubSubTest {
     return "group-" + Long.toHexString(random.getMostSignificantBits() ^ random.getLeastSignificantBits());
   }
   
-  protected static final ErrorHandler mockErrorHandler() {
-    final ErrorHandler mock = mock(ErrorHandler.class);
+  protected static final ExceptionHandler mockExceptionHandler() {
+    final ExceptionHandler mock = mock(ExceptionHandler.class);
     doAnswer(invocation -> {
       final String summary = invocation.getArgument(0);
       final Throwable error = invocation.getArgument(1);
       final Logger log = LoggerFactory.getLogger(AbstractPubSubTest.class);
       log.warn(summary, error);
       return null;
-    }).when(mock).onError(any(), any());
+    }).when(mock).onException(any(), any());
     return mock;
   }
   
-  protected static final void verifyNoError(ErrorHandler... mockErrorHandlers) {
-    Arrays.stream(mockErrorHandlers).forEach(AbstractPubSubTest::verifyNoError);
+  protected static final void verifyNoError(ExceptionHandler... mockExceptionHandlers) {
+    Arrays.stream(mockExceptionHandlers).forEach(AbstractPubSubTest::verifyNoError);
   }
   
-  protected static final void verifyNoError(ErrorHandler mockErrorHandler) {
-    verify(mockErrorHandler, never()).onError(any(), any());
+  protected static final void verifyNoError(ExceptionHandler mockExceptionHandler) {
+    verify(mockExceptionHandler, never()).onException(any(), any());
   }
 }

@@ -16,6 +16,7 @@ import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
 import com.obsidiandynamics.blackstrom.hazelcast.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.testmark.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
@@ -76,9 +77,9 @@ public final class PubSubOneWayTest extends AbstractPubSubTest {
     if (options.verbose) System.out.format("ready (x%d). Starting run...\n", prestartInstances);
 
     // create subscribers with receivers
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final SubscriberConfig subConfig = new SubscriberConfig()
-        .withErrorHandler(eh)
+        .withExceptionHandler(eh)
         .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
         .withStreamConfig(streamConfig);
     

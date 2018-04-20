@@ -16,6 +16,7 @@ import com.hazelcast.ringbuffer.*;
 import com.hazelcast.util.executor.*;
 import com.obsidiandynamics.blackstrom.hazelcast.*;
 import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
 
@@ -35,11 +36,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 1;
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -57,11 +58,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String stream = "s";
     final String group = randomGroup();
     final int capacity = 10;
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -97,7 +98,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String stream = "s";
     final String group = randomGroup();
     final int capacity = 10;
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     
     // start with an existing lease
     final HazelcastInstance instance = newInstance();
@@ -107,7 +108,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
         configureSubscriber(instance,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -164,12 +165,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final IMap<String, byte[]> leases = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     leases.put(group, Lease.expired(UUID.randomUUID()).pack());
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(instance,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withMinLeaseExtendInterval(0)
                             .withStreamConfig(new StreamConfig()
@@ -245,12 +246,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final IMap<String, byte[]> leases = instance.getMap(QNamespace.HAZELQ_META.qualify("lease." + stream));
     leases.put(group, Lease.expired(UUID.randomUUID()).pack());
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(instance,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withMinLeaseExtendInterval(60_000)
                             .withStreamConfig(new StreamConfig()
@@ -309,11 +310,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String stream = "s";
     final String group = randomGroup();
     final int capacity = 10;
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -330,11 +331,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String stream = "s";
     final String group = randomGroup();
     final int capacity = 10;
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -355,11 +356,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 10;
     
-    final ErrorHandler errorHandler = mock(ErrorHandler.class);
+    final ExceptionHandler errorHandler = mock(ExceptionHandler.class);
     final DefaultSubscriber s = 
         configureSubscriber(new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(errorHandler)
+                            .withExceptionHandler(errorHandler)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withMinLeaseExtendInterval(0)
                             .withStreamConfig(new StreamConfig()
@@ -396,7 +397,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     wait.until(() -> {
       assertFalse(s.isAssigned());
       assertEquals(-1L, (long) offsets.get(group));
-      verify(errorHandler).onError(isNotNull(), isNull());
+      verify(errorHandler).onException(isNotNull(), isNull());
     });
     
     // try deactivating (yield will only happen for a current tenant)
@@ -418,7 +419,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 1;
     
-    final ErrorHandler eh = mock(ErrorHandler.class);
+    final ExceptionHandler eh = mock(ExceptionHandler.class);
     
     final HazelcastInstance realInstance = newInstance();
     final HazelcastInstance mockInstance = mock(HazelcastInstance.class);
@@ -440,7 +441,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
         configureSubscriber(mockInstance,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -456,7 +457,7 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     
     // when an error occurs, forcibly reassign the lease
     doAnswer(invocation -> leases.put(group, Lease.forever(UUID.randomUUID()).pack()))
-    .when(eh).onError(any(), any());
+    .when(eh).onException(any(), any());
     
     // simulate an error by reading stale items
     Thread.sleep(10);
@@ -464,8 +465,8 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     assertEquals(0, b.size());
     
     // there should be two errors -- the first for the stale read, the second for the failed lease extension
-    wait.until(() -> verify(eh).onError(isNotNull(), eq(cause)));
-    wait.until(() -> verify(eh).onError(isNotNull(), any(NotTenantException.class)));
+    wait.until(() -> verify(eh).onException(isNotNull(), eq(cause)));
+    wait.until(() -> verify(eh).onException(isNotNull(), any(NotTenantException.class)));
   }
   
   /**
@@ -484,12 +485,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(instance,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -518,12 +519,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s = 
         configureSubscriber(instance,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.LATEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -548,11 +549,11 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final String group = randomGroup();
     final int capacity = 10;
     
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     configureSubscriber(new SubscriberConfig()
                         .withGroup(group)
                         .withInitialOffsetScheme(InitialOffsetScheme.NONE)
-                        .withErrorHandler(eh)
+                        .withExceptionHandler(eh)
                         .withStreamConfig(new StreamConfig()
                                           .withName(stream)
                                           .withHeapCapacity(capacity)));
@@ -580,12 +581,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final IMap<String, Long> offsets = instance0.getMap(QNamespace.HAZELQ_META.qualify("offsets." + stream));
     offsets.put(group, -1L);
     
-    final ErrorHandler eh0 = mockErrorHandler();
+    final ExceptionHandler eh0 = mockExceptionHandler();
     final DefaultSubscriber s0 = 
         configureSubscriber(instance0,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh0)
+                            .withExceptionHandler(eh0)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -595,12 +596,12 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     buffer.add("h1".getBytes());
     wait.untilTrue(s0::isAssigned);
     
-    final ErrorHandler eh1 = mockErrorHandler();
+    final ExceptionHandler eh1 = mockExceptionHandler();
     final DefaultSubscriber s1 = 
         configureSubscriber(instance1,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh1)
+                            .withExceptionHandler(eh1)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -691,22 +692,22 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     offsets.put(group0, -1L);
     offsets.put(group1, -1L);
     
-    final ErrorHandler eh0 = mockErrorHandler();
+    final ExceptionHandler eh0 = mockExceptionHandler();
     final DefaultSubscriber s0 = 
         configureSubscriber(instance0,
                             new SubscriberConfig()
                             .withGroup(group0)
-                            .withErrorHandler(eh0)
+                            .withExceptionHandler(eh0)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
-    final ErrorHandler eh1 = mockErrorHandler();
+    final ExceptionHandler eh1 = mockExceptionHandler();
     final DefaultSubscriber s1 = 
         configureSubscriber(instance1,
                             new SubscriberConfig()
                             .withGroup(group1)
-                            .withErrorHandler(eh1)
+                            .withExceptionHandler(eh1)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -758,23 +759,23 @@ public final class SubscriberGroupTest extends AbstractPubSubTest {
     final Ringbuffer<byte[]> buffer0 = instance0.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream0));
     final Ringbuffer<byte[]> buffer1 = instance1.getRingbuffer(QNamespace.HAZELQ_STREAM.qualify(stream1));
     
-    final ErrorHandler eh0 = mockErrorHandler();
+    final ExceptionHandler eh0 = mockExceptionHandler();
     final DefaultSubscriber s0 = 
         configureSubscriber(instance0,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh0)
+                            .withExceptionHandler(eh0)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream0)
                                               .withHeapCapacity(capacity)));
 
-    final ErrorHandler eh1 = mockErrorHandler();
+    final ExceptionHandler eh1 = mockExceptionHandler();
     final DefaultSubscriber s1 = 
         configureSubscriber(instance1,
                             new SubscriberConfig()
                             .withGroup(group)
-                            .withErrorHandler(eh1)
+                            .withExceptionHandler(eh1)
                             .withElectionConfig(new ElectionConfig().withScavengeInterval(1))
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream1)

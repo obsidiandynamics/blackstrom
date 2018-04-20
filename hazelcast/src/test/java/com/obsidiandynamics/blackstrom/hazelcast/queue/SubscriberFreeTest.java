@@ -14,6 +14,7 @@ import com.hazelcast.core.*;
 import com.hazelcast.ringbuffer.*;
 import com.hazelcast.util.executor.*;
 import com.obsidiandynamics.blackstrom.hazelcast.queue.Receiver.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
@@ -78,10 +79,10 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final String stream = "s";
     final int capacity = 10;
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -107,10 +108,10 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final String stream = "s";
     final int capacity = 10;
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -138,10 +139,10 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final String stream = "s";
     final int capacity = 10;
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -172,10 +173,10 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final String stream = "s";
     final int capacity = 10;
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
@@ -218,7 +219,7 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testReadFailure() throws InterruptedException {
     final String stream = "s";
     final int capacity = 1;
-    final ErrorHandler eh = mock(ErrorHandler.class);
+    final ExceptionHandler eh = mock(ExceptionHandler.class);
 
     final HazelcastInstance realInstance = newInstance();
     final HazelcastInstance mockInstance = mock(HazelcastInstance.class);
@@ -239,14 +240,14 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final DefaultSubscriber s =
         configureSubscriber(mockInstance,
                             new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
     final RecordBatch b = s.poll(1_000);
     assertEquals(0, b.size());
-    verify(eh).onError(isNotNull(), eq(cause));
+    verify(eh).onException(isNotNull(), eq(cause));
   }
   
   /**
@@ -261,11 +262,11 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
   public void testStaleRead() throws InterruptedException {
     final String stream = "s";
     final int capacity = 1;
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
 
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStaleReadSafetyMargin(0)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -295,11 +296,11 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber subscriber =
         configureSubscriber(instance,
                             new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.EARLIEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -326,11 +327,11 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     buffer.add("h0".getBytes());
     buffer.add("h1".getBytes());
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(instance,
                             new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withInitialOffsetScheme(InitialOffsetScheme.LATEST)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
@@ -368,10 +369,10 @@ public final class SubscriberFreeTest extends AbstractPubSubTest {
     final String stream = "s";
     final int capacity = 10;
 
-    final ErrorHandler eh = mockErrorHandler();
+    final ExceptionHandler eh = mockExceptionHandler();
     final DefaultSubscriber s =
         configureSubscriber(new SubscriberConfig()
-                            .withErrorHandler(eh)
+                            .withExceptionHandler(eh)
                             .withStreamConfig(new StreamConfig()
                                               .withName(stream)
                                               .withHeapCapacity(capacity)));
