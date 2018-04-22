@@ -22,7 +22,7 @@ import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   

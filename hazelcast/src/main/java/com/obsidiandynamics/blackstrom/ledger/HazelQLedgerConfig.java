@@ -1,11 +1,9 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
-import org.slf4j.*;
-
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
-import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
+import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.zerolog.*;
 
 @Y
 public final class HazelQLedgerConfig {
@@ -13,7 +11,7 @@ public final class HazelQLedgerConfig {
   private MessageCodec codec;
   
   @YInject
-  private Logger log = LoggerFactory.getLogger(HazelQLedger.class);
+  private Zlg zlg = Zlg.forDeclaringClass().get();
   
   @YInject
   private StreamConfig streamConfig = new StreamConfig();
@@ -33,12 +31,12 @@ public final class HazelQLedgerConfig {
     return this;
   }
 
-  Logger getLog() {
-    return log;
+  Zlg getZlg() {
+    return zlg;
   }
 
-  public HazelQLedgerConfig withLog(Logger log) {
-    this.log = log;
+  public HazelQLedgerConfig withZlg(Zlg zlg) {
+    this.zlg = zlg;
     return this;
   }
 
@@ -71,7 +69,7 @@ public final class HazelQLedgerConfig {
 
   @Override
   public String toString() {
-    return HazelQLedgerConfig.class.getSimpleName() + " [codec=" + codec + ", log=" + log + ", streamConfig=" + streamConfig
+    return HazelQLedgerConfig.class.getSimpleName() + " [codec=" + codec + ", streamConfig=" + streamConfig
         + ", electionConfig=" + electionConfig + ", pollInterval=" + pollIntervalMillis + "]";
   }
 }

@@ -1,6 +1,5 @@
 package com.obsidiandynamics.blackstrom.bank;
 
-import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -15,7 +14,7 @@ import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class BankBranch implements Cohort {
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final String branchId;
   

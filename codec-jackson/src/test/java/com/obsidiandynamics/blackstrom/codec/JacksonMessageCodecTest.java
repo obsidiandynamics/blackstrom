@@ -2,7 +2,6 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import static org.junit.Assert.*;
 
-import java.lang.invoke.*;
 import java.util.*;
 
 import org.hamcrest.core.*;
@@ -22,7 +21,7 @@ import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class JacksonMessageCodecTest {
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static void logEncoded(String encoded) {
     zlg.t("encoded %s", z -> z.arg(encoded));

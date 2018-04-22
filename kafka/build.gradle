@@ -1,6 +1,5 @@
 def packageName = "blackstrom-kafka"
 version = project(":").version
-
   
 ext {
   jackdawVersion = "0.3.0"
@@ -10,7 +9,7 @@ dependencies {
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.obsidiandynamics.jackdaw:jackdaw-core:${jackdawVersion}"
-  compile "org.apache.kafka:kafka-clients:0.11.0.2"
+  compile "org.apache.kafka:kafka-clients:1.1.0"
   
   testCompile project(":blackstrom-codec-jackson")
   testCompile project(":blackstrom-codec-jackson").sourceSets.test.output
@@ -29,16 +28,6 @@ task addLauncherApps() {
   project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.KafkaJacksonRandomBankTransferIT"
   project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.KafkaKryoLedgerIT"
   project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.KafkaJacksonLedgerIT"
-}
-
-task startKafka(type: JavaExec) {
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  main = "com.obsidiandynamics.blackstrom.kafka.RunKafkaDocker\$Start"
-}
-
-task stopKafka(type: JavaExec) {
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  main = "com.obsidiandynamics.blackstrom.kafka.RunKafkaDocker\$Stop"
 }
 
 jar {

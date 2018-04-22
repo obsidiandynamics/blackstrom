@@ -1,9 +1,14 @@
 def packageName = "blackstrom-hazelcast"
 version = project(":").version
-
+  
+ext {
+  hazelqVersion = "0.3.0"
+}
+  
 dependencies {
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
+  compile "com.obsidiandynamics.hazelq:hazelq-core:${hazelqVersion}"
   compile "com.hazelcast:hazelcast:3.10-BETA-2"
   
   testCompile project(":blackstrom-codec-kryo")
@@ -11,6 +16,7 @@ dependencies {
   testCompile project(":blackstrom-sim")
   testCompile project(":blackstrom-sim").sourceSets.test.output
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
+  testCompile "com.obsidiandynamics.hazelq:hazelq-assurance:${hazelqVersion}"
   testCompile "com.hazelcast:hazelcast:3.10-BETA-2:tests"
 }
 
@@ -18,8 +24,6 @@ task addLauncherApps() {
   project(":").launcherClasspath += sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
   project(":").launcherClasses += "com.obsidiandynamics.blackstrom.bank.HazelQKryoRandomBankTransferTest"
   project(":").launcherClasses += "com.obsidiandynamics.blackstrom.ledger.HazelQKryoLedgerTest"
-  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubOneWayTest"
-  project(":").launcherClasses += "com.obsidiandynamics.blackstrom.hazelcast.queue.PubSubRoundTripTest"
 }
 
 jar {
@@ -64,7 +68,7 @@ publishing {
 
 def envUser = "BINTRAY_USER"
 def envKey = "BINTRAY_KEY"
-def packageDesc = "Hazelcast ledger"
+def packageDesc = "HazelQ-based ledger implementation"
 def repoName = "blackstrom"
 bintray {
   user = System.getenv(envUser)

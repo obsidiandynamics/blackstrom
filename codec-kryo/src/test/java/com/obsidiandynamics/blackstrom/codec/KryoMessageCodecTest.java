@@ -2,8 +2,6 @@ package com.obsidiandynamics.blackstrom.codec;
 
 import static org.junit.Assert.*;
 
-import java.lang.invoke.*;
-
 import org.hamcrest.core.*;
 import org.junit.*;
 import org.junit.rules.*;
@@ -22,7 +20,7 @@ import com.obsidiandynamics.zerolog.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class KryoMessageCodecTest {
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static void logEncoded(byte[] encoded) {
     zlg.t("encoded:\n%s", z -> z.arg(BinaryUtils.dump(encoded)));

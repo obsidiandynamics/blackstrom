@@ -27,7 +27,7 @@ public final class BalancedLedgerHubTest {
     return TestCycle.timesQuietly(1);
   }
   
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final Timesert wait = Wait.SHORT;
   

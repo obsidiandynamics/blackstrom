@@ -2,7 +2,6 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import static junit.framework.TestCase.*;
 
-import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -15,7 +14,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.zerolog.*;
 
 public abstract class AbstractGroupLedgerTest {
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static final String[] TEST_COHORTS = new String[] {"a", "b"};
   

@@ -1,15 +1,16 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.hazelq.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class HazelQLedgerTest {
   @Test
@@ -48,14 +49,16 @@ public final class HazelQLedgerTest {
     when(codec.encode(any())).thenReturn(new byte[0]);
     when(codec.decode(any())).thenThrow(cause);
     
-    final Logger log = mock(Logger.class);
+    final MockLogTarget logTarget = new MockLogTarget();
     final Message m = new Proposal("100", new String[0], null, 0);
     final Record record = new Record(MessagePacker.pack(codec, m));
     final MessageHandler handler = mock(MessageHandler.class);
     final MessageContext context = mock(MessageContext.class);
-    HazelQLedger.receive(codec, record, log, handler, context);
+    HazelQLedger.receive(codec, record, logTarget.logger(), handler, context);
     
-    verify(log).error(isNotNull(), eq(cause));
+    assertEquals(1, logTarget.entries().list().size());
+    assertEquals(1, logTarget.entries().forLevel(LogLevel.ERROR).list().size());
+    assertEquals(cause, logTarget.entries().forLevel(LogLevel.ERROR).list().get(0).getThrowable());
     verifyNoMoreInteractions(handler);
     verifyNoMoreInteractions(context);
   }

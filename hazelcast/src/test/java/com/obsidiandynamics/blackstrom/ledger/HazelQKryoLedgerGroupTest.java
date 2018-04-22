@@ -10,12 +10,10 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.blackstrom.hazelcast.*;
-import com.obsidiandynamics.blackstrom.hazelcast.elect.*;
-import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.junit.*;
-import com.obsidiandynamics.testmark.Testmark;
+import com.obsidiandynamics.testmark.*;
 
 @RunWith(Parameterized.class)
 public final class HazelQKryoLedgerGroupTest extends AbstractGroupLedgerTest {  

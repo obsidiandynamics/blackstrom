@@ -3,16 +3,15 @@ package com.obsidiandynamics.blackstrom.ledger;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
-import org.slf4j.*;
-
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.hazelcast.queue.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.model.Message;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.worker.Terminator;
+import com.obsidiandynamics.zerolog.*;
 
 public final class HazelQLedger implements Ledger {
   private final HazelcastInstance instance;
@@ -38,7 +37,7 @@ public final class HazelQLedger implements Ledger {
     this.config = config;
     codec = config.getCodec();
     final PublisherConfig pubConfig = new PublisherConfig()
-        .withLog(config.getLog())
+        .withZlg(config.getZlg())
         .withStreamConfig(config.getStreamConfig());
     publisher = Publisher.createDefault(instance, pubConfig);
   }
@@ -47,7 +46,7 @@ public final class HazelQLedger implements Ledger {
   public void attach(MessageHandler handler) {
     final String group = handler.getGroupId();
     final SubscriberConfig subConfig = new SubscriberConfig()
-        .withLog(config.getLog())
+        .withZlg(config.getZlg())
         .withStreamConfig(config.getStreamConfig())
         .withElectionConfig(config.getElectionConfig())
         .withGroup(group);
@@ -68,18 +67,18 @@ public final class HazelQLedger implements Ledger {
     }
 
     final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
-    final Receiver receiver = subscriber.createReceiver(record -> receive(codec, record, config.getLog(), handler, context), 
+    final Receiver receiver = subscriber.createReceiver(record -> receive(codec, record, config.getZlg(), handler, context), 
                                                         config.getPollInterval());
     receivers.add(receiver);
   }
   
-  static void receive(MessageCodec codec, Record record, Logger log, MessageHandler handler, MessageContext context) {
+  static void receive(MessageCodec codec, Record record, Zlg zlg, MessageHandler handler, MessageContext context) {
     final DefaultMessageId messageId = new DefaultMessageId(0, record.getOffset());
     final Message message;
     try {
       message = MessagePacker.unpack(codec, record.getData());
     } catch (Exception e) {
-      log.error(String.format("Could not decode message at offset %,d", record.getOffset()), e);
+      zlg.e("Could not decode message at offset %,d", z -> z.arg(record::getOffset).threw(e));
       return;
     }
     message.setMessageId(messageId);

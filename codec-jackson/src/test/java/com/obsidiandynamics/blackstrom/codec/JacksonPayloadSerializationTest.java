@@ -3,7 +3,6 @@ package com.obsidiandynamics.blackstrom.codec;
 import static org.junit.Assert.*;
 
 import java.io.*;
-import java.lang.invoke.*;
 import java.util.*;
 
 import org.hamcrest.core.*;
@@ -16,7 +15,7 @@ import com.obsidiandynamics.blackstrom.codec.JacksonPayloadDeserializer.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class JacksonPayloadSerializationTest {
-  private static final Zlg zlg = Zlg.forClass(MethodHandles.lookup().lookupClass()).get();
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static ObjectMapper createObjectMapper() {
     final ObjectMapper mapper = new ObjectMapper();
