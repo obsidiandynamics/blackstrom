@@ -6,6 +6,8 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
+import nl.jqno.equalsverifier.*;
+
 public final class ProposalTest {
   @Test
   public void testFields() {
@@ -20,17 +22,6 @@ public final class ProposalTest {
   
   @Test
   public void testEqualsHashCode() {
-    final Proposal p1 = new Proposal("B1", 1000, new String[] {"a", "b"}, "objective", 1000);
-    final Proposal p2 = new Proposal("B1", 1000, new String[] {"a", "b"}, "something else", 1000);
-    final Proposal p3 = new Proposal("B1", 1000, new String[] {"a", "b"}, "objective", 1000);
-    final Proposal p4 = p1;
-
-    assertNotEquals(p1, p2);
-    assertEquals(p1, p3);
-    assertEquals(p1, p4);
-    assertNotEquals(p1, new Object());
-
-    assertNotEquals(p1.hashCode(), p2.hashCode());
-    assertEquals(p1.hashCode(), p3.hashCode());
+    EqualsVerifier.forClass(Proposal.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
 }

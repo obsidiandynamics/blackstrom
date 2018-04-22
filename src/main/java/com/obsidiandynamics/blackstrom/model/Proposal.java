@@ -42,7 +42,7 @@ public final class Proposal extends FluentMessage<Proposal> {
   @Override
   public int hashCode() {
     return new HashCodeBuilder()
-        .appendSuper(super.hashCode())
+        .appendSuper(baseHashCode())
         .append(cohorts)
         .append(objective)
         .append(ttl)
@@ -56,7 +56,7 @@ public final class Proposal extends FluentMessage<Proposal> {
     } else if (obj instanceof Proposal) {
       final Proposal that = (Proposal) obj;
       return new EqualsBuilder()
-          .appendSuper(super.equals(obj))
+          .appendSuper(baseEquals(that))
           .append(cohorts, that.cohorts)
           .append(objective, that.objective)
           .append(ttl, that.ttl)

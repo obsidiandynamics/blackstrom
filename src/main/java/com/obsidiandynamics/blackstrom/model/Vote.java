@@ -26,7 +26,7 @@ public final class Vote extends FluentMessage<Vote> {
   @Override
   public int hashCode() {
     return new HashCodeBuilder()
-        .appendSuper(super.hashCode())
+        .appendSuper(baseHashCode())
         .append(response)
         .toHashCode();
   }
@@ -38,7 +38,7 @@ public final class Vote extends FluentMessage<Vote> {
     } else if (obj instanceof Vote) {
       final Vote that = (Vote) obj;
       return new EqualsBuilder()
-          .appendSuper(super.equals(obj))
+          .appendSuper(baseEquals(that))
           .append(response, that.response)
           .isEquals();
     } else {

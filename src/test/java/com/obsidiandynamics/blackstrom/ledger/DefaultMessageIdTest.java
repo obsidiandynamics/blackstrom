@@ -6,6 +6,8 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
+import nl.jqno.equalsverifier.*;
+
 public final class DefaultMessageIdTest {
   @Test
   public void testGetters() {
@@ -16,20 +18,7 @@ public final class DefaultMessageIdTest {
   
   @Test
   public void testEqualsHashCode() {
-    final DefaultMessageId m1 = new DefaultMessageId(2, 400);
-    final DefaultMessageId m2 = new DefaultMessageId(3, 400);
-    final DefaultMessageId m3 = new DefaultMessageId(2, 400);
-    final DefaultMessageId m4 = m1;
-    final DefaultMessageId m5 = new DefaultMessageId(2, 500);
-    
-    assertNotEquals(m1, m2);
-    assertEquals(m1, m3);
-    assertEquals(m1, m4);
-    assertNotEquals(m1, m5);
-    assertNotEquals(m1, new Object());
-    
-    assertNotEquals(m1.hashCode(), m2.hashCode());
-    assertEquals(m1.hashCode(), m3.hashCode());
+    EqualsVerifier.forClass(DefaultMessageId.class).verify();
   }
   
   @Test

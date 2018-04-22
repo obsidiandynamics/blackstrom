@@ -74,8 +74,7 @@ public abstract class Message {
   
   public abstract MessageType getMessageType();  
   
-  @Override
-  public int hashCode() {
+  protected final int baseHashCode() {
     return new HashCodeBuilder()
         .append(ballotId)
         .append(timestamp)
@@ -86,21 +85,15 @@ public abstract class Message {
         .toHashCode();
   }
   
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof Message) {
-      final Message that = (Message) obj;
-      return new EqualsBuilder()
-          .append(ballotId, that.ballotId)
-          .append(timestamp, that.timestamp)
-          .append(messageId, that.messageId)
-          .append(source, that.source)
-          .append(shardKey, that.shardKey)
-          .append(shard, that.shard)
-          .isEquals();
-    } else {
-      return false;
-    }
+  protected final boolean baseEquals(Message that) {
+    return new EqualsBuilder()
+        .append(ballotId, that.ballotId)
+        .append(timestamp, that.timestamp)
+        .append(messageId, that.messageId)
+        .append(source, that.source)
+        .append(shardKey, that.shardKey)
+        .append(shard, that.shard)
+        .isEquals();
   }
   
   protected final String baseToString() {

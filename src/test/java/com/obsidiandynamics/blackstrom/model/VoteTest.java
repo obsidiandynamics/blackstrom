@@ -6,6 +6,8 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
+import nl.jqno.equalsverifier.*;
+
 public final class VoteTest {
   @Test
   public void testFields() {
@@ -18,17 +20,6 @@ public final class VoteTest {
   
   @Test
   public void testEqualsHashCode() {
-    final Vote v1 = new Vote("B1", 1000, new Response("a", Intent.ACCEPT, "meta-a"));
-    final Vote v2 = new Vote("B1", 1000, new Response("a", Intent.REJECT, "meta-a"));
-    final Vote v3 = new Vote("B1", 1000, new Response("a", Intent.ACCEPT, "meta-a"));
-    final Vote v4 = v1;
-
-    assertNotEquals(v1, v2);
-    assertEquals(v1, v3);
-    assertEquals(v1, v4);
-    assertNotEquals(v1, new Object());
-
-    assertNotEquals(v1.hashCode(), v2.hashCode());
-    assertEquals(v1.hashCode(), v3.hashCode());
+    EqualsVerifier.forClass(Vote.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
 }

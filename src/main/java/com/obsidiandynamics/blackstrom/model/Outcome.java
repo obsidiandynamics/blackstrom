@@ -58,6 +58,7 @@ public final class Outcome extends FluentMessage<Outcome> {
   @Override
   public int hashCode() {
     return new HashCodeBuilder()
+        .appendSuper(baseHashCode())
         .append(resolution)
         .append(abortReason)
         .append(responses)
@@ -72,7 +73,7 @@ public final class Outcome extends FluentMessage<Outcome> {
     } else if (obj instanceof Outcome) {
       final Outcome that = (Outcome) obj;
       return new EqualsBuilder()
-          .appendSuper(super.equals(obj))
+          .appendSuper(baseEquals(that))
           .append(resolution, that.resolution)
           .append(abortReason, that.abortReason)
           .append(responses, that.responses)

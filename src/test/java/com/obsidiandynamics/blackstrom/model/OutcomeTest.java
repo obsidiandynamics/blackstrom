@@ -6,6 +6,8 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 
+import nl.jqno.equalsverifier.*;
+
 public final class OutcomeTest {
   @Test
   public void testFields() {
@@ -25,19 +27,6 @@ public final class OutcomeTest {
   
   @Test
   public void testEqualsHashCode() {
-    final Response ra = new Response("a", Intent.ACCEPT, "a-meta");
-    final Response rb = new Response("b", Intent.REJECT, "b-meta");
-    final Outcome o1 = new Outcome("B1", 1000, Resolution.COMMIT, null, new Response[] {ra, rb}, null);
-    final Outcome o2 = new Outcome("B1", 1000, Resolution.ABORT, AbortReason.IMPLICIT_TIMEOUT, new Response[] {ra, rb}, null);
-    final Outcome o3 = new Outcome("B1", 1000, Resolution.COMMIT, null, new Response[] {ra, rb}, null);
-    final Outcome o4 = o1;
-
-    assertNotEquals(o1, o2);
-    assertEquals(o1, o3);
-    assertEquals(o1, o4);
-    assertNotEquals(o1, new Object());
-
-    assertNotEquals(o1.hashCode(), o2.hashCode());
-    assertEquals(o1.hashCode(), o3.hashCode());
+    EqualsVerifier.forClass(Outcome.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
 }

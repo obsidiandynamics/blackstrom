@@ -19,7 +19,7 @@ public final class UnknownMessage extends FluentMessage<UnknownMessage> {
   @Override
   public int hashCode() {
     return new HashCodeBuilder()
-        .appendSuper(super.hashCode())
+        .appendSuper(baseHashCode())
         .toHashCode();
   }
   
@@ -29,7 +29,7 @@ public final class UnknownMessage extends FluentMessage<UnknownMessage> {
       return true;
     } else if (obj instanceof UnknownMessage) {
       return new EqualsBuilder()
-          .appendSuper(super.equals(obj))
+          .appendSuper(baseEquals((UnknownMessage) obj))
           .isEquals();
     } else {
       return false;

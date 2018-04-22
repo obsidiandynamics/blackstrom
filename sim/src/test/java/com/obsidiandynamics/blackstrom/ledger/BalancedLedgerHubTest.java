@@ -2,7 +2,6 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import static org.junit.Assert.*;
 
-import java.lang.invoke.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
