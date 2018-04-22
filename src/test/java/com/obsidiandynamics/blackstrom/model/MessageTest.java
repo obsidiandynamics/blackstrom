@@ -7,6 +7,8 @@ import org.junit.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.nanoclock.*;
 
+import nl.jqno.equalsverifier.*;
+
 public final class MessageTest {
   private static final class UntypedMessage extends FluentMessage<UntypedMessage> {
     UntypedMessage(String ballotId, long timestamp) {
@@ -62,5 +64,34 @@ public final class MessageTest {
     assertFalse(m.isShardAssigned());
     assertNull(m.getShardIfAssigned());
     assertEquals(1000, time);
+  }
+  
+  /**
+   *  For testing of {@link Message#baseEquals(Message)} and {@link Message#baseHashCode()}.
+   */
+  private static final class TrivialSubclass extends Message {
+    private TrivialSubclass() {
+      super(null, 0);
+    }
+    
+    @Override
+    public int hashCode() {
+      return baseHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof TrivialSubclass ? baseEquals((TrivialSubclass) obj) : false;
+    }
+
+    @Override
+    public MessageType getMessageType() {
+      throw new UnsupportedOperationException();
+    }
+  }
+  
+  @Test
+  public void testEqualsHashCode() {
+    EqualsVerifier.forClass(TrivialSubclass.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
 }
