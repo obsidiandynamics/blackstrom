@@ -1,5 +1,6 @@
 plugins {
   id "com.jfrog.bintray" version "1.7.3"
+  id "com.github.johnrengelman.shadow" version "2.0.3"
 }
 apply plugin: "maven-publish"
 apply plugin: "com.jfrog.bintray"
@@ -25,7 +26,8 @@ allprojects {
   apply plugin: "jacoco"
   apply plugin: "maven-publish"
   apply plugin: "com.jfrog.bintray"
-  
+  apply plugin: "com.github.johnrengelman.shadow"
+
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
 

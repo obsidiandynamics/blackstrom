@@ -1,4 +1,4 @@
-def packageName = "blackstrom-hazelcast"
+def packageName = "blackstrom-ledger-hazelq"
 version = project(":").version
   
 ext {

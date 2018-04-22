@@ -16,27 +16,50 @@ import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jgroups.*;
 import com.obsidiandynamics.props.*;
 import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaRig {
+  enum Encoding {
+    JSON {
+      @Override String getTopic() {
+        return TestTopic.of(KafkaRig.class, "json", JacksonMessageCodec.ENCODING_VERSION, cluster);
+      }
+      
+      @Override MessageCodec getCodec() {
+        return new JacksonMessageCodec(true, new JacksonBankExpansion());
+      }
+    },     
+    KRYO {
+      @Override String getTopic() {
+        return TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, cluster);
+      }
+      
+      @Override MessageCodec getCodec() {
+        return new KryoMessageCodec(true, new KryoBankExpansion());
+      }
+    };  
+    
+    abstract String getTopic();
+    abstract MessageCodec getCodec();
+  }
+  
   private static final Properties base = new Properties(System.getProperties());
   
   private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
   private static final String bootstrapServers = getOrSet(base, "bootstrap.servers", String::valueOf, "localhost:9092");
   private static final boolean producerAsync = getOrSet(base, "rig.producer.async", Boolean::valueOf, false);
   private static final boolean consumerAsync = getOrSet(base, "rig.consumer.async", Boolean::valueOf, true);
+  private static final Encoding encoding = getOrSet(base, "rig.encoding", Encoding::valueOf, Encoding.KRYO);
   
   private static final Logger log = LoggerFactory.getLogger(KafkaRig.class);
   
   private static final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers(bootstrapServers);
 
-  private static final String topic = 
-      TestTopic.of(KafkaRig.class, "kryo", KryoMessageCodec.ENCODING_VERSION, cluster);
-  
   private static void before() throws InterruptedException, ExecutionException, TimeoutException {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
+      admin.ensureExists(TestTopic.newOf(encoding.getTopic()), KafkaTimeouts.TOPIC_CREATE);
     }
   }
   
@@ -50,13 +73,17 @@ public final class KafkaRig {
                            .withProducerPipeConfig(new ProducerPipeConfig().withAsync(producerAsync))
                            .withConsumerPipeConfig(new ConsumerPipeConfig().withAsync(consumerAsync))
                            .withKafka(new KafkaCluster<>(config))
-                           .withTopic(topic)
-                           .withCodec(new KryoMessageCodec(true, new KryoBankExpansion()))
+                           .withTopic(encoding.getTopic())
+                           .withCodec(encoding.getCodec())
                            .withPrintConfig(true));
   }
   
   private static JChannel createChannel() throws Exception {
     return Group.newUdpChannel(null);
+  }
+  
+  static {
+    Zlg.forDeclaringClass().get().t("Trace enabled");
   }
   
   public static final class Initiator {
