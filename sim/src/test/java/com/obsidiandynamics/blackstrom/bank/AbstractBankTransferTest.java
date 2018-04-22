@@ -29,8 +29,8 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
                                                       TWO_BRANCH_IDS,
                                                       BankSettlement.forTwo(transferAmount),
-                                                      PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+                                                      PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.COMMIT, o.getResolution());
     assertNull(o.getAbortReason());
     assertEquals(2, o.getResponses().length);
@@ -57,8 +57,8 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
                                                       TWO_BRANCH_IDS,
                                                       BankSettlement.forTwo(transferAmount),
-                                                      PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+                                                      PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.COMMIT, o.getResolution());
     assertNull(o.getAbortReason());
     assertEquals(2, o.getResponses().length);
@@ -85,8 +85,8 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
-                                                      PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+                                                      PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.REJECT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
@@ -116,8 +116,8 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     final Outcome o = initiator.initiate(new Proposal(UUID.randomUUID().toString(), 
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
-                                                      PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+                                                      PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.REJECT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1); // the accept status doesn't need to have been considered
@@ -152,7 +152,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1);
@@ -182,7 +182,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, o.getAbortReason());
     assertTrue("responses.length=" + o.getResponses().length, o.getResponses().length >= 1);
@@ -213,7 +213,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, o.getAbortReason());
     wait.until(() -> {
@@ -243,7 +243,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
                                                       1).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(Resolution.ABORT, o.getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, o.getAbortReason());
     wait.until(() -> {

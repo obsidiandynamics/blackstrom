@@ -9,6 +9,8 @@ import com.obsidiandynamics.func.*;
 public final class Proposal extends FluentMessage<Proposal> {
   private final String[] cohorts;
   private final Object objective;
+  
+  /** The time to live, in milliseconds. */
   private final int ttl;
 
   public Proposal(String ballotId, String[] cohorts, Object objective, int ttl) {

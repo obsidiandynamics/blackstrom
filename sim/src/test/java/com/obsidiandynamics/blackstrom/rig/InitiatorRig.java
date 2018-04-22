@@ -151,7 +151,7 @@ public final class InitiatorRig {
           settlement = run % 1 == 0 ? settlement0 : settlement1;
         }
         ledger.append(new Proposal(Long.toHexString(run), NanoClock.now(), branchIds, settlement, 
-                                   PROPOSAL_TIMEOUT_MILLIS * 1_000)
+                                   PROPOSAL_TIMEOUT_MILLIS)
                       .withShardKey(sandbox.key()));
       }
       

@@ -104,7 +104,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
           branchIds = numBranches != 2 ? BankBranch.generateIds(2 + (int) (Math.random() * (numBranches - 1))) : TWO_BRANCH_IDS;
           settlement = BankSettlement.randomise(branchIds, transferAmount);
         }
-        final Proposal p = new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT)
+        final Proposal p = new Proposal(Long.toHexString(ballotIdBase + run), branchIds, settlement, PROPOSAL_TIMEOUT_MILLIS)
             .withShardKey(sandbox.key());
         zlg.t("proposing %s", z -> z.arg(p));
         ledger.append(p);

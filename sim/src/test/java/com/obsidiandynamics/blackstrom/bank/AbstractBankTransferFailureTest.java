@@ -129,8 +129,8 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     final Outcome o = initiator.initiate(new Proposal(ballotId, 
                                                       TWO_BRANCH_IDS, 
                                                       BankSettlement.forTwo(transferAmount),
-                                                      PROPOSAL_TIMEOUT).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT, TimeUnit.MILLISECONDS);
+                                                      PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     assertEquals(expectedVerdict, o.getResolution());
     assertEquals(expectedAbortReason, o.getAbortReason());
   }
