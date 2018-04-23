@@ -19,19 +19,39 @@ import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class HazelQRig {
-  private static final Properties base = new Properties(System.getProperties());
-  
-  private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
-  
-  private static final String hazelcastLogging = getOrSet(base, "rig.hazelcast.logging", String::valueOf, "slf4j");
-  
-  private static final int hazelcastPartitions = getOrSet(base, "rig.hazelcast.partitions", Integer::valueOf, 7);
-   
-  private static final boolean hazelcastDebugMigrations = getOrSet(base, "rig.hazelcast.debug.migrations", Boolean::parseBoolean, false);
-  
-  private static final boolean hazelcastCleanShutdown = getOrSet(base, "rig.hazelcast.clean.shutdown", Boolean::parseBoolean, true);
-  
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  
+  enum Encoding {
+    JSON {
+      @Override String getStream() {
+        return "json";
+      }
+      
+      @Override MessageCodec getCodec() {
+        return new JacksonMessageCodec(true, new JacksonBankExpansion());
+      }
+    },     
+    KRYO {
+      @Override String getStream() {
+        return "kryo";
+      }
+      
+      @Override MessageCodec getCodec() {
+        return new KryoMessageCodec(true, new KryoBankExpansion());
+      }
+    };  
+    
+    abstract String getStream();
+    abstract MessageCodec getCodec();
+  }
+  
+  private static final Properties base = new Properties(System.getProperties());
+  private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
+  private static final String hazelcastLogging = getOrSet(base, "rig.hazelcast.logging", String::valueOf, "slf4j");
+  private static final int hazelcastPartitions = getOrSet(base, "rig.hazelcast.partitions", Integer::valueOf, 7);
+  private static final boolean hazelcastDebugMigrations = getOrSet(base, "rig.hazelcast.debug.migrations", Boolean::parseBoolean, false);
+  private static final boolean hazelcastCleanShutdown = getOrSet(base, "rig.hazelcast.clean.shutdown", Boolean::parseBoolean, true);
+  private static final Encoding encoding = getOrSet(base, "rig.encoding", Encoding::valueOf, Encoding.KRYO);
   
   private static void printProps(Properties props) {
     zlg.c("Rig properties:");
@@ -96,7 +116,7 @@ public final class HazelQRig {
   private static Ledger createLedger() {
     synchronized (instanceLock) {
       final StreamConfig streamConfig = new StreamConfig()
-          .withName("rig")
+          .withName(encoding.getStream())
           .withSyncReplicas(1)
           .withAsyncReplicas(0)
           .withHeapCapacity(100_000);
@@ -106,7 +126,7 @@ public final class HazelQRig {
                                                   .withScavengeInterval(1000))
                               .withStreamConfig(streamConfig)
                               .withPollInterval(1000)
-                              .withCodec(new KryoMessageCodec(true, new KryoBankExpansion())));
+                              .withCodec(encoding.getCodec()));
     }
   }
   

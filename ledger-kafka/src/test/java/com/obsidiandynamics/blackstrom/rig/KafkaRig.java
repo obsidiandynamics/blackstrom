@@ -18,6 +18,8 @@ import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaRig {
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  
   enum Encoding {
     JSON {
       @Override String getTopic() {
@@ -43,14 +45,11 @@ public final class KafkaRig {
   }
   
   private static final Properties base = new Properties(System.getProperties());
-  
   private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
   private static final String bootstrapServers = getOrSet(base, "bootstrap.servers", String::valueOf, "localhost:9092");
   private static final boolean producerAsync = getOrSet(base, "rig.producer.async", Boolean::valueOf, false);
   private static final boolean consumerAsync = getOrSet(base, "rig.consumer.async", Boolean::valueOf, true);
   private static final Encoding encoding = getOrSet(base, "rig.encoding", Encoding::valueOf, Encoding.KRYO);
-  
-  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers(bootstrapServers);
