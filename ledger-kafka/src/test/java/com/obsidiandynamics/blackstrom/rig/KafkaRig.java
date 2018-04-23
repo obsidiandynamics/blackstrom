@@ -136,6 +136,8 @@ public final class KafkaRig {
   
   public static final class Monitor {
     public static void main(String[] args) throws Exception {
+      final Properties props = new Properties(base);
+      printProps(props);
       before();
       
       new MonitorRig.Config() {{

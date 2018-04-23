@@ -24,6 +24,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.jgroups.*;
 import com.obsidiandynamics.nanoclock.*;
 import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.worker.*;
 
 public final class InitiatorRig {
   private static final int GROUP_VIEW_WAIT_MILLIS = 300_000;
@@ -92,6 +93,20 @@ public final class InitiatorRig {
     final AtomicLong commits = new AtomicLong();
     final AtomicLong aborts = new AtomicLong();
     final AtomicLong timeouts = new AtomicLong();
+    
+    final long started = System.currentTimeMillis();
+    final WorkerThread progressMonitorThread = WorkerThread.builder()
+        .withOptions(new WorkerOptions().daemon().withName(InitiatorRig.class, "progress"))
+        .onCycle(__thread -> {
+          Thread.sleep(2_000);
+          final long c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
+          final long took = System.currentTimeMillis() - started;
+          final double rate = 1000d * s / took;
+          config.zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]", 
+                       z -> z.arg(c).arg(a).arg(t).arg(s).arg(rate));
+        })
+        .buildAndStart();
+    
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
     final AtomicBoolean timedRunStarted = new AtomicBoolean();
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
@@ -155,6 +170,7 @@ public final class InitiatorRig {
                                    PROPOSAL_TIMEOUT_MILLIS)
                       .withShardKey(sandbox.key()));
       }
+      progressMonitorThread.terminate().joinSilently();
       
       Timesert.wait(BENCHMARK_FINALISE_MILLIS).until(() -> {
         final long c = commits.get(), a = aborts.get(), t = timeouts.get();
@@ -163,8 +179,8 @@ public final class InitiatorRig {
       
       final long took = System.currentTimeMillis() - startTime;
       final long timedRuns = runs - warmupRuns;
-      config.zlg.i("%,d took %,d ms, %,.0f txns/sec", 
-                   z -> z.arg(timedRuns).arg(took).arg((double) timedRuns / took * 1000));
+      final double rate = (double) timedRuns / took * 1000;
+      config.zlg.i("%,d took %,d ms, %,.0f txns/sec", z -> z.arg(timedRuns).arg(took).arg(rate));
       final long c = commits.get(), a = aborts.get(), t = timeouts.get();
       config.zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total", 
                    z -> z.arg(c).arg(a).arg(t).arg(c + a + t));
