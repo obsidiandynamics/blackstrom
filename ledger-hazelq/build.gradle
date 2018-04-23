@@ -16,6 +16,7 @@ dependencies {
   testCompile project(":blackstrom-sim")
   testCompile project(":blackstrom-sim").sourceSets.test.output
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
+  testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.hazelq:hazelq-assurance:${hazelqVersion}"
   testCompile "com.hazelcast:hazelcast:3.10-BETA-2:tests"
 }
@@ -96,19 +97,11 @@ bintray {
   }
 }
 
-task testJar(type: Jar) {
-  dependsOn configurations.compile
-  dependsOn configurations.runtime
-  dependsOn configurations.testCompile
-  dependsOn configurations.testRuntime
-  dependsOn jar
+task testJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+  mergeServiceFiles()
+  classifier = 'tests'
   from sourceSets.main.output
   from sourceSets.test.output
-  from { // bundle all dependencies
-    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
-    configurations.testCompile.collect { it.isDirectory() ? it : zipTree(it) }
-    configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }
-  }   
-  baseName packageName + "-test"
+  configurations = [project.configurations.compile, project.configurations.runtime,
+                    project.configurations.testCompile, project.configurations.testRuntime]
 }

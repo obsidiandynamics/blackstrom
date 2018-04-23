@@ -55,6 +55,9 @@ public final class HazelQRig {
           .setProperty("hazelcast.shutdownhook.enabled", "false")
           .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(5))
           .setProperty("hazelcast.partition.count", String.valueOf(hazelcastPartitions))
+          .setGroupConfig(new GroupConfig()
+                          .setName(cluster)
+                          .setPassword(""))
           .setNetworkConfig(new NetworkConfig()
                             .setJoin(new JoinConfig()
                                      .setMulticastConfig(new MulticastConfig()
@@ -121,6 +124,7 @@ public final class HazelQRig {
       final long _runs = getOrSet(props, "rig.runs", Long::valueOf, 100_000L);
       final int _backlogTarget = getOrSet(props, "rig.backlog", Integer::valueOf, 10_000);
       final int cycles = getOrSet(props, "rig.cycles", Integer::valueOf, 1);
+      final int _progressIntervalMillis = getOrSet(props, "rig.progress.interval.ms", Integer::valueOf, 2_000);
       printProps(props);
       configureHazelcastInstanceAsync();
       
@@ -139,6 +143,7 @@ public final class HazelQRig {
           runs = _runs;
           backlogTarget = _backlogTarget;
           groupAnnounceWaitMillis = 10_000;
+          progressIntervalMillis = _progressIntervalMillis;
         }}.create().run();
       }
       if (hazelcastCleanShutdown) shutdownHazelcastInstance();

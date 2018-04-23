@@ -105,7 +105,8 @@ public final class InitiatorRig {
           if (timedRunStarted.get()) {
             final long c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
             final long took = System.currentTimeMillis() - startTime.get();
-            final double rate = 1000d * (s - warmupRuns) / took;
+            final long timedRuns = Math.max(0, s - warmupRuns);
+            final double rate = 1000d * timedRuns / took;
             config.zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]", 
                          z -> z.arg(c).arg(a).arg(t).arg(s).arg(rate));
           }
@@ -141,8 +142,8 @@ public final class InitiatorRig {
       for (long run = 0; run < runs; run++) {
         if (run == warmupRuns) {
           config.zlg.i("Initiator: starting timed run");
-          timedRunStarted.set(true);
           startTime.set(System.currentTimeMillis());
+          timedRunStarted.set(true);
         }
         
         if (run % backlogTarget == 0) {
