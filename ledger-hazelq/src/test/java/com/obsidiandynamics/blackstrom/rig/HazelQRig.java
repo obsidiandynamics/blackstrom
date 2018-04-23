@@ -106,7 +106,6 @@ public final class HazelQRig {
     synchronized (instanceLock) {
       if (instance != null) {
         zlg.i("Shutting down existing Hazelcast instance");
-        Wait.SHORT.untilTrue(instance.getPartitionService()::isClusterSafe);
         instance.shutdown();
         instance = null;
       }
