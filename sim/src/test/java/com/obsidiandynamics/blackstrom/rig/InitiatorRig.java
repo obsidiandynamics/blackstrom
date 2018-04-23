@@ -41,6 +41,7 @@ public final class InitiatorRig {
     int backlogTarget = 10_000;
     boolean histogram;
     int groupAnnounceWaitMillis = 5_000;
+    int progressIntervalMillis = 2_000;
     
     @Override void validate() {
       super.validate();
@@ -100,7 +101,7 @@ public final class InitiatorRig {
     final WorkerThread progressMonitorThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(InitiatorRig.class, "progress"))
         .onCycle(__thread -> {
-          Thread.sleep(2_000);
+          Thread.sleep(config.progressIntervalMillis);
           if (timedRunStarted.get()) {
             final long c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
             final long took = System.currentTimeMillis() - startTime.get();

@@ -91,6 +91,7 @@ public final class KafkaRig {
       final long _runs = getOrSet(props, "rig.runs", Long::valueOf, 1_000_000L);
       final int _backlogTarget = getOrSet(props, "rig.backlog", Integer::valueOf, 10_000);
       final int cycles = getOrSet(props, "rig.cycles", Integer::valueOf, 1);
+      final int _progressIntervalMillis = getOrSet(props, "rig.progress.interval.ms", Integer::valueOf, 2_000);
       printProps(props);
       
       before();
@@ -109,6 +110,7 @@ public final class KafkaRig {
           clusterName = KafkaRig.cluster;
           runs = _runs;
           backlogTarget = _backlogTarget;
+          progressIntervalMillis = _progressIntervalMillis;
         }}.create().run();
       }
     }
