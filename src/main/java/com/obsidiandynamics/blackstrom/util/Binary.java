@@ -77,19 +77,39 @@ public final class Binary {
    */
   public static String dump(byte[] bytes) {
     final StringBuilder sb = new StringBuilder();
+    final StringBuilder byteLine = new StringBuilder();
+    final StringBuilder charLine = new StringBuilder();
     for (int i = 0; i < bytes.length; i++) {
-      sb.append(toHex(bytes[i]));
+      byteLine.append(toHex(bytes[i]));
+      final char ch = (char) bytes[i];
+      charLine.append(isPrintable(ch) ? ch : '.');
+      
       if (i != bytes.length - 1) {
         if (i % 16 == 15) {
+          sb.append(byteLine);
+          sb.append("   ");
+          sb.append(charLine);
+          byteLine.delete(0, byteLine.length());
+          charLine.delete(0, charLine.length());
           sb.append('\n');
         } else if (i % 8 == 7) {
-          sb.append("   ");
+          byteLine.append("   ");
         } else {
-          sb.append(' ');
+          byteLine.append(' ');
         }
       }
     }
+    
+    if (byteLine.length() > 0) {
+      sb.append(String.format("%-49s", byteLine));
+      sb.append("   ");
+      sb.append(charLine);
+    }
     return sb.toString();
+  }
+  
+  private static boolean isPrintable(char ch) {
+    return ch >= 32 && ch < 127;
   }
   
   /**
