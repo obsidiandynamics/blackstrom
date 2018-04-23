@@ -34,8 +34,8 @@ public final class HazelQRig {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static void printProps(Properties props) {
-    zlg.i("Rig properties:");
-    PropsFormat.printStandard(zlg::i, props, 25, "rig.");
+    zlg.c("Rig properties:");
+    PropsFormat.printStandard(zlg::c, props, 25, "rig.");
   }
   
   private static HazelcastInstance instance;
