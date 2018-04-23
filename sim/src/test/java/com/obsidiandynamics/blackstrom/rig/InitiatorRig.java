@@ -94,21 +94,24 @@ public final class InitiatorRig {
     final AtomicLong aborts = new AtomicLong();
     final AtomicLong timeouts = new AtomicLong();
     
-    final long started = System.currentTimeMillis();
+    final AtomicBoolean timedRunStarted = new AtomicBoolean();
+    final AtomicLong startTime = new AtomicLong();
+    final long warmupRuns = (long) (config.warmupFraction * runs);
     final WorkerThread progressMonitorThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(InitiatorRig.class, "progress"))
         .onCycle(__thread -> {
           Thread.sleep(2_000);
-          final long c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
-          final long took = System.currentTimeMillis() - started;
-          final double rate = 1000d * s / took;
-          config.zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]", 
-                       z -> z.arg(c).arg(a).arg(t).arg(s).arg(rate));
+          if (timedRunStarted.get()) {
+            final long c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
+            final long took = System.currentTimeMillis() - startTime.get();
+            final double rate = 1000d * (s - warmupRuns) / took;
+            config.zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]", 
+                         z -> z.arg(c).arg(a).arg(t).arg(s).arg(rate));
+          }
         })
         .buildAndStart();
     
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
-    final AtomicBoolean timedRunStarted = new AtomicBoolean();
     final Initiator initiator = (NullGroupInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
         if (histogram && timedRunStarted.get()) {
@@ -133,14 +136,12 @@ public final class InitiatorRig {
       final BankSettlement settlementAbort = BankSettlement.forTwo(Integer.MAX_VALUE * 2L);
       final String[] branchIds = BankBranch.generateIds(2);
       
-      final long warmupRuns = (long) (config.warmupFraction * runs);
       final int abortsPerMille = (int) (config.pAbort * 1000d);
-      long startTime = 0;
       for (long run = 0; run < runs; run++) {
         if (run == warmupRuns) {
           config.zlg.i("Initiator: starting timed run");
           timedRunStarted.set(true);
-          startTime = System.currentTimeMillis();
+          startTime.set(System.currentTimeMillis());
         }
         
         if (run % backlogTarget == 0) {
@@ -177,7 +178,7 @@ public final class InitiatorRig {
         assertTrue(String.format("commits=%,d, aborts=%,d, timeouts=%,d", c, a, t), c + a + t >= runs);
       });
       
-      final long took = System.currentTimeMillis() - startTime;
+      final long took = System.currentTimeMillis() - startTime.get();
       final long timedRuns = runs - warmupRuns;
       final double rate = (double) timedRuns / took * 1000;
       config.zlg.i("%,d took %,d ms, %,.0f txns/sec", z -> z.arg(timedRuns).arg(took).arg(rate));
