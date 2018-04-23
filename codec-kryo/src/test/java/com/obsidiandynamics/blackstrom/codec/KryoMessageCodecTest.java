@@ -13,6 +13,7 @@ import com.esotericsoftware.kryo.io.*;
 import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.KryoMessageSerializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.testmark.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.*;
@@ -23,11 +24,11 @@ public final class KryoMessageCodecTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static void logEncoded(byte[] encoded) {
-    zlg.t("encoded:\n%s", z -> z.arg(BinaryUtils.dump(encoded)));
+    zlg.t("encoded:\n%s", z -> z.arg(Binary.dump(encoded)));
   }
   
   private static void logReencoded(byte[] reencoded) {
-    zlg.t("re-encoded:\n%s", z -> z.arg(BinaryUtils.dump(reencoded)));
+    zlg.t("re-encoded:\n%s", z -> z.arg(Binary.dump(reencoded)));
   }
   
   private static void logDecoded(Message m, Object p) {

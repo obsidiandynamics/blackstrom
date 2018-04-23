@@ -1,4 +1,4 @@
-package com.obsidiandynamics.blackstrom.codec;
+package com.obsidiandynamics.blackstrom.util;
 
 import java.nio.*;
 import java.util.*;
@@ -6,8 +6,37 @@ import java.util.*;
 /**
  *  Provides conversion and printing utilities for binary data (byte arrays).
  */
-public final class BinaryUtils {
-  private BinaryUtils() {}
+public final class Binary {
+  private Binary() {}
+  
+  /**
+   *  Verifies whether the given {@code int} lies in the allowable unsigned byte range 
+   *  (0x00—0xFF).
+   *  
+   *  @param intToTest The number to test.
+   *  @return True if the number lies in the unsigned byte range.
+   */
+  public static boolean isInByteRange(int intToTest) {
+    return intToTest >= 0x00 && intToTest <= 0xFF;
+  }
+  
+  public static final class NotAnUnsignedByteException extends IllegalArgumentException {
+    private static final long serialVersionUID = 1L;
+    NotAnUnsignedByteException(String m) { super(m); }
+  }
+  
+  /**
+   *  Ensures that the given {@code int} lies in the allowable unsigned byte range 
+   *  (0x00—0xFF), returning the byte value if this is the case, and throwing a 
+   *  {@link NotAnUnsignedByteException} otherwise.
+   *  
+   *  @param intToTest The number to test.
+   *  @return The byte value.
+   */
+  public static byte toByte(int intToTest) {
+    if (! isInByteRange(intToTest)) throw new NotAnUnsignedByteException("Not in unsigned byte range " + intToTest);
+    return (byte) intToTest;
+  }
   
   /**
    *  Converts a given {@link ByteBuffer} to a byte array.
@@ -64,7 +93,7 @@ public final class BinaryUtils {
   }
   
   /**
-   *  Converts a given (unsigned) byte to a pair of hex characters, zero-padded if
+   *  Converts a given byte to a pair of hex characters, zero-padded if
    *  the value is lower than 0x10.
    *  
    *  @param b The byte to convert.
@@ -76,16 +105,16 @@ public final class BinaryUtils {
   }
   
   /**
-   *  Converts a varargs array of integers into a byte array, where the integers are
-   *  assumed to be holding an unsigned byte value.
+   *  Converts a varargs array of integers into a byte array, where each of the
+   *  integers is assumed to be holding an unsigned byte value.
    *  
-   *  @param unsignedBytes The bytes (valid values 0x00 — 0xFF) to convert.
+   *  @param unsignedBytes The bytes (valid values 0x00—0xFF) to convert.
    *  @return The resulting byte array.
    */
   public static byte[] toByteArray(int... unsignedBytes) {
     final byte[] bytes = new byte[unsignedBytes.length];
     for (int i = 0; i < unsignedBytes.length; i++) {
-      bytes[i] = (byte) unsignedBytes[i];
+      bytes[i] = toByte(unsignedBytes[i]);
     }
     return bytes;
   }
@@ -94,7 +123,7 @@ public final class BinaryUtils {
    *  Converts a varargs array of integers into a {@link ByteBuffer}, where the integers are
    *  assumed to be holding an unsigned byte value.
    *  
-   *  @param unsignedBytes The bytes (valid values 0x00 — 0xFF) to convert.
+   *  @param unsignedBytes The bytes (valid values 0x00—0xFF) to convert.
    *  @return The resulting {@link ByteBuffer}.
    */
   public static ByteBuffer toByteBuffer(int... unsignedBytes) {
@@ -117,15 +146,14 @@ public final class BinaryUtils {
   /**
    *  Produces a random hex string, where each character is between '0' and 'F'.
    *  
-   *  @param length The length of the string; must be a multiple of two.
+   *  @param length The length of the string.
    *  @return The random hex string.
    */
   public static String randomHexString(int length) {
-    if (length % 2 != 0) throw new IllegalArgumentException("Length must be a multiple of 2");
     final StringBuilder sb = new StringBuilder(length);
-    final byte[] bytes = randomBytes(length / 2);
-    for (int i = 0; i < bytes.length; i++) {
-      sb.append(toHex(bytes[i]));
+    final SplittableRandom random = new SplittableRandom();
+    for (int i = 0; i < length; i++) {
+      sb.append(Integer.toHexString(random.nextInt(0x10)).toUpperCase());
     }
     return sb.toString();
   }
