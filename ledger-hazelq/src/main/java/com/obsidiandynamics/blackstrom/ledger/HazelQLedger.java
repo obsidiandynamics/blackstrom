@@ -9,6 +9,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.model.Message;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
@@ -78,7 +79,8 @@ public final class HazelQLedger implements Ledger {
     try {
       message = MessagePacker.unpack(codec, record.getData());
     } catch (Exception e) {
-      zlg.e("Could not decode message at offset %,d", z -> z.arg(record::getOffset).threw(e));
+      zlg.e("Could not decode message at offset %,d\n%s", 
+            z -> z.arg(record::getOffset).arg(Args.map(record::getData, Binary::dump)).threw(e));
       return;
     }
     message.setMessageId(messageId);
