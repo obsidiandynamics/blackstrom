@@ -79,13 +79,13 @@ public final class BinaryUtils {
    *  Converts a varargs array of integers into a byte array, where the integers are
    *  assumed to be holding an unsigned byte value.
    *  
-   *  @param ints The ints to convert.
+   *  @param unsignedBytes The bytes (valid values 0x00 — 0xFF) to convert.
    *  @return The resulting byte array.
    */
-  public static byte[] toByteArray(int ... ints) {
-    final byte[] bytes = new byte[ints.length];
-    for (int i = 0; i < ints.length; i++) {
-      bytes[i] = (byte) ints[i];
+  public static byte[] toByteArray(int... unsignedBytes) {
+    final byte[] bytes = new byte[unsignedBytes.length];
+    for (int i = 0; i < unsignedBytes.length; i++) {
+      bytes[i] = (byte) unsignedBytes[i];
     }
     return bytes;
   }
@@ -94,11 +94,11 @@ public final class BinaryUtils {
    *  Converts a varargs array of integers into a {@link ByteBuffer}, where the integers are
    *  assumed to be holding an unsigned byte value.
    *  
-   *  @param ints The ints to convert.
+   *  @param unsignedBytes The bytes (valid values 0x00 — 0xFF) to convert.
    *  @return The resulting {@link ByteBuffer}.
    */
-  public static ByteBuffer toByteBuffer(int ... ints) {
-    final byte[] bytes = toByteArray(ints);
+  public static ByteBuffer toByteBuffer(int... unsignedBytes) {
+    final byte[] bytes = toByteArray(unsignedBytes);
     return ByteBuffer.wrap(bytes);
   }
   

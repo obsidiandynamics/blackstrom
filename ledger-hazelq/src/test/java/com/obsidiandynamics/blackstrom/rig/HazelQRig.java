@@ -6,7 +6,6 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.jgroups.*;
-import org.slf4j.*;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
@@ -17,6 +16,7 @@ import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.jgroups.*;
 import com.obsidiandynamics.props.*;
 import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class HazelQRig {
   private static final Properties base = new Properties(System.getProperties());
@@ -31,11 +31,11 @@ public final class HazelQRig {
   
   private static final boolean hazelcastCleanShutdown = getOrSet(base, "rig.hazelcast.clean.shutdown", Boolean::parseBoolean, true);
   
-  private static final Logger log = LoggerFactory.getLogger(HazelQRig.class);
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static void printProps(Properties props) {
-    log.info("Rig properties:");
-    PropsFormat.printStandard(log::info, props, 25, "rig.");
+    zlg.i("Rig properties:");
+    PropsFormat.printStandard(zlg::i, props, 25, "rig.");
   }
   
   private static HazelcastInstance instance;
@@ -49,7 +49,7 @@ public final class HazelQRig {
   private static void configureHazelcastInstance() {
     synchronized (instanceLock) {
       shutdownHazelcastInstance();
-      log.info("Creating Hazelcast instance");
+      zlg.i("Creating Hazelcast instance");
       final Config config = new Config()
           .setProperty("hazelcast.logging.type", hazelcastLogging)
           .setProperty("hazelcast.shutdownhook.enabled", "false")
@@ -67,22 +67,22 @@ public final class HazelQRig {
           @Override public void migrationStarted(MigrationEvent migrationEvent) {}
   
           @Override public void migrationCompleted(MigrationEvent migrationEvent) {
-            log.info("Migration compeleted {}", migrationEvent);
+            zlg.i("Migration compeleted %s", z -> z.arg(migrationEvent));
           }
   
           @Override public void migrationFailed(MigrationEvent migrationEvent) {
-            log.info("Migration failed {}", migrationEvent);
+            zlg.i("Migration failed %s", z -> z.arg(migrationEvent));
           }
         });
       }
-      log.info("Hazelcast instance ready");
+      zlg.i("Hazelcast instance ready");
     }
   }
   
   private static void shutdownHazelcastInstance() {
     synchronized (instanceLock) {
       if (instance != null) {
-        log.info("Shutting down existing Hazelcast instance");
+        zlg.i("Shutting down existing Hazelcast instance");
         Wait.SHORT.untilTrue(instance.getPartitionService()::isClusterSafe);
         instance.shutdown();
         instance = null;
@@ -111,6 +111,10 @@ public final class HazelQRig {
     return Group.newUdpChannel(null);
   }
   
+  static {
+    zlg.t("Trace enabled");
+  }
+  
   public static final class Initiator {
     public static void main(String[] args) throws Exception {
       final Properties props = new Properties(base);
@@ -122,12 +126,13 @@ public final class HazelQRig {
       
       for (int cycle = 0; cycle < cycles; cycle++) {
         if (cycles != 1) {
-          log.info("——");
-          log.info("Cycle #{}/{}", cycle + 1, cycles);
+          final int cycleNumber = cycle + 1;
+          zlg.i("——");
+          zlg.i("Cycle #%,d/%,d", z -> z.arg(cycleNumber).arg(cycles));
         }
         
         new InitiatorRig.Config() {{
-          log = HazelQRig.log;
+          zlg = HazelQRig.zlg;
           ledgerFactory = HazelQRig::createLedger;
           channelFactory = HazelQRig::createChannel;
           clusterName = HazelQRig.cluster;
@@ -149,7 +154,7 @@ public final class HazelQRig {
       configureHazelcastInstanceAsync();
       
       final CohortRig cohortRig = new CohortRig.Config() {{
-        log = HazelQRig.log;
+        zlg = HazelQRig.zlg;
         ledgerFactory = HazelQRig::createLedger;
         channelFactory = HazelQRig::createChannel;
         clusterName = HazelQRig.cluster;
@@ -170,7 +175,7 @@ public final class HazelQRig {
       printProps(props);
       configureHazelcastInstanceAsync();
       final MonitorRig monitorRig = new MonitorRig.Config() {{
-        log = HazelQRig.log;
+        zlg = HazelQRig.zlg;
         ledgerFactory = HazelQRig::createLedger;
         channelFactory = HazelQRig::createChannel;
         clusterName = HazelQRig.cluster;

@@ -29,7 +29,7 @@ final class MessagePacker {
     return buf.array();
   }
   
-  static class DeserializationException extends Exception {
+  static final class DeserializationException extends Exception {
     private static final long serialVersionUID = 1L;
     DeserializationException(String m) { super(m); }
   }

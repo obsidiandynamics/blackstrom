@@ -8,7 +8,6 @@ import java.util.concurrent.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.jgroups.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
@@ -51,7 +50,7 @@ public final class KafkaRig {
   private static final boolean consumerAsync = getOrSet(base, "rig.consumer.async", Boolean::valueOf, true);
   private static final Encoding encoding = getOrSet(base, "rig.encoding", Encoding::valueOf, Encoding.KRYO);
   
-  private static final Logger log = LoggerFactory.getLogger(KafkaRig.class);
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers(bootstrapServers);
@@ -64,8 +63,8 @@ public final class KafkaRig {
   }
   
   private static void printProps(Properties props) {
-    log.info("Rig properties:");
-    PropsFormat.printStandard(log::info, props, 25, "rig.");
+    zlg.i("Rig properties:");
+    PropsFormat.printStandard(zlg::i, props, 25, "rig.");
   }
   
   private static Ledger createLedger() {
@@ -83,7 +82,7 @@ public final class KafkaRig {
   }
   
   static {
-    Zlg.forDeclaringClass().get().t("Trace enabled");
+    zlg.t("Trace enabled");
   }
   
   public static final class Initiator {
@@ -98,12 +97,13 @@ public final class KafkaRig {
       
       for (int cycle = 0; cycle < cycles; cycle++) {
         if (cycles != 1) {
-          log.info("——");
-          log.info("Cycle #{}/{}", cycle + 1, cycles);
+          final int cycleNumber = cycle + 1;
+          zlg.i("——");
+          zlg.i("Cycle #%,d/%,d", z -> z.arg(cycleNumber).arg(cycles));
         }
         
         new InitiatorRig.Config() {{
-          log = KafkaRig.log;
+          zlg = KafkaRig.zlg;
           ledgerFactory = KafkaRig::createLedger;
           channelFactory = KafkaRig::createChannel;
           clusterName = KafkaRig.cluster;
@@ -123,7 +123,7 @@ public final class KafkaRig {
       before();
       
       new CohortRig.Config() {{
-        log = KafkaRig.log;
+        zlg = KafkaRig.zlg;
         ledgerFactory = KafkaRig::createLedger;
         channelFactory = KafkaRig::createChannel;
         clusterName = KafkaRig.cluster;
@@ -139,7 +139,7 @@ public final class KafkaRig {
       before();
       
       new MonitorRig.Config() {{
-        log = KafkaRig.log;
+        zlg = KafkaRig.zlg;
         ledgerFactory = KafkaRig::createLedger;
         channelFactory = KafkaRig::createChannel;
         clusterName = KafkaRig.cluster;

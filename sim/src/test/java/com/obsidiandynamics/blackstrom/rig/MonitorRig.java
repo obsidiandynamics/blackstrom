@@ -41,7 +41,7 @@ public final class MonitorRig implements Disposable {
   }
   
   private void connect() throws Exception {
-    config.log.info("Monitor: joining cluster '{}'", config.clusterName);
+    config.zlg.i("Monitor: joining cluster '%s'", z -> z.arg(config.clusterName));
     group.connect(config.clusterName);
   }
   
@@ -57,7 +57,7 @@ public final class MonitorRig implements Disposable {
     if (sandboxKey.equals(this.sandboxKey)) return;
     cleanupExisting();
     this.sandboxKey = sandboxKey;
-    config.log.info("Monitor: building manifold with sandbox key {}", sandboxKey);
+    config.zlg.i("Monitor: building manifold with sandbox key %s", z -> z.arg(sandboxKey));
 
     final boolean trackingEnabled = false;
     final Monitor monitor = new DefaultMonitor(new MonitorEngineConfig()
@@ -68,7 +68,7 @@ public final class MonitorRig implements Disposable {
         .withLedger(ledger)
         .withFactors(monitor)
         .build();
-    config.log.info("Monitor: manifold ready");
+    config.zlg.i("Monitor: manifold ready");
   }
   
   private void cleanupExisting() {

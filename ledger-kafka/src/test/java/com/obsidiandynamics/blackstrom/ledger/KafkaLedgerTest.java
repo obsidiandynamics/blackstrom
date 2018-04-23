@@ -13,7 +13,6 @@ import org.apache.kafka.common.errors.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
@@ -24,6 +23,8 @@ import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
+import com.obsidiandynamics.zerolog.MockLogTarget.*;
 
 @RunWith(Parameterized.class)
 public final class KafkaLedgerTest {
@@ -43,19 +44,19 @@ public final class KafkaLedgerTest {
   
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
                                           boolean asyncProducer, boolean asyncConsumer, 
-                                          int pipelineSizeBatches, Logger log) {
-    return createLedger(kafka, new KafkaLedgerConfig(), asyncProducer, asyncConsumer, pipelineSizeBatches, log);
+                                          int pipelineSizeBatches, Zlg zlg) {
+    return createLedger(kafka, new KafkaLedgerConfig(), asyncProducer, asyncConsumer, pipelineSizeBatches, zlg);
   }
   
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
                                           KafkaLedgerConfig baseConfig,
                                           boolean asyncProducer, boolean asyncConsumer, 
-                                          int pipelineSizeBatches, Logger log) {
+                                          int pipelineSizeBatches, Zlg zlg) {
     return new KafkaLedger(baseConfig
                            .withKafka(kafka)
                            .withTopic("test")
                            .withCodec(new NullMessageCodec())
-                           .withLog(log)
+                           .withZlg(zlg)
                            .withProducerPipeConfig(new ProducerPipeConfig()
                                                    .withAsync(asyncProducer))
                            .withConsumerPipeConfig(new ConsumerPipeConfig()
@@ -67,7 +68,7 @@ public final class KafkaLedgerTest {
   public void testPipelineBackoff() {
     final Kafka<String, Message> kafka = new MockKafka<>();
     ledger = createLedger(kafka, new KafkaLedgerConfig().withPrintConfig(true), 
-                          false, true, 1, LoggerFactory.getLogger(KafkaLedger.class));
+                          false, true, 1, new MockLogTarget().logger());
     final CyclicBarrier barrierA = new CyclicBarrier(2);
     final CyclicBarrier barrierB = new CyclicBarrier(2);
     final AtomicInteger received = new AtomicInteger();
@@ -93,32 +94,32 @@ public final class KafkaLedgerTest {
   
   @Test
   public void testSendCallbackExceptionLoggerPass() {
-    final Logger log = mock(Logger.class);
-    final Exception exception = new Exception("testSendExceptionLoggerPass");
+    final MockLogTarget logTarget = new MockLogTarget();
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendCallbackExceptionGenerator(ExceptionGenerator.never());
-    ledger = createLedger(kafka, false, true, 10, log);
+    ledger = createLedger(kafka, false, true, 10, logTarget.logger());
     ledger.append(new Proposal("B100", new String[0], null, 0));
-    verify(log, never()).warn(isNotNull(), eq(exception));
+    assertEquals(0, logTarget.entries().forLevel(LogLevel.WARN).list().size());
   }
   
   @Test
   public void testSendCallbackExceptionLoggerFail() {
-    final Logger log = mock(Logger.class);
+    final MockLogTarget logTarget = new MockLogTarget();
     final Exception exception = new Exception("testSendExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendCallbackExceptionGenerator(ExceptionGenerator.once(exception));
-    ledger = createLedger(kafka, false, true, 10, log);
-    ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
+    ledger = createLedger(kafka, false, true, 10, logTarget.logger());
+    ledger.append(new Proposal("B100", new String[0], null, 0), AppendCallback.nop());
     
     wait.until(() -> {
-      verify(log).warn(isNotNull(), eq(exception));
+      final List<Entry> entries = logTarget.entries().forLevel(LogLevel.WARN).filter(e -> e.getThrowable() == exception).list();
+      assertEquals(1, entries.size());
     });
   }
   
   @Test
   public void testSendCallbackRetriableException() {
-    final Logger log = mock(Logger.class);
+    final MockLogTarget logTarget = new MockLogTarget();
     final Exception exception = new CorruptRecordException("testSendRetriableException");
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> exGen = ExceptionGenerator.times(exception, 2);
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> mockExGen = Classes.cast(mock(ExceptionGenerator.class));
@@ -126,35 +127,37 @@ public final class KafkaLedgerTest {
     
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendCallbackExceptionGenerator(mockExGen);
-    ledger = createLedger(kafka, false, true, 10, log);
-    ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
+    ledger = createLedger(kafka, false, true, 10, logTarget.logger());
+    ledger.append(new Proposal("B100", new String[0], null, 0), AppendCallback.nop());
     
     wait.until(() -> {
-      verify(log, times(2)).warn(isNotNull(), eq(exception));
+      final List<Entry> entries = logTarget.entries().forLevel(LogLevel.WARN).filter(e -> e.getThrowable() == exception).list();
+      assertEquals(2, entries.size());
       verify(mockExGen, times(3)).inspect(any());
     });
   }
   
   @Test
   public void testSendRuntimeException() {
-    final Logger log = mock(Logger.class);
+    final MockLogTarget logTarget = new MockLogTarget();
     final IllegalStateException exception = new IllegalStateException("testSendRuntimeException");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendRuntimeExceptionGenerator(ExceptionGenerator.once(exception));
-    ledger = createLedger(kafka, false, true, 10, log);
-    ledger.append(new Proposal("B100", new String[0], null, 0), (id, x) -> {});
+    ledger = createLedger(kafka, false, true, 10, logTarget.logger());
+    ledger.append(new Proposal("B100", new String[0], null, 0), AppendCallback.nop());
     wait.until(() -> {
-      verify(log).warn(isNotNull(), (Throwable) isNotNull());
+      final List<Entry> entries = logTarget.entries().forLevel(LogLevel.WARN).filter(e -> e.getThrowable() == exception).list();
+      assertEquals(1, entries.size());
     });
   }
   
   @Test
   public void testCommitCallbackExceptionLoggerFail() {
-    final Logger log = mock(Logger.class);
+    final MockLogTarget logTarget = new MockLogTarget();
     final Exception exception = new Exception("testCommitExceptionLoggerFail");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withCommitExceptionGenerator(ExceptionGenerator.once(exception));
-    ledger = createLedger(kafka, false, true, 10, log);
+    ledger = createLedger(kafka, false, true, 10, logTarget.logger());
     final String groupId = "test";
     
     ledger.attach(new MessageHandler() {
@@ -175,7 +178,9 @@ public final class KafkaLedgerTest {
     
     wait.until(() -> {
       ledger.append(new Proposal("B100", new String[0], null, 0));
-      verify(log, atLeastOnce()).warn(isNotNull(), eq(exception));
+      final List<Entry> entries = logTarget.entries().forLevel(LogLevel.WARN).list();
+      assertEquals(1, entries.size());
+      assertEquals(exception, entries.get(0).getThrowable());
     });
   }
   

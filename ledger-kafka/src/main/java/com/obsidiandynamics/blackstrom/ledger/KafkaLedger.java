@@ -9,7 +9,6 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.errors.*;
 import org.apache.kafka.common.serialization.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -21,6 +20,7 @@ import com.obsidiandynamics.retry.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.yconf.util.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
@@ -34,7 +34,7 @@ public final class KafkaLedger implements Ledger {
 
   private final String topic;
 
-  private final Logger log;
+  private final Zlg zlg;
 
   private final String codecLocator;
 
@@ -82,7 +82,7 @@ public final class KafkaLedger implements Ledger {
   public KafkaLedger(KafkaLedgerConfig config) {
     kafka = config.getKafka();
     topic = config.getTopic();
-    log = config.getLog();
+    zlg = config.getZlg();
     printConfig = config.isPrintConfig();
     consumerPipeConfig = config.getConsumerPipeConfig();
     attachRetries = config.getAttachRetries();
@@ -112,11 +112,11 @@ public final class KafkaLedger implements Ledger {
         .with("max.block.ms", Long.MAX_VALUE)
         .build();
     
-    if (printConfig) kafka.describeProducer(log::info, producerDefaults, producerOverrides);
+    if (printConfig) kafka.describeProducer(zlg::i, producerDefaults, producerOverrides);
     producer = kafka.getProducer(producerDefaults, producerOverrides);
     final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
-        new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, log::warn);
+        new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, zlg::w);
   }
   
   private void onRetry(WorkerThread t) throws InterruptedException {
@@ -159,22 +159,22 @@ public final class KafkaLedger implements Ledger {
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
     
-    if (printConfig) kafka.describeConsumer(log::info, consumerDefaults, consumerOverrides);
+    if (printConfig) kafka.describeConsumer(zlg::i, consumerDefaults, consumerOverrides);
     final Consumer<String, Message> consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
     new Retry()
     .withAttempts(attachRetries)
-    .withFaultHandler(log::warn)
-    .withErrorHandler(log::error)
+    .withFaultHandler(zlg::w)
+    .withErrorHandler(zlg::e)
     .run(() -> {
       if (groupId != null) {
         consumer.subscribe(Collections.singletonList(topic));
-        log.debug("subscribed to topic {}", topic);
+        zlg.d("subscribed to topic %s", z -> z.arg(topic));
       } else {
         final List<PartitionInfo> infos = consumer.partitionsFor(topic);
         final List<TopicPartition> partitions = infos.stream()
             .map(i -> new TopicPartition(i.topic(), i.partition()))
             .collect(Collectors.toList());
-        log.debug("infos={}, partitions={}", infos, partitions);
+        zlg.d("infos=%s, partitions=%s", z -> z.arg(infos).arg(partitions));
         final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
         consumer.assign(partitions);
         for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
@@ -230,7 +230,7 @@ public final class KafkaLedger implements Ledger {
           }
 
           if (offsetsSnapshot != null) {
-            log.trace("Committing offsets {}", offsetsSnapshot);
+            zlg.t("Committing offsets %s", z -> z.arg(offsetsSnapshot));
             consumer.commitAsync(offsetsSnapshot, 
                                  (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
           }
@@ -249,7 +249,7 @@ public final class KafkaLedger implements Ledger {
 
     final String threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
     final AsyncReceiver<String, Message> receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
-        threadName, recordHandler, log::warn);
+        threadName, recordHandler, zlg::w);
     receivers.add(receiver);
   }
 
@@ -285,7 +285,7 @@ public final class KafkaLedger implements Ledger {
 
   private void logException(Exception cause, String messageFormat, Object... messageArgs) {
     if (cause != null) {
-      log.warn(String.format(messageFormat, messageArgs), cause);
+      zlg.w(String.format(messageFormat, messageArgs), cause);
     }
   }
 

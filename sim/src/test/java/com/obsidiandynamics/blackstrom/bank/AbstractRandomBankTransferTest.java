@@ -63,12 +63,12 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     final WorkerThread progressMonitorThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(AbstractBankTransferTest.class, "progress"))
         .onCycle(__thread -> {
-          Thread.sleep(2000);
+          Thread.sleep(2_000);
           final int c = commits.get(), a = aborts.get(), t = timeouts.get(), s = c + a + t;
           final long took = System.currentTimeMillis() - started;
           final double rate = 1000d * s / took;
-          System.out.format("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]\n", 
-                            c, a, t, s, rate);
+          zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total [%,.0f/s]", 
+                z -> z.arg(c).arg(a).arg(t).arg(s).arg(rate));
         })
         .buildAndStart();
     
@@ -136,8 +136,9 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
       });
     });
-    System.out.format("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts | %,d timeouts)\n", 
-                      runs, tookMillis, (double) runs / tookMillis * 1000, commits.get(), aborts.get(), timeouts.get());
+    final double rate = (double) runs / tookMillis * 1000;
+    zlg.i("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts | %,d timeouts)", 
+          z -> z.arg(runs).arg(tookMillis).arg(rate).arg(commits::get).arg(aborts::get).arg(timeouts::get));
   }
   
   private long getMinOutcomes(BankBranch[] branches) {

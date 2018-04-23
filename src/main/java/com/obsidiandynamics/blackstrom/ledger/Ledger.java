@@ -15,8 +15,8 @@ public interface Ledger extends Disposable.Default {
   }
   
   static AppendCallback appendErrorHandler(Consumer<Throwable> errorHandler) {
-    return (id, x) -> { 
-      if (x != null) errorHandler.accept(x);
+    return (__id, error) -> { 
+      if (error != null) errorHandler.accept(error);
     };
   }
   

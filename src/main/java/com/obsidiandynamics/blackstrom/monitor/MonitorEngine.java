@@ -2,8 +2,6 @@ package com.obsidiandynamics.blackstrom.monitor;
 
 import java.util.*;
 
-import org.slf4j.*;
-
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -11,11 +9,10 @@ import com.obsidiandynamics.nanoclock.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
+import com.obsidiandynamics.zerolog.*;
 
 public final class MonitorEngine implements Disposable {
-  static final boolean DEBUG = false;
-  
-  private static final Logger log = LoggerFactory.getLogger(MonitorEngine.class);
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final Map<Object, PendingBallot> pending = new HashMap<>();
   
@@ -106,8 +103,9 @@ public final class MonitorEngine implements Disposable {
       
       if (reaped != 0) {
         reapedSoFar += reaped;
-        log.debug("Reaped {} outcomes ({} so far), pending: {}, decided: {}", 
-                  reaped, reapedSoFar, pending.size(), decided.size());
+        final int _reaped = reaped;
+        zlg.d("Reaped %,d outcomes (%,d so far), pending: %,d, decided: %,d", 
+              z -> z.arg(_reaped).arg(reapedSoFar).arg(pending::size).arg(decided::size));
       }
     }
   }
@@ -138,14 +136,14 @@ public final class MonitorEngine implements Disposable {
   }
   
   private void timeoutCohort(Proposal proposal, String cohort) {
-    log.debug("Timed out {} for cohort {}", proposal, cohort);
+    zlg.d("Timed out %s for cohort %s", z -> z.arg(proposal).arg(cohort));
     append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null))
            .inResponseTo(proposal).withSource(groupId));
   }
   
   private void append(Vote vote) {
     action.appendVote(vote, (id, x) -> {
-      if (x != null) log.warn("Error appending to ledger [message: " + vote + "]", x);
+      if (x != null) zlg.w("Error appending to ledger [message: %s]", z -> z.arg(vote).threw(x));
     });
   }
   
@@ -170,7 +168,7 @@ public final class MonitorEngine implements Disposable {
       final PendingBallot newBallot = new PendingBallot(proposal);
       final PendingBallot existingBallot = pending.put(proposal.getBallotId(), newBallot);
       if (existingBallot != null) {
-        if (DEBUG) log.trace("Skipping redundant {} (ballot already pending)", proposal);
+        zlg.t("Skipping redundant %s (ballot already pending)", z -> z.arg(proposal));
         pending.put(proposal.getBallotId(), existingBallot);
         return;
       } else {
@@ -178,26 +176,26 @@ public final class MonitorEngine implements Disposable {
       }
     }
     
-    if (DEBUG) log.trace("Initiating ballot for {}", proposal);
+    zlg.t("Initiating ballot for %s", z -> z.arg(proposal));
   }
 
   public void onVote(MessageContext context, Vote vote) {
     synchronized (messageLock) {
       final PendingBallot ballot = pending.get(vote.getBallotId());
       if (ballot != null) {
-        if (DEBUG) log.trace("Received {}", vote);
-        final boolean decided = ballot.castVote(log, vote);
+        zlg.t("Received %s", z -> z.arg(vote));
+        final boolean decided = ballot.castVote(zlg, vote);
         if (decided) {
           decideBallot(ballot);
         }
       } else {
-        if (DEBUG) log.trace("Missing pending ballot for vote {}", vote);
+        zlg.t("Missing pending ballot for vote %s", z -> z.arg(vote));
       }
     }
   }
   
   private void decideBallot(PendingBallot ballot) {
-    if (DEBUG) log.trace("Decided ballot for {}: resolution: {}", ballot.getProposal(), ballot.getResolution());
+    zlg.t("Decided ballot for %s: resolution: %s", z -> z.arg(ballot::getProposal).arg(ballot::getResolution));
     final Proposal proposal = ballot.getProposal();
     final String ballotId = proposal.getBallotId();
     final Object metadata = metadataEnabled ? new OutcomeMetadata(proposal.getTimestamp()) : null;
@@ -211,7 +209,7 @@ public final class MonitorEngine implements Disposable {
       if (x == null) {
         ballot.getConfirmation().confirm();
       } else {
-        log.warn("Error appending to ledger [message: " + outcome + "]", x);
+        zlg.w("Error appending to ledger [message: %s]", z -> z.arg(outcome).threw(x));
       }
     });
   }

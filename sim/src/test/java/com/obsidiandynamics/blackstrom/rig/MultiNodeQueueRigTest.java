@@ -7,7 +7,6 @@ import org.jgroups.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.bank.*;
@@ -16,6 +15,7 @@ import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.jgroups.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.testmark.*;
+import com.obsidiandynamics.zerolog.*;
 
 @RunWith(Parameterized.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -60,11 +60,11 @@ public final class MultiNodeQueueRigTest {
     final MultiNodeQueueLedger ledger = new MultiNodeQueueLedger(new MultiNodeQueueLedger.Config()
                                                                  .withMaxYields(maxYields));
     final Supplier<Ledger> _ledgerFactory = () -> ledger;
-    final Logger _log = LoggerFactory.getLogger(MultiNodeQueueRigTest.class);
+    final Zlg _zlg = Zlg.forDeclaringClass().get();
     final long _runs = runs;
 
     final InitiatorRig initiator = new InitiatorRig.Config() {{
-      log = _log;
+      zlg = _zlg;
       ledgerFactory = _ledgerFactory;
       channelFactory = _channelFactory;
       runs = _runs;
@@ -75,7 +75,7 @@ public final class MultiNodeQueueRigTest {
     final String[] branchIds = BankBranch.generateIds(branches);
     for (String _branchId : branchIds) {
       final CohortRig cohort = new CohortRig.Config() {{
-        log = _log;
+        zlg = _zlg;
         ledgerFactory = _ledgerFactory;
         channelFactory = _channelFactory;
         branchId = _branchId;
@@ -84,7 +84,7 @@ public final class MultiNodeQueueRigTest {
     }
     
     final MonitorRig monitor = new MonitorRig.Config() {{
-      log = _log;
+      zlg = _zlg;
       ledgerFactory = _ledgerFactory;
       channelFactory = _channelFactory;
       metadataEnabled = true;

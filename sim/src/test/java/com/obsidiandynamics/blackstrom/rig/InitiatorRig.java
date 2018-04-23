@@ -65,26 +65,26 @@ public final class InitiatorRig {
 
     final String sandboxKey = UUID.randomUUID().toString();
     try (Group group = new Group(config.channelFactory.get())) {
-      config.log.info("Initiator: joining cluster '{}'", config.clusterName);
+      config.zlg.i("Initiator: joining cluster '%s'", z -> z.arg(config.clusterName));
       group.connect(config.clusterName);
       final int groupSize = config.branches + (config.guided ? 2 : 1);
-      config.log.info("Initiator: awaiting group formation ({} members required)", groupSize);
+      config.zlg.i("Initiator: awaiting group formation (%d members required)", z -> z.arg(groupSize));
       Timesert.wait(GROUP_VIEW_WAIT_MILLIS).until(() -> assertEquals(groupSize, group.view().size()));
       for (int attempt = 0; attempt < GROUP_ANNOUNCE_ATTEMPTS; attempt++) {
-        config.log.info("Initiator: announcing sandbox key {}", sandboxKey);
+        config.zlg.i("Initiator: announcing sandbox key %s", z -> z.arg(sandboxKey));
         final Future<?> f = group.gather(groupSize - 1,
                                          new AnnouncePacket(UUID.randomUUID(), sandboxKey), Flag.DONT_BUNDLE);
         try { 
           f.get(config.groupAnnounceWaitMillis, MILLISECONDS);
           break;
         } catch (TimeoutException e) {
-          config.log.warn("Initiator: timed out {}", sandboxKey);
+          config.zlg.w("Initiator: timed out %s", z -> z.arg(sandboxKey));
           if (attempt == GROUP_ANNOUNCE_ATTEMPTS - 1) throw e;
         } finally {
           f.cancel(true);
         }
       }
-      config.log.info("Initiator: warming up");
+      config.zlg.i("Initiator: warming up");
     }
 
     final boolean histogram = config.histogram;
@@ -123,7 +123,7 @@ public final class InitiatorRig {
       long startTime = 0;
       for (long run = 0; run < runs; run++) {
         if (run == warmupRuns) {
-          config.log.info("Initiator: starting timed run");
+          config.zlg.i("Initiator: starting timed run");
           timedRunStarted.set(true);
           startTime = System.currentTimeMillis();
         }
@@ -135,7 +135,8 @@ public final class InitiatorRig {
             if (backlog >= backlogTarget) {
               Threads.sleep(1);
               if (System.currentTimeMillis() - lastLogTime > 5_000) {
-                config.log.debug(String.format("Initiator: throttling... backlog @ %,d (%,d txns)", backlog, run));
+                final long _run = run;
+                config.zlg.d("Initiator: throttling... backlog @ %,d (%,d txns)", z -> z.arg(backlog).arg(_run));
                 lastLogTime = System.currentTimeMillis();
               }
             } else {
@@ -162,11 +163,11 @@ public final class InitiatorRig {
       
       final long took = System.currentTimeMillis() - startTime;
       final long timedRuns = runs - warmupRuns;
-      config.log.info(String.format("%,d took %,d ms, %,.0f txns/sec", 
-                                    timedRuns, took, (double) timedRuns / took * 1000));
+      config.zlg.i("%,d took %,d ms, %,.0f txns/sec", 
+                   z -> z.arg(timedRuns).arg(took).arg((double) timedRuns / took * 1000));
       final long c = commits.get(), a = aborts.get(), t = timeouts.get();
-      config.log.info(String.format("%,d commits | %,d aborts | %,d timeouts | %,d total", 
-                                    c, a, t, c + a + t));
+      config.zlg.i("%,d commits | %,d aborts | %,d timeouts | %,d total", 
+                   z -> z.arg(c).arg(a).arg(t).arg(c + a + t));
       
       if (histogram) {
         final long min = hist.getMinValue();
@@ -175,8 +176,8 @@ public final class InitiatorRig {
         final long p95 = hist.getValueAtPercentile(95.0);
         final long p99 = hist.getValueAtPercentile(99.0);
         final long max = hist.getMaxValue();
-        config.log.info(String.format("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d (ns)", 
-                                      min, mean, p50, p95, p99, max));
+        config.zlg.i("min: %,d, mean: %,.0f, 50%%: %,d, 95%%: %,d, 99%%: %,d, max: %,d (ns)", 
+                     z -> z.arg(min).arg(mean).arg(p50).arg(p95).arg(p99).arg(max));
       }
     } finally {
       manifold.dispose();

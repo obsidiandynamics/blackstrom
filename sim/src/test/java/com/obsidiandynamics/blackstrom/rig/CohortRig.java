@@ -47,7 +47,7 @@ public final class CohortRig implements Disposable {
   }
   
   private void connect() throws Exception {
-    config.log.info("Cohort {}: joining cluster '{}'", config.branchId, config.clusterName);
+    config.zlg.i("Cohort %s: joining cluster '%s'", z -> z.arg(config.branchId).arg(config.clusterName));
     group.connect(config.clusterName);
   }
   
@@ -63,7 +63,7 @@ public final class CohortRig implements Disposable {
     if (sandboxKey.equals(this.sandboxKey)) return;
     cleanupExisting();
     this.sandboxKey = sandboxKey;
-    config.log.info("Cohort {}: building manifold with sandbox key {}", config.branchId, sandboxKey);
+    config.zlg.i("Cohort %s: building manifold with sandbox key %s", z -> z.arg(config.branchId).arg(sandboxKey));
 
     final boolean idempotencyEnabled = false;
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
@@ -73,7 +73,7 @@ public final class CohortRig implements Disposable {
         .withLedger(ledger)
         .withFactors(branch)
         .build();
-    config.log.info("Cohort {}: manifold ready", config.branchId);
+    config.zlg.i("Cohort %s: manifold ready", z -> z.arg(config.branchId));
   }
   
   private void cleanupExisting() {

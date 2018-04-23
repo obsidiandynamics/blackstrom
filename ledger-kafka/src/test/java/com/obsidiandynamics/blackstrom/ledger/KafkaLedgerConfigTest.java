@@ -5,13 +5,12 @@ import static org.junit.Assert.*;
 import java.io.*;
 
 import org.junit.*;
-import org.mockito.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaLedgerConfigTest {
   @Test
@@ -28,7 +27,7 @@ public final class KafkaLedgerConfigTest {
     assertEquals(KryoMessageCodec.class, config.getCodec().getClass());
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
-    assertNotNull(config.getLog());
+    assertNotNull(config.getZlg());
     assertEquals(10, config.getAttachRetries());
     Assertions.assertToStringOverride(config);
   }
@@ -40,7 +39,7 @@ public final class KafkaLedgerConfigTest {
         .withTopic("test")
         .withProducerPipeConfig(new ProducerPipeConfig())
         .withConsumerPipeConfig(new ConsumerPipeConfig())
-        .withLog(Mockito.mock(Logger.class))
+        .withZlg(Zlg.forDeclaringClass().get())
         .withAttachRetries(5)
         .withPrintConfig(true);
     
@@ -48,7 +47,7 @@ public final class KafkaLedgerConfigTest {
     assertEquals("test", config.getTopic());
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
-    assertNotNull(config.getLog());
+    assertNotNull(config.getZlg());
     assertEquals(5, config.getAttachRetries());
     assertTrue(config.isPrintConfig());
   }

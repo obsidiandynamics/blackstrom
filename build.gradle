@@ -141,8 +141,8 @@ dependencies {
   compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
   compile "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
   compile "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
-  compile "org.slf4j:slf4j-api:1.7.25"
   compile "org.apache.commons:commons-lang3:3.7"
+  runtime "org.slf4j:slf4j-api:1.7.25"
   
   testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }

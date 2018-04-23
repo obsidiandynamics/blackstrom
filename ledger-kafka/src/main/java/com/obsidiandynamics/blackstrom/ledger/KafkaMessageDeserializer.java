@@ -4,13 +4,13 @@ import java.util.*;
 
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.serialization.*;
-import org.slf4j.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaMessageDeserializer implements Deserializer<Message> {
-  private static final Logger log = LoggerFactory.getLogger(KafkaMessageDeserializer.class);
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   static final class MessageDeserializationException extends KafkaException {
     private static final long serialVersionUID = 1L;
@@ -32,7 +32,7 @@ public final class KafkaMessageDeserializer implements Deserializer<Message> {
     try {
       return codec.decode(data);
     } catch (Throwable e) {
-      log.error("Error deserializing message " + data, e);
+      zlg.e("Error deserializing message %s", z -> z.arg(data).threw(e));
       throw new MessageDeserializationException("Error deserializing message", e);
     }
   }

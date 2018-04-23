@@ -1,11 +1,10 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
-import org.slf4j.*;
-
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.zerolog.*;
 
 @Y
 public final class KafkaLedgerConfig {
@@ -25,7 +24,7 @@ public final class KafkaLedgerConfig {
   private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true);
   
   @YInject
-  private Logger log = LoggerFactory.getLogger(KafkaLedger.class);
+  private Zlg zlg = Zlg.forDeclaringClass().get();
   
   @YInject
   private int attachRetries = 10;
@@ -78,12 +77,12 @@ public final class KafkaLedgerConfig {
     return this;
   }
 
-  Logger getLog() {
-    return log;
+  Zlg getZlg() {
+    return zlg;
   }
 
-  public KafkaLedgerConfig withLog(Logger log) {
-    this.log = log;
+  public KafkaLedgerConfig withZlg(Zlg zlg) {
+    this.zlg = zlg;
     return this;
   }
 
@@ -108,7 +107,7 @@ public final class KafkaLedgerConfig {
   @Override
   public String toString() {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
-        ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + ", log=" + log + 
+        ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + 
         ", attachRetries=" + attachRetries + ", printConfig=" + printConfig + "]";
   }
 }

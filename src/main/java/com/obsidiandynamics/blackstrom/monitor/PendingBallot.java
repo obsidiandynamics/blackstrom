@@ -2,10 +2,9 @@ package com.obsidiandynamics.blackstrom.monitor;
 
 import java.util.*;
 
-import org.slf4j.*;
-
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.flow.*;
+import com.obsidiandynamics.zerolog.*;
 
 final class PendingBallot {
   private final Proposal proposal;
@@ -51,11 +50,11 @@ final class PendingBallot {
     this.confirmation = confirmation;
   }
 
-  boolean castVote(Logger log, Vote vote) {
+  boolean castVote(Zlg zlg, Vote vote) {
     final Response response = vote.getResponse();
     final Response existing = responses.put(response.getCohort(), response);
     if (existing != null) {
-      if (MonitorEngine.DEBUG) log.trace("Skipping redundant {} (already cast in current ballot)", vote);
+      zlg.t("Skipping redundant %s (already cast in current ballot)", z -> z.arg(vote));
       responses.put(existing.getCohort(), existing);
       return false;
     }
