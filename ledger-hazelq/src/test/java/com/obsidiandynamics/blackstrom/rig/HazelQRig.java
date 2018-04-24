@@ -11,7 +11,6 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.jgroups.*;
 import com.obsidiandynamics.props.*;
