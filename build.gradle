@@ -140,8 +140,8 @@ dependencies {
   compile "com.obsidiandynamics.fulcrum:fulcrum-worker:${fulcrumVersion}"
   compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
   compile "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
-  compile "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
   compile "org.apache.commons:commons-lang3:3.7"
+  runtime "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
   runtime "org.slf4j:slf4j-api:1.7.25"
   
   testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
