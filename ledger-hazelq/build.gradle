@@ -3,7 +3,7 @@ version = project(":").version
   
 ext {
   hazelqVersion = "0.4.0"
-  hazelcastVersion = "3.10"
+  hazelcastVersion = "3.10-BETA-2"
 }
   
 dependencies {
