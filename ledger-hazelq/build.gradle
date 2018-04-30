@@ -3,13 +3,14 @@ version = project(":").version
   
 ext {
   hazelqVersion = "0.4.0"
+  hazelcastVersion = "3.10"
 }
   
 dependencies {
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.obsidiandynamics.hazelq:hazelq-core:${hazelqVersion}"
-  compile "com.hazelcast:hazelcast:3.10-BETA-2"
+  compile "com.hazelcast:hazelcast:${hazelcastVersion}"
   
   testCompile project(":blackstrom-codec-jackson")
   testCompile project(":blackstrom-codec-jackson").sourceSets.test.output
@@ -20,7 +21,7 @@ dependencies {
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.hazelq:hazelq-assurance:${hazelqVersion}"
-  testCompile "com.hazelcast:hazelcast:3.10-BETA-2:tests"
+  testCompile "com.hazelcast:hazelcast:${hazelcastVersion}:tests"
 }
 
 task addLauncherApps() {
