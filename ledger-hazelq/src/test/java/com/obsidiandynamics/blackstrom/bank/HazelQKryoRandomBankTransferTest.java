@@ -35,7 +35,7 @@ public final class HazelQKryoRandomBankTransferTest extends AbstractRandomBankTr
   public void before() {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "none");
-    instance = new TestHazelcastProvider().createInstance(config);
+    instance = new TestProvider().createInstance(config);
   }
   
   @After

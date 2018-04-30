@@ -46,7 +46,6 @@ public final class HazelQRig {
   
   private static final Properties base = new Properties(System.getProperties());
   private static final String cluster = getOrSet(base, "rig.cluster", String::valueOf, "rig");
-  private static final String hazelcastLogging = getOrSet(base, "rig.hazelcast.logging", String::valueOf, "slf4j");
   private static final int hazelcastPartitions = getOrSet(base, "rig.hazelcast.partitions", Integer::valueOf, 7);
   private static final boolean hazelcastDebugMigrations = getOrSet(base, "rig.hazelcast.debug.migrations", Boolean::parseBoolean, false);
   private static final boolean hazelcastCleanShutdown = getOrSet(base, "rig.hazelcast.clean.shutdown", Boolean::parseBoolean, true);
@@ -66,11 +65,12 @@ public final class HazelQRig {
   }
   
   private static void configureHazelcastInstance() {
+    HazelcastZlgBridge.install();
+    
     synchronized (instanceLock) {
       shutdownHazelcastInstance();
       zlg.i("Creating Hazelcast instance");
       final Config config = new Config()
-          .setProperty("hazelcast.logging.type", hazelcastLogging)
           .setProperty("hazelcast.shutdownhook.enabled", "false")
           .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(5))
           .setProperty("hazelcast.partition.count", String.valueOf(hazelcastPartitions))
@@ -83,7 +83,7 @@ public final class HazelQRig {
                                                          .setMulticastTimeoutSeconds(1))
                                      .setTcpIpConfig(new TcpIpConfig()
                                                      .setEnabled(false))));
-      instance = GridHazelcastProvider.getInstance().createInstance(config);
+      instance = GridProvider.getInstance().createInstance(config);
       if (hazelcastDebugMigrations) {
         instance.getPartitionService().addMigrationListener(new MigrationListener() {
           @Override public void migrationStarted(MigrationEvent migrationEvent) {}
