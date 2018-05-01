@@ -33,11 +33,7 @@ public final class HazelQKryoLedgerTest extends AbstractLedgerTest {
   public void before() {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "none");
-    if (Testmark.isEnabled()) {
-      instance = GridProvider.getInstance().createInstance(config);
-    } else {
-      instance = new TestProvider().createInstance(config);
-    }
+    instance = (Testmark.isEnabled() ? GridProvider.getInstance() : new TestProvider()).createInstance(config);
   }
   
   @After
