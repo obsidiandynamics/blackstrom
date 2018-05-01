@@ -25,7 +25,7 @@ public final class MultiNodeQueueRigTest {
     return TestCycle.timesQuietly(1);
   }
   
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
+  private final int scale = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   private final List<Disposable> cleanup = new ArrayList<>();
   
@@ -43,14 +43,14 @@ public final class MultiNodeQueueRigTest {
   @Test
   public void testBenchmarkLatency() throws Exception {
     Testmark.ifEnabled("latency", () -> {
-      test(1_000 * SCALE, 2, true);
+      test(1_000 * scale, 2, true);
     });
   }
   
   @Test
   public void testBenchmarkThroughput() throws Exception {
     Testmark.ifEnabled("throughput", () -> {
-      test(4_000_000 * SCALE, 2, false);
+      test(4_000_000 * scale, 2, false);
     });
   }
   

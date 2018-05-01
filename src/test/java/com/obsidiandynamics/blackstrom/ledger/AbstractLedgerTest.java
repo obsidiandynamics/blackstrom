@@ -23,10 +23,10 @@ import com.obsidiandynamics.zerolog.*;
 public abstract class AbstractLedgerTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
-  private static final String[] TEST_COHORTS = new String[] {"a", "b"};
-  private static final Object TEST_OBJECTIVE = BankSettlement.forTwo(1_000);
+  private static final String[] testCohorts = new String[] {"a", "b"};
+  private static final Object testObjectives = BankSettlement.forTwo(1_000);
 
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
+  private final int scale = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   private class TestHandler implements MessageHandler, Groupable.NullGroup {
     private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -95,7 +95,7 @@ public abstract class AbstractLedgerTest {
     ledger.init();
     
     for (int i = 0; i < numMessages; i++) {
-      appendMessage("test", TEST_OBJECTIVE);
+      appendMessage("test", testObjectives);
     }
     
     boolean success = false;
@@ -128,19 +128,19 @@ public abstract class AbstractLedgerTest {
   
   @Test
   public final void testOneWay() {
-    testOneWay(2, 4, 10_000 * SCALE);
+    testOneWay(2, 4, 10_000 * scale);
   }
   
   @Test
   public final void testOneWayBenchmark() {
     Testmark.ifEnabled(() -> {
-      testOneWay(1, 1, 2_000_000 * SCALE);
-      testOneWay(1, 2, 2_000_000 * SCALE);
-      testOneWay(1, 4, 2_000_000 * SCALE);
-      testOneWay(2, 4, 1_000_000 * SCALE);
-      testOneWay(2, 8, 1_000_000 * SCALE);
-      testOneWay(4, 8, 500_000 * SCALE);
-      testOneWay(4, 16, 500_000 * SCALE);
+      testOneWay(1, 1, 2_000_000 * scale);
+      testOneWay(1, 2, 2_000_000 * scale);
+      testOneWay(1, 4, 2_000_000 * scale);
+      testOneWay(2, 4, 1_000_000 * scale);
+      testOneWay(2, 8, 1_000_000 * scale);
+      testOneWay(4, 8, 500_000 * scale);
+      testOneWay(4, 16, 500_000 * scale);
     });
   }
   
@@ -184,7 +184,7 @@ public abstract class AbstractLedgerTest {
     final long tookMillis = Threads.tookMillis(() -> {
       Parallel.blocking(producers, threadNo -> {
         for (int i = 0; i < messagesPerProducer; i++) {
-          appendMessage("test", TEST_OBJECTIVE);
+          appendMessage("test", testObjectives);
           
           if (i != 0 && i % checkInterval == 0) {
             final long sent = totalSent.addAndGet(checkInterval);
@@ -207,12 +207,12 @@ public abstract class AbstractLedgerTest {
   
   @Test
   public final void testTwoWay() {
-    testTwoWay(10_000 * SCALE);
+    testTwoWay(10_000 * scale);
   }
   
   @Test
   public final void testTwoWayBenchmark() {
-    Testmark.ifEnabled(() -> testTwoWay(2_000_000 * SCALE));
+    Testmark.ifEnabled(() -> testTwoWay(2_000_000 * scale));
   }
   
   private final void testTwoWay(int numMessages) {
@@ -224,7 +224,7 @@ public abstract class AbstractLedgerTest {
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (sandbox.contains(m) && m.getSource().equals("source")) {
-        c.getLedger().append(new Proposal(m.getBallotId(), 0, TEST_COHORTS, null, 0).withSource("echo"));
+        c.getLedger().append(new Proposal(m.getBallotId(), 0, testCohorts, null, 0).withSource("echo"));
         c.beginAndConfirm(m);
       }
     });
@@ -238,7 +238,7 @@ public abstract class AbstractLedgerTest {
     
     final long tookMillis = Threads.tookMillis(() -> {
       for (int i = 0; i < numMessages; i++) {
-        appendMessage("source", TEST_OBJECTIVE);
+        appendMessage("source", testObjectives);
         
         if (i != 0 && i % checkInterval == 0) {
           final long sent = totalSent.addAndGet(checkInterval);
@@ -256,7 +256,7 @@ public abstract class AbstractLedgerTest {
   }
   
   private void appendMessage(String source, Object objective) {
-    ledger.append(new Proposal(String.valueOf(messageId++), 0, TEST_COHORTS, objective, 0)
+    ledger.append(new Proposal(String.valueOf(messageId++), 0, testCohorts, objective, 0)
                   .withSource(source)
                   .withShardKey(sandbox.key()));
   }

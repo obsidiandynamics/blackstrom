@@ -22,30 +22,30 @@ import com.obsidiandynamics.zerolog.*;
 public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
-  private final int SCALE = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
+  private final int scale = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
   
   private static final boolean LOG_BENCHMARK = false;
   
   @Test
   public final void testRandomTransfersAutonomous() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
-    testRandomTransfers(branches, 100 * SCALE, true, true, true, true);
+    testRandomTransfers(branches, 100 * scale, true, true, true, true);
   }
   
   @Test
   public final void testRandomTransfersCoordinated() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
-    testRandomTransfers(branches, 100 * SCALE, true, true, true, false);
+    testRandomTransfers(branches, 100 * scale, true, true, true, false);
   }
 
   @Test
   public final void testRandomTransfersAutonomousBenchmark() {
-    Testmark.ifEnabled("autonomous", () -> testRandomTransfers(2, 4_000_000 * SCALE, false, LOG_BENCHMARK, false, true));
+    Testmark.ifEnabled("autonomous", () -> testRandomTransfers(2, 4_000_000 * scale, false, LOG_BENCHMARK, false, true));
   }
 
   @Test
   public final void testRandomTransfersCoordinatedBenchmark() {
-    Testmark.ifEnabled("coordinated", () -> testRandomTransfers(2, 4_000_000 * SCALE, false, LOG_BENCHMARK, false, false));
+    Testmark.ifEnabled("coordinated", () -> testRandomTransfers(2, 4_000_000 * scale, false, LOG_BENCHMARK, false, false));
   }
 
   private void testRandomTransfers(int numBranches, int runs, boolean randomiseRuns, boolean loggingEnabled, 
