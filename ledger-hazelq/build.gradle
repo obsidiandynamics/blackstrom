@@ -2,8 +2,8 @@ def packageName = "blackstrom-ledger-hazelq"
 version = project(":").version
   
 ext {
-  hazelqVersion = "0.4.0"
-  hazelcastVersion = "3.10-BETA-2"
+  hazelqVersion = "0.5.0"
+  hazelcastVersion = "3.10"
 }
   
 dependencies {
