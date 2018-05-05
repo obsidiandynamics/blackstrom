@@ -9,17 +9,17 @@ import org.junit.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.hazelq.*;
+import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.zerolog.*;
 
-public final class HazelQLedgerTest {
+public final class MeteorLedgerTest {
   @Test
   public void testAppendPackError() {
     final MessageCodec codec = new NullMessageCodec();
     final Publisher publisher = mock(Publisher.class);
     final Message m = new Proposal("100", new String[0], null, 0);
     final AppendCallback callback = mock(AppendCallback.class);
-    HazelQLedger.appendWithCallback(codec, publisher, m, callback);
+    MeteorLedger.appendWithCallback(codec, publisher, m, callback);
     
     verify(callback).onAppend(isNull(), isA(UnsupportedOperationException.class));
   }
@@ -37,7 +37,7 @@ public final class HazelQLedgerTest {
     
     final Message m = new Proposal("100", new String[0], null, 0);
     final AppendCallback callback = mock(AppendCallback.class);
-    HazelQLedger.appendWithCallback(codec, publisher, m, callback);
+    MeteorLedger.appendWithCallback(codec, publisher, m, callback);
     
     verify(callback).onAppend(isNull(), eq(cause));
   }
@@ -54,7 +54,7 @@ public final class HazelQLedgerTest {
     final Record record = new Record(MessagePacker.pack(codec, m));
     final MessageHandler handler = mock(MessageHandler.class);
     final MessageContext context = mock(MessageContext.class);
-    HazelQLedger.receive(codec, record, logTarget.logger(), handler, context);
+    MeteorLedger.receive(codec, record, logTarget.logger(), handler, context);
     
     assertEquals(1, logTarget.entries().list().size());
     assertEquals(1, logTarget.entries().forLevel(LogLevel.ERROR).list().size());

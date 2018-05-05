@@ -6,10 +6,10 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.hazelq.*;
+import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.zerolog.*;
 
-public final class HazelQLedgerConfigTest {
+public final class MeteorLedgerConfigTest {
   @Test
   public void testConfig() {
     final MessageCodec codec = new KryoMessageCodec(false);
@@ -17,7 +17,7 @@ public final class HazelQLedgerConfigTest {
     final Zlg zlg = Zlg.forDeclaringClass().get();
     final int pollIntervalMillis = 500;
     final StreamConfig streamConfig = new StreamConfig();
-    final HazelQLedgerConfig config = new HazelQLedgerConfig()
+    final MeteorLedgerConfig config = new MeteorLedgerConfig()
         .withCodec(codec)
         .withElectionConfig(electionConfig)
         .withZlg(zlg)
@@ -32,6 +32,6 @@ public final class HazelQLedgerConfigTest {
 
   @Test
   public void testToString() {
-    Assertions.assertToStringOverride(new HazelQLedgerConfig());
+    Assertions.assertToStringOverride(new MeteorLedgerConfig());
   }
 }

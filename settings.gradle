@@ -6,11 +6,11 @@ project(":blackstrom-codec-jackson").projectDir = new File(settingsDir, "codec-j
 include "blackstrom-codec-kryo"
 project(":blackstrom-codec-kryo").projectDir = new File(settingsDir, "codec-kryo")
 
-include "blackstrom-ledger-hazelq"
-project(":blackstrom-ledger-hazelq").projectDir = new File(settingsDir, "ledger-hazelq")
-
 include "blackstrom-ledger-kafka"
 project(":blackstrom-ledger-kafka").projectDir = new File(settingsDir, "ledger-kafka")
+
+include "blackstrom-ledger-meteor"
+project(":blackstrom-ledger-meteor").projectDir = new File(settingsDir, "ledger-meteor")
 
 include "blackstrom-sim"
 project(":blackstrom-sim").projectDir = new File(settingsDir, "sim")

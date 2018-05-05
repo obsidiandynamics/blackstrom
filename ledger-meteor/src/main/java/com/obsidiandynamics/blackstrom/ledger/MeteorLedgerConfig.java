@@ -1,12 +1,12 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import com.obsidiandynamics.blackstrom.codec.*;
-import com.obsidiandynamics.hazelq.*;
+import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.yconf.*;
 import com.obsidiandynamics.zerolog.*;
 
 @Y
-public final class HazelQLedgerConfig {
+public final class MeteorLedgerConfig {
   @YInject
   private MessageCodec codec;
   
@@ -26,7 +26,7 @@ public final class HazelQLedgerConfig {
     return codec;
   }
 
-  public HazelQLedgerConfig withCodec(MessageCodec codec) {
+  public MeteorLedgerConfig withCodec(MessageCodec codec) {
     this.codec = codec;
     return this;
   }
@@ -35,7 +35,7 @@ public final class HazelQLedgerConfig {
     return zlg;
   }
 
-  public HazelQLedgerConfig withZlg(Zlg zlg) {
+  public MeteorLedgerConfig withZlg(Zlg zlg) {
     this.zlg = zlg;
     return this;
   }
@@ -44,7 +44,7 @@ public final class HazelQLedgerConfig {
     return streamConfig;
   }
 
-  public HazelQLedgerConfig withStreamConfig(StreamConfig streamConfig) {
+  public MeteorLedgerConfig withStreamConfig(StreamConfig streamConfig) {
     this.streamConfig = streamConfig;
     return this;
   }
@@ -53,7 +53,7 @@ public final class HazelQLedgerConfig {
     return electionConfig;
   }
   
-  public HazelQLedgerConfig withElectionConfig(ElectionConfig electionConfig) {
+  public MeteorLedgerConfig withElectionConfig(ElectionConfig electionConfig) {
     this.electionConfig = electionConfig;
     return this;
   }
@@ -62,14 +62,14 @@ public final class HazelQLedgerConfig {
     return pollIntervalMillis;
   }
 
-  public HazelQLedgerConfig withPollInterval(int pollIntervalMillis) {
+  public MeteorLedgerConfig withPollInterval(int pollIntervalMillis) {
     this.pollIntervalMillis = pollIntervalMillis;
     return this;
   }
 
   @Override
   public String toString() {
-    return HazelQLedgerConfig.class.getSimpleName() + " [codec=" + codec + ", streamConfig=" + streamConfig
+    return MeteorLedgerConfig.class.getSimpleName() + " [codec=" + codec + ", streamConfig=" + streamConfig
         + ", electionConfig=" + electionConfig + ", pollInterval=" + pollIntervalMillis + "]";
   }
 }

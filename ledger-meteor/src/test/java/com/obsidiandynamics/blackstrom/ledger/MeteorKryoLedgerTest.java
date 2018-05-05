@@ -11,12 +11,12 @@ import com.hazelcast.core.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.testmark.*;
 
 @RunWith(Parameterized.class)
-public final class HazelQKryoLedgerTest extends AbstractLedgerTest {  
+public final class MeteorKryoLedgerTest extends AbstractLedgerTest {  
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -44,17 +44,17 @@ public final class HazelQKryoLedgerTest extends AbstractLedgerTest {
   
   @Override
   protected Ledger createLedger() {
-    final HazelQLedgerConfig config = new HazelQLedgerConfig()
+    final MeteorLedgerConfig config = new MeteorLedgerConfig()
         .withCodec(new KryoMessageCodec(true, new KryoBankExpansion()))
         .withStreamConfig(new StreamConfig()
                           .withName("stream")
                           .withHeapCapacity(100_000))
         .withElectionConfig(new ElectionConfig().withScavengeInterval(1));
-    return new HazelQLedger(instance, config);
+    return new MeteorLedger(instance, config);
   }
   
   public static void main(String[] args) {
     Testmark.enable();
-    JUnitCore.runClasses(HazelQKryoLedgerTest.class);
+    JUnitCore.runClasses(MeteorKryoLedgerTest.class);
   }
 }

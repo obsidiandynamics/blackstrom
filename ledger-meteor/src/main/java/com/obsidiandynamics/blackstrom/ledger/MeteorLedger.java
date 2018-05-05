@@ -10,14 +10,14 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.model.Message;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.hazelq.*;
+import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
 
-public final class HazelQLedger implements Ledger {
+public final class MeteorLedger implements Ledger {
   private final HazelcastInstance instance;
   
-  private final HazelQLedgerConfig config;
+  private final MeteorLedgerConfig config;
   
   private final Publisher publisher;
   
@@ -27,13 +27,11 @@ public final class HazelQLedger implements Ledger {
   
   private final Map<Integer, Subscriber> groupSubscribers = new HashMap<>();
   
-  private final List<Receiver> receivers = new ArrayList<>();
-  
   private final List<ShardedFlow> flows = new ArrayList<>(); 
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
-  public HazelQLedger(HazelcastInstance instance, HazelQLedgerConfig config) {
+  public MeteorLedger(HazelcastInstance instance, MeteorLedgerConfig config) {
     this.instance = instance;
     this.config = config;
     codec = config.getCodec();
@@ -68,9 +66,8 @@ public final class HazelQLedger implements Ledger {
     }
 
     final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
-    final Receiver receiver = subscriber.createReceiver(record -> receive(codec, record, config.getZlg(), handler, context), 
-                                                        config.getPollInterval());
-    receivers.add(receiver);
+    subscriber.attachReceiver(record -> receive(codec, record, config.getZlg(), handler, context), 
+                              config.getPollInterval());
   }
   
   static void receive(MessageCodec codec, Record record, Zlg zlg, MessageHandler handler, MessageContext context) {
@@ -118,7 +115,6 @@ public final class HazelQLedger implements Ledger {
   public void dispose() {
     Terminator.blank()
     .add(publisher)
-    .add(receivers)
     .add(allSubscribers)
     .add(flows)
     .terminate()

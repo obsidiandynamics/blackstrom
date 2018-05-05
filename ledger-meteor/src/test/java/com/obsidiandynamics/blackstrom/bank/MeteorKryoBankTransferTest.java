@@ -13,12 +13,11 @@ import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.util.*;
-import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.junit.*;
-import com.obsidiandynamics.testmark.*;
+import com.obsidiandynamics.meteor.*;
 
 @RunWith(Parameterized.class)
-public final class HazelQKryoRandomBankTransferTest extends AbstractRandomBankTransferTest {  
+public final class MeteorKryoBankTransferTest extends AbstractBankTransferTest {  
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -35,7 +34,7 @@ public final class HazelQKryoRandomBankTransferTest extends AbstractRandomBankTr
   public void before() {
     final Config config = new Config()
         .setProperty("hazelcast.logging.type", "none");
-    instance = (Testmark.isEnabled() ? GridProvider.getInstance() : new TestProvider()).createInstance(config);
+    instance = new TestProvider().createInstance(config);
   }
   
   @After
@@ -48,17 +47,12 @@ public final class HazelQKryoRandomBankTransferTest extends AbstractRandomBankTr
   
   @Override
   protected Ledger createLedger(Guidance guidance) {
-    final HazelQLedgerConfig config = new HazelQLedgerConfig()
+    final MeteorLedgerConfig config = new MeteorLedgerConfig()
         .withCodec(new KryoMessageCodec(true, new KryoBankExpansion()))
         .withStreamConfig(new StreamConfig()
                           .withName("stream")
                           .withHeapCapacity(100_000))
         .withElectionConfig(new ElectionConfig().withScavengeInterval(1));
-    return new HazelQLedger(instance, config);
-  }
-  
-  public static void main(String[] args) {
-    Testmark.enable();
-    JUnitCore.runClasses(HazelQKryoRandomBankTransferTest.class);
+    return new MeteorLedger(instance, config);
   }
 }

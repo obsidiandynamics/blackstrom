@@ -11,13 +11,13 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
-import com.obsidiandynamics.hazelq.*;
 import com.obsidiandynamics.jgroups.*;
+import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.props.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
 
-public final class HazelQRig {
+public final class MeteorRig {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   enum Encoding {
@@ -61,7 +61,7 @@ public final class HazelQRig {
   private static final Object instanceLock = new Object();
   
   private static void configureHazelcastInstanceAsync() {
-    new Thread(HazelQRig::configureHazelcastInstance, "hazelcast-configure").start();
+    new Thread(MeteorRig::configureHazelcastInstance, "hazelcast-configure").start();
   }
   
   private static void configureHazelcastInstance() {
@@ -118,8 +118,8 @@ public final class HazelQRig {
           .withSyncReplicas(1)
           .withAsyncReplicas(0)
           .withHeapCapacity(100_000);
-      return new HazelQLedger(instance, 
-                              new HazelQLedgerConfig()
+      return new MeteorLedger(instance, 
+                              new MeteorLedgerConfig()
                               .withElectionConfig(new ElectionConfig()
                                                   .withScavengeInterval(1000))
                               .withStreamConfig(streamConfig)
@@ -154,10 +154,10 @@ public final class HazelQRig {
         }
         
         new InitiatorRig.Config() {{
-          zlg = HazelQRig.zlg;
-          ledgerFactory = HazelQRig::createLedger;
-          channelFactory = HazelQRig::createChannel;
-          clusterName = HazelQRig.cluster;
+          zlg = MeteorRig.zlg;
+          ledgerFactory = MeteorRig::createLedger;
+          channelFactory = MeteorRig::createChannel;
+          clusterName = MeteorRig.cluster;
           runs = _runs;
           backlogTarget = _backlogTarget;
           groupAnnounceWaitMillis = 10_000;
@@ -177,10 +177,10 @@ public final class HazelQRig {
       configureHazelcastInstanceAsync();
       
       final CohortRig cohortRig = new CohortRig.Config() {{
-        zlg = HazelQRig.zlg;
-        ledgerFactory = HazelQRig::createLedger;
-        channelFactory = HazelQRig::createChannel;
-        clusterName = HazelQRig.cluster;
+        zlg = MeteorRig.zlg;
+        ledgerFactory = MeteorRig::createLedger;
+        channelFactory = MeteorRig::createChannel;
+        clusterName = MeteorRig.cluster;
         branchId = _branchId;
       }}.create();
       if (hazelcastCleanShutdown) Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -198,10 +198,10 @@ public final class HazelQRig {
       printProps(props);
       configureHazelcastInstanceAsync();
       final MonitorRig monitorRig = new MonitorRig.Config() {{
-        zlg = HazelQRig.zlg;
-        ledgerFactory = HazelQRig::createLedger;
-        channelFactory = HazelQRig::createChannel;
-        clusterName = HazelQRig.cluster;
+        zlg = MeteorRig.zlg;
+        ledgerFactory = MeteorRig::createLedger;
+        channelFactory = MeteorRig::createChannel;
+        clusterName = MeteorRig.cluster;
       }}.create();
       if (hazelcastCleanShutdown) Runtime.getRuntime().addShutdownHook(new Thread(() -> {
         monitorRig.dispose();

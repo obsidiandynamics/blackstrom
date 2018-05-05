@@ -15,7 +15,7 @@ jvm_args="-XX:-MaxFDLimit -XX:+TieredCompilation -XX:+UseNUMA -XX:+UseCondCardMa
           -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:InitiatingHeapOccupancyPercent=0 -XX:+DisableExplicitGC \
           -Xlog:gc*:file=../logs/${role}-gc-%t.log"
 cd ../..
-./gradlew -x test blackstrom-ledger-hazelq:testJar 1> /dev/null
+./gradlew -x test blackstrom-ledger-meteor:testJar 1> /dev/null
 if [ $? -ne 0 ]; then
   exit 1
 fi
@@ -24,6 +24,6 @@ cd - 1> /dev/null
 mkdir -p ../logs
 tmp_dir="/tmp/blackstrom-$(date +%s)"
 mkdir $tmp_dir
-cp ../build/libs/blackstrom-ledger-hazelq-*-tests.jar $tmp_dir
-java $jvm_args -cp $tmp_dir/blackstrom-ledger-hazelq-*-tests.jar $@ com.obsidiandynamics.blackstrom.rig.HazelQRig\$$role
+cp ../build/libs/blackstrom-ledger-meteor-*-tests.jar $tmp_dir
+java $jvm_args -cp $tmp_dir/blackstrom-ledger-meteor-*-tests.jar $@ com.obsidiandynamics.blackstrom.rig.MeteorRig\$$role
 rm -rf $tmp_dir
