@@ -79,7 +79,7 @@ public final class MonitorRig implements Disposable {
   }
   
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
     group.close();
     cleanupExisting();
   }

@@ -84,7 +84,7 @@ public final class CohortRig implements Disposable {
   }
   
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
     group.close();
     cleanupExisting();
   }
