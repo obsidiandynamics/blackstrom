@@ -14,7 +14,7 @@ import com.obsidiandynamics.yconf.*;
 public final class JacksonMessageCodec implements MessageCodec {  
   public static final int ENCODING_VERSION = 1;
   
-  private static final JacksonExpansion[] DEF_EXPANSIONS = { new JacksonDefaultOutcomeMetadataExpansion() };
+  private static final JacksonExpansion[] defExpansions = { new JacksonDefaultOutcomeMetadataExpansion() };
   
   @FunctionalInterface
   public interface JacksonExpansion extends Consumer<SimpleModule> {}
@@ -32,7 +32,7 @@ public final class JacksonMessageCodec implements MessageCodec {
     module.addSerializer(Payload.class, new JacksonPayloadSerializer());
     module.addDeserializer(Payload.class, new JacksonPayloadDeserializer());
     
-    for (JacksonExpansion expansion : DEF_EXPANSIONS) expansion.accept(module);
+    for (JacksonExpansion expansion : defExpansions) expansion.accept(module);
     for (JacksonExpansion expansion : expansions) expansion.accept(module);
     
     mapper.registerModule(module);
