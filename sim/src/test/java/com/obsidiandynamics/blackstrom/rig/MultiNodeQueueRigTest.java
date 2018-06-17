@@ -50,7 +50,7 @@ public final class MultiNodeQueueRigTest {
   @Test
   public void testBenchmarkThroughput() throws Exception {
     Testmark.ifEnabled("throughput", () -> {
-      test(4_000_000 * scale, 2, false);
+      test(4_000_000L * scale, 2, false);
     });
   }
   
