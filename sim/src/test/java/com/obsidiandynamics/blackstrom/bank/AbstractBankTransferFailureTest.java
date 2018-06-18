@@ -14,8 +14,11 @@ import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.monitor.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.zerolog.*;
 
 public abstract class AbstractBankTransferFailureTest extends BaseBankTest {  
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  
   @Test
   public final void testFactorFailures() {
     final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
@@ -41,18 +44,20 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     };
     
     for (TargetFactor target : TargetFactor.values()) {
-      for (RxTxFailureModes failureModes : presetFailureModesArray) {
-        boolean success = false;
-        try {
-          testFactorFailure(new FailureModes().set(target, failureModes));
-          success = true;
-        } catch (Exception e) {
-          throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
-        } finally {
-          if (! success) System.out.format("Failure for target=%s, failureModes=%s\n", target, failureModes);
-          if (manifold != null) manifold.dispose();
+//      if (target == TargetFactor.COHORT) { //TODO
+        for (RxTxFailureModes failureModes : presetFailureModesArray) {
+          boolean success = false;
+          try {
+            testFactorFailure(new FailureModes().set(target, failureModes));
+            success = true;
+          } catch (Exception e) {
+            throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
+          } finally {
+            if (! success) System.out.format("Failure for target=%s, failureModes=%s\n", target, failureModes);
+            if (manifold != null) manifold.dispose();
+          }
         }
-      }
+//      }
     }
   }
   
@@ -126,12 +131,19 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
                                   AsyncInitiator initiator, Sandbox sandbox) throws InterruptedException, ExecutionException, Exception {
     assert expectedVerdict == Resolution.COMMIT ^ expectedAbortReason != null;
     final String ballotId = UUID.randomUUID().toString();
-    final Outcome o = initiator.initiate(new Proposal(ballotId, 
-                                                      TWO_BRANCH_IDS, 
-                                                      BankSettlement.forTwo(transferAmount),
-                                                      PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
-        .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-    assertEquals(expectedVerdict, o.getResolution());
-    assertEquals(expectedAbortReason, o.getAbortReason());
+    zlg.t("Initiating %s", z -> z.arg(ballotId));
+    boolean success = false;
+    try {
+      final Outcome o = initiator.initiate(new Proposal(ballotId, 
+                                                        TWO_BRANCH_IDS, 
+                                                        BankSettlement.forTwo(transferAmount),
+                                                        PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+          .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+      assertEquals(expectedVerdict, o.getResolution());
+      assertEquals(expectedAbortReason, o.getAbortReason());
+      success = true;
+    } finally {
+      if (! success) zlg.e("Error in ballot %s", z -> z.arg(ballotId));
+    }
   }
 }

@@ -8,8 +8,11 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
+import com.obsidiandynamics.zerolog.*;
 
 public final class BalancedLedgerView implements Ledger {
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  
   private final BalancedLedgerHub hub;
   
   private final List<ShardedFlow> flows = new ArrayList<>(); 
@@ -59,14 +62,24 @@ public final class BalancedLedgerView implements Ledger {
           final Accumulator accumulator = accumulators[shard];
           final long nextReadOffset;
           if (group != null) {
-            nextReadOffset = Math.max(nextReadOffsets[shard], group.getReadOffset(shard));
+            final long localNextReadOffset = nextReadOffsets[shard];
+            final long groupNextReadOffset = group.getReadOffset(shard);
+            if (localNextReadOffset < groupNextReadOffset) {
+              zlg.t("Read offset changed for group %s: local: %,d, group: %,d", z -> z.arg(group.getGroupId()).arg(localNextReadOffset).arg(groupNextReadOffset));
+            }
+            nextReadOffset = Math.max(localNextReadOffset, groupNextReadOffset);
           } else {
             nextReadOffset = nextReadOffsets[shard];
           }
           
           final int retrieved = accumulator.retrieve(nextReadOffset, sink);
           if (retrieved != 0) {
-            nextReadOffsets[shard] = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset() + 1;
+            final long offsetOfLastItem = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset();
+            final long newReadOffset = offsetOfLastItem + 1;
+            if (newReadOffset - nextReadOffset != retrieved) {
+              zlg.t("Read offset discontinuity nextReadOffset: %,d offsetOfLastItem: %,d", z -> z.arg(nextReadOffset).arg(offsetOfLastItem));
+            }
+            nextReadOffsets[shard] = newReadOffset;
           }
         }
       }

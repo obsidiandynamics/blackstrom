@@ -152,6 +152,7 @@ public final class BankBranch implements Cohort {
       
       final Proposal proposal = proposals.remove(outcome.getBallotId());
       if (proposal == null) {
+        zlg.t("%s: no applicable outcome for ballot %s", z -> z.arg(branchId).arg(outcome.getBallotId()));
         return; // outcome doesn't apply to this branch
       }
       

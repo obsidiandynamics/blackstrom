@@ -14,12 +14,18 @@ public final class BalancedLedgerHub implements Disposable {
   private final Accumulator[] accumulators;
 
   class ConsumerGroup {
+    private final String groupId;
     private final AtomicLong[] offsets = new AtomicLong[accumulators.length];
     private final ShardAssignment[] assignments = new ShardAssignment[accumulators.length];
 
-    ConsumerGroup() {
+    ConsumerGroup(String groupId) {
+      this.groupId = groupId;
       Arrays.setAll(offsets, i-> new AtomicLong());
       Arrays.setAll(assignments, i -> shardAssignmentFactory.create());
+    }
+    
+    String getGroupId() {
+      return groupId;
     }
 
     void join(Object handlerId) {
@@ -92,7 +98,7 @@ public final class BalancedLedgerHub implements Disposable {
       if (existing != null) {
         return existing;
       } else {
-        final ConsumerGroup created = new ConsumerGroup();
+        final ConsumerGroup created = new ConsumerGroup(groupId);
         groups.put(groupId, created);
         return created;
       }
