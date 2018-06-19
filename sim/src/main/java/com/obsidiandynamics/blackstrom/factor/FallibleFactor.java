@@ -24,11 +24,13 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   private final Object backingHandlerLock = new Object();
   
   private final Ledger interceptedLedger = new Ledger() {
-    @Override public void attach(MessageHandler handler) {
+    @Override 
+    public void attach(MessageHandler handler) {
       throw new UnsupportedOperationException();
     }
 
-    @Override public void append(Message message, AppendCallback callback) {
+    @Override 
+    public void append(Message message, AppendCallback callback) {
       onSend(message, callback);
     }
     
@@ -186,9 +188,12 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   }
   
   private void onTxDelayedDuplicate(DelayedDuplicateDelivery mode, Message message, AppendCallback callback) {
+    // because a message is mutable, we can't use it twice for sending; instead we clone it before attempting delayed delivery
+    final Message clone = message.clone();
+    
     backingLedger.append(message, callback);
-    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
-      backingLedger.append(message, callback);
+    runLater(mode.getDelayMillis(), clone.getBallotId(), t -> {
+      backingLedger.append(clone, callback);
     });
   }
   

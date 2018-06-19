@@ -73,4 +73,9 @@ public final class Proposal extends FluentMessage<Proposal> {
     return Proposal.class.getSimpleName() + " [" + baseToString() + ", cohorts=" + Arrays.toString(cohorts) + 
         ", objective=" + objective + ", ttl=" + ttl + "]";
   }
+  
+  @Override
+  public Proposal clone() {
+    return copyMutableFields(this, new Proposal(getBallotId(), getTimestamp(), cohorts, objective, ttl));
+  }
 }

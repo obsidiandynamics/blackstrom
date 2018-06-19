@@ -15,7 +15,7 @@ import com.obsidiandynamics.junit.*;
 public final class BalancedBankTransferFailureTest extends AbstractBankTransferFailureTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    return TestCycle.timesQuietly(1);
+    return TestCycle.timesQuietly(100);
   }
   
   @Override

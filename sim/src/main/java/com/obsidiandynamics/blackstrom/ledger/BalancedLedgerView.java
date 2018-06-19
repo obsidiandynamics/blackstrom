@@ -65,7 +65,8 @@ public final class BalancedLedgerView implements Ledger {
             final long localNextReadOffset = nextReadOffsets[shard];
             final long groupNextReadOffset = group.getReadOffset(shard);
             if (localNextReadOffset < groupNextReadOffset) {
-              zlg.t("Read offset changed for group %s: local: %,d, group: %,d", z -> z.arg(group.getGroupId()).arg(localNextReadOffset).arg(groupNextReadOffset));
+              zlg.i("Read offset advanced changed for group %s: local: %,d, group: %,d", 
+                    z -> z.arg(group.getGroupId()).arg(localNextReadOffset).arg(groupNextReadOffset));
             }
             nextReadOffset = Math.max(localNextReadOffset, groupNextReadOffset);
           } else {
@@ -77,7 +78,10 @@ public final class BalancedLedgerView implements Ledger {
             final long offsetOfLastItem = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset();
             final long newReadOffset = offsetOfLastItem + 1;
             if (newReadOffset - nextReadOffset != retrieved) {
-              zlg.t("Read offset discontinuity nextReadOffset: %,d offsetOfLastItem: %,d", z -> z.arg(nextReadOffset).arg(offsetOfLastItem));
+              // detect buffer discontinuities, which can occur if the reader can't keep up with the writer
+              final long offsetOfFirstItem = ((DefaultMessageId) sink.get(sink.size() - retrieved).getMessageId()).getOffset();
+              zlg.w("Buffer overflow: next expected read: %,d, but read %,d item(s) between offsets %,d and %,d", 
+                    z -> z.arg(nextReadOffset).arg(retrieved).arg(offsetOfFirstItem).arg(offsetOfLastItem));
             }
             nextReadOffsets[shard] = newReadOffset;
           }

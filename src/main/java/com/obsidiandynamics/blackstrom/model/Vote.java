@@ -50,4 +50,9 @@ public final class Vote extends FluentMessage<Vote> {
   public String toString() {
     return Vote.class.getSimpleName() + " [" + baseToString() + ", response=" + response + "]";
   }
+  
+  @Override
+  public Vote clone() {
+    return copyMutableFields(this, new Vote(getBallotId(), getTimestamp(), response));
+  }
 }

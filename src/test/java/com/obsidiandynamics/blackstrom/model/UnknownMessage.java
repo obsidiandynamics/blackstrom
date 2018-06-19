@@ -40,4 +40,9 @@ public final class UnknownMessage extends FluentMessage<UnknownMessage> {
   public String toString() {
     return UnknownMessage.class.getSimpleName() + " [" + baseToString() + "]";
   }
+  
+  @Override
+  public UnknownMessage clone() {
+    return copyMutableFields(this, new UnknownMessage(getBallotId(), getTimestamp()));
+  }
 }

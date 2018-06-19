@@ -90,4 +90,9 @@ public final class Outcome extends FluentMessage<Outcome> {
         ", abortReason=" + abortReason + ", responses=" + Arrays.toString(responses) + 
         ", metadata=" + metadata + "]";
   }
+  
+  @Override
+  public Outcome clone() {
+    return copyMutableFields(this, new Outcome(getBallotId(), getTimestamp(), resolution, abortReason, responses, metadata));
+  }
 }

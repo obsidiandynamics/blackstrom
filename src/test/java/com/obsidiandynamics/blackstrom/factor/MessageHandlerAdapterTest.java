@@ -78,6 +78,11 @@ public final class MessageHandlerAdapterTest {
       @Override public MessageType getMessageType() {
         return null;
       }
+
+      @Override
+      public Message clone() {
+        throw new UnsupportedOperationException();
+      }
     });
   }
   

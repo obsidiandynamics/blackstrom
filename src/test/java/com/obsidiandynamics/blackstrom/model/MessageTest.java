@@ -15,13 +15,20 @@ public final class MessageTest {
       super(ballotId, timestamp);
     }
 
-    @Override public MessageType getMessageType() {
+    @Override 
+    public MessageType getMessageType() {
       return null;
     }
 
-    @Override public String toString() {
+    @Override 
+    public String toString() {
       return UntypedMessage.class.getName() + " [" + baseToString() + "]";
     } 
+    
+    @Override
+    public UntypedMessage clone() {
+      return copyMutableFields(this, new UntypedMessage(getBallotId(), getTimestamp()));
+    }
   }
 
   @Test
@@ -71,7 +78,11 @@ public final class MessageTest {
    */
   private static final class TrivialSubclass extends Message {
     private TrivialSubclass() {
-      super(null, 0);
+      this(null, 0);
+    }
+    
+    private TrivialSubclass(String ballotId, long timestamp) {
+      super(ballotId, timestamp);
     }
     
     @Override
@@ -87,6 +98,11 @@ public final class MessageTest {
     @Override
     public MessageType getMessageType() {
       throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public TrivialSubclass clone() {
+      return copyMutableFields(this, new TrivialSubclass(getBallotId(), getTimestamp()));
     }
   }
   
