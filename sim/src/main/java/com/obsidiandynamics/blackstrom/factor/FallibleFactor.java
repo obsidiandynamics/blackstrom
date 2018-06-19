@@ -177,8 +177,10 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   }
   
   private void onTxDuplicate(Message message, AppendCallback callback) {
+    // because a message is mutable, we can't use it twice for sending; instead we copy it before attempting duplicate delivery
+    final Message copy = message.shallowCopy();
     backingLedger.append(message, callback);
-    backingLedger.append(message, callback);
+    backingLedger.append(copy, callback);
   }
   
   private void onTxDelayed(DelayedDelivery mode, Message message, AppendCallback callback) {
@@ -188,7 +190,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   }
   
   private void onTxDelayedDuplicate(DelayedDuplicateDelivery mode, Message message, AppendCallback callback) {
-    // because a message is mutable, we can't use it twice for sending; instead we copy it before attempting delayed delivery
+    // because a message is mutable, we can't use it twice for sending; instead we copy it before attempting duplicate delivery
     final Message copy = message.shallowCopy();
     
     backingLedger.append(message, callback);

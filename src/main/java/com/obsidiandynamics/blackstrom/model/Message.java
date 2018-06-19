@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.model;
 
+import java.util.*;
+
 import org.apache.commons.lang3.builder.*;
 
 import com.obsidiandynamics.nanoclock.*;
@@ -33,6 +35,9 @@ public abstract class Message {
   }
   
   public final void setMessageId(MessageId messageId) {
+    if (this.messageId != null && ! Objects.equals(this.messageId, messageId)) {
+      throw new IllegalArgumentException("Message ID cannot be reassigned (current: " + this.messageId + ", new: " + messageId + ")");
+    }
     this.messageId = messageId;
   }
   
@@ -41,6 +46,9 @@ public abstract class Message {
   }
   
   public final void setSource(String source) {
+    if (this.source != null && ! Objects.equals(this.source, source)) {
+      throw new IllegalArgumentException("Source cannot be reassigned (current: " + this.source + ", new: " + source + ")");
+    }
     this.source = source;
   }
 
@@ -53,6 +61,9 @@ public abstract class Message {
   }
   
   public final void setShardKey(String shardKey) {
+    if (this.shardKey != null && ! Objects.equals(this.shardKey, shardKey)) {
+      throw new IllegalArgumentException("Shard key cannot be reassigned (current: " + this.shardKey + ", new: " + shardKey + ")");
+    }
     this.shardKey = shardKey;
   }
   
@@ -69,6 +80,9 @@ public abstract class Message {
   }
   
   public final void setShard(int shard) {
+    if (this.shard != UNASSIGNED && this.shard != shard) {
+      throw new IllegalArgumentException("Shard cannot be reassigned (current: " + this.shard + ", new: " + shard + ")");
+    }
     this.shard = shard;
   }
   

@@ -128,4 +128,46 @@ public final class MessageTest {
     assertEquals(m.getShard(), copy.getShard());
     assertEquals(m.getTimestamp(), copy.getTimestamp());
   }
+  
+  @Test
+  public void testFieldAssignmentToSame() {
+    final Message m = new UntypedMessage("B0", 0)
+        .withMessageId(new DefaultMessageId(0, 100))
+        .withSource("test")
+        .withShardKey("key")
+        .withShard(99);
+    
+    m.setMessageId(m.getMessageId());
+    m.setShard(m.getShard());
+    m.setShardKey(m.getShardKey());
+    m.setSource(m.getSource());
+  }
+  
+  @Test(expected=IllegalArgumentException.class)
+  public void testMessageIdReassignment() {
+    final Message m = new UntypedMessage("B0", 0)
+        .withMessageId(new DefaultMessageId(0, 100));
+    m.setMessageId(new DefaultMessageId(0, 200));
+  }
+  
+  @Test(expected=IllegalArgumentException.class)
+  public void testSourceReassignment() {
+    final Message m = new UntypedMessage("B0", 0)
+        .withSource("source");
+    m.setSource("source2");
+  }
+  
+  @Test(expected=IllegalArgumentException.class)
+  public void testShardKeyReassignment() {
+    final Message m = new UntypedMessage("B0", 0)
+        .withShardKey("shardKey");
+    m.setShardKey("shardKey2");
+  }
+  
+  @Test(expected=IllegalArgumentException.class)
+  public void testShardReassignment() {
+    final Message m = new UntypedMessage("B0", 0)
+        .withShard(100);
+    m.setShard(200);
+  }
 }
