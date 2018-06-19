@@ -52,7 +52,7 @@ public final class Vote extends FluentMessage<Vote> {
   }
   
   @Override
-  public Vote clone() {
+  public Vote shallowCopy() {
     return copyMutableFields(this, new Vote(getBallotId(), getTimestamp(), response));
   }
 }

@@ -29,4 +29,13 @@ public final class OutcomeTest {
   public void testEqualsHashCode() {
     EqualsVerifier.forClass(Outcome.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
+  
+  @Test
+  public void testShallow() {
+    final Response ra = new Response("a", Intent.ACCEPT, "a-meta");
+    final Response rb = new Response("b", Intent.REJECT, "b-meta");
+    final Outcome outcome = new Outcome("B1", Resolution.ABORT, AbortReason.REJECT, new Response[] {ra, rb}, "metadata")
+        .withShardKey("shardKey");
+    assertEquals(outcome, outcome.shallowCopy()); 
+  }
 }

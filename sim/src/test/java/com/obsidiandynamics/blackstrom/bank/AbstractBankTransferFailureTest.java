@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.bank;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static junit.framework.TestCase.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -19,45 +18,43 @@ import com.obsidiandynamics.zerolog.*;
 public abstract class AbstractBankTransferFailureTest extends BaseBankTest {  
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
-  private static final int DELIVERY_DELAY_MILLIS = 1;
+  private static final int DELIVERY_DELAY_MILLIS = 10;
   
   @Test
   public final void testFactorFailures() {
     final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
-//      new RxTxFailureModes() {},
-//      new RxTxFailureModes() {{
-//        rxFailureMode = new DuplicateDelivery(1);
-//      }},
-//      new RxTxFailureModes() {{
-//        rxFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
-//      }},
-//      new RxTxFailureModes() {{
-//        rxFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
-//      }},
-//      new RxTxFailureModes() {{
-//        txFailureMode = new DuplicateDelivery(1);
-//      }},
-//      new RxTxFailureModes() {{
-//        txFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
-//      }},
+      new RxTxFailureModes() {},
+      new RxTxFailureModes() {{
+        rxFailureMode = new DuplicateDelivery(1);
+      }},
+      new RxTxFailureModes() {{
+        rxFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
+      }},
+      new RxTxFailureModes() {{
+        rxFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
+      }},
+      new RxTxFailureModes() {{
+        txFailureMode = new DuplicateDelivery(1);
+      }},
+      new RxTxFailureModes() {{
+        txFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
+      }},
       new RxTxFailureModes() {{
         txFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
       }}
     };
     
     for (TargetFactor target : TargetFactor.values()) {
-      if (target == TargetFactor.COHORT) { //TODO
-        for (RxTxFailureModes failureModes : presetFailureModesArray) {
-          boolean success = false;
-          try {
-            testFactorFailure(new FailureModes().set(target, failureModes));
-            success = true;
-          } catch (Exception e) {
-            throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
-          } finally {
-            if (! success) System.out.format("Failure for target=%s, failureModes=%s\n", target, failureModes);
-            if (manifold != null) manifold.dispose();
-          }
+      for (RxTxFailureModes failureModes : presetFailureModesArray) {
+        boolean success = false;
+        try {
+          testFactorFailure(new FailureModes().set(target, failureModes));
+          success = true;
+        } catch (Exception e) {
+          throw new AssertionError(String.format("target=%s, failureModes=%s", target, failureModes), e);
+        } finally {
+          if (! success) System.out.format("Failure for target=%s, failureModes=%s\n", target, failureModes);
+          if (manifold != null) manifold.dispose();
         }
       }
     }
@@ -118,17 +115,14 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
                      branches[1])
         .build();
 
-    for (int i = 0; i < 10; i++) { //TODO
-      testSingleTransfer(initialBalance + 1, Resolution.ABORT, AbortReason.REJECT, initiator, sandbox);
-      testSingleTransfer(10, Resolution.COMMIT, null, initiator, sandbox);
-    }
-//TODO
-//    Thread.sleep(10);
-//    wait.until(() -> {
-//      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-//      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
-//      assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
-//    });
+    testSingleTransfer(initialBalance + 1, Resolution.ABORT, AbortReason.REJECT, initiator, sandbox);
+    testSingleTransfer(10, Resolution.COMMIT, null, initiator, sandbox);
+
+    wait.until(() -> {
+      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
+      assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
+    });
   }
 
   private void testSingleTransfer(int transferAmount, Resolution expectedVerdict, AbortReason expectedAbortReason,

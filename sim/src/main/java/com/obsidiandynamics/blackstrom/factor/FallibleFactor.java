@@ -188,12 +188,12 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   }
   
   private void onTxDelayedDuplicate(DelayedDuplicateDelivery mode, Message message, AppendCallback callback) {
-    // because a message is mutable, we can't use it twice for sending; instead we clone it before attempting delayed delivery
-    final Message clone = message.clone();
+    // because a message is mutable, we can't use it twice for sending; instead we copy it before attempting delayed delivery
+    final Message copy = message.shallowCopy();
     
     backingLedger.append(message, callback);
-    runLater(mode.getDelayMillis(), clone.getBallotId(), t -> {
-      backingLedger.append(clone, callback);
+    runLater(mode.getDelayMillis(), copy.getBallotId(), t -> {
+      backingLedger.append(copy, callback);
     });
   }
   

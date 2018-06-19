@@ -22,4 +22,11 @@ public final class VoteTest {
   public void testEqualsHashCode() {
     EqualsVerifier.forClass(Vote.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
+  
+  @Test
+  public void testShallowCopy() {
+    final Response ra = new Response("a", Intent.ACCEPT, "meta-a");
+    final Vote v = new Vote("B1", ra).withShardKey("shardKey");
+    assertEquals(v, v.shallowCopy());
+  }
 }

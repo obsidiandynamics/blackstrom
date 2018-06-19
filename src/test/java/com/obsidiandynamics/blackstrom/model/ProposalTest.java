@@ -24,4 +24,11 @@ public final class ProposalTest {
   public void testEqualsHashCode() {
     EqualsVerifier.forClass(Proposal.class).suppress(Warning.NONFINAL_FIELDS).verify();
   }
+  
+  @Test
+  public void testShallowCopy() {
+    final String[] cohorts = new String[] {"a", "b"};
+    final Proposal p = new Proposal("B1", cohorts, "objective", 1000).withShardKey("shardKey");
+    assertEquals(p, p.shallowCopy());
+  }
 }

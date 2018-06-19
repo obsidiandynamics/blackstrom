@@ -42,7 +42,7 @@ public final class UnknownMessage extends FluentMessage<UnknownMessage> {
   }
   
   @Override
-  public UnknownMessage clone() {
+  public UnknownMessage shallowCopy() {
     return copyMutableFields(this, new UnknownMessage(getBallotId(), getTimestamp()));
   }
 }

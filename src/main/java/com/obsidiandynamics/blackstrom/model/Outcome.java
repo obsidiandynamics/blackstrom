@@ -92,7 +92,7 @@ public final class Outcome extends FluentMessage<Outcome> {
   }
   
   @Override
-  public Outcome clone() {
+  public Outcome shallowCopy() {
     return copyMutableFields(this, new Outcome(getBallotId(), getTimestamp(), resolution, abortReason, responses, metadata));
   }
 }

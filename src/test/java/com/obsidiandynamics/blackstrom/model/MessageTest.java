@@ -26,7 +26,7 @@ public final class MessageTest {
     } 
     
     @Override
-    public UntypedMessage clone() {
+    public UntypedMessage shallowCopy() {
       return copyMutableFields(this, new UntypedMessage(getBallotId(), getTimestamp()));
     }
   }
@@ -101,7 +101,7 @@ public final class MessageTest {
     }
     
     @Override
-    public TrivialSubclass clone() {
+    public TrivialSubclass shallowCopy() {
       return copyMutableFields(this, new TrivialSubclass(getBallotId(), getTimestamp()));
     }
   }
@@ -109,5 +109,23 @@ public final class MessageTest {
   @Test
   public void testEqualsHashCode() {
     EqualsVerifier.forClass(TrivialSubclass.class).suppress(Warning.NONFINAL_FIELDS).verify();
+  }
+  
+  @Test
+  public void testBaseShallowCopy() {
+    final Message m = new UntypedMessage("B0", 0)
+        .withMessageId(new DefaultMessageId(0, 100))
+        .withSource("test")
+        .withShardKey("key")
+        .withShard(99);
+
+    
+    final Message copy = m.shallowCopy();
+    assertEquals(m.getBallotId(), copy.getBallotId());
+    assertEquals(m.getMessageId(), copy.getMessageId());
+    assertEquals(m.getSource(), copy.getSource());
+    assertEquals(m.getShardKey(), copy.getShardKey());
+    assertEquals(m.getShard(), copy.getShard());
+    assertEquals(m.getTimestamp(), copy.getTimestamp());
   }
 }

@@ -80,7 +80,7 @@ public final class MessageHandlerAdapterTest {
       }
 
       @Override
-      public Message clone() {
+      public Message shallowCopy() {
         throw new UnsupportedOperationException();
       }
     });

@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.*;
 
 import com.obsidiandynamics.nanoclock.*;
 
-public abstract class Message implements Cloneable {
+public abstract class Message {
   private static final int UNASSIGNED = -1;
   
   private final String ballotId;
@@ -101,8 +101,7 @@ public abstract class Message implements Cloneable {
         ", shard=" + shard + ", timestamp=" + timestamp;
   }
   
-  @Override
-  public abstract Message clone();
+  public abstract Message shallowCopy();
   
   protected static <M extends Message> M copyMutableFields(M original, M clone) {
     final Message originalMessage = original;
