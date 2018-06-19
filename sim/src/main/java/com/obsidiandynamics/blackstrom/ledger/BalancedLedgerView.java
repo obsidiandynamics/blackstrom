@@ -11,7 +11,7 @@ import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
 
 public final class BalancedLedgerView implements Ledger {
-  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  private Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final BalancedLedgerHub hub;
   
@@ -119,6 +119,11 @@ public final class BalancedLedgerView implements Ledger {
   
   public void detach() {
     detached = true;
+  }
+  
+  public BalancedLedgerView withZlg(Zlg zlg) {
+    this.zlg = zlg;
+    return this;
   }
 
   @Override

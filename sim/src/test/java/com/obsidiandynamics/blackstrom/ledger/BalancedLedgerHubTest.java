@@ -51,10 +51,11 @@ public final class BalancedLedgerHubTest {
       return new TestView(viewId, hub.connectDetached());
     }
     
-    void attach(String groupId) {
+    TestHandler attach(String groupId) {
       final TestHandler handler = new TestHandler(groupId);
       handlers.add(handler);
       view.attach(handler);
+      return handler;
     }
     
     void confirmFirst() {
@@ -75,6 +76,7 @@ public final class BalancedLedgerHubTest {
       final List<AtomicReference<Message>> lastMessageByShard;
       final String groupId;
       private volatile MessageContext context;
+      private long pause;
       
       private TestHandler(String groupId) {
         this.groupId = groupId;
@@ -85,6 +87,11 @@ public final class BalancedLedgerHubTest {
         lastMessageByShard = IntStream.range(0, view.getHub().getShards())
             .boxed().map(shard -> new AtomicReference<Message>()).collect(Collectors.toList());
       }
+      
+      TestHandler withPause(long pauseMillis) {
+        this.pause = pauseMillis;
+        return this;
+      }
 
       @Override
       public String getGroupId() {
@@ -94,6 +101,7 @@ public final class BalancedLedgerHubTest {
       @Override
       public void onMessage(MessageContext context, Message message) {
         zlg.t("%d-%x got %s", z -> z.arg(viewId).arg(System.identityHashCode(this)).arg(message));
+        Threads.sleep(pause);
         this.context = context;
         receivedByShard.get(message.getShard()).add(Long.parseLong(message.getBallotId()));
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);
@@ -183,7 +191,7 @@ public final class BalancedLedgerHubTest {
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> {
           final TestView view = TestView.connectTo(v, hub);
-          // attach before publishing -- should see all messages
+          // attach before publishing — should see all messages
           IntStream.range(0, handlers).forEach(h -> view.attach(null));
           return view;
         })
@@ -220,7 +228,7 @@ public final class BalancedLedgerHubTest {
       views.get(0).view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
     }));
     
-    // attach after publishing -- shouldn't see any messages
+    // attach after publishing — shouldn't see any messages
     views.forEach(view -> IntStream.range(0, handlers).forEach(h -> {
       view.attach(null);
     }));
@@ -230,6 +238,39 @@ public final class BalancedLedgerHubTest {
     views.forEach(view -> view.handlers.forEach(handler -> handler.receivedByShard.forEach(received -> {
       assertEquals(LongList.empty(), received);
     })));
+  }
+  
+  /**
+   *  Messages are published to a small buffer at a rate that is much higher than the consumer's 
+   *  throughput, resulting in a buffer overflow condition.
+   */
+  @Test
+  public void testBufferOverflow() {
+    hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
+    
+    final TestView view = TestView.connectTo(0, hub);
+    view.attach(null).withPause(5); // simulate slow consumer
+    
+    final MockLogTarget logTarget = new MockLogTarget();
+    view.view.withZlg(logTarget.logger());
+    
+    // first publish 5 messages and assert receipt
+    LongList.generate(0, 5).forEach(ballotId -> {
+      view.view.append(new UnknownMessage(String.valueOf(ballotId), 0));
+    });
+    
+    wait.until(() -> {
+      assertEquals(5, view.handlers.get(0).receivedByShard.get(0).size());
+    });
+    
+    // publish more messages — some will be missed due to constrained buffer capacity
+    LongList.generate(0, 100).forEach(ballotId -> {
+      view.view.append(new UnknownMessage(String.valueOf(ballotId), 0));
+    });
+    
+    wait.until(() -> {
+      logTarget.entries().forLevel(LogLevel.WARN).containing("overflow").assertCountAtLeast(1);
+    });
   }
 
   /**
@@ -298,7 +339,7 @@ public final class BalancedLedgerHubTest {
     // verify that we have exactly one receipt for each shard
     wait.until(assertAtLeastOneForEachShard(shards, views, expected));
     
-    // confirm at the head offset -- after rebalancing all messages will be redelivered
+    // confirm at the head offset — after rebalancing all messages will be redelivered
     views.forEach(view -> view.confirmFirst());
     
     // one by one, dispose and remove each view and verify that the shards have rebalanced (i.e. there is still exactly
@@ -338,7 +379,7 @@ public final class BalancedLedgerHubTest {
     final LongList expectedFull = LongList.generate(0, messages);
     wait.until(assertAtLeastOneForEachShard(shards, views, expectedFull));
     
-    // confirm at the tail offset -- after rebalancing only the tail message will be redelivered
+    // confirm at the tail offset — after rebalancing only the tail message will be redelivered
     views.forEach(view -> view.confirmLast());
     
     // remove views that have had complete receipts and clear the remaining views
