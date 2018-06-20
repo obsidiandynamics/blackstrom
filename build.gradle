@@ -59,13 +59,36 @@ allprojects {
     testRuntime "org.slf4j:slf4j-log4j12:1.7.25"
     testRuntime "log4j:log4j:1.2.17"
   }
+    
+  compileJava {
+    options.compilerArgs += "-proc:none"
+  }
+
+  compileTestJava {
+    options.compilerArgs += "-proc:none"
+  }
+  
+  tasks.withType(JavaCompile) {
+    options.fork = true
+    options.incremental = true
+  }
+  
+  def testJvmArgs = [
+    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    "--add-opens=java.base/java.nio=ALL-UNNAMED",
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+  ]
 
   test {
     exclude "**/*IT.class"
+    jvmArgs += testJvmArgs
   }
   
   task integrationTest(type: Test, description: "Runs integration tests.", group: "Verification") {
     include "**/*IT.class"
+    jvmArgs += testJvmArgs
   }
 
   jacoco {
@@ -82,10 +105,17 @@ allprojects {
     additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
     sourceDirectories = files(sourceSets.main.allSource.srcDirs)
     classDirectories = files(sourceSets.main.output)
+    executionData = files("$buildDir/jacoco/test.exec") + files("$buildDir/jacoco/integrationTest.exec")
     reports {
       html.enabled true
       xml.enabled true
       csv.enabled false
+    }
+  }
+
+  javadoc {
+    if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
+      options.addStringOption("quiet", "-html5")
     }
   }
 
@@ -102,7 +132,7 @@ subprojects {
 }
 
 task jacocoRootReport(type: JacocoReport) {
-  dependsOn = allprojects.test
+  mustRunAfter = allprojects.test + allprojects.integrationTest
   additionalSourceDirs = files(allprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories = files(allprojects.sourceSets.main.allSource.srcDirs)
   classDirectories = files(allprojects.sourceSets.main.output)
@@ -122,7 +152,7 @@ task jacocoRootReport(type: JacocoReport) {
   }
   afterEvaluate {
     classDirectories = files(classDirectories.files.collect {
-      fileTree(dir: it, exclude: ["sample/**"])
+      fileTree(dir: it, exclude: ["sample/**", "**/*Uncovered*", "**/generated/**"])
     })
   }
 }
@@ -193,8 +223,6 @@ task sourcesJar(type: Jar) {
  
 artifacts {
   archives jar
-  archives javadocJar
-  archives sourcesJar
 }
 
 publishing {
@@ -210,7 +238,7 @@ publishing {
   }
   repositories {
     maven {
-      url "${project(":").projectDir}/../repo"
+      url "${project(':').projectDir}/../repo"
     }
   }
 }
