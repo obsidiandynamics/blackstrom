@@ -83,12 +83,16 @@ allprojects {
 
   test {
     exclude "**/*IT.class"
-    jvmArgs += testJvmArgs
+    if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
+      jvmArgs += testJvmArgs
+    }
   }
   
-  task integrationTest(type: Test, description: "Runs integration tests.", group: "Verification") {
+  task integrationTest(type: Test, description: "Runs integration tests", group: "Verification") {
     include "**/*IT.class"
-    jvmArgs += testJvmArgs
+    if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
+      jvmArgs += testJvmArgs
+    }
   }
 
   jacoco {
