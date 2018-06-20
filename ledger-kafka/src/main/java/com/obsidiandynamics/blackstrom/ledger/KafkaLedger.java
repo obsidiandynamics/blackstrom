@@ -24,10 +24,7 @@ import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
-
-  private static final int PIPELINE_MAX_YIELDS = 100;
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
-  
   private static final int RETRY_BACKOFF_MILLIS = 100;
 
   private final Kafka<String, Message> kafka;
@@ -39,6 +36,8 @@ public final class KafkaLedger implements Ledger {
   private final String codecLocator;
 
   private final ConsumerPipeConfig consumerPipeConfig;
+  
+  private final int maxConsumerPipeYields;
 
   private final Producer<String, Message> producer;
 
@@ -85,6 +84,7 @@ public final class KafkaLedger implements Ledger {
     zlg = config.getZlg();
     printConfig = config.isPrintConfig();
     consumerPipeConfig = config.getConsumerPipeConfig();
+    maxConsumerPipeYields = config.getMaxConsumerPipeYields();
     attachRetries = config.getAttachRetries();
     codecLocator = CodecRegistry.register(config.getCodec());
     retryThread = WorkerThread.builder()
@@ -238,7 +238,7 @@ public final class KafkaLedger implements Ledger {
 
         if (enqueued) {
           break;
-        } else if (yields < PIPELINE_MAX_YIELDS) {
+        } else if (yields < maxConsumerPipeYields) {
           yields++;
           Thread.yield();
         } else {

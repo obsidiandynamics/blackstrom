@@ -9,6 +9,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.ledger.SingleNodeQueueLedger.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
@@ -26,7 +27,7 @@ public final class SingleNodeQueueLedgerTest extends AbstractLedgerTest {
   
   @Override
   protected Ledger createLedger() {
-    return new SingleNodeQueueLedger();
+    return new SingleNodeQueueLedger(new Config().withMaxYields(1));
   }
   
   @Test

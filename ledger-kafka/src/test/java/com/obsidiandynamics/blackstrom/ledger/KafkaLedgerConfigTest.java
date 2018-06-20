@@ -27,6 +27,7 @@ public final class KafkaLedgerConfigTest {
     assertEquals(KryoMessageCodec.class, config.getCodec().getClass());
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
+    assertEquals(50, config.getMaxConsumerPipeYields());
     assertNotNull(config.getZlg());
     assertEquals(10, config.getAttachRetries());
     Assertions.assertToStringOverride(config);
@@ -39,6 +40,7 @@ public final class KafkaLedgerConfigTest {
         .withTopic("test")
         .withProducerPipeConfig(new ProducerPipeConfig())
         .withConsumerPipeConfig(new ConsumerPipeConfig())
+        .withMaxConsumerPipeYields(50)
         .withZlg(Zlg.forDeclaringClass().get())
         .withAttachRetries(5)
         .withPrintConfig(true);
@@ -47,6 +49,7 @@ public final class KafkaLedgerConfigTest {
     assertEquals("test", config.getTopic());
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
+    assertEquals(50, config.getMaxConsumerPipeYields());
     assertNotNull(config.getZlg());
     assertEquals(5, config.getAttachRetries());
     assertTrue(config.isPrintConfig());

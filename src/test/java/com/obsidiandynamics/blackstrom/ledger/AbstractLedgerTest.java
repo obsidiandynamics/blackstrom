@@ -84,7 +84,7 @@ public abstract class AbstractLedgerTest {
   public final void testPubSub() {
     useLedger(createLedger());
     final int numHandlers = 3;
-    final int numMessages = 5;
+    final int numMessages = 10;
     final List<TestHandler> handlers = new ArrayList<>(numHandlers);
     
     for (int i = 0; i < numHandlers; i++) {
@@ -95,6 +95,7 @@ public abstract class AbstractLedgerTest {
     ledger.init();
     
     for (int i = 0; i < numMessages; i++) {
+      Threads.sleep(10); // small pauses between publishing allow to test yield-based backoffs for those ledgers that use them
       appendMessage("test", testObjectives);
     }
     

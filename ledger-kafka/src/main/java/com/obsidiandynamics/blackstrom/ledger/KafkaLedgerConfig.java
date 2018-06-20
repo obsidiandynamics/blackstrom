@@ -24,6 +24,9 @@ public final class KafkaLedgerConfig {
   private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true);
   
   @YInject
+  private int maxConsumerPipeYields = 100;
+  
+  @YInject
   private Zlg zlg = Zlg.forDeclaringClass().get();
   
   @YInject
@@ -76,6 +79,15 @@ public final class KafkaLedgerConfig {
     this.consumerPipeConfig = consumerPipeConfig;
     return this;
   }
+  
+  int getMaxConsumerPipeYields() {
+    return maxConsumerPipeYields;
+  }
+  
+  public KafkaLedgerConfig withMaxConsumerPipeYields(int maxConsumerPipeYields) {
+    this.maxConsumerPipeYields = maxConsumerPipeYields;
+    return this;
+  }
 
   Zlg getZlg() {
     return zlg;
@@ -108,6 +120,7 @@ public final class KafkaLedgerConfig {
   public String toString() {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
         ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + 
+        ", maxConsumerPipeYields=" + maxConsumerPipeYields + 
         ", attachRetries=" + attachRetries + ", printConfig=" + printConfig + "]";
   }
 }

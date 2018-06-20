@@ -44,7 +44,8 @@ public final class KafkaLedgerTest {
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
                                           boolean asyncProducer, boolean asyncConsumer, 
                                           int pipelineSizeBatches, Zlg zlg) {
-    return createLedger(kafka, new KafkaLedgerConfig(), asyncProducer, asyncConsumer, pipelineSizeBatches, zlg);
+    final KafkaLedgerConfig ledgerConfig = new KafkaLedgerConfig().withMaxConsumerPipeYields(1);
+    return createLedger(kafka, ledgerConfig, asyncProducer, asyncConsumer, pipelineSizeBatches, zlg);
   }
   
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, 

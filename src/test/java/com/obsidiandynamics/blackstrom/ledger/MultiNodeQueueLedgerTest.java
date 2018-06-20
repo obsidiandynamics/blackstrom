@@ -14,6 +14,7 @@ import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.ledger.MultiNodeQueueLedger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
@@ -34,7 +35,7 @@ public final class MultiNodeQueueLedgerTest extends AbstractLedgerTest {
   
   @Override
   protected Ledger createLedger() {
-    return new MultiNodeQueueLedger();
+    return new MultiNodeQueueLedger(new Config().withMaxYields(1));
   }
   
   @Test
