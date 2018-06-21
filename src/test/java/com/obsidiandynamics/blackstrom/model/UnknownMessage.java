@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.*;
 
 public final class UnknownMessage extends FluentMessage<UnknownMessage> {
   public UnknownMessage(String xid) {
-    this(xid, 0);
+    this(xid, NOW);
   }
   
   public UnknownMessage(String xid, long timestamp) {

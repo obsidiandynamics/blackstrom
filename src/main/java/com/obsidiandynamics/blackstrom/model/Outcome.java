@@ -13,7 +13,7 @@ public final class Outcome extends FluentMessage<Outcome> {
   private final Object metadata;
 
   public Outcome(String xid, Resolution resolution, AbortReason abortReason, Response[] responses, Object metadata) {
-    this(xid, 0, resolution, abortReason, responses, metadata);
+    this(xid, NOW, resolution, abortReason, responses, metadata);
   }
   
   public Outcome(String xid, long timestamp, Resolution resolution, AbortReason abortReason, 

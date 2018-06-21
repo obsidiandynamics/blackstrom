@@ -78,7 +78,7 @@ public final class MessageTest {
    */
   private static final class TrivialSubclass extends Message {
     private TrivialSubclass() {
-      this(null, 0);
+      this(null, NOW);
     }
     
     private TrivialSubclass(String xid, long timestamp) {

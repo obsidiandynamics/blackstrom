@@ -7,6 +7,8 @@ import org.apache.commons.lang3.builder.*;
 import com.obsidiandynamics.nanoclock.*;
 
 public abstract class Message {
+  public static final long NOW = 0;
+  
   private static final int UNASSIGNED = -1;
   
   private final String xid;
@@ -23,7 +25,7 @@ public abstract class Message {
   
   protected Message(String xid, long timestamp) {
     this.xid = xid;
-    this.timestamp = timestamp != 0 ? timestamp : NanoClock.now();
+    this.timestamp = timestamp != NOW ? timestamp : NanoClock.now();
   }
   
   public final String getBallotId() {
@@ -117,7 +119,7 @@ public abstract class Message {
   
   public abstract Message shallowCopy();
   
-  protected static <M extends Message> M copyMutableFields(M original, M clone) {
+  protected static final <M extends Message> M copyMutableFields(M original, M clone) {
     final Message originalMessage = original;
     final Message cloneMessage = clone;
     cloneMessage.messageId = originalMessage.messageId;

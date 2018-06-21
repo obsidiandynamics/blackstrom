@@ -2,7 +2,7 @@ def packageName = "blackstrom-ledger-kafka"
 version = project(":").version
   
 ext {
-  jackdawVersion = "0.5.0"
+  jackdawVersion = "0.6.0"
 }
   
 dependencies {
