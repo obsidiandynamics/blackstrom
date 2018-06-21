@@ -197,11 +197,11 @@ public final class MonitorEngine implements Disposable {
   private void decideBallot(PendingBallot ballot) {
     zlg.t("Decided ballot for %s: resolution: %s", z -> z.arg(ballot::getProposal).arg(ballot::getResolution));
     final Proposal proposal = ballot.getProposal();
-    final String ballotId = proposal.getBallotId();
+    final String xid = proposal.getBallotId();
     final Object metadata = metadataEnabled ? new OutcomeMetadata(proposal.getTimestamp()) : null;
-    final Outcome outcome = new Outcome(ballotId, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses(), metadata)
+    final Outcome outcome = new Outcome(xid, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses(), metadata)
         .inResponseTo(proposal).withSource(groupId);
-    pending.remove(ballotId);
+    pending.remove(xid);
     if (trackingEnabled) {
       additions.add(outcome);
     }

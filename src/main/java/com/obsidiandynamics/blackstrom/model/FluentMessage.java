@@ -3,8 +3,8 @@ package com.obsidiandynamics.blackstrom.model;
 import com.obsidiandynamics.func.*;
 
 public abstract class FluentMessage<M extends FluentMessage<?>> extends Message {
-  protected FluentMessage(String ballotId, long timestamp) {
-    super(ballotId, timestamp);
+  protected FluentMessage(String xid, long timestamp) {
+    super(xid, timestamp);
   }
   
   public final M withMessageId(MessageId messageId) {

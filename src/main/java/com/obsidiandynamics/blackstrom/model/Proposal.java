@@ -13,12 +13,12 @@ public final class Proposal extends FluentMessage<Proposal> {
   /** The time to live, in milliseconds. */
   private final int ttl;
 
-  public Proposal(String ballotId, String[] cohorts, Object objective, int ttl) {
-    this(ballotId, 0, cohorts, objective, ttl);
+  public Proposal(String xid, String[] cohorts, Object objective, int ttl) {
+    this(xid, 0, cohorts, objective, ttl);
   }
 
-  public Proposal(String ballotId, long timestamp, String[] cohorts, Object objective, int ttl) {
-    super(ballotId, timestamp);
+  public Proposal(String xid, long timestamp, String[] cohorts, Object objective, int ttl) {
+    super(xid, timestamp);
     this.cohorts = cohorts;
     this.objective = objective;
     this.ttl = ttl;

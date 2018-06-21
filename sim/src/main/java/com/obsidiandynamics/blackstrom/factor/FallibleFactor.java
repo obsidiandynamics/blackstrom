@@ -199,7 +199,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
     });
   }
   
-  private Task runLater(long delayMillis, Object ballotId, Consumer<Task> job) {
+  private Task runLater(long delayMillis, Object xid, Consumer<Task> job) {
     final long time = System.nanoTime() + delayMillis * 1_000_000L;
     final Task task = new Task() {
       @Override
@@ -209,7 +209,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
 
       @Override
       public Comparable<?> getId() {
-        return (Comparable<?>) ballotId;
+        return (Comparable<?>) xid;
       }
 
       @Override

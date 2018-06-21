@@ -104,22 +104,22 @@ final class KryoMessageSerializer extends Serializer<Message> {
   public Message read(Kryo kryo, Input in, Class<Message> type) {
     final byte messageTypeOrdinal = in.readByte();
     final MessageType messageType = MessageType.values()[messageTypeOrdinal];
-    final String ballotId = in.readString();
+    final String xid = in.readString();
     final long timestamp = in.readLong();
     final String source = in.readString();
     final Message message;
     
     switch (messageType) {
       case PROPOSAL:
-        message = deserializeProposal(kryo, in, ballotId, timestamp);
+        message = deserializeProposal(kryo, in, xid, timestamp);
         break;
         
       case VOTE:
-        message = deserializeVote(kryo, in, ballotId, timestamp);
+        message = deserializeVote(kryo, in, xid, timestamp);
         break;
         
       case OUTCOME:
-        message = deserializeOutcome(kryo, in, ballotId, timestamp);
+        message = deserializeOutcome(kryo, in, xid, timestamp);
         break;
         
       case $UNKNOWN:
@@ -132,19 +132,19 @@ final class KryoMessageSerializer extends Serializer<Message> {
     return message;
   }
   
-  private Proposal deserializeProposal(Kryo kryo, Input in, String ballotId, long timestamp) {
+  private Proposal deserializeProposal(Kryo kryo, Input in, String xid, long timestamp) {
     final String[] cohorts = KryoUtils.readStringArray(in);
     final int ttl = in.readVarInt(true);
     final Object objective = deserializePayload(kryo, in);
-    return new Proposal(ballotId, timestamp, cohorts, objective, ttl);
+    return new Proposal(xid, timestamp, cohorts, objective, ttl);
   }
   
-  private Vote deserializeVote(Kryo kryo, Input in, String ballotId, long timestamp) {
+  private Vote deserializeVote(Kryo kryo, Input in, String xid, long timestamp) {
     final Response response = deserializeResponse(kryo, in);
-    return new Vote(ballotId, timestamp, response);
+    return new Vote(xid, timestamp, response);
   }
   
-  private Outcome deserializeOutcome(Kryo kryo, Input in, String ballotId, long timestamp) {
+  private Outcome deserializeOutcome(Kryo kryo, Input in, String xid, long timestamp) {
     final byte resolutionOrdinal = in.readByte();
     final Resolution resolution = Resolution.values()[resolutionOrdinal];
     final byte abortReasonOrdinal = in.readByte();
@@ -155,7 +155,7 @@ final class KryoMessageSerializer extends Serializer<Message> {
       responses[i] = deserializeResponse(kryo, in);
     }
     final Object metadata = deserializePayload(kryo, in);
-    return new Outcome(ballotId, timestamp, resolution, abortReason, responses, metadata);
+    return new Outcome(xid, timestamp, resolution, abortReason, responses, metadata);
   }
   
   private Response deserializeResponse(Kryo kryo, Input in) {

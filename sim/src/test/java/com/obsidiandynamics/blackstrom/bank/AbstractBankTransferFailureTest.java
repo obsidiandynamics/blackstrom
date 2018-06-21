@@ -128,11 +128,11 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
   private void testSingleTransfer(int transferAmount, Resolution expectedVerdict, AbortReason expectedAbortReason,
                                   AsyncInitiator initiator, Sandbox sandbox) throws InterruptedException, ExecutionException, Exception {
     assert expectedVerdict == Resolution.COMMIT ^ expectedAbortReason != null;
-    final String ballotId = UUID.randomUUID().toString();
-    zlg.t("Initiating %s", z -> z.arg(ballotId));
+    final String xid = UUID.randomUUID().toString();
+    zlg.t("Initiating %s", z -> z.arg(xid));
     boolean success = false;
     try {
-      final Outcome o = initiator.initiate(new Proposal(ballotId, 
+      final Outcome o = initiator.initiate(new Proposal(xid, 
                                                         TWO_BRANCH_IDS, 
                                                         BankSettlement.forTwo(transferAmount),
                                                         PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
@@ -141,7 +141,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
       assertEquals(expectedAbortReason, o.getAbortReason());
       success = true;
     } finally {
-      if (! success) zlg.e("Error in ballot %s", z -> z.arg(ballotId));
+      if (! success) zlg.e("Error in ballot %s", z -> z.arg(xid));
     }
   }
 }

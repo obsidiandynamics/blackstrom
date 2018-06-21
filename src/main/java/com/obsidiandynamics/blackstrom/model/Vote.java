@@ -5,12 +5,12 @@ import org.apache.commons.lang3.builder.*;
 public final class Vote extends FluentMessage<Vote> {
   private final Response response;
   
-  public Vote(String ballotId, Response response) {
-    this(ballotId, 0, response);
+  public Vote(String xid, Response response) {
+    this(xid, 0, response);
   }
 
-  public Vote(String ballotId, long timestamp, Response response) {
-    super(ballotId, timestamp);
+  public Vote(String xid, long timestamp, Response response) {
+    super(xid, timestamp);
     this.response = response;
   }
   

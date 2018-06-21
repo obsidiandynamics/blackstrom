@@ -39,16 +39,16 @@ public abstract class AbstractLedgerTest {
       if (! sandbox.contains(message)) return;
       
       zlg.t("Received %s", z -> z.arg(message));
-      final long ballotId = Long.parseLong(message.getBallotId());
+      final long xid = Long.parseLong(message.getBallotId());
       if (lastBallotId == -1) {
-        lastBallotId = ballotId;
+        lastBallotId = xid;
       } else {
         final long expectedBallotId = lastBallotId + 1;
-        if (ballotId != expectedBallotId) {
-          error = new AssertionError("Expected ballot " + expectedBallotId + ", got " + ballotId);
+        if (xid != expectedBallotId) {
+          error = new AssertionError("Expected ballot " + expectedBallotId + ", got " + xid);
           throw error;
         } else {
-          lastBallotId = ballotId;
+          lastBallotId = xid;
         }
       }
       received.add(message);

@@ -118,9 +118,9 @@ public class ShardedFlowTest {
     verify(ledger, never()).confirm(any(), any());
   }
 
-  private static Message message(long ballotId, int shard) {
-    return new Proposal(String.valueOf(ballotId), new String[0], null, 0)
+  private static Message message(long xid, int shard) {
+    return new Proposal(String.valueOf(xid), new String[0], null, 0)
         .withShard(shard)
-        .withMessageId(new DefaultMessageId(shard, ballotId));
+        .withMessageId(new DefaultMessageId(shard, xid));
   }
 }

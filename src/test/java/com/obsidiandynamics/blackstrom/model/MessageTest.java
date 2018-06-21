@@ -11,8 +11,8 @@ import nl.jqno.equalsverifier.*;
 
 public final class MessageTest {
   private static final class UntypedMessage extends FluentMessage<UntypedMessage> {
-    UntypedMessage(String ballotId, long timestamp) {
-      super(ballotId, timestamp);
+    UntypedMessage(String xid, long timestamp) {
+      super(xid, timestamp);
     }
 
     @Override 
@@ -81,8 +81,8 @@ public final class MessageTest {
       this(null, 0);
     }
     
-    private TrivialSubclass(String ballotId, long timestamp) {
-      super(ballotId, timestamp);
+    private TrivialSubclass(String xid, long timestamp) {
+      super(xid, timestamp);
     }
     
     @Override

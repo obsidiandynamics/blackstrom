@@ -9,7 +9,7 @@ import com.obsidiandynamics.nanoclock.*;
 public abstract class Message {
   private static final int UNASSIGNED = -1;
   
-  private final String ballotId;
+  private final String xid;
   
   private final long timestamp;
   
@@ -21,13 +21,13 @@ public abstract class Message {
   
   private int shard = UNASSIGNED;
   
-  protected Message(String ballotId, long timestamp) {
-    this.ballotId = ballotId;
+  protected Message(String xid, long timestamp) {
+    this.xid = xid;
     this.timestamp = timestamp != 0 ? timestamp : NanoClock.now();
   }
   
   public final String getBallotId() {
-    return ballotId;
+    return xid;
   }
 
   public final MessageId getMessageId() {
@@ -90,7 +90,7 @@ public abstract class Message {
   
   protected final int baseHashCode() {
     return new HashCodeBuilder()
-        .append(ballotId)
+        .append(xid)
         .append(timestamp)
         .append(messageId)
         .append(source)
@@ -101,7 +101,7 @@ public abstract class Message {
   
   protected final boolean baseEquals(Message that) {
     return new EqualsBuilder()
-        .append(ballotId, that.ballotId)
+        .append(xid, that.xid)
         .append(timestamp, that.timestamp)
         .append(messageId, that.messageId)
         .append(source, that.source)
@@ -111,7 +111,7 @@ public abstract class Message {
   }
   
   protected final String baseToString() {
-    return "ballotId=" + ballotId + ", messageId=" + messageId + ", source=" + source + ", shardKey=" + shardKey + 
+    return "xid=" + xid + ", messageId=" + messageId + ", source=" + source + ", shardKey=" + shardKey + 
         ", shard=" + shard + ", timestamp=" + timestamp;
   }
   

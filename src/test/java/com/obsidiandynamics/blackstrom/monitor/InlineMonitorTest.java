@@ -100,15 +100,15 @@ public final class InlineMonitorTest {
   public void testProposalOutcome_oneCohort() {
     configure(new MonitorEngineConfig().withMetadataEnabled(true));
     
-    String ballotId;
+    String xid;
     
-    ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a");
-    vote(ballotId, "a", Intent.ACCEPT);
+    xid = UUID.randomUUID().toString();
+    propose(xid, "a");
+    vote(xid, "a", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -116,13 +116,13 @@ public final class InlineMonitorTest {
     assertEquals("ACCEPT", getResponseForCohort(outcomes.get(0), "a").getMetadata());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a");
-    vote(ballotId, "a", Intent.REJECT);
+    xid = UUID.randomUUID().toString();
+    propose(xid, "a");
+    vote(xid, "a", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertNotNull(outcomes.get(0).getMetadata());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
@@ -136,17 +136,17 @@ public final class InlineMonitorTest {
   public void testProposalOutcome_twoCohorts() {
     configure(new MonitorEngineConfig());
     
-    String ballotId;
+    String xid;
     
-    ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a", "b");
-    vote(ballotId, "a", Intent.ACCEPT);
+    xid = UUID.randomUUID().toString();
+    propose(xid, "a", "b");
+    vote(xid, "a", Intent.ACCEPT);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Intent.ACCEPT);
+    vote(xid, "b", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -154,15 +154,15 @@ public final class InlineMonitorTest {
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a", "b");
-    vote(ballotId, "a", Intent.ACCEPT);
+    xid = UUID.randomUUID().toString();
+    propose(xid, "a", "b");
+    vote(xid, "a", Intent.ACCEPT);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Intent.REJECT);
+    vote(xid, "b", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertNull(outcomes.get(0).getMetadata());
@@ -171,28 +171,28 @@ public final class InlineMonitorTest {
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a", "b");
-    vote(ballotId, "a", Intent.REJECT);
+    xid = UUID.randomUUID().toString();
+    propose(xid, "a", "b");
+    vote(xid, "a", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    vote(ballotId, "b", Intent.ACCEPT);
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    vote(xid, "b", Intent.ACCEPT);
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
     assertEquals(Intent.REJECT, getResponseForCohort(outcomes.get(0), "a").getIntent());
     outcomes.clear();
     
-    ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a", "b");
-    vote(ballotId, "a", Intent.REJECT);
+    xid = UUID.randomUUID().toString();
+    propose(xid, "a", "b");
+    vote(xid, "a", Intent.REJECT);
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    vote(ballotId, "b", Intent.REJECT);
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    vote(xid, "b", Intent.REJECT);
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -206,29 +206,29 @@ public final class InlineMonitorTest {
               .withOutcomeLifetime(60_000)
               .withGCInterval(1));
     
-    final String ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a", "b");
-    propose(ballotId, "a", "b", "c");
-    vote(ballotId, "a", Intent.ACCEPT);
+    final String xid = UUID.randomUUID().toString();
+    propose(xid, "a", "b");
+    propose(xid, "a", "b", "c");
+    vote(xid, "a", Intent.ACCEPT);
 
     Threads.sleep(10);
     assertEquals(0, outcomes.size());
-    propose(ballotId, "a", "b", "c");
+    propose(xid, "a", "b", "c");
 
     Threads.sleep(10);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Intent.ACCEPT);
+    vote(xid, "b", Intent.ACCEPT);
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
-    propose(ballotId, "a", "b", "c");
+    propose(xid, "a", "b", "c");
     assertEquals(0, outcomes.size());
 
     wait.until(numTrackedOutcomesIs(1));
@@ -238,26 +238,26 @@ public final class InlineMonitorTest {
   public void testDuplicateVote_twoCohorts() {
     configure(new MonitorEngineConfig());
     
-    final String ballotId = UUID.randomUUID().toString();
-    propose(ballotId, "a", "b");
-    vote(ballotId, "a", Intent.ACCEPT);
-    vote(ballotId, "a", Intent.REJECT);
+    final String xid = UUID.randomUUID().toString();
+    propose(xid, "a", "b");
+    vote(xid, "a", Intent.ACCEPT);
+    vote(xid, "a", Intent.REJECT);
 
     Threads.sleep(10);
     assertEquals(0, outcomes.size());
-    vote(ballotId, "b", Intent.ACCEPT);
-    vote(ballotId, "b", Intent.TIMEOUT);
+    vote(xid, "b", Intent.ACCEPT);
+    vote(xid, "b", Intent.TIMEOUT);
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "a").getIntent());
     assertEquals(Intent.ACCEPT, getResponseForCohort(outcomes.get(0), "b").getIntent());
     outcomes.clear();
-    vote(ballotId, "b", Intent.REJECT);
+    vote(xid, "b", Intent.REJECT);
     assertEquals(0, outcomes.size());
   }
   
@@ -265,8 +265,8 @@ public final class InlineMonitorTest {
   public void testVoteWithoutBallot() {
     configure(new MonitorEngineConfig());
     
-    final String ballotId = UUID.randomUUID().toString();
-    vote(ballotId, "a", Intent.ACCEPT);
+    final String xid = UUID.randomUUID().toString();
+    vote(xid, "a", Intent.ACCEPT);
     
     Threads.sleep(10);
     assertEquals(0, outcomes.size());
@@ -276,15 +276,15 @@ public final class InlineMonitorTest {
   public void testExplicitTimeout_twoCohorts() {
     configure(new MonitorEngineConfig().withTimeoutInterval(1));
     
-    final String ballotId = UUID.randomUUID().toString();
+    final String xid = UUID.randomUUID().toString();
     final long startTimestamp = NanoClock.now();
-    propose(ballotId, 0, "a", "b");
-    vote(ballotId, startTimestamp, "a", Intent.ACCEPT);
+    propose(xid, 0, "a", "b");
+    vote(xid, startTimestamp, "a", Intent.ACCEPT);
     
     wait.until(numVotesIsAtLeast(2));
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
     
@@ -303,7 +303,7 @@ public final class InlineMonitorTest {
     }
     
     // subsequent votes should have no effect
-    vote(ballotId, "b", Intent.ACCEPT);
+    vote(xid, "b", Intent.ACCEPT);
     
     Threads.sleep(10);
     assertEquals(1, outcomes.size());
@@ -313,18 +313,18 @@ public final class InlineMonitorTest {
   public void testNoTimeout_twoCohorts() {
     configure(new MonitorEngineConfig().withTimeoutInterval(1));
     
-    final String ballotId = UUID.randomUUID().toString();
-    propose(ballotId, 10_000, "a", "b");
-    vote(ballotId, "a", Intent.ACCEPT);
+    final String xid = UUID.randomUUID().toString();
+    propose(xid, 10_000, "a", "b");
+    vote(xid, "a", Intent.ACCEPT);
     
     Threads.sleep(10);
     assertEquals(0, outcomes.size());
     
-    vote(ballotId, "b", Intent.ACCEPT);
+    vote(xid, "b", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -337,13 +337,13 @@ public final class InlineMonitorTest {
     configure(new MonitorEngineConfig()
               .withTimeoutInterval(60_000));
     
-    final String ballotId = UUID.randomUUID().toString();
-    propose(ballotId, 1, "a", "b");
-    vote(ballotId, NanoClock.now() + 1_000_000_000L, "a", Intent.ACCEPT);
+    final String xid = UUID.randomUUID().toString();
+    propose(xid, 1, "a", "b");
+    vote(xid, NanoClock.now() + 1_000_000_000L, "a", Intent.ACCEPT);
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(ballotId, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getBallotId());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
   }
@@ -364,19 +364,19 @@ public final class InlineMonitorTest {
     return Arrays.stream(outcome.getResponses()).filter(r -> r.getCohort().equals(cohort)).findAny().get();
   }
 
-  private void propose(String ballotId, String... cohorts) {
-    propose(ballotId, Integer.MAX_VALUE, cohorts);
+  private void propose(String xid, String... cohorts) {
+    propose(xid, Integer.MAX_VALUE, cohorts);
   }
 
-  private void propose(String ballotId, int ttl, String... cohorts) {
-    manifold.getLedger().append(new Proposal(ballotId.toString(), cohorts, null, ttl));
+  private void propose(String xid, int ttl, String... cohorts) {
+    manifold.getLedger().append(new Proposal(xid.toString(), cohorts, null, ttl));
   }
 
-  private void vote(String ballotId, String cohort, Intent intent) {
-    vote(ballotId, 0, cohort, intent);
+  private void vote(String xid, String cohort, Intent intent) {
+    vote(xid, 0, cohort, intent);
   }
 
-  private void vote(String ballotId, long timestamp, String cohort, Intent intent) {
-    manifold.getLedger().append(new Vote(ballotId.toString(), timestamp, new Response(cohort, intent, intent.name())));
+  private void vote(String xid, long timestamp, String cohort, Intent intent) {
+    manifold.getLedger().append(new Vote(xid.toString(), timestamp, new Response(cohort, intent, intent.name())));
   }
 }

@@ -12,13 +12,13 @@ public final class Outcome extends FluentMessage<Outcome> {
   private final Response[] responses;
   private final Object metadata;
 
-  public Outcome(String ballotId, Resolution resolution, AbortReason abortReason, Response[] responses, Object metadata) {
-    this(ballotId, 0, resolution, abortReason, responses, metadata);
+  public Outcome(String xid, Resolution resolution, AbortReason abortReason, Response[] responses, Object metadata) {
+    this(xid, 0, resolution, abortReason, responses, metadata);
   }
   
-  public Outcome(String ballotId, long timestamp, Resolution resolution, AbortReason abortReason, 
+  public Outcome(String xid, long timestamp, Resolution resolution, AbortReason abortReason, 
                  Response[] responses, Object metadata) {
-    super(ballotId, timestamp);
+    super(xid, timestamp);
     this.resolution = resolution;
     this.abortReason = abortReason;
     this.responses = responses;

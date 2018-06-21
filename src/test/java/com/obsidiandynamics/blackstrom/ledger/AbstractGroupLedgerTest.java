@@ -34,11 +34,11 @@ public abstract class AbstractGroupLedgerTest {
       if (! sandbox.contains(message)) return;
       
       zlg.t("Received %s", z -> z.arg(message));
-      final long ballotId = Long.parseLong(message.getBallotId());
-      if (ballotId > lastBallotId) {
-        lastBallotId = ballotId;
+      final long xid = Long.parseLong(message.getBallotId());
+      if (xid > lastBallotId) {
+        lastBallotId = xid;
       } else {
-        error = new AssertionError("Last ballot " + lastBallotId + ", got " + ballotId);
+        error = new AssertionError("Last ballot " + lastBallotId + ", got " + xid);
         throw error;
       }
       received.add(message);

@@ -198,8 +198,8 @@ public final class BalancedLedgerHubTest {
         .collect(Collectors.toList());
     
     final List<Long> expected = LongList.generate(0, messages);
-    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      views.get(0).view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     
     wait.until(() -> {
@@ -224,8 +224,8 @@ public final class BalancedLedgerHubTest {
         .map(v -> TestView.connectTo(v, hub))
         .collect(Collectors.toList());
     
-    LongList.generate(0, messages).forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      views.get(0).view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    LongList.generate(0, messages).forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     
     // attach after publishing — shouldn't see any messages
@@ -255,8 +255,8 @@ public final class BalancedLedgerHubTest {
     view.view.withZlg(logTarget.logger());
     
     // first publish 5 messages and assert receipt
-    LongList.generate(0, 5).forEach(ballotId -> {
-      view.view.append(new UnknownMessage(String.valueOf(ballotId), 0));
+    LongList.generate(0, 5).forEach(xid -> {
+      view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
     
     wait.until(() -> {
@@ -264,8 +264,8 @@ public final class BalancedLedgerHubTest {
     });
     
     // publish more messages — some will be missed due to constrained buffer capacity
-    LongList.generate(0, 100).forEach(ballotId -> {
-      view.view.append(new UnknownMessage(String.valueOf(ballotId), 0));
+    LongList.generate(0, 100).forEach(xid -> {
+      view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
     
     wait.until(() -> {
@@ -294,8 +294,8 @@ public final class BalancedLedgerHubTest {
         .collect(Collectors.toList());
     
     final LongList expected = LongList.generate(0, messages);
-    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      views.get(0).view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     
     // verify that we have exactly one receipt for each shard
@@ -332,8 +332,8 @@ public final class BalancedLedgerHubTest {
         .collect(Collectors.toList());
     
     final LongList expected = LongList.generate(0, messages);
-    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      views.get(0).view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     
     // verify that we have exactly one receipt for each shard
@@ -371,8 +371,8 @@ public final class BalancedLedgerHubTest {
         })
         .collect(Collectors.toList());
     
-    LongList.generate(0, messages).forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      views.get(0).view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    LongList.generate(0, messages).forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     
     // verify that we have exactly one full receipt for each shard
@@ -413,8 +413,8 @@ public final class BalancedLedgerHubTest {
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expected = LongList.generate(0, messages);
-    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      v0.view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v0), expected));
     
@@ -437,8 +437,8 @@ public final class BalancedLedgerHubTest {
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expected = LongList.generate(0, messages);
-    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      v0.view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
     
@@ -465,8 +465,8 @@ public final class BalancedLedgerHubTest {
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expected = LongList.generate(0, messages);
-    expected.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      v0.view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
     
@@ -494,8 +494,8 @@ public final class BalancedLedgerHubTest {
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expectedFull = LongList.generate(0, messages);
-    expectedFull.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      v0.view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expectedFull.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
     
@@ -523,8 +523,8 @@ public final class BalancedLedgerHubTest {
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group-0"));
     final LongList expectedFull = LongList.generate(0, messages);
-    expectedFull.forEach(ballotId -> IntStream.range(0, shards).forEach(shard -> {
-      v0.view.append(new UnknownMessage(String.valueOf(ballotId), 0).withShard(shard));
+    expectedFull.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
+      v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
     

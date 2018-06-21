@@ -233,7 +233,7 @@ public final class JacksonMessageCodecTest {
   @Test
   public void testUnknownDeserialize() throws Exception {
     final MessageCodec c = new JacksonMessageCodec(false);
-    final String encoded = "{\"messageType\":\"$UNKNOWN\",\"ballotId\":\"$U400\",\"timestamp\":1000}";
+    final String encoded = "{\"messageType\":\"$UNKNOWN\",\"xid\":\"$U400\",\"timestamp\":1000}";
     thrown.expect(MessageDeserializationException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
     c.decodeText(encoded);
