@@ -31,6 +31,18 @@ public final class AsyncInitiator implements Initiator, NullGroup {
   }
 
   @Override
+  public void onQueryResponse(MessageContext context, QueryResponse queryResponse) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void onCommandResponse(MessageContext context, CommandResponse commandResponse) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
   public void onOutcome(MessageContext context, Outcome outcome) {
     final Consumer<Outcome> callback = pending.remove(outcome.getXid());
     if (callback != null) {

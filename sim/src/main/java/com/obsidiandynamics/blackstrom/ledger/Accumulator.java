@@ -5,7 +5,7 @@ import java.util.*;
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-public interface Accumulator extends Disposable.Default {
+public interface Accumulator extends Disposable.Nop {
   void append(Message message);
   
   long getNextOffset();

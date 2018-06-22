@@ -3,7 +3,7 @@ package com.obsidiandynamics.blackstrom;
 public interface Disposable {
   void dispose();
   
-  interface Default extends Disposable {
+  interface Nop extends Disposable {
     @Override
     default void dispose() {}
   }

@@ -4,7 +4,7 @@ import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
-public interface Ledger extends Disposable.Default {
+public interface Ledger extends Disposable.Nop {
   static AppendCallback sysErrAppendCallback = AppendCallback.errorLoggingAppendCallback(System.err);
   
   default void init() {}
