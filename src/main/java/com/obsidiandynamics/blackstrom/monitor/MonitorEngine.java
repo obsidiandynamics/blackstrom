@@ -137,7 +137,7 @@ public final class MonitorEngine implements Disposable {
   
   private void timeoutCohort(Proposal proposal, String cohort) {
     zlg.d("Timed out %s for cohort %s", z -> z.arg(proposal).arg(cohort));
-    append(new Vote(proposal.getBallotId(), new Response(cohort, Intent.TIMEOUT, null))
+    append(new Vote(proposal.getXid(), new Response(cohort, Intent.TIMEOUT, null))
            .inResponseTo(proposal).withSource(groupId));
   }
   
@@ -166,10 +166,10 @@ public final class MonitorEngine implements Disposable {
   public void onProposal(MessageContext context, Proposal proposal) {
     synchronized (messageLock) {
       final PendingBallot newBallot = new PendingBallot(proposal);
-      final PendingBallot existingBallot = pending.put(proposal.getBallotId(), newBallot);
+      final PendingBallot existingBallot = pending.put(proposal.getXid(), newBallot);
       if (existingBallot != null) {
         zlg.t("Skipping redundant %s (ballot already pending)", z -> z.arg(proposal));
-        pending.put(proposal.getBallotId(), existingBallot);
+        pending.put(proposal.getXid(), existingBallot);
         return;
       } else {
         newBallot.setConfirmation(context.begin(proposal));
@@ -181,7 +181,7 @@ public final class MonitorEngine implements Disposable {
 
   public void onVote(MessageContext context, Vote vote) {
     synchronized (messageLock) {
-      final PendingBallot ballot = pending.get(vote.getBallotId());
+      final PendingBallot ballot = pending.get(vote.getXid());
       if (ballot != null) {
         zlg.t("Received %s", z -> z.arg(vote));
         final boolean decided = ballot.castVote(zlg, vote);
@@ -197,7 +197,7 @@ public final class MonitorEngine implements Disposable {
   private void decideBallot(PendingBallot ballot) {
     zlg.t("Decided ballot for %s: resolution: %s", z -> z.arg(ballot::getProposal).arg(ballot::getResolution));
     final Proposal proposal = ballot.getProposal();
-    final String xid = proposal.getBallotId();
+    final String xid = proposal.getXid();
     final Object metadata = metadataEnabled ? new OutcomeMetadata(proposal.getTimestamp()) : null;
     final Outcome outcome = new Outcome(xid, ballot.getResolution(), ballot.getAbortReason(), ballot.getResponses(), metadata)
         .inResponseTo(proposal).withSource(groupId);

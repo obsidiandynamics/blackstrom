@@ -49,16 +49,16 @@ public final class IdentityMessageCodec implements MessageCodec {
   }
 
   private static Message cloneProposal(Proposal original) {
-    return new Proposal(original.getBallotId(), original.getTimestamp(), original.getCohorts(), original.getObjective(), 
+    return new Proposal(original.getXid(), original.getTimestamp(), original.getCohorts(), original.getObjective(), 
                         original.getTtl());
   }
 
   private static Message cloneVote(Vote original) {
-    return new Vote(original.getBallotId(), original.getTimestamp(), original.getResponse());
+    return new Vote(original.getXid(), original.getTimestamp(), original.getResponse());
   }
   
   private static Message cloneOutcome(Outcome original) {
-    return new Outcome(original.getBallotId(), original.getTimestamp(), original.getResolution(), original.getAbortReason(), 
+    return new Outcome(original.getXid(), original.getTimestamp(), original.getResolution(), original.getAbortReason(), 
                        original.getResponses(), original.getMetadata());
   }
 

@@ -14,6 +14,7 @@ import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.KryoMessageSerializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.testmark.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.*;
@@ -47,7 +48,7 @@ public final class KryoMessageCodecTest {
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
 
-    final Proposal d1 = (Proposal) c.decode(encoded);
+    final Proposal d1 = Classes.cast(c.decode(encoded));
     logDecoded(d1, d1.getObjective());
     assertEquals(m, d1);
     
@@ -56,7 +57,7 @@ public final class KryoMessageCodecTest {
     assertArrayEquals(encoded, reencoded);
 
     c = new KryoMessageCodec(true);
-    final Proposal d2 = (Proposal) c.decode(reencoded);
+    final Proposal d2 = Classes.cast(c.decode(reencoded));
     logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
@@ -112,16 +113,16 @@ public final class KryoMessageCodecTest {
   }
   
   @Test
-  public void testProposalNonNullObjective() throws Exception {
+  public void testQueryNonNullObjective() throws Exception {
     final KryoAnimal<?> a = new KryoDog().named("Rover").withFriend(new KryoCat().named("Misty"));
-    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
+    final Query m = new Query("N100", a, 1000);
     MessageCodec c;
 
     c = new KryoMessageCodec(false);
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
     
-    final Proposal d1 = (Proposal) c.decode(encoded);
+    final Query d1 = Classes.cast(c.decode(encoded));
     logDecoded(d1, d1.getObjective());
     assertNotNull(d1.getObjective());
     assertEquals(PayloadBuffer.class, d1.getObjective().getClass());
@@ -131,7 +132,132 @@ public final class KryoMessageCodecTest {
     assertArrayEquals(encoded, reencoded);
     
     c = new KryoMessageCodec(true);
-    final Proposal d2 = (Proposal) c.decode(reencoded);
+    final Query d2 = Classes.cast(c.decode(reencoded));
+    logDecoded(d2, d2.getObjective());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testQueryResponseNonNullObjective() throws Exception {
+    final KryoAnimal<?> a = new KryoDog().named("Rover").withFriend(new KryoCat().named("Misty"));
+    final QueryResponse m = new QueryResponse("N100", a);
+    MessageCodec c;
+
+    c = new KryoMessageCodec(false);
+    final byte[] encoded = c.encode(m);
+    logEncoded(encoded);
+    
+    final QueryResponse d1 = Classes.cast(c.decode(encoded));
+    logDecoded(d1, d1.getResult());
+    assertNotNull(d1.getResult());
+    assertEquals(PayloadBuffer.class, d1.getResult().getClass());
+    
+    final byte[] reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertArrayEquals(encoded, reencoded);
+    
+    c = new KryoMessageCodec(true);
+    final QueryResponse d2 = Classes.cast(c.decode(reencoded));
+    logDecoded(d2, d2.getResult());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testCommandNonNullObjective() throws Exception {
+    final KryoAnimal<?> a = new KryoDog().named("Rover").withFriend(new KryoCat().named("Misty"));
+    final Command m = new Command("N100", a, 1000);
+    MessageCodec c;
+
+    c = new KryoMessageCodec(false);
+    final byte[] encoded = c.encode(m);
+    logEncoded(encoded);
+    
+    final Command d1 = Classes.cast(c.decode(encoded));
+    logDecoded(d1, d1.getObjective());
+    assertNotNull(d1.getObjective());
+    assertEquals(PayloadBuffer.class, d1.getObjective().getClass());
+    
+    final byte[] reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertArrayEquals(encoded, reencoded);
+    
+    c = new KryoMessageCodec(true);
+    final Command d2 = Classes.cast(c.decode(reencoded));
+    logDecoded(d2, d2.getObjective());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testCommandResponseNonNullObjective() throws Exception {
+    final KryoAnimal<?> a = new KryoDog().named("Rover").withFriend(new KryoCat().named("Misty"));
+    final CommandResponse m = new CommandResponse("N100", a);
+    MessageCodec c;
+
+    c = new KryoMessageCodec(false);
+    final byte[] encoded = c.encode(m);
+    logEncoded(encoded);
+    
+    final CommandResponse d1 = Classes.cast(c.decode(encoded));
+    logDecoded(d1, d1.getResult());
+    assertNotNull(d1.getResult());
+    assertEquals(PayloadBuffer.class, d1.getResult().getClass());
+    
+    final byte[] reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertArrayEquals(encoded, reencoded);
+    
+    c = new KryoMessageCodec(true);
+    final CommandResponse d2 = Classes.cast(c.decode(reencoded));
+    logDecoded(d2, d2.getResult());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testNoticeNonNullObjective() throws Exception {
+    final KryoAnimal<?> a = new KryoDog().named("Rover").withFriend(new KryoCat().named("Misty"));
+    final Notice m = new Notice("N100", a);
+    MessageCodec c;
+
+    c = new KryoMessageCodec(false);
+    final byte[] encoded = c.encode(m);
+    logEncoded(encoded);
+    
+    final Notice d1 = Classes.cast(c.decode(encoded));
+    logDecoded(d1, d1.getEvent());
+    assertNotNull(d1.getEvent());
+    assertEquals(PayloadBuffer.class, d1.getEvent().getClass());
+    
+    final byte[] reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertArrayEquals(encoded, reencoded);
+    
+    c = new KryoMessageCodec(true);
+    final Notice d2 = Classes.cast(c.decode(reencoded));
+    logDecoded(d2, d2.getEvent());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testProposalNonNullObjective() throws Exception {
+    final KryoAnimal<?> a = new KryoDog().named("Rover").withFriend(new KryoCat().named("Misty"));
+    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
+    MessageCodec c;
+
+    c = new KryoMessageCodec(false);
+    final byte[] encoded = c.encode(m);
+    logEncoded(encoded);
+    
+    final Proposal d1 = Classes.cast(c.decode(encoded));
+    logDecoded(d1, d1.getObjective());
+    assertNotNull(d1.getObjective());
+    assertEquals(PayloadBuffer.class, d1.getObjective().getClass());
+    
+    final byte[] reencoded = c.encode(d1);
+    logReencoded(reencoded);
+    assertArrayEquals(encoded, reencoded);
+    
+    c = new KryoMessageCodec(true);
+    final Proposal d2 = Classes.cast(c.decode(reencoded));
     logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
@@ -146,7 +272,7 @@ public final class KryoMessageCodecTest {
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
     
-    final Vote d1 = (Vote) c.decode(encoded);
+    final Vote d1 = Classes.cast(c.decode(encoded));
     logDecoded(d1, d1.getResponse().getMetadata());
     assertNotNull(d1.getResponse().getMetadata());
     assertEquals(PayloadBuffer.class, d1.getResponse().getMetadata().getClass());
@@ -156,7 +282,7 @@ public final class KryoMessageCodecTest {
     assertArrayEquals(encoded, reencoded);
     
     c = new KryoMessageCodec(true);
-    final Vote d2 = (Vote) c.decode(reencoded);
+    final Vote d2 = Classes.cast(c.decode(reencoded));
     logDecoded(d2, d2.getResponse().getMetadata());
     assertEquals(m, d2);
   }
@@ -173,7 +299,7 @@ public final class KryoMessageCodecTest {
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
     
-    final Outcome d1 = (Outcome) c.decode(encoded);
+    final Outcome d1 = Classes.cast(c.decode(encoded));
     logDecoded(d1, d1.getResponses()[0].getMetadata());
     assertEquals(2, d1.getResponses().length);
     assertNotNull(d1.getResponses()[0].getMetadata());
@@ -186,7 +312,7 @@ public final class KryoMessageCodecTest {
     assertArrayEquals(encoded, reencoded);
     
     c = new KryoMessageCodec(true);
-    final Outcome d2 = (Outcome) c.decode(reencoded);
+    final Outcome d2 = Classes.cast(c.decode(reencoded));
     logDecoded(d2, d2.getResponses()[0].getMetadata());
     assertEquals(m, d2);
   }
@@ -203,7 +329,7 @@ public final class KryoMessageCodecTest {
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
     
-    final Outcome d1 = (Outcome) c.decode(encoded);
+    final Outcome d1 = Classes.cast(c.decode(encoded));
     logDecoded(d1, d1.getResponses()[0].getMetadata());
     assertEquals(2, d1.getResponses().length);
     assertNotNull(d1.getResponses()[0].getMetadata());
@@ -216,7 +342,7 @@ public final class KryoMessageCodecTest {
     assertArrayEquals(encoded, reencoded);
     
     c = new KryoMessageCodec(true);
-    final Outcome d2 = (Outcome) c.decode(reencoded);
+    final Outcome d2 = Classes.cast(c.decode(reencoded));
     logDecoded(d2, d2.getResponses()[0].getMetadata());
     assertEquals(m, d2);
   }
@@ -234,8 +360,7 @@ public final class KryoMessageCodecTest {
   public void testUnknownDeserialize() throws Exception {
     final boolean WRITE_REFERENCES = false;
     final MessageCodec c = new KryoMessageCodec(false);
-    final Output buffer = new Output(16, -1);
-    try {
+    try (Output buffer = new Output(16, -1)) {
       if (WRITE_REFERENCES) buffer.writeVarInt(Kryo.NOT_NULL, true);
       buffer.writeByte(MessageType.$UNKNOWN.ordinal());
       buffer.writeString(null);
@@ -245,8 +370,6 @@ public final class KryoMessageCodecTest {
       thrown.expect(MessageDeserializationException.class);
       thrown.expectCause(IsInstanceOf.instanceOf(UnsupportedOperationException.class));
       c.decode(encoded);
-    } finally {
-      buffer.close();
     }
   }
   
@@ -258,7 +381,7 @@ public final class KryoMessageCodecTest {
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
 
-    final Proposal d = (Proposal) c.decode(encoded);
+    final Proposal d = Classes.cast(c.decode(encoded));
     logDecoded(d, d.getObjective());
     assertEquals(m, d);
   }

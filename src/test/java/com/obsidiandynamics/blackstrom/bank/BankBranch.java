@@ -73,7 +73,7 @@ public final class BankBranch implements Cohort {
     if (! deathRow.isEmpty()) {
       for (Outcome outcome : deathRow) {
         synchronized (lock) {
-          decided.remove(outcome.getBallotId());
+          decided.remove(outcome.getXid());
         }
       }
 
@@ -105,7 +105,7 @@ public final class BankBranch implements Cohort {
       if (idempotencyEnabled) {
         zlg.t("%s: %s", z -> z.arg(branchId).arg(proposal));
         synchronized (lock) {
-          if (decided.containsKey(proposal.getBallotId())) {
+          if (decided.containsKey(proposal.getXid())) {
             zlg.t("%s: ignoring, already decided", z -> z.arg(branchId));
             return;
           }
@@ -116,24 +116,24 @@ public final class BankBranch implements Cohort {
       final long xferAmount = xfer.getAmount();
       final long newBalance = balance + escrow + xferAmount;
       if (newBalance >= 0) {
-        final boolean inserted = proposals.put(proposal.getBallotId(), proposal) == null;
+        final boolean inserted = proposals.put(proposal.getXid(), proposal) == null;
         if (inserted) {
           intent = Intent.ACCEPT;
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
-          zlg.t("%s: accepting %s", z -> z.arg(branchId).arg(proposal::getBallotId));
+          zlg.t("%s: accepting %s", z -> z.arg(branchId).arg(proposal::getXid));
         } else {
           intent = Intent.ACCEPT;
           zlg.t("%s: retransmitting previous acceptance", z -> z.arg(branchId));
         }
       } else {
-        zlg.t("%s: rejecting %s, balance: %,d", z -> z.arg(branchId).arg(proposal::getBallotId).arg(balance));
+        zlg.t("%s: rejecting %s, balance: %,d", z -> z.arg(branchId).arg(proposal::getXid).arg(balance));
         intent = Intent.REJECT;
       }
       
       try {
-        context.getLedger().append(new Vote(proposal.getBallotId(), new Response(branchId, intent, null))
+        context.getLedger().append(new Vote(proposal.getXid(), new Response(branchId, intent, null))
                                    .inResponseTo(proposal).withSource(branchId));
       } catch (Exception e) {
         e.printStackTrace();
@@ -150,15 +150,15 @@ public final class BankBranch implements Cohort {
       
       outcomes.incrementAndGet();
       
-      final Proposal proposal = proposals.remove(outcome.getBallotId());
+      final Proposal proposal = proposals.remove(outcome.getXid());
       if (proposal == null) {
-        zlg.t("%s: no applicable outcome for ballot %s", z -> z.arg(branchId).arg(outcome.getBallotId()));
+        zlg.t("%s: no applicable outcome for ballot %s", z -> z.arg(branchId).arg(outcome.getXid()));
         return; // outcome doesn't apply to this branch
       }
       
       if (idempotencyEnabled) {
         synchronized (lock) {
-          decided.put(outcome.getBallotId(), outcome);
+          decided.put(outcome.getXid(), outcome);
         }
       }
   

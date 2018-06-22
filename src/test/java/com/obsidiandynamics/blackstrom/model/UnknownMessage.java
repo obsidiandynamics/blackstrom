@@ -43,6 +43,6 @@ public final class UnknownMessage extends FluentMessage<UnknownMessage> {
   
   @Override
   public UnknownMessage shallowCopy() {
-    return copyMutableFields(this, new UnknownMessage(getBallotId(), getTimestamp()));
+    return copyMutableFields(this, new UnknownMessage(getXid(), getTimestamp()));
   }
 }

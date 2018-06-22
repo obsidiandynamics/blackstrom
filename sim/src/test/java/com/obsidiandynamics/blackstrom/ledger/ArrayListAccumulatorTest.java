@@ -156,7 +156,7 @@ public final class ArrayListAccumulatorTest {
 
     @Override
     public void onMessage(MessageContext context, Message message) {
-      final ProducerBallotId producerBallotId = ProducerBallotId.fromString(message.getBallotId());
+      final ProducerBallotId producerBallotId = ProducerBallotId.fromString(message.getXid());
       received[producerBallotId.producer].add(producerBallotId.sequence);
     }
     
@@ -216,7 +216,7 @@ public final class ArrayListAccumulatorTest {
         final List<Message> sink = new ArrayList<>();
         a.retrieve(0, sink);
         System.out.println("accumulator:");
-        sink.stream().map(m -> m.getBallotId()).forEach(id -> System.out.println("  " + id));
+        sink.stream().map(m -> m.getXid()).forEach(id -> System.out.println("  " + id));
         
         for (BallotReceiver receiver : receivers) {
           System.out.println("receiver:");
@@ -267,7 +267,7 @@ public final class ArrayListAccumulatorTest {
         final List<Message> sink = new ArrayList<>();
         a.retrieve(0, sink);
         System.out.println("accumulator:");
-        sink.stream().map(m -> m.getBallotId()).forEach(id -> System.out.println("  " + id));
+        sink.stream().map(m -> m.getXid()).forEach(id -> System.out.println("  " + id));
         
         for (BallotReceiver receiver : receivers) {
           System.out.println("receiver:");
@@ -282,7 +282,7 @@ public final class ArrayListAccumulatorTest {
   
   private static List<Long> getItems(Accumulator a, long fromOffset) {
     return retrieve(a, fromOffset).stream()
-        .map(m -> Long.parseLong(m.getBallotId()))
+        .map(m -> Long.parseLong(m.getXid()))
         .collect(Collectors.toList());
   }
   

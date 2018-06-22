@@ -66,6 +66,6 @@ public final class Query extends FluentMessage<Query> {
   
   @Override
   public Query shallowCopy() {
-    return copyMutableFields(this, new Query(getBallotId(), getTimestamp(), objective, ttlMillis));
+    return copyMutableFields(this, new Query(getXid(), getTimestamp(), objective, ttlMillis));
   }
 }

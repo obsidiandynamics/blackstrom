@@ -66,6 +66,6 @@ public final class Command extends FluentMessage<Command> {
   
   @Override
   public Command shallowCopy() {
-    return copyMutableFields(this, new Command(getBallotId(), getTimestamp(), objective, ttlMillis));
+    return copyMutableFields(this, new Command(getXid(), getTimestamp(), objective, ttlMillis));
   }
 }

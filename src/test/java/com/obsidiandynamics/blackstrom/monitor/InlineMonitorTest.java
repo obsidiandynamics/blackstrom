@@ -108,7 +108,7 @@ public final class InlineMonitorTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -122,7 +122,7 @@ public final class InlineMonitorTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertNotNull(outcomes.get(0).getMetadata());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
@@ -146,7 +146,7 @@ public final class InlineMonitorTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -162,7 +162,7 @@ public final class InlineMonitorTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertNull(outcomes.get(0).getMetadata());
@@ -178,7 +178,7 @@ public final class InlineMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     vote(xid, "b", Intent.ACCEPT);
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -192,7 +192,7 @@ public final class InlineMonitorTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     vote(xid, "b", Intent.REJECT);
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -221,7 +221,7 @@ public final class InlineMonitorTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -250,7 +250,7 @@ public final class InlineMonitorTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -284,7 +284,7 @@ public final class InlineMonitorTest {
     wait.until(numVotesIsAtLeast(2));
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
     
@@ -324,7 +324,7 @@ public final class InlineMonitorTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -343,7 +343,7 @@ public final class InlineMonitorTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
   }

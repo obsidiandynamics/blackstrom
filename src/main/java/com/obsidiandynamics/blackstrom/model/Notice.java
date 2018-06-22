@@ -55,6 +55,6 @@ public final class Notice extends FluentMessage<Notice> {
   
   @Override
   public Notice shallowCopy() {
-    return copyMutableFields(this, new Notice(getBallotId(), getTimestamp(), event));
+    return copyMutableFields(this, new Notice(getXid(), getTimestamp(), event));
   }
 }

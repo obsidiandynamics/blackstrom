@@ -48,7 +48,7 @@ public final class FallibleFactorTest {
     public void onProposal(MessageContext context, Proposal proposal) {
       proposals.add(proposal);
       try {
-        context.getLedger().append(new Vote(proposal.getBallotId(), new Response("test", Intent.ACCEPT, null)));
+        context.getLedger().append(new Vote(proposal.getXid(), new Response("test", Intent.ACCEPT, null)));
       } catch (Exception e) {
         e.printStackTrace();
         throw new RuntimeException(e);

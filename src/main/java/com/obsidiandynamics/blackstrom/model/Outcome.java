@@ -93,6 +93,6 @@ public final class Outcome extends FluentMessage<Outcome> {
   
   @Override
   public Outcome shallowCopy() {
-    return copyMutableFields(this, new Outcome(getBallotId(), getTimestamp(), resolution, abortReason, responses, metadata));
+    return copyMutableFields(this, new Outcome(getXid(), getTimestamp(), resolution, abortReason, responses, metadata));
   }
 }

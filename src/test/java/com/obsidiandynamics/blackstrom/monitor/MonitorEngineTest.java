@@ -111,7 +111,7 @@ public final class MonitorEngineTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -125,7 +125,7 @@ public final class MonitorEngineTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertNotNull(outcomes.get(0).getMetadata());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
@@ -147,7 +147,7 @@ public final class MonitorEngineTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -163,7 +163,7 @@ public final class MonitorEngineTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertNull(outcomes.get(0).getMetadata());
@@ -179,7 +179,7 @@ public final class MonitorEngineTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     vote(xid, "b", Intent.ACCEPT);
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -193,7 +193,7 @@ public final class MonitorEngineTest {
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
     vote(xid, "b", Intent.REJECT);
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.REJECT, outcomes.get(0).getAbortReason());
     assertEquals(1, outcomes.get(0).getResponses().length);
@@ -222,7 +222,7 @@ public final class MonitorEngineTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -249,7 +249,7 @@ public final class MonitorEngineTest {
 
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -328,14 +328,14 @@ public final class MonitorEngineTest {
     
     wait.until(numVotesIsAtLeast(1));
     assertEquals(0, outcomes.size());
-    assertEquals(xid, votes.get(0).getBallotId());
+    assertEquals(xid, votes.get(0).getXid());
     assertEquals(Intent.TIMEOUT, votes.get(0).getResponse().getIntent());
     
     // feed the timeout back into the monitor - should produce a rejection
     vote(xid, "b", Intent.TIMEOUT);
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.EXPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -365,7 +365,7 @@ public final class MonitorEngineTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.COMMIT, outcomes.get(0).getResolution());
     assertNull(outcomes.get(0).getAbortReason());
     assertEquals(2, outcomes.get(0).getResponses().length);
@@ -384,7 +384,7 @@ public final class MonitorEngineTest {
     
     wait.until(numOutcomesIs(1));
     assertEquals(1, outcomes.size());
-    assertEquals(xid, outcomes.get(0).getBallotId());
+    assertEquals(xid, outcomes.get(0).getXid());
     assertEquals(Resolution.ABORT, outcomes.get(0).getResolution());
     assertEquals(AbortReason.IMPLICIT_TIMEOUT, outcomes.get(0).getAbortReason());
   }

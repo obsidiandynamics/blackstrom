@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.*;
 import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonMessageDeserializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.testmark.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.yconf.*;
@@ -47,7 +48,7 @@ public final class JacksonMessageCodecTest {
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
 
-    final Proposal d1 = (Proposal) c.decodeText(encoded);
+    final Proposal d1 = Classes.cast(c.decodeText(encoded));
     logDecoded(d1, d1.getObjective());
     assertEquals(m, d1);
     
@@ -56,7 +57,7 @@ public final class JacksonMessageCodecTest {
     assertEquals(encoded, reencoded);
 
     c = new JacksonMessageCodec(true);
-    final Proposal d2 = (Proposal) c.decodeText(reencoded);
+    final Proposal d2 = Classes.cast(c.decodeText(reencoded));
     logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
@@ -112,16 +113,16 @@ public final class JacksonMessageCodecTest {
   }
   
   @Test
-  public void testProposalNonNullObjective() throws Exception {
+  public void testQueryNonNullObjective() throws Exception {
     final JacksonAnimal<?> a = new JacksonDog().named("Rover").withFriend(new JacksonCat().named("Misty"));
-    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
+    final Query m = new Query("N100", a, 1000);
     MessageCodec c;
 
     c = new JacksonMessageCodec(false);
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Proposal d1 = (Proposal) c.decodeText(encoded);
+    final Query d1 = Classes.cast(c.decodeText(encoded));
     logDecoded(d1, d1.getObjective());
     assertNotNull(d1.getObjective());
     assertEquals(LinkedHashMap.class, d1.getObjective().getClass());
@@ -131,7 +132,132 @@ public final class JacksonMessageCodecTest {
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Proposal d2 = (Proposal) c.decodeText(reencoded);
+    final Query d2 = Classes.cast(c.decodeText(reencoded));
+    logDecoded(d2, d2.getObjective());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testQueryResponseNonNullResult() throws Exception {
+    final JacksonAnimal<?> a = new JacksonDog().named("Rover").withFriend(new JacksonCat().named("Misty"));
+    final QueryResponse m = new QueryResponse("N100", a);
+    MessageCodec c;
+
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+    
+    final QueryResponse d1 = Classes.cast(c.decodeText(encoded));
+    logDecoded(d1, d1.getResult());
+    assertNotNull(d1.getResult());
+    assertEquals(LinkedHashMap.class, d1.getResult().getClass());
+    
+    final String reencoded = c.encodeText(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+    
+    c = new JacksonMessageCodec(true);
+    final QueryResponse d2 = Classes.cast(c.decodeText(reencoded));
+    logDecoded(d2, d2.getResult());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testCommandNonNullObjective() throws Exception {
+    final JacksonAnimal<?> a = new JacksonDog().named("Rover").withFriend(new JacksonCat().named("Misty"));
+    final Command m = new Command("N100", a, 1000);
+    MessageCodec c;
+
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+    
+    final Command d1 = Classes.cast(c.decodeText(encoded));
+    logDecoded(d1, d1.getObjective());
+    assertNotNull(d1.getObjective());
+    assertEquals(LinkedHashMap.class, d1.getObjective().getClass());
+    
+    final String reencoded = c.encodeText(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+    
+    c = new JacksonMessageCodec(true);
+    final Command d2 = Classes.cast(c.decodeText(reencoded));
+    logDecoded(d2, d2.getObjective());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testCommandResponseNonNullResult() throws Exception {
+    final JacksonAnimal<?> a = new JacksonDog().named("Rover").withFriend(new JacksonCat().named("Misty"));
+    final CommandResponse m = new CommandResponse("N100", a);
+    MessageCodec c;
+
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+    
+    final CommandResponse d1 = Classes.cast(c.decodeText(encoded));
+    logDecoded(d1, d1.getResult());
+    assertNotNull(d1.getResult());
+    assertEquals(LinkedHashMap.class, d1.getResult().getClass());
+    
+    final String reencoded = c.encodeText(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+    
+    c = new JacksonMessageCodec(true);
+    final CommandResponse d2 = Classes.cast(c.decodeText(reencoded));
+    logDecoded(d2, d2.getResult());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testNoticeNonNullEvent() throws Exception {
+    final JacksonAnimal<?> a = new JacksonDog().named("Rover").withFriend(new JacksonCat().named("Misty"));
+    final Notice m = new Notice("N100", a);
+    MessageCodec c;
+
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+    
+    final Notice d1 = Classes.cast(c.decodeText(encoded));
+    logDecoded(d1, d1.getEvent());
+    assertNotNull(d1.getEvent());
+    assertEquals(LinkedHashMap.class, d1.getEvent().getClass());
+    
+    final String reencoded = c.encodeText(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+    
+    c = new JacksonMessageCodec(true);
+    final Notice d2 = Classes.cast(c.decodeText(reencoded));
+    logDecoded(d2, d2.getEvent());
+    assertEquals(m, d2);
+  }
+  
+  @Test
+  public void testProposalNonNullObjective() throws Exception {
+    final JacksonAnimal<?> a = new JacksonDog().named("Rover").withFriend(new JacksonCat().named("Misty"));
+    final Proposal m = new Proposal("N100", new String[] {"a", "b"}, a, 1000);
+    MessageCodec c;
+
+    c = new JacksonMessageCodec(false);
+    final String encoded = c.encodeText(m);
+    logEncoded(encoded);
+    
+    final Proposal d1 = Classes.cast(c.decodeText(encoded));
+    logDecoded(d1, d1.getObjective());
+    assertNotNull(d1.getObjective());
+    assertEquals(LinkedHashMap.class, d1.getObjective().getClass());
+    
+    final String reencoded = c.encodeText(d1);
+    logReencoded(reencoded);
+    assertEquals(encoded, reencoded);
+    
+    c = new JacksonMessageCodec(true);
+    final Proposal d2 = Classes.cast(c.decodeText(reencoded));
     logDecoded(d2, d2.getObjective());
     assertEquals(m, d2);
   }
@@ -146,7 +272,7 @@ public final class JacksonMessageCodecTest {
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Vote d1 = (Vote) c.decodeText(encoded);
+    final Vote d1 = Classes.cast(c.decodeText(encoded));
     logDecoded(d1, d1.getResponse().getMetadata());
     assertNotNull(d1.getResponse().getMetadata());
     assertEquals(LinkedHashMap.class, d1.getResponse().getMetadata().getClass());
@@ -156,7 +282,7 @@ public final class JacksonMessageCodecTest {
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Vote d2 = (Vote) c.decodeText(reencoded);
+    final Vote d2 = Classes.cast(c.decodeText(reencoded));
     logDecoded(d2, d2.getResponse().getMetadata());
     assertEquals(m, d2);
   }
@@ -173,7 +299,7 @@ public final class JacksonMessageCodecTest {
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Outcome d1 = (Outcome) c.decodeText(encoded);
+    final Outcome d1 = Classes.cast(c.decodeText(encoded));
     logDecoded(d1, d1.getResponses()[0].getMetadata());
     assertEquals(2, d1.getResponses().length);
     assertNotNull(d1.getResponses()[0].getMetadata());
@@ -186,7 +312,7 @@ public final class JacksonMessageCodecTest {
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Outcome d2 = (Outcome) c.decodeText(reencoded);
+    final Outcome d2 = Classes.cast(c.decodeText(reencoded));
     logDecoded(d2, d2.getResponses()[0].getMetadata());
     assertEquals(m, d2);
   }
@@ -203,7 +329,7 @@ public final class JacksonMessageCodecTest {
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
     
-    final Outcome d1 = (Outcome) c.decodeText(encoded);
+    final Outcome d1 = Classes.cast(c.decodeText(encoded));
     logDecoded(d1, d1.getResponses()[0].getMetadata());
     assertEquals(2, d1.getResponses().length);
     assertNotNull(d1.getResponses()[0].getMetadata());
@@ -216,7 +342,7 @@ public final class JacksonMessageCodecTest {
     assertEquals(encoded, reencoded);
     
     c = new JacksonMessageCodec(true);
-    final Outcome d2 = (Outcome) c.decodeText(reencoded);
+    final Outcome d2 = Classes.cast(c.decodeText(reencoded));
     logDecoded(d2, d2.getResponses()[0].getMetadata());
     assertEquals(m, d2);
   }
@@ -247,7 +373,7 @@ public final class JacksonMessageCodecTest {
     final String encoded = c.encodeText(m);
     logEncoded(encoded);
 
-    final Proposal d = (Proposal) c.decodeText(encoded);
+    final Proposal d = Classes.cast(c.decodeText(encoded));
     logDecoded(d, d.getObjective());
     assertEquals(m, d);
   }

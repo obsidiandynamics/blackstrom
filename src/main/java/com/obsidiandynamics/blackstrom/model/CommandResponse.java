@@ -5,19 +5,19 @@ import org.apache.commons.lang3.builder.*;
 import com.obsidiandynamics.func.*;
 
 public final class CommandResponse extends FluentMessage<CommandResponse> {
-  private final Object reply;
+  private final Object result;
   
-  public CommandResponse(String xid, Object reply) {
-    this(xid, NOW, reply);
+  public CommandResponse(String xid, Object result) {
+    this(xid, NOW, result);
   }
 
-  public CommandResponse(String xid, long timestamp, Object reply) {
+  public CommandResponse(String xid, long timestamp, Object result) {
     super(xid, timestamp);
-    this.reply = reply;
+    this.result = result;
   }
   
-  public <T> T getObjective() {
-    return Classes.cast(reply);
+  public <T> T getResult() {
+    return Classes.cast(result);
   }
   
   @Override
@@ -29,7 +29,7 @@ public final class CommandResponse extends FluentMessage<CommandResponse> {
   public int hashCode() {
     return new HashCodeBuilder()
         .appendSuper(baseHashCode())
-        .append(reply)
+        .append(result)
         .toHashCode();
   }
   
@@ -41,7 +41,7 @@ public final class CommandResponse extends FluentMessage<CommandResponse> {
       final CommandResponse that = (CommandResponse) obj;
       return new EqualsBuilder()
           .appendSuper(baseEquals(that))
-          .append(reply, that.reply)
+          .append(result, that.result)
           .isEquals();
     } else {
       return false;
@@ -50,11 +50,11 @@ public final class CommandResponse extends FluentMessage<CommandResponse> {
 
   @Override
   public String toString() {
-    return CommandResponse.class.getSimpleName() + " [" + baseToString() + ", reply=" + reply + "]";
+    return CommandResponse.class.getSimpleName() + " [" + baseToString() + ", result=" + result + "]";
   }
   
   @Override
   public CommandResponse shallowCopy() {
-    return copyMutableFields(this, new CommandResponse(getBallotId(), getTimestamp(), reply));
+    return copyMutableFields(this, new CommandResponse(getXid(), getTimestamp(), result));
   }
 }

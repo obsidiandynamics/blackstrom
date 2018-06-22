@@ -103,7 +103,7 @@ public final class BalancedLedgerHubTest {
         zlg.t("%d-%x got %s", z -> z.arg(viewId).arg(System.identityHashCode(this)).arg(message));
         Threads.sleep(pause);
         this.context = context;
-        receivedByShard.get(message.getShard()).add(Long.parseLong(message.getBallotId()));
+        receivedByShard.get(message.getShard()).add(Long.parseLong(message.getXid()));
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);
         lastMessageByShard.get(message.getShard()).set(message);
       }

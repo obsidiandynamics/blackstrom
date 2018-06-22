@@ -32,11 +32,31 @@ final class KryoMessageSerializer extends Serializer<Message> {
   @Override
   public void write(Kryo kryo, Output out, Message message) {
     out.writeByte(message.getMessageType().ordinal());
-    out.writeString(message.getBallotId());
+    out.writeString(message.getXid());
     out.writeLong(message.getTimestamp());
     out.writeString(message.getSource());
     
     switch (message.getMessageType()) {
+      case QUERY:
+        serializeQuery(kryo, out, (Query) message);
+        break;
+
+      case QUERY_RESPONSE:
+        serializeQueryResponse(kryo, out, (QueryResponse) message);
+        break;
+
+      case COMMAND:
+        serializeCommand(kryo, out, (Command) message);
+        break;
+
+      case COMMAND_RESPONSE:
+        serializeCommandResponse(kryo, out, (CommandResponse) message);
+        break;
+        
+      case NOTICE:
+        serializeNotice(kryo, out, (Notice) message);
+        break;
+      
       case PROPOSAL:
         serializeProposal(kryo, out, (Proposal) message);
         break;
@@ -56,32 +76,54 @@ final class KryoMessageSerializer extends Serializer<Message> {
     }
   }
   
-  private static void serializeProposal(Kryo kryo, Output out, Proposal proposal) {
-    KryoUtils.writeStringArray(out, proposal.getCohorts());
-    out.writeVarInt(proposal.getTtl(), true);
-    serializePayload(kryo, out, proposal.getObjective());
+  private static void serializeQuery(Kryo kryo, Output out, Query m) {
+    out.writeVarInt(m.getTtl(), true);
+    serializePayload(kryo, out, m.getObjective());
   }
   
-  private static void serializeVote(Kryo kryo, Output out, Vote vote) {
-    serializeResponse(kryo, out, vote.getResponse());
+  private static void serializeQueryResponse(Kryo kryo, Output out, QueryResponse m) {
+    serializePayload(kryo, out, m.getResult());
   }
   
-  private static void serializeOutcome(Kryo kryo, Output out, Outcome outcome) {
-    out.writeByte(outcome.getResolution().ordinal());
-    final AbortReason abortReason = outcome.getAbortReason();
+  private static void serializeCommand(Kryo kryo, Output out, Command m) {
+    out.writeVarInt(m.getTtl(), true);
+    serializePayload(kryo, out, m.getObjective());
+  }
+  
+  private static void serializeCommandResponse(Kryo kryo, Output out, CommandResponse m) {
+    serializePayload(kryo, out, m.getResult());
+  }
+  
+  private static void serializeNotice(Kryo kryo, Output out, Notice m) {
+    serializePayload(kryo, out, m.getEvent());
+  }
+  
+  private static void serializeProposal(Kryo kryo, Output out, Proposal m) {
+    KryoUtils.writeStringArray(out, m.getCohorts());
+    out.writeVarInt(m.getTtl(), true);
+    serializePayload(kryo, out, m.getObjective());
+  }
+  
+  private static void serializeVote(Kryo kryo, Output out, Vote m) {
+    serializeResponse(kryo, out, m.getResponse());
+  }
+  
+  private static void serializeOutcome(Kryo kryo, Output out, Outcome m) {
+    out.writeByte(m.getResolution().ordinal());
+    final AbortReason abortReason = m.getAbortReason();
     out.writeByte(abortReason != null ? abortReason.ordinal() : -1);
-    final Response[] responses = outcome.getResponses();
+    final Response[] responses = m.getResponses();
     out.writeVarInt(responses.length, true);
     for (Response response : responses) {
       serializeResponse(kryo, out, response);
     }
-    serializePayload(kryo, out, outcome.getMetadata());
+    serializePayload(kryo, out, m.getMetadata());
   }
   
-  private static void serializeResponse(Kryo kryo, Output out, Response response) {
-    out.writeString(response.getCohort());
-    out.writeByte(response.getIntent().ordinal());
-    serializePayload(kryo, out, response.getMetadata());
+  private static void serializeResponse(Kryo kryo, Output out, Response r) {
+    out.writeString(r.getCohort());
+    out.writeByte(r.getIntent().ordinal());
+    serializePayload(kryo, out, r.getMetadata());
   }
   
   private static void serializePayload(Kryo kryo, Output out, Object payload) {
@@ -110,6 +152,26 @@ final class KryoMessageSerializer extends Serializer<Message> {
     final Message message;
     
     switch (messageType) {
+      case QUERY:
+        message = deserializeQuery(kryo, in, xid, timestamp);
+        break;
+
+      case QUERY_RESPONSE:
+        message = deserializeQueryResponse(kryo, in, xid, timestamp);
+        break;
+
+      case COMMAND:
+        message = deserializeCommand(kryo, in, xid, timestamp);
+        break;
+
+      case COMMAND_RESPONSE:
+        message = deserializeCommandResponse(kryo, in, xid, timestamp);
+        break;
+        
+      case NOTICE:
+        message = deserializeNotice(kryo, in, xid, timestamp);
+        break;
+        
       case PROPOSAL:
         message = deserializeProposal(kryo, in, xid, timestamp);
         break;
@@ -130,6 +192,33 @@ final class KryoMessageSerializer extends Serializer<Message> {
     
     message.setSource(source);
     return message;
+  }
+  
+  private Query deserializeQuery(Kryo kryo, Input in, String xid, long timestamp) {
+    final int ttl = in.readVarInt(true);
+    final Object objective = deserializePayload(kryo, in);
+    return new Query(xid, timestamp, objective, ttl);
+  }
+  
+  private QueryResponse deserializeQueryResponse(Kryo kryo, Input in, String xid, long timestamp) {
+    final Object result = deserializePayload(kryo, in);
+    return new QueryResponse(xid, timestamp, result);
+  }
+  
+  private Command deserializeCommand(Kryo kryo, Input in, String xid, long timestamp) {
+    final int ttl = in.readVarInt(true);
+    final Object objective = deserializePayload(kryo, in);
+    return new Command(xid, timestamp, objective, ttl);
+  }
+  
+  private CommandResponse deserializeCommandResponse(Kryo kryo, Input in, String xid, long timestamp) {
+    final Object result = deserializePayload(kryo, in);
+    return new CommandResponse(xid, timestamp, result);
+  }
+  
+  private Notice deserializeNotice(Kryo kryo, Input in, String xid, long timestamp) {
+    final Object event = deserializePayload(kryo, in);
+    return new Notice(xid, timestamp, event);
   }
   
   private Proposal deserializeProposal(Kryo kryo, Input in, String xid, long timestamp) {

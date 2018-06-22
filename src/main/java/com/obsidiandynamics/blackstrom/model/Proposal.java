@@ -76,6 +76,6 @@ public final class Proposal extends FluentMessage<Proposal> {
   
   @Override
   public Proposal shallowCopy() {
-    return copyMutableFields(this, new Proposal(getBallotId(), getTimestamp(), cohorts, objective, ttlMillis));
+    return copyMutableFields(this, new Proposal(getXid(), getTimestamp(), cohorts, objective, ttlMillis));
   }
 }

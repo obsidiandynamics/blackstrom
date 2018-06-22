@@ -21,11 +21,31 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
   public void serialize(Message m, JsonGenerator gen, SerializerProvider provider) throws IOException {
     gen.writeStartObject();
     gen.writeStringField("messageType", m.getMessageType().name());
-    gen.writeStringField("xid", m.getBallotId());
+    gen.writeStringField("xid", m.getXid());
     gen.writeNumberField("timestamp", m.getTimestamp());
     writeString("source", m.getSource(), gen);
     
     switch (m.getMessageType()) {
+      case QUERY:
+        serializeQuery((Query) m, gen);
+        break;
+
+      case QUERY_RESPONSE:
+        serializeQueryResponse((QueryResponse) m, gen);
+        break;
+        
+      case COMMAND:
+        serializeCommand((Command) m, gen);
+        break;
+
+      case COMMAND_RESPONSE:
+        serializeCommandResponse((CommandResponse) m, gen);
+        break;
+        
+      case NOTICE:
+        serializeNotice((Notice) m, gen);
+        break;
+
       case PROPOSAL:
         serializeProposal((Proposal) m, gen);
         break;
@@ -49,20 +69,42 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
   private Object packConditional(Object value) {
     return value instanceof LinkedHashMap ? value : Payload.pack(value);
   }
+  
+  private void serializeQuery(Query m, JsonGenerator gen) throws IOException {
+    gen.writeNumberField("ttl", m.getTtl());
+    JacksonUtils.writeObject("objective", packConditional(m.getObjective()), gen);
+  }
+  
+  private void serializeQueryResponse(QueryResponse m, JsonGenerator gen) throws IOException {
+    JacksonUtils.writeObject("result", packConditional(m.getResult()), gen);
+  }
+  
+  private void serializeCommand(Command m, JsonGenerator gen) throws IOException {
+    gen.writeNumberField("ttl", m.getTtl());
+    JacksonUtils.writeObject("objective", packConditional(m.getObjective()), gen);
+  }
+  
+  private void serializeCommandResponse(CommandResponse m, JsonGenerator gen) throws IOException {
+    JacksonUtils.writeObject("result", packConditional(m.getResult()), gen);
+  }
+  
+  private void serializeNotice(Notice m, JsonGenerator gen) throws IOException {
+    JacksonUtils.writeObject("event", packConditional(m.getEvent()), gen);
+  }
 
-  private void serializeProposal(Proposal p, JsonGenerator gen) throws IOException {
+  private void serializeProposal(Proposal m, JsonGenerator gen) throws IOException {
     gen.writeArrayFieldStart("cohorts"); 
-    for (String cohort : p.getCohorts()) {
+    for (String cohort : m.getCohorts()) {
       gen.writeString(cohort);
     }
     gen.writeEndArray();
-    gen.writeNumberField("ttl", p.getTtl());
-    JacksonUtils.writeObject("objective", packConditional(p.getObjective()), gen);
+    gen.writeNumberField("ttl", m.getTtl());
+    JacksonUtils.writeObject("objective", packConditional(m.getObjective()), gen);
   }
   
-  private void serializeVote(Vote v, JsonGenerator gen) throws IOException {
+  private void serializeVote(Vote m, JsonGenerator gen) throws IOException {
     gen.writeFieldName("response");
-    serializeResponse(v.getResponse(), gen);
+    serializeResponse(m.getResponse(), gen);
   }
   
   private void serializeResponse(Response r, JsonGenerator gen) throws IOException {
@@ -73,18 +115,18 @@ final class JacksonMessageSerializer extends StdSerializer<Message> {
     gen.writeEndObject();
   }
   
-  private void serializeOutcome(Outcome o, JsonGenerator gen) throws IOException {
-    gen.writeStringField("resolution", o.getResolution().name());
-    final AbortReason abortReason = o.getAbortReason();
+  private void serializeOutcome(Outcome m, JsonGenerator gen) throws IOException {
+    gen.writeStringField("resolution", m.getResolution().name());
+    final AbortReason abortReason = m.getAbortReason();
     if (abortReason != null) {
       gen.writeStringField("abortReason", abortReason.name());      
     }
     gen.writeFieldName("responses");
     gen.writeStartArray();
-    for (Response response : o.getResponses()) {
+    for (Response response : m.getResponses()) {
       serializeResponse(response, gen);
     }
     gen.writeEndArray();
-    JacksonUtils.writeObject("metadata", packConditional(o.getMetadata()), gen);
+    JacksonUtils.writeObject("metadata", packConditional(m.getMetadata()), gen);
   }
 }

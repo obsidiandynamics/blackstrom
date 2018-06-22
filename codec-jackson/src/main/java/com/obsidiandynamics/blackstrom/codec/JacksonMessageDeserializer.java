@@ -41,6 +41,26 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     final Message message;
     
     switch (messageType) {
+      case QUERY:
+        message = deserializeQuery(p, root, xid, timestamp);
+        break;
+
+      case QUERY_RESPONSE:
+        message = deserializeQueryResponse(p, root, xid, timestamp);
+        break;
+
+      case COMMAND:
+        message = deserializeCommand(p, root, xid, timestamp);
+        break;
+
+      case COMMAND_RESPONSE:
+        message = deserializeCommandResponse(p, root, xid, timestamp);
+        break;
+
+      case NOTICE:
+        message = deserializeNotice(p, root, xid, timestamp);
+        break;
+      
       case PROPOSAL:
         message = deserializeProposal(p, root, xid, timestamp);
         break;
@@ -61,6 +81,33 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
     
     message.setSource(source);
     return message;
+  }
+  
+  private Message deserializeQuery(JsonParser p, JsonNode root, String xid, long timestamp) throws JsonProcessingException {
+    final int ttl = root.get("ttl").asInt();
+    final Object objective = Payload.unpack(JacksonUtils.readObject("objective", root, p, getPayloadClass()));
+    return new Query(xid, timestamp, objective, ttl);
+  }
+  
+  private Message deserializeQueryResponse(JsonParser p, JsonNode root, String xid, long timestamp) throws JsonProcessingException {
+    final Object reply = Payload.unpack(JacksonUtils.readObject("result", root, p, getPayloadClass()));
+    return new QueryResponse(xid, timestamp, reply);
+  }
+  
+  private Message deserializeCommand(JsonParser p, JsonNode root, String xid, long timestamp) throws JsonProcessingException {
+    final int ttl = root.get("ttl").asInt();
+    final Object objective = Payload.unpack(JacksonUtils.readObject("objective", root, p, getPayloadClass()));
+    return new Command(xid, timestamp, objective, ttl);
+  }
+  
+  private Message deserializeCommandResponse(JsonParser p, JsonNode root, String xid, long timestamp) throws JsonProcessingException {
+    final Object reply = Payload.unpack(JacksonUtils.readObject("result", root, p, getPayloadClass()));
+    return new CommandResponse(xid, timestamp, reply);
+  }
+  
+  private Message deserializeNotice(JsonParser p, JsonNode root, String xid, long timestamp) throws JsonProcessingException {
+    final Object event = Payload.unpack(JacksonUtils.readObject("event", root, p, getPayloadClass()));
+    return new Notice(xid, timestamp, event);
   }
   
   private Message deserializeProposal(JsonParser p, JsonNode root, String xid, long timestamp) throws JsonProcessingException {

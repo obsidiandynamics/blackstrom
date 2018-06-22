@@ -27,7 +27,7 @@ public final class MessageTest {
     
     @Override
     public UntypedMessage shallowCopy() {
-      return copyMutableFields(this, new UntypedMessage(getBallotId(), getTimestamp()));
+      return copyMutableFields(this, new UntypedMessage(getXid(), getTimestamp()));
     }
   }
 
@@ -40,7 +40,7 @@ public final class MessageTest {
         .withShardKey("key")
         .withShard(99);
 
-    assertEquals("B0", m.getBallotId());
+    assertEquals("B0", m.getXid());
     assertEquals(new DefaultMessageId(0, 100), m.getMessageId());
     assertEquals("test", m.getSource());
     assertEquals("key", m.getShardKey());
@@ -102,7 +102,7 @@ public final class MessageTest {
     
     @Override
     public TrivialSubclass shallowCopy() {
-      return copyMutableFields(this, new TrivialSubclass(getBallotId(), getTimestamp()));
+      return copyMutableFields(this, new TrivialSubclass(getXid(), getTimestamp()));
     }
   }
   
@@ -121,7 +121,7 @@ public final class MessageTest {
 
     
     final Message copy = m.shallowCopy();
-    assertEquals(m.getBallotId(), copy.getBallotId());
+    assertEquals(m.getXid(), copy.getXid());
     assertEquals(m.getMessageId(), copy.getMessageId());
     assertEquals(m.getSource(), copy.getSource());
     assertEquals(m.getShardKey(), copy.getShardKey());

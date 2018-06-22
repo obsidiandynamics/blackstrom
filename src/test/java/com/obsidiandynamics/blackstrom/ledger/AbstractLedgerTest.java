@@ -39,7 +39,7 @@ public abstract class AbstractLedgerTest {
       if (! sandbox.contains(message)) return;
       
       zlg.t("Received %s", z -> z.arg(message));
-      final long xid = Long.parseLong(message.getBallotId());
+      final long xid = Long.parseLong(message.getXid());
       if (lastBallotId == -1) {
         lastBallotId = xid;
       } else {
@@ -107,7 +107,7 @@ public abstract class AbstractLedgerTest {
           assertEquals(numMessages, handler.received.size());
           long index = 0;
           for (Message m  : handler.received) {
-            assertEquals(String.valueOf(index), m.getBallotId());
+            assertEquals(String.valueOf(index), m.getXid());
             index++;
           }
         }
@@ -225,7 +225,7 @@ public abstract class AbstractLedgerTest {
     final AtomicLong received = new AtomicLong();
     ledger.attach((NullGroupMessageHandler) (c, m) -> {
       if (sandbox.contains(m) && m.getSource().equals("source")) {
-        c.getLedger().append(new Proposal(m.getBallotId(), 0, testCohorts, null, 0).withSource("echo"));
+        c.getLedger().append(new Proposal(m.getXid(), 0, testCohorts, null, 0).withSource("echo"));
         c.beginAndConfirm(m);
       }
     });

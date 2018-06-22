@@ -28,7 +28,7 @@ public abstract class Message {
     this.timestamp = timestamp != NOW ? timestamp : NanoClock.now();
   }
   
-  public final String getBallotId() {
+  public final String getXid() {
     return xid;
   }
 

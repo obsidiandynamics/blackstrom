@@ -140,14 +140,14 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   }
   
   private void onRxDelayed(DelayedDelivery mode, MessageContext context, Message message) {
-    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
+    runLater(mode.getDelayMillis(), message.getXid(), t -> {
       forwardToHandler(context, message);
     });
   }
   
   private void onRxDelayedDuplicate(DelayedDuplicateDelivery mode, MessageContext context, Message message) {
     forwardToHandler(context, message);
-    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
+    runLater(mode.getDelayMillis(), message.getXid(), t -> {
       forwardToHandler(context, message);
     });
   }
@@ -184,7 +184,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   }
   
   private void onTxDelayed(DelayedDelivery mode, Message message, AppendCallback callback) {
-    runLater(mode.getDelayMillis(), message.getBallotId(), t -> {
+    runLater(mode.getDelayMillis(), message.getXid(), t -> {
       backingLedger.append(message, callback);
     });
   }
@@ -194,7 +194,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
     final Message copy = message.shallowCopy();
     
     backingLedger.append(message, callback);
-    runLater(mode.getDelayMillis(), copy.getBallotId(), t -> {
+    runLater(mode.getDelayMillis(), copy.getXid(), t -> {
       backingLedger.append(copy, callback);
     });
   }

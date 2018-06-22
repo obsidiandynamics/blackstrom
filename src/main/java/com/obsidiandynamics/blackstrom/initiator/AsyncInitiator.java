@@ -26,13 +26,13 @@ public final class AsyncInitiator implements Initiator, NullGroup {
   }
   
   public void initiate(Proposal proposal, Consumer<Outcome> callback) {
-    pending.put(proposal.getBallotId(), callback);
+    pending.put(proposal.getXid(), callback);
     ledger.append(proposal);
   }
 
   @Override
   public void onOutcome(MessageContext context, Outcome outcome) {
-    final Consumer<Outcome> callback = pending.remove(outcome.getBallotId());
+    final Consumer<Outcome> callback = pending.remove(outcome.getXid());
     if (callback != null) {
       callback.accept(outcome);
     }
