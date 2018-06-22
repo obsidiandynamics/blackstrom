@@ -6,7 +6,6 @@ import java.util.function.*;
 import java.util.stream.*;
 
 import com.obsidiandynamics.blackstrom.cohort.*;
-import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
@@ -14,7 +13,7 @@ import com.obsidiandynamics.nanoclock.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.zerolog.*;
 
-public final class BankBranch implements Cohort.Choreography, VoteProcessor.Nop {
+public final class BankBranch implements Cohort.Base {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final String branchId;
