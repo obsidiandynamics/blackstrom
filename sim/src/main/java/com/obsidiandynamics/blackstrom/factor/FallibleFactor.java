@@ -59,7 +59,8 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   public void init(InitContext context) {
     backingLedger = context.getLedger();
     backingFactor.init(new InitContext() {
-      @Override public Ledger getLedger() {
+      @Override 
+      public Ledger getLedger() {
         return interceptedLedger;
       }
     });

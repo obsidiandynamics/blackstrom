@@ -41,7 +41,7 @@ public final class FallibleFactorTest {
   }
 
   
-  private static class TestCohort implements Cohort, Groupable.NullGroup {
+  private static class TestCohort implements Cohort.Choreography, VoteProcessor.Nop, Groupable.NullGroup {
     private final List<Proposal> proposals = new CopyOnWriteArrayList<>();
     
     @Override
@@ -91,7 +91,6 @@ public final class FallibleFactorTest {
             causeRef.set(e);
           }
         })
-        .onOutcome((c, m) -> {})
         .build();
     final Factor fc = new FallibleFactor(cohort);
     manifold = Manifold.builder()

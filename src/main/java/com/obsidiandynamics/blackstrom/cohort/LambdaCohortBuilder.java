@@ -10,9 +10,17 @@ public final class LambdaCohortBuilder {
   
   private OnDispose onDispose = () -> {};
   
-  private ProposalProcessor onProposal;
+  private QueryProcessor onQuery = (__context, __query) -> {};
   
-  private OutcomeProcessor onOutcome;
+  private CommandProcessor onCommand = (__context, __command) -> {};
+  
+  private NoticeProcessor onNotice = (__context, __notice) -> {};
+  
+  private ProposalProcessor onProposal = (__context, __proposal) -> {};
+  
+  private VoteProcessor onVote = (__context, __vote) -> {};
+  
+  private OutcomeProcessor onOutcome = (__context, __outcome) -> {};
   
   LambdaCohortBuilder() {}
   
@@ -31,8 +39,28 @@ public final class LambdaCohortBuilder {
     return this;
   }
 
+  public LambdaCohortBuilder onQuery(QueryProcessor onQuery) {
+    this.onQuery = onQuery;
+    return this;
+  }
+
+  public LambdaCohortBuilder onCommand(CommandProcessor onCommand) {
+    this.onCommand = onCommand;
+    return this;
+  }
+
+  public LambdaCohortBuilder onNotice(NoticeProcessor onNotice) {
+    this.onNotice = onNotice;
+    return this;
+  }
+
   public LambdaCohortBuilder onProposal(ProposalProcessor onProposal) {
     this.onProposal = onProposal;
+    return this;
+  }
+
+  public LambdaCohortBuilder onVote(VoteProcessor onVote) {
+    this.onVote = onVote;
     return this;
   }
 
@@ -42,8 +70,6 @@ public final class LambdaCohortBuilder {
   }
   
   public LambdaCohort build() {
-    if (onProposal == null) throw new IllegalStateException("No onProposal behaviour set");
-    if (onOutcome == null) throw new IllegalStateException("No onOutcome behaviour set");
-    return new LambdaCohort(groupId, onInit, onDispose, onProposal, onOutcome);
+    return new LambdaCohort(groupId, onInit, onDispose, onQuery, onCommand, onNotice, onProposal, onVote, onOutcome);
   }
 }
