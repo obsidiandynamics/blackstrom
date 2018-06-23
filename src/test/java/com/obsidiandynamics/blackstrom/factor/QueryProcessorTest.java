@@ -1,11 +1,9 @@
-package com.obsidiandynamics.blackstrom.model;
+package com.obsidiandynamics.blackstrom.factor;
 
 import static org.mockito.Mockito.*;
 
 import org.junit.*;
 import org.mockito.*;
-
-import com.obsidiandynamics.blackstrom.factor.*;
 
 public final class QueryProcessorTest {
   @Test

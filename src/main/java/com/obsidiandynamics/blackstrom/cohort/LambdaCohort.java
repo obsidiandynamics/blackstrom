@@ -1,23 +1,16 @@
 package com.obsidiandynamics.blackstrom.cohort;
 
+import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class LambdaCohort implements Cohort {
-  @FunctionalInterface public interface OnInit {
-    void onInit(InitContext context);
-  }
-  
-  @FunctionalInterface public interface OnDispose {
-    void onDispose();
-  }
-  
   private final String groupId;
   
-  private final OnInit onInit;
+  private final Initable onInit;
   
-  private final OnDispose onDispose;
+  private final Disposable onDispose;
   
   private final QueryProcessor onQuery;
   
@@ -32,8 +25,8 @@ public final class LambdaCohort implements Cohort {
   private final OutcomeProcessor onOutcome;
   
   LambdaCohort(String groupId, 
-               OnInit onInit, 
-               OnDispose onDispose, 
+               Initable onInit, 
+               Disposable onDispose, 
                QueryProcessor onQuery,
                CommandProcessor onCommand,
                NoticeProcessor onNotice,
@@ -53,12 +46,12 @@ public final class LambdaCohort implements Cohort {
 
   @Override
   public void init(InitContext context) {
-    onInit.onInit(context);
+    onInit.init(context);
   }
   
   @Override
   public void dispose() {
-    onDispose.onDispose();
+    onDispose.dispose();
   }
   
   @Override

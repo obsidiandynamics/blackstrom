@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import org.junit.*;
 
-import com.obsidiandynamics.blackstrom.cohort.LambdaCohort.*;
+import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -55,8 +55,8 @@ public final class LambdaCohortTest {
   
   @Test
   public void testHandlers() {
-    final OnInit onInit = mock(OnInit.class);
-    final OnDispose onDispose = mock(OnDispose.class);
+    final Initable onInit = mock(Initable.class);
+    final Disposable onDispose = mock(Disposable.class);
     final QueryProcessor onQuery = mock(QueryProcessor.class);
     final CommandProcessor onCommand = mock(CommandProcessor.class);
     final NoticeProcessor onNotice = mock(NoticeProcessor.class);
@@ -87,7 +87,7 @@ public final class LambdaCohortTest {
     assertNull(l.getGroupId());
     
     l.init(initContext);
-    verify(onInit).onInit(eq(initContext));
+    verify(onInit).init(eq(initContext));
     
     l.onQuery(messageContext, query);
     verify(onQuery).onQuery(eq(messageContext), eq(query));
@@ -108,7 +108,7 @@ public final class LambdaCohortTest {
     verify(onOutcome).onOutcome(eq(messageContext), eq(outcome));
     
     l.dispose();
-    verify(onDispose).onDispose();
+    verify(onDispose).dispose();
     
     verifyNoMoreInteractions(initContext, messageContext, onInit, onDispose, onQuery, onCommand, onNotice, onProposal, onVote, onOutcome);
   }

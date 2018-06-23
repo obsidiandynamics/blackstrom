@@ -4,13 +4,14 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 
+import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.handler.Groupable.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.func.*;
 
-public final class AsyncInitiator implements Initiator, NullGroup {
+public final class AsyncInitiator implements Initiator, NullGroup, Disposable.Nop {
   private final Map<String, Consumer<?>> pending = new ConcurrentHashMap<>();
   
   private Ledger ledger;

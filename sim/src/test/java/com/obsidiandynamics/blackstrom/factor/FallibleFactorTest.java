@@ -39,7 +39,6 @@ public final class FallibleFactorTest {
       return FailureType.$UNKNOWN;
     }
   }
-
   
   private static class TestCohort implements Cohort.Base, Groupable.NullGroup {
     private final List<Proposal> proposals = new CopyOnWriteArrayList<>();
@@ -61,7 +60,7 @@ public final class FallibleFactorTest {
     }
   }
   
-  private static class VoteCollector implements Factor, VoteProcessor, Groupable.NullGroup {
+  private static class VoteCollector implements Cohort.Base, Groupable.NullGroup {
     private final List<Vote> votes = new CopyOnWriteArrayList<>();
     
     @Override

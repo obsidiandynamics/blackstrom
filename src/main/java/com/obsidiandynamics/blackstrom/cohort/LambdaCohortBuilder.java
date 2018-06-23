@@ -1,14 +1,14 @@
 package com.obsidiandynamics.blackstrom.cohort;
 
-import com.obsidiandynamics.blackstrom.cohort.LambdaCohort.*;
+import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.factor.*;
 
 public final class LambdaCohortBuilder {
   private String groupId;
   
-  private OnInit onInit = c -> {};
+  private Initable onInit = __ -> {};
   
-  private OnDispose onDispose = () -> {};
+  private Disposable onDispose = () -> {};
   
   private QueryProcessor onQuery = (__context, __query) -> {};
   
@@ -29,12 +29,12 @@ public final class LambdaCohortBuilder {
     return this;
   }
 
-  public LambdaCohortBuilder onInit(OnInit onInit) {
+  public LambdaCohortBuilder onInit(Initable onInit) {
     this.onInit = onInit;
     return this;
   }
 
-  public LambdaCohortBuilder onDispose(OnDispose onDispose) {
+  public LambdaCohortBuilder onDispose(Disposable onDispose) {
     this.onDispose = onDispose;
     return this;
   }
