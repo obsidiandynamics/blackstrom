@@ -38,6 +38,7 @@ publishing {
       artifactId packageName
       version project(":").version
       from components.java
+      artifact jar
       artifact sourcesJar
       artifact javadocJar
     }

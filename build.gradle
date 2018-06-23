@@ -1,5 +1,5 @@
 plugins {
-  id "com.jfrog.bintray" version "1.7.3"
+  id "com.jfrog.bintray" version "1.8.2"
   id "com.github.johnrengelman.shadow" version "2.0.3"
 }
 apply plugin: "maven-publish"
@@ -126,6 +126,10 @@ allprojects {
   // invoke this task when ready to publish to Bintray
   bintrayUpload {
     dependsOn ":bintrayCredentialsCheck"
+    dependsOn "jar"
+    dependsOn "sourcesJar"
+    dependsOn "javadocJar"
+    dependsOn "generatePomFileForMavenJavaPublication"
   }
 }
 
@@ -231,13 +235,16 @@ artifacts {
 
 publishing {
   publications {
-    mavenJava(MavenPublication) {
-      groupId project(":").group
-      artifactId packageName
-      version project(":").version
+	mavenJava(MavenPublication) {
       from components.java
-      artifact sourcesJar
-      artifact javadocJar
+      afterEvaluate {
+        groupId project(":").group
+        artifactId packageName
+        version project(":").version
+        artifact jar
+        artifact sourcesJar
+        artifact javadocJar
+      }
     }
   }
   repositories {
@@ -247,7 +254,7 @@ publishing {
   }
 }
 
-def packageDesc = "Implementation of the ICARUS atomic commit protocol"
+def packageDesc = "Transactional service mesh for the JVM"
 def repoName = "blackstrom"
 bintray {
   user = System.getenv(envUser)
