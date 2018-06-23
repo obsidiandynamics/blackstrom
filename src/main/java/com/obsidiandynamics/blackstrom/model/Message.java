@@ -90,6 +90,11 @@ public abstract class Message {
   
   public abstract MessageType getMessageType();  
   
+  public final void respondTo(Message origin) {
+    setShardKey(origin.getShardKey());
+    setShard(origin.getShard());
+  }
+  
   protected final int baseHashCode() {
     return new HashCodeBuilder()
         .append(xid)

@@ -28,8 +28,7 @@ public abstract class FluentMessage<M extends FluentMessage<?>> extends Message 
   }
   
   public final M inResponseTo(Message origin) {
-    setShardKey(origin.getShardKey());
-    setShard(origin.getShard());
+    respondTo(origin);
     return self();
   }
   

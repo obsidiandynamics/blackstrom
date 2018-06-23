@@ -13,7 +13,7 @@ public final class BalancedLedgerHub implements Disposable {
   
   private final Accumulator[] accumulators;
 
-  class ConsumerGroup {
+  final class ConsumerGroup {
     private final String groupId;
     private final AtomicLong[] offsets = new AtomicLong[accumulators.length];
     private final ShardAssignment[] assignments = new ShardAssignment[accumulators.length];

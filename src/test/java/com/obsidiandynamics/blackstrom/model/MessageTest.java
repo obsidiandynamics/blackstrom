@@ -10,37 +10,16 @@ import com.obsidiandynamics.nanoclock.*;
 import nl.jqno.equalsverifier.*;
 
 public final class MessageTest {
-  private static final class UntypedMessage extends FluentMessage<UntypedMessage> {
-    UntypedMessage(String xid, long timestamp) {
-      super(xid, timestamp);
-    }
-
-    @Override 
-    public MessageType getMessageType() {
-      return null;
-    }
-
-    @Override 
-    public String toString() {
-      return UntypedMessage.class.getName() + " [" + baseToString() + "]";
-    } 
-    
-    @Override
-    public UntypedMessage shallowCopy() {
-      return copyMutableFields(this, new UntypedMessage(getXid(), getTimestamp()));
-    }
-  }
-
   @Test
   public void testFields() {
     final long time = NanoClock.now();
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withMessageId(new DefaultMessageId(0, 100))
         .withSource("test")
         .withShardKey("key")
         .withShard(99);
 
-    assertEquals("B0", m.getXid());
+    assertEquals("X0", m.getXid());
     assertEquals(new DefaultMessageId(0, 100), m.getMessageId());
     assertEquals("test", m.getSource());
     assertEquals("key", m.getShardKey());
@@ -53,7 +32,7 @@ public final class MessageTest {
   @Test
   public void testShardAssigned() {
     final long time = 1000;
-    final Message m = new UntypedMessage("B0", time).withShard(1);
+    final Message m = new UntypedMessage("X0", time).withShard(1);
     
     assertEquals(1, m.getShard());
     assertTrue(m.isShardAssigned());
@@ -62,7 +41,7 @@ public final class MessageTest {
   @Test
   public void testShardUnassignedAndCustomTime() {
     final long time = 1000;
-    final Message m = new UntypedMessage("B0", time)
+    final Message m = new UntypedMessage("X0", time)
         .withMessageId(new DefaultMessageId(0, 100))
         .withSource("test")
         .withShardKey("key");
@@ -113,7 +92,7 @@ public final class MessageTest {
   
   @Test
   public void testBaseShallowCopy() {
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withMessageId(new DefaultMessageId(0, 100))
         .withSource("test")
         .withShardKey("key")
@@ -131,7 +110,7 @@ public final class MessageTest {
   
   @Test
   public void testFieldAssignmentToSame() {
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withMessageId(new DefaultMessageId(0, 100))
         .withSource("test")
         .withShardKey("key")
@@ -145,29 +124,46 @@ public final class MessageTest {
   
   @Test(expected=IllegalArgumentException.class)
   public void testMessageIdReassignment() {
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withMessageId(new DefaultMessageId(0, 100));
     m.setMessageId(new DefaultMessageId(0, 200));
   }
   
   @Test(expected=IllegalArgumentException.class)
   public void testSourceReassignment() {
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withSource("source");
     m.setSource("source2");
   }
   
   @Test(expected=IllegalArgumentException.class)
   public void testShardKeyReassignment() {
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withShardKey("shardKey");
     m.setShardKey("shardKey2");
   }
   
   @Test(expected=IllegalArgumentException.class)
   public void testShardReassignment() {
-    final Message m = new UntypedMessage("B0", 0)
+    final Message m = new UntypedMessage("X0", 0)
         .withShard(100);
     m.setShard(200);
+  }
+  
+  @Test
+  public void testRespondTo() {
+    final Message m = new UntypedMessage("X0", 0)
+        .withMessageId(new DefaultMessageId(0, 100))
+        .withSource("test")
+        .withShardKey("key")
+        .withShard(99);
+    
+    final Message r = new UntypedMessage("X0", 0);
+    r.respondTo(m);
+    
+    assertNull(r.getMessageId());
+    assertNull(r.getSource());
+    assertEquals("key", r.getShardKey());
+    assertEquals(99, r.getShard());
   }
 }
