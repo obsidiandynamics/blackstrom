@@ -114,7 +114,7 @@ public final class InitiatorRig {
         .buildAndStart();
     
     final Sandbox sandbox = Sandbox.forKey(sandboxKey);
-    final Initiator initiator = (NullGroupInitiator) (c, o) -> {
+    final Initiator initiator = (NullGroupChoreograpyInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
         if (histogram && timedRunStarted.get()) {
           final OutcomeMetadata meta = o.getMetadata();

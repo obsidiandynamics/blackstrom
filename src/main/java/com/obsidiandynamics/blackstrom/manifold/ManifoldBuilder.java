@@ -17,6 +17,10 @@ public final class ManifoldBuilder {
     return this;
   }
   
+  public ManifoldBuilder withFactor(Factor factor) {
+    return withFactors(Collections.singleton(factor));
+  }
+  
   public ManifoldBuilder withFactors(Factor... factors) {
     return withFactors(Arrays.asList(factors));
   }

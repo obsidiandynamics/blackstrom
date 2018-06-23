@@ -21,7 +21,8 @@ public final class ManifoldTest {
     
     final Manifold manifold = Manifold.builder()
         .withLedger(ledger)
-        .withFactors(initiator, cohort, monitor)
+        .withFactor(initiator)
+        .withFactors(cohort, monitor)
         .build();
     
     verify(initiator).init(notNull());
