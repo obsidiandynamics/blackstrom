@@ -33,6 +33,7 @@ public final class DefaultMessageContext implements MessageContext {
 
   @Override
   public String toString() {
-    return DefaultMessageContext.class.getSimpleName() + " [ledger=" + ledger + ", handlerId=" + handlerId + "]";
+    return DefaultMessageContext.class.getSimpleName() + " [ledger=" + ledger + ", handlerId=" + handlerId + 
+        ", retention=" + retention + "]";
   }
 }
