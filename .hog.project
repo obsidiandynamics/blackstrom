@@ -1,0 +1,23 @@
+build: ./gradlew test cleanIntegrationTest integrationTest --info --stacktrace --no-daemon
+modules:
+- path: .
+  dependencies:
+  - name: fulcrum
+    groupId: com.obsidiandynamics.fulcrum
+    artefactId: fulcrum-func
+  - name: yconf
+    groupId: com.obsidiandynamics.yconf
+    artefactId: yconf-core
+  - name: zerolog
+    groupId: com.obsidiandynamics.zerolog
+    artefactId: zerolog-core
+- path: ledger-meteor
+  dependencies:
+  - name: meteor
+    groupId: com.obsidiandynamics.meteor
+    artefactId: meteor-core
+- path: ledger-kafka
+  dependencies:
+  - name: jackdaw
+    groupId: com.obsidiandynamics.jackdaw
+    artefactId: jackdaw-core
