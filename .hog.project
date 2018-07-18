@@ -6,20 +6,20 @@ modules:
   dependencies:
   - name: fulcrum
     groupId: com.obsidiandynamics.fulcrum
-    artefactId: fulcrum-func
+    artifactId: fulcrum-func
   - name: yconf
     groupId: com.obsidiandynamics.yconf
-    artefactId: yconf-core
+    artifactId: yconf-core
   - name: zerolog
     groupId: com.obsidiandynamics.zerolog
-    artefactId: zerolog-core
+    artifactId: zerolog-core
 - path: ledger-meteor
   dependencies:
   - name: meteor
     groupId: com.obsidiandynamics.meteor
-    artefactId: meteor-core
+    artifactId: meteor-core
 - path: ledger-kafka
   dependencies:
   - name: jackdaw
     groupId: com.obsidiandynamics.jackdaw
-    artefactId: jackdaw-core
+    artifactId: jackdaw-core
