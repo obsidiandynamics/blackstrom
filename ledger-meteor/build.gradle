@@ -1,12 +1,10 @@
 def packageName = "blackstrom-ledger-meteor"
 version = project(":").version
   
-ext {
-  meteorVersion = "0.10.0"
-  hazelcastVersion = "3.10.2"
-}
-  
 dependencies {
+  def meteorVersion = "0.11.0"
+  def hazelcastVersion = "3.10.3"
+  
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.obsidiandynamics.meteor:meteor-core:${meteorVersion}"
@@ -22,6 +20,7 @@ dependencies {
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.meteor:meteor-assurance:${meteorVersion}"
   testCompile "com.hazelcast:hazelcast:${hazelcastVersion}:tests"
+  testCompile "org.jgroups:jgroups:${jgroupsVersion}"
 }
 
 task addLauncherApps() {

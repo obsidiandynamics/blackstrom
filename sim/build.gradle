@@ -6,6 +6,7 @@ dependencies {
   
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
+  testCompile "org.jgroups:jgroups:${jgroupsVersion}"
 }
 
 task addLauncherApps() {

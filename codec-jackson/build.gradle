@@ -2,9 +2,11 @@ def packageName = "blackstrom-codec-jackson"
 version = project(":").version
 
 dependencies {
+  def jacksonVersion = "2.9.6"
+
   compile project(":")
-  compile "com.fasterxml.jackson.core:jackson-core:2.9.5"
-  compile "com.fasterxml.jackson.core:jackson-databind:2.9.5"
+  compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+  compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
 }
 
 task addLauncherApps() {
