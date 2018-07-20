@@ -64,12 +64,12 @@ public final class Binary {
   
   /**
    *  Dumps the contents of the given byte array to a formatted hex string, using a multi-line,
-   *  8 + 8 layout commonly used in hex editors.<p>
+   *  8 + 8 layout with an ASCII side-note, commonly used in hex editors.<p>
    *  
    *  A typical hex dump resembles the following:<br>
    *  {@code
-   *  20 00 15 73 6F 6D 65 2F   74 6F 70 69 63 2F 74 6F
-   *  2F 70 75 62 6C 69 73 68   00 01 02
+   *  3C 3D 3E 3F 40 41 42 43   44 45 46 47 48 49 4A 4B   <=>?@ABCDEFGHIJK
+   *  4C 4D 4E 4F 50 51 52 53   54                        LMNOPQRST
    *  }
    *  
    *  @param bytes The byte array.
