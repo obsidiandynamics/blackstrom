@@ -7,6 +7,10 @@ import com.obsidiandynamics.blackstrom.model.*;
 public interface Ledger extends Disposable.Nop {
   static AppendCallback sysErrAppendCallback = AppendCallback.errorLoggingAppendCallback(System.err);
   
+  static AppendCallback getDefaultAppendCallback() {
+    return sysErrAppendCallback;
+  }
+  
   default void init() {}
   
   void attach(MessageHandler handler);
@@ -14,7 +18,7 @@ public interface Ledger extends Disposable.Nop {
   void append(Message message, AppendCallback callback);
   
   default void append(Message message) {
-    append(message, sysErrAppendCallback);
+    append(message, getDefaultAppendCallback());
   }
   
   default void confirm(Object handlerId, MessageId messageId) {}

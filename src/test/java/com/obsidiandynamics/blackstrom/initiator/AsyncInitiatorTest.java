@@ -49,7 +49,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testQueryWithCallback() throws Exception {
+  public void testQueryWithResponseCallback() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -99,7 +99,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testCommandWithCallback() throws Exception {
+  public void testCommandWithResponseCallback() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -152,7 +152,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testProposalWithCallback() throws Exception {
+  public void testProposalWithResponseCallback() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -179,6 +179,40 @@ public final class AsyncInitiatorTest {
       assertNotNull(outcome);
       assertEquals(Resolution.COMMIT, outcome.getResolution());
       assertEquals(1, called.get());
+    });
+  }
+
+  @Test
+  public void testProposalWithResponseAndAppendCallbacks() throws Exception {
+    final AsyncInitiator initiator = new AsyncInitiator();
+    final AtomicInteger called = new AtomicInteger();
+    manifold = Manifold.builder()
+        .withLedger(new SingleNodeQueueLedger())
+        .withFactor(initiator)
+        .withFactor(LambdaCohort
+                    .builder()
+                    .onProposal((c, m) -> {
+                      called.incrementAndGet();
+                      c.getLedger().append(new Outcome(m.getXid(), Resolution.COMMIT, null, new Response[0], null));
+
+                      // second append should do nothing
+                      c.getLedger().append(new Outcome(m.getXid(), Resolution.ABORT, AbortReason.REJECT, new Response[0], null));
+                    })
+                    .build())
+        .build();
+
+    final Consumer<Outcome> responseCallback = Classes.cast(mock(Consumer.class));
+    final AppendCallback appendCallback = mock(AppendCallback.class);
+    initiator.initiate(new Proposal("X0", new String[0], null, 0), responseCallback, appendCallback);
+    Wait.SHORT.until(() -> {
+      final ArgumentCaptor<Outcome> captor = ArgumentCaptor.forClass(Outcome.class);
+      verify(responseCallback).accept(captor.capture());
+      final Outcome outcome = captor.getValue();
+      assertNotNull(outcome);
+      assertEquals(Resolution.COMMIT, outcome.getResolution());
+      assertEquals(1, called.get());
+      
+      verify(appendCallback).onAppend(any(), isNull());
     });
   }
 }

@@ -22,38 +22,77 @@ public final class AsyncInitiator implements Initiator, NullGroup, Disposable.No
   }
   
   public CompletableFuture<QueryResponse> initiate(Query query) {
-    return genericInitiate(query);
+    return initiate(query, Ledger.getDefaultAppendCallback());
+  }
+  
+  public CompletableFuture<QueryResponse> initiate(Query query, 
+                                                   AppendCallback appendCallback) {
+    return genericInitiate(query, appendCallback);
   }
   
   public CompletableFuture<CommandResponse> initiate(Command command) {
-    return genericInitiate(command);
+    return initiate(command, Ledger.getDefaultAppendCallback());
+  }
+  
+  public CompletableFuture<CommandResponse> initiate(Command command, 
+                                                     AppendCallback appendCallback) {
+    return genericInitiate(command, appendCallback);
   }
   
   public CompletableFuture<Outcome> initiate(Proposal proposal) {
-    return genericInitiate(proposal);
+    return initiate(proposal, Ledger.getDefaultAppendCallback());
   }
   
-  private <REQ extends Message, RES extends Message> CompletableFuture<RES> genericInitiate(REQ request) {
+  public CompletableFuture<Outcome> initiate(Proposal proposal, 
+                                             AppendCallback appendCallback) {
+    return genericInitiate(proposal, appendCallback);
+  }
+  
+  private <REQ extends Message, RES extends Message> CompletableFuture<RES> genericInitiate(REQ request, 
+                                                                                            AppendCallback appendCallback) {
     final CompletableFuture<RES> f = new CompletableFuture<>();
-    this.genericInitiate(request, f::complete);
+    this.genericInitiate(request, f::complete, appendCallback);
     return f;
   }
   
-  public void initiate(Query query, Consumer<? super QueryResponse> callback) {
-    this.<Query, QueryResponse>genericInitiate(query, callback);
+  public void initiate(Query query, 
+                       Consumer<? super QueryResponse> responseCallback) {
+    initiate(query, responseCallback, Ledger.getDefaultAppendCallback());
   }
   
-  public void initiate(Command command, Consumer<? super CommandResponse> callback) {
-    this.<Command, CommandResponse>genericInitiate(command, callback);
+  public void initiate(Query query, 
+                       Consumer<? super QueryResponse> responseCallback, 
+                       AppendCallback appendCallback) {
+    this.<Query, QueryResponse>genericInitiate(query, responseCallback, appendCallback);
   }
   
-  public void initiate(Proposal proposal, Consumer<? super Outcome> callback) {
-    this.<Proposal, Outcome>genericInitiate(proposal, callback);
+  public void initiate(Command command, 
+                       Consumer<? super CommandResponse> responseCallback) {
+    initiate(command, responseCallback, Ledger.getDefaultAppendCallback());
   }
   
-  private <REQ extends Message, RES extends Message> void genericInitiate(REQ message, Consumer<? super RES> callback) {
-    pending.put(message.getXid(), callback);
-    ledger.append(message);
+  public void initiate(Command command, 
+                       Consumer<? super CommandResponse> responseCallback, 
+                       AppendCallback appendCallback) {
+    this.<Command, CommandResponse>genericInitiate(command, responseCallback, appendCallback);
+  }
+  
+  public void initiate(Proposal proposal, 
+                       Consumer<? super Outcome> responseCallback) {
+    initiate(proposal, responseCallback, Ledger.getDefaultAppendCallback());
+  }
+  
+  public void initiate(Proposal proposal, 
+                       Consumer<? super Outcome> responseCallback, 
+                       AppendCallback appendCallback) {
+    this.<Proposal, Outcome>genericInitiate(proposal, responseCallback, appendCallback);
+  }
+  
+  private <REQ extends Message, RES extends Message> void genericInitiate(REQ message, 
+                                                                          Consumer<? super RES> responseCallback, 
+                                                                          AppendCallback appendCallback) {
+    pending.put(message.getXid(), responseCallback);
+    ledger.append(message, appendCallback);
   }
 
   @Override
