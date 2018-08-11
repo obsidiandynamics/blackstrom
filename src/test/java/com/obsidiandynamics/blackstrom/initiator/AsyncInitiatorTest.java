@@ -1,8 +1,10 @@
 package com.obsidiandynamics.blackstrom.initiator;
 
 import static junit.framework.TestCase.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
@@ -42,10 +44,54 @@ public final class AsyncInitiatorTest {
                     .build())
         .build();
 
-    final QueryResponse res = initiator.initiate(new Query("X0", "do", 0)).get();
+    final Query query = new Query("X0", "do", 0);
+    final QueryResponse res = initiator.initiate(query).get();
+    initiator.cancel(query.getXid()); // should do nothing
     assertNotNull(res);
     assertEquals("done", res.getResult());
     assertEquals(1, called.get());
+  }
+
+  @Test(expected=TimeoutException.class)
+  public void testQueryWithFutureTimeoutDueToCancel() throws Exception {
+    final AsyncInitiator initiator = new AsyncInitiator();
+    manifold = Manifold.builder()
+        .withLedger(new SingleNodeQueueLedger())
+        .withFactor(initiator)
+        .withFactor(LambdaCohort
+                    .builder()
+                    .onQuery((c, m) -> {
+                      initiator.cancel(m);
+                      c.getLedger().append(new QueryResponse(m.getXid(), "done"));
+                    })
+                    .build())
+        .build();
+
+    final Query query = new Query("X0", "do", 0);
+    final Future<QueryResponse> resFuture = initiator.initiate(query);
+    resFuture.get(10, TimeUnit.MILLISECONDS);
+    assertFalse(initiator.isPending(query));
+  }
+
+  @Test(expected=TimeoutException.class)
+  public void testQueryWithFutureTimeoutDueToNoResponse() throws Exception {
+    final AsyncInitiator initiator = new AsyncInitiator();
+    manifold = Manifold.builder()
+        .withLedger(new SingleNodeQueueLedger())
+        .withFactor(initiator)
+        .withFactor(LambdaCohort
+                    .builder()
+                    .onQuery((c, m) -> {})
+                    .build())
+        .build();
+
+    final Query query = new Query("X0", "do", 0);
+    final Future<QueryResponse> resFuture = initiator.initiate(query);
+    try {
+      resFuture.get(10, TimeUnit.MILLISECONDS);
+    } finally {
+      assertTrue(initiator.isPending(query));
+    }
   }
 
   @Test
@@ -92,10 +138,12 @@ public final class AsyncInitiatorTest {
                     .build())
         .build();
 
-    final CommandResponse res = initiator.initiate(new Command("X0", "do", 0)).get();
+    final Command command = new Command("X0", "do", 0);
+    final CommandResponse res = initiator.initiate(command).get();
     assertNotNull(res);
     assertEquals("done", res.getResult());
     assertEquals(1, called.get());
+    assertFalse(initiator.isPending(command));
   }
 
   @Test

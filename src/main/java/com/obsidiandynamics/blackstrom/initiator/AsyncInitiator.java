@@ -88,6 +88,22 @@ public final class AsyncInitiator implements Initiator, NullGroup, Disposable.No
     this.<Proposal, Outcome>genericInitiate(proposal, responseCallback, appendCallback);
   }
   
+  public boolean isPending(Message message) {
+    return isPending(message.getXid());
+  }
+  
+  public boolean isPending(String xid) {
+    return pending.containsKey(xid);
+  }
+  
+  public void cancel(Message message) {
+    cancel(message.getXid());
+  }
+  
+  public void cancel(String xid) {
+    pending.remove(xid);
+  }
+  
   private <REQ extends Message, RES extends Message> void genericInitiate(REQ message, 
                                                                           Consumer<? super RES> responseCallback, 
                                                                           AppendCallback appendCallback) {
