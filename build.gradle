@@ -119,12 +119,6 @@ allprojects {
     }
   }
 
-  javadoc {
-    if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
-      options.addStringOption("quiet", "-html5")
-    }
-  }
-
   // invoke this task when ready to publish to Bintray
   bintrayUpload {
     dependsOn ":bintrayCredentialsCheck"
