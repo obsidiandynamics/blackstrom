@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import org.apache.kafka.clients.admin.*;
@@ -26,7 +27,7 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.ensureExists(TestTopic.newOf(topic), KafkaTimeouts.TOPIC_CREATE);
+      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaTimeouts.TOPIC_CREATE);
     }
   }
   

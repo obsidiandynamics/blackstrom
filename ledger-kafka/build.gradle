@@ -2,8 +2,8 @@ def packageName = "blackstrom-ledger-kafka"
 version = project(":").version
 
 dependencies {
-  def jackdawVersion = "0.9.0"
-  def kafkaVersion = "1.1.1"
+  def jackdawVersion = "1.0.0"
+  def kafkaVersion = "2.0.0"
 
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"

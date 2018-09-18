@@ -42,8 +42,8 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.ensureExists(TestTopic.newOf(getTopic(Guidance.AUTONOMOUS)), KafkaTimeouts.TOPIC_CREATE);
-      admin.ensureExists(TestTopic.newOf(getTopic(Guidance.COORDINATED)), KafkaTimeouts.TOPIC_CREATE);
+      admin.createTopics(Collections.singleton(TestTopic.newOf(getTopic(Guidance.AUTONOMOUS))), KafkaTimeouts.TOPIC_CREATE);
+      admin.createTopics(Collections.singleton(TestTopic.newOf(getTopic(Guidance.COORDINATED))), KafkaTimeouts.TOPIC_CREATE);
     }
   }
   

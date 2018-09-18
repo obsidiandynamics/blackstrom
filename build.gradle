@@ -40,10 +40,17 @@ allprojects {
   }
   
   ext {
+    commonslangVersion = "3.8"
+    equalsverifierVersion = "2.5.2"
     fulcrumVersion = "0.17.0"
+    hdrHistogramVersion = "2.1.10"
+    jgroupsVersion = "4.0.13.Final"
+    junitVersion = "4.12"
+    log4jVersion = "1.2.17"
+    mockitoVersion = "2.22.0"
+    slf4jVersion = "1.7.25"
     yconfVersion = "0.7.0"
     zerologVersion = "0.18.0"
-    jgroupsVersion = "4.0.12.Final"
   }
   
   dependencies {
@@ -53,13 +60,13 @@ allprojects {
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-testmark:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-threads:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.yconf:yconf-snakeyaml:${yconfVersion}"
-    testCompile "junit:junit:4.12"
-    testCompile "org.mockito:mockito-core:2.19.1"
-    testCompile "org.hdrhistogram:HdrHistogram:2.1.10"
-    testCompile "nl.jqno.equalsverifier:equalsverifier:2.4.8"
+    testCompile "junit:junit:${junitVersion}"
+    testCompile "org.mockito:mockito-core:${mockitoVersion}"
+    testCompile "org.hdrhistogram:HdrHistogram:${hdrHistogramVersion}"
+    testCompile "nl.jqno.equalsverifier:equalsverifier:${equalsverifierVersion}"
 
-    testRuntime "org.slf4j:slf4j-log4j12:1.7.25"
-    testRuntime "log4j:log4j:1.2.17"
+    testRuntime "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+    testRuntime "log4j:log4j:${log4jVersion}"
   }
     
   compileJava {
@@ -105,6 +112,11 @@ allprojects {
     if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
       options.addStringOption("quiet", "-html5")
     }
+  }
+  
+  task verify {  
+    dependsOn test
+    dependsOn integrationTest
   }
 
   jacocoTestReport {
@@ -174,9 +186,9 @@ dependencies {
   compile "com.obsidiandynamics.fulcrum:fulcrum-worker:${fulcrumVersion}"
   compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
   compile "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
-  compile "org.apache.commons:commons-lang3:3.7"
+  compile "org.apache.commons:commons-lang3:${commonslangVersion}"
   runtime "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
-  runtime "org.slf4j:slf4j-api:1.7.25"
+  runtime "org.slf4j:slf4j-api:${slf4jVersion}"
   
   testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
