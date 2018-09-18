@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
@@ -15,7 +16,7 @@ public final class BalancedLedgerView implements Ledger {
   
   private final BalancedLedgerHub hub;
   
-  private final List<ShardedFlow> flows = new ArrayList<>(); 
+  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
   
   private final Accumulator[] accumulators;
   
@@ -65,7 +66,7 @@ public final class BalancedLedgerView implements Ledger {
             final long localNextReadOffset = nextReadOffsets[shard];
             final long groupNextReadOffset = group.getReadOffset(shard);
             if (localNextReadOffset < groupNextReadOffset) {
-              zlg.i("Read offset advanced changed for group %s: local: %,d, group: %,d", 
+              zlg.i("Read offset advanced for group %s: local: %,d, group: %,d", 
                     z -> z.arg(group.getGroupId()).arg(localNextReadOffset).arg(groupNextReadOffset));
             }
             nextReadOffset = Math.max(localNextReadOffset, groupNextReadOffset);

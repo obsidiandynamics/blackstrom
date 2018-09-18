@@ -20,7 +20,7 @@ public final class BalancedLedgerHub implements Disposable {
 
     ConsumerGroup(String groupId) {
       this.groupId = groupId;
-      Arrays.setAll(offsets, i-> new AtomicLong());
+      Arrays.setAll(offsets, i -> new AtomicLong());
       Arrays.setAll(assignments, i -> shardAssignmentFactory.create());
     }
     
