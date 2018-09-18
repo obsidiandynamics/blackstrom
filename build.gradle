@@ -40,7 +40,7 @@ allprojects {
   }
   
   ext {
-    commonslangVersion = "3.8"
+    commonsLangVersion = "3.8"
     equalsverifierVersion = "2.5.2"
     fulcrumVersion = "0.17.0"
     hdrHistogramVersion = "2.1.10"
@@ -186,7 +186,7 @@ dependencies {
   compile "com.obsidiandynamics.fulcrum:fulcrum-worker:${fulcrumVersion}"
   compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
   compile "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
-  compile "org.apache.commons:commons-lang3:${commonslangVersion}"
+  compile "org.apache.commons:commons-lang3:${commonsLangVersion}"
   runtime "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
   runtime "org.slf4j:slf4j-api:${slf4jVersion}"
   
