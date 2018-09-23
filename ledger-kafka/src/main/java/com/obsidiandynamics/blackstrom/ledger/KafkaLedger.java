@@ -17,6 +17,7 @@ import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.retry.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.yconf.util.*;
@@ -26,6 +27,7 @@ public final class KafkaLedger implements Ledger {
   private static final int POLL_TIMEOUT_MILLIS = 1_000;
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
   private static final int RETRY_BACKOFF_MILLIS = 100;
+  private static final long OFFSET_DRAIN_CHECK_INTERVAL_MILLIS = 10;
 
   private final Kafka<String, Message> kafka;
 
@@ -51,11 +53,13 @@ public final class KafkaLedger implements Ledger {
   
   private final boolean printConfig;
   
-  private final int attachRetries;
+  private final int ioRetries;
+  
+  private final boolean drainConfirmations;
   
   private final WorkerThread retryThread;
   
-  private static class RetryTask {
+  private static final class RetryTask {
     final Message message;
     final AppendCallback callback;
     
@@ -68,13 +72,17 @@ public final class KafkaLedger implements Ledger {
   private final NodeQueue<RetryTask> retryQueue = new NodeQueue<>();
   private final QueueConsumer<RetryTask> retryQueueConsumer = retryQueue.consumer();
 
-  private static class ConsumerOffsets {
+  static final class ConsumerState {
     final Object lock = new Object();
-    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    
+    Map<TopicPartition, OffsetAndMetadata> offsetsConfirmed = new HashMap<>();
+    Map<Integer, Long> offsetsPending = new HashMap<>();
+    Map<Integer, Long> offsetsAccepted = new HashMap<>();
+    Set<Integer> assignedPartitions = Collections.emptySet();
   }
 
   /** Maps handler IDs to consumer offsets. */
-  private final Map<Integer, ConsumerOffsets> consumers = new HashMap<>();
+  private final Map<Integer, ConsumerState> consumerStates = new HashMap<>();
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
 
@@ -85,7 +93,8 @@ public final class KafkaLedger implements Ledger {
     printConfig = config.isPrintConfig();
     consumerPipeConfig = config.getConsumerPipeConfig();
     maxConsumerPipeYields = config.getMaxConsumerPipeYields();
-    attachRetries = config.getAttachRetries();
+    ioRetries = config.getIORetries();
+    drainConfirmations = config.isDrainConfirmations();
     codecLocator = CodecRegistry.register(config.getCodec());
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
@@ -127,6 +136,14 @@ public final class KafkaLedger implements Ledger {
       Thread.sleep(RETRY_BACKOFF_MILLIS);
     }
   }
+  
+  private static Map<TopicPartition, OffsetAndMetadata> toKafkaOffsetsMap(Map<Integer, Long> sourceMap, String topic) {
+    final Map<TopicPartition, OffsetAndMetadata> targetMap = new HashMap<>();
+    for (Map.Entry<Integer, Long> entry : sourceMap.entrySet()) {
+      targetMap.put(new TopicPartition(topic, entry.getKey()), new OffsetAndMetadata(entry.getValue()));
+    }
+    return targetMap;
+  }
 
   @Override
   public void attach(MessageHandler handler) {
@@ -161,14 +178,42 @@ public final class KafkaLedger implements Ledger {
     
     if (printConfig) kafka.describeConsumer(zlg::i, consumerDefaults, consumerOverrides);
     final Consumer<String, Message> consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
+    final ConsumerState consumerState;
+    if (groupId != null) {
+      consumerState = new ConsumerState();
+    } else {
+      consumerState = null;
+    }
+    
     new Retry()
-    .withAttempts(attachRetries)
+    .withAttempts(ioRetries)
     .withFaultHandler(zlg::w)
     .withErrorHandler(zlg::e)
     .run(() -> {
       if (groupId != null) {
-        consumer.subscribe(Collections.singletonList(topic));
-        zlg.d("subscribed to topic %s", z -> z.arg(topic));
+        final ConsumerRebalanceListener rebalanceListener = new ConsumerRebalanceListener() {
+          @Override
+          public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+            synchronized (consumerState.lock) {
+              consumerState.assignedPartitions = Collections.emptySet();
+            }
+
+            if (drainConfirmations) {
+              // blocks until all pending offsets have been confirmed, and performs a sync commit
+              drainOffsets(topic, consumer, consumerState, ioRetries, sleepFor(OFFSET_DRAIN_CHECK_INTERVAL_MILLIS), zlg);
+            }
+          }
+
+          @Override
+          public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+            final Set<Integer> assignedPartitions = partitions.stream().map(TopicPartition::partition).collect(Collectors.toSet());
+            synchronized (consumerState.lock) {
+              consumerState.assignedPartitions = assignedPartitions;
+            }
+          }
+        };
+        consumer.subscribe(Collections.singletonList(topic), rebalanceListener);
+        zlg.d("Subscribed to topic %s", z -> z.arg(topic));
       } else {
         final List<PartitionInfo> infos = consumer.partitionsFor(topic);
         final List<TopicPartition> partitions = infos.stream()
@@ -184,18 +229,15 @@ public final class KafkaLedger implements Ledger {
     });
 
     final Integer handlerId;
-    final ConsumerOffsets consumerOffsets;
     final Retention retention;
     if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
-      consumerOffsets = new ConsumerOffsets();
-      consumers.put(handlerId, consumerOffsets);
+      consumerStates.put(handlerId, consumerState);
       final ShardedFlow flow = new ShardedFlow();
       retention = flow;
       flows.add(flow);
     } else {
       handlerId = null;
-      consumerOffsets = null;
       retention = NopRetention.getInstance();
     }
 
@@ -203,12 +245,7 @@ public final class KafkaLedger implements Ledger {
     final String consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
       for (ConsumerRecord<String, Message> record : records) {
-        final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
-        final Message message = record.value();
-        message.setMessageId(messageId);
-        message.setShardKey(record.key());
-        message.setShard(record.partition());
-        handler.onMessage(context, message);
+        handleRecord(handler, consumerState, context, record, zlg);
       }
     };
     final ConsumerPipe<String, Message> consumerPipe = 
@@ -218,22 +255,8 @@ public final class KafkaLedger implements Ledger {
       for (int yields = 0;;) {
         final boolean enqueued = consumerPipe.receive(records);
 
-        if (consumerOffsets != null) {
-          final Map<TopicPartition, OffsetAndMetadata> offsetsSnapshot;
-          synchronized (consumerOffsets.lock) {
-            if (! consumerOffsets.offsets.isEmpty()) {
-              offsetsSnapshot = consumerOffsets.offsets;
-              consumerOffsets.offsets = new HashMap<>(offsetsSnapshot.size());
-            } else {
-              offsetsSnapshot = null;
-            }
-          }
-
-          if (offsetsSnapshot != null) {
-            zlg.t("Committing offsets %s", z -> z.arg(offsetsSnapshot));
-            consumer.commitAsync(offsetsSnapshot, 
-                                 (offsets, exception) -> logException(exception, "Error committing offsets %s", offsets));
-          }
+        if (consumerState != null) {
+          commitOffsets(consumer, consumerState, zlg);
         }
 
         if (enqueued) {
@@ -252,6 +275,84 @@ public final class KafkaLedger implements Ledger {
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
   }
+  
+  static Runnable sleepFor(long sleepMillis) {
+    return () -> Threads.sleep(sleepMillis);
+  }
+
+  static void drainOffsets(String topic, Consumer<String, Message> consumer, ConsumerState consumerState, 
+                           int ioRetries, Runnable intervalSleep, Zlg zlg) {
+    for (;;) {
+      final boolean allPendingOffsetsConfirmed;
+      final Map<Integer, Long> offsetsAcceptedSnapshot;
+      synchronized (consumerState.lock) {
+        allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
+        if (allPendingOffsetsConfirmed) {
+          offsetsAcceptedSnapshot = consumerState.offsetsAccepted;
+          consumerState.offsetsAccepted = new HashMap<>();
+        } else {
+          offsetsAcceptedSnapshot = null;
+        }
+      }
+
+      if (allPendingOffsetsConfirmed) {
+        zlg.d("All offsets confirmed: %s", z -> z.arg(offsetsAcceptedSnapshot));
+        new Retry()
+        .withAttempts(ioRetries)
+        .withFaultHandler(zlg::w)
+        .withErrorHandler(zlg::e)
+        .run(() -> consumer.commitSync(toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic)));
+        return;
+      } else {
+        intervalSleep.run();
+      }
+    }
+  }
+
+  static void commitOffsets(Consumer<String, Message> consumer, ConsumerState consumerState, Zlg zlg) {
+    final Map<TopicPartition, OffsetAndMetadata> confirmedSnapshot;
+    synchronized (consumerState.lock) {
+      if (! consumerState.offsetsConfirmed.isEmpty()) {
+        confirmedSnapshot = consumerState.offsetsConfirmed;
+        consumerState.offsetsConfirmed = new HashMap<>(confirmedSnapshot.size());
+      } else {
+        confirmedSnapshot = null;
+      }
+    }
+
+    if (confirmedSnapshot != null) {
+      zlg.t("Committing offsets %s", z -> z.arg(confirmedSnapshot));
+      consumer.commitAsync(confirmedSnapshot, 
+                           (offsets, exception) -> logException(zlg, exception, "Error committing offsets %s", offsets));
+    }
+  }
+
+  static void handleRecord(MessageHandler handler, ConsumerState consumerState, MessageContext context,
+                           ConsumerRecord<String, Message> record, Zlg zlg) {
+    final boolean accepted;
+    if (consumerState != null) {
+      synchronized (consumerState.lock) {
+        accepted = consumerState.assignedPartitions.contains(record.partition());
+        if (accepted) {
+          consumerState.offsetsPending.put(record.partition(), record.offset());
+          consumerState.offsetsAccepted.put(record.partition(), record.offset());
+        } else {
+          zlg.d("Skipping message at offset %d: partition %d has been reassigned", z -> z.arg(record::offset).arg(record::partition));
+        }
+      }
+    } else {
+      accepted = true;
+    }
+    
+    if (accepted) {
+      final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
+      final Message message = record.value();
+      message.setMessageId(messageId);
+      message.setShardKey(record.key());
+      message.setShard(record.partition());
+      handler.onMessage(context, message);
+    }
+  }
 
   @Override
   public void append(Message message, AppendCallback callback) {
@@ -261,11 +362,11 @@ public final class KafkaLedger implements Ledger {
       if (exception == null) {
         callback.onAppend(new DefaultMessageId(metadata.partition(), metadata.offset()), null);
       } else if (exception instanceof RetriableException) { 
-        logException(exception, "Retriable error publishing %s (queuing in background)", record);
+        logException(zlg, exception, "Retriable error publishing %s (queuing in background)", record);
         retryQueue.add(new RetryTask(message, callback));
       } else {
         callback.onAppend(null, exception);
-        logException(exception, "Error publishing %s", record);
+        logException(zlg, exception, "Error publishing %s", record);
       }
     };
 
@@ -274,16 +375,30 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
-    final ConsumerOffsets consumer = consumers.get(handlerId);
-    final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
-    final TopicPartition tp = new TopicPartition(topic, defaultMessageId.getShard());
-    final OffsetAndMetadata om = new OffsetAndMetadata(defaultMessageId.getOffset());
-    synchronized (consumer.lock) {
-      consumer.offsets.put(tp, om);
+    final ConsumerState consumerState = consumerStates.get(handlerId);
+    confirm((DefaultMessageId) messageId, consumerState, topic, zlg);
+  }
+
+  static void confirm(DefaultMessageId messageId, ConsumerState consumerState, String topic, Zlg zlg) {
+    final int partition = messageId.getShard();
+    final TopicPartition topicPartition = new TopicPartition(topic, partition);
+    final long offset = messageId.getOffset();
+    final OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset);
+    synchronized (consumerState.lock) {
+      consumerState.offsetsConfirmed.put(topicPartition, offsetAndMetadata);
+      consumerState.offsetsPending.computeIfPresent(partition, (_partition, _offset) -> {
+        if (_offset == offset) {
+          zlg.t("Confirmed last %d (partition %d)", z -> z.arg(_offset).arg(partition));
+          return null;
+        } else {
+          zlg.t("Confirmed intermediate %d from %d (partition %d)", z -> z.arg(offset).arg(_offset).arg(partition));
+          return _offset;
+        }
+      });
     }
   }
 
-  private void logException(Exception cause, String messageFormat, Object... messageArgs) {
+  private static void logException(Zlg zlg, Exception cause, String messageFormat, Object... messageArgs) {
     if (cause != null) {
       zlg.w(String.format(messageFormat, messageArgs), cause);
     }

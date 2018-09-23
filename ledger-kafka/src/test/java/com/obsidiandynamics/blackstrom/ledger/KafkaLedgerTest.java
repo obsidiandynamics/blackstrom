@@ -8,7 +8,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.*;
 import org.apache.kafka.common.errors.*;
 import org.junit.*;
 import org.junit.runner.*;
@@ -17,6 +19,7 @@ import org.junit.runners.*;
 import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
@@ -73,7 +76,8 @@ public final class KafkaLedgerTest {
     final CyclicBarrier barrierB = new CyclicBarrier(2);
     final AtomicInteger received = new AtomicInteger();
     ledger.attach(new NullGroupMessageHandler() {
-      @Override public void onMessage(MessageContext context, Message message) {
+      @Override 
+      public void onMessage(MessageContext context, Message message) {
         if (received.get() == 0) {
           Threads.await(barrierA);
           Threads.await(barrierB);
@@ -105,7 +109,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testSendCallbackExceptionLoggerFail() {
     final MockLogTarget target = new MockLogTarget();
-    final Exception exception = new Exception("testSendExceptionLoggerFail");
+    final Exception exception = new Exception("simulated");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendCallbackExceptionGenerator(ExceptionGenerator.once(exception));
     ledger = createLedger(kafka, false, true, 10, target.logger());
@@ -119,7 +123,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testSendCallbackRetriableException() {
     final MockLogTarget target = new MockLogTarget();
-    final Exception exception = new CorruptRecordException("testSendRetriableException");
+    final Exception exception = new CorruptRecordException("simulated");
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> exGen = ExceptionGenerator.times(exception, 2);
     final ExceptionGenerator<ProducerRecord<String, Message>, Exception> mockExGen = Classes.cast(mock(ExceptionGenerator.class));
     when(mockExGen.inspect(any())).thenAnswer(invocation -> exGen.inspect(invocation.getArgument(0)));
@@ -138,7 +142,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testSendRuntimeException() {
     final MockLogTarget target = new MockLogTarget();
-    final IllegalStateException exception = new IllegalStateException("testSendRuntimeException");
+    final IllegalStateException exception = new IllegalStateException("simulated");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withSendRuntimeExceptionGenerator(ExceptionGenerator.once(exception));
     ledger = createLedger(kafka, false, true, 10, target.logger());
@@ -151,7 +155,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testCommitCallbackExceptionLoggerFail() {
     final MockLogTarget target = new MockLogTarget();
-    final Exception exception = new Exception("testCommitExceptionLoggerFail");
+    final Exception exception = new Exception("simulated");
     final Kafka<String, Message> kafka = new MockKafka<String, Message>()
         .withCommitExceptionGenerator(ExceptionGenerator.once(exception));
     ledger = createLedger(kafka, false, true, 10, target.logger());
@@ -187,5 +191,129 @@ public final class KafkaLedgerTest {
     ledger.append(new Proposal("B100", new String[0], null, 0), callback);
     Threads.sleep(10);
     verifyNoMoreInteractions(callback);
+  }
+  
+  @Test
+  public void testHandleRecordWithNoConsumerState() {
+    final MessageHandler handler = mock(MessageHandler.class);
+    final Message message = new Command("xid", null, 0);
+    final ConsumerRecord<String, Message> record = new ConsumerRecord<>("topic", 0, 0L, "key", message);
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.handleRecord(handler, null, null, record, logTarget.logger());
+    verify(handler).onMessage(isNull(), eq(message));
+    logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testHandleRecordWithAssignedTopic() {
+    final MessageHandler handler = mock(MessageHandler.class);
+    final ConsumerState consumerState = new ConsumerState();
+    consumerState.assignedPartitions = new HashSet<>(Arrays.asList(0));
+    final Message message = new Command("xid", null, 0);
+    final ConsumerRecord<String, Message> record = new ConsumerRecord<>("topic", 0, 0L, "key", message);
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.handleRecord(handler, consumerState, null, record, logTarget.logger());
+    verify(handler).onMessage(isNull(), eq(message));
+    logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testHandleRecordWithUnassignedTopic() {
+    final MessageHandler handler = mock(MessageHandler.class);
+    final ConsumerState consumerState = new ConsumerState();
+    final Message message = new Command("xid", null, 0);
+    final ConsumerRecord<String, Message> record = new ConsumerRecord<>("topic", 0, 0L, "key", message);
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.handleRecord(handler, consumerState, null, record, logTarget.logger());
+    verify(handler, never()).onMessage(isNull(), eq(message));
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Skipping message at offset").assertCount(1);
+  }
+  
+  @Test
+  public void testConfirmItermediate() {
+    final DefaultMessageId messageId = new DefaultMessageId(0, 100L);
+    final ConsumerState consumerState = new ConsumerState();
+    consumerState.offsetsPending.put(0, 200L);
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.confirm(messageId, consumerState, "topic", logTarget.logger());
+    assertTrue(consumerState.offsetsConfirmed.containsKey(new TopicPartition("topic", 0)));
+    assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(100L)));
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("intermediate").assertCount(1);
+  }
+  
+  @Test
+  public void testConfirmLast() {
+    final DefaultMessageId messageId = new DefaultMessageId(0, 100L);
+    final ConsumerState consumerState = new ConsumerState();
+    consumerState.offsetsPending.put(0, 100L);
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.confirm(messageId, consumerState, "topic", logTarget.logger());
+    assertTrue(consumerState.offsetsConfirmed.containsKey(new TopicPartition("topic", 0)));
+    assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(100L)));
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("last").assertCount(1);
+  }
+  
+  @Test
+  public void testCommitOffsetsWithEnqueued() {
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final ConsumerState consumerState = new ConsumerState();
+    final MockLogTarget logTarget = new MockLogTarget();
+    final TopicPartition topicPartition = new TopicPartition("topic", 0);
+    final OffsetAndMetadata offsetsAndMetadata = new OffsetAndMetadata(100L);
+    consumerState.offsetsConfirmed.put(topicPartition, offsetsAndMetadata);
+    final Map<TopicPartition, OffsetAndMetadata> offsetsConfirmed = consumerState.offsetsConfirmed;
+    
+    KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets").assertCount(1);
+    verify(consumer).commitAsync(eq(offsetsConfirmed), isNotNull());
+  }
+  
+  @Test
+  public void testCommitOffsetsWithNoneEnqueued() {
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final ConsumerState consumerState = new ConsumerState();
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
+    logTarget.entries().assertCount(0);
+    verify(consumer, never()).commitAsync(any(), isNotNull());
+  }
+  
+  @Test
+  public void testSleepFor() {
+    KafkaLedger.sleepFor(0).run();
+  }
+  
+  @Test
+  public void testDrainOffsets() {
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final ConsumerState consumerState = new ConsumerState();
+    final MockLogTarget logTarget = new MockLogTarget();
+    final Runnable intervalSleep = mock(Runnable.class);
+    consumerState.offsetsAccepted.put(0, 100L);
+    consumerState.offsetsPending.put(0, 100L);
+    doAnswer(__ -> {
+      synchronized (consumerState.lock) {
+        consumerState.offsetsPending.clear();
+      }
+      return null;
+    }).when(intervalSleep).run();
+    
+    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, logTarget.logger());
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
+    final Map<TopicPartition, OffsetAndMetadata> expectedOffsets = MapBuilder
+        .init(new TopicPartition("topic", 0), new OffsetAndMetadata(100L))
+        .build();
+    verify(consumer).commitSync(eq(expectedOffsets));
   }
 }

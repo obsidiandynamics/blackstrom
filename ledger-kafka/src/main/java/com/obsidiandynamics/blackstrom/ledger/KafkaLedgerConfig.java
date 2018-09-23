@@ -30,7 +30,10 @@ public final class KafkaLedgerConfig {
   private Zlg zlg = Zlg.forDeclaringClass().get();
   
   @YInject
-  private int attachRetries = 10;
+  private int ioRetries = 10;
+  
+  @YInject
+  private boolean drainConfirmations;
   
   @YInject
   private boolean printConfig;
@@ -98,12 +101,21 @@ public final class KafkaLedgerConfig {
     return this;
   }
 
-  int getAttachRetries() {
-    return attachRetries;
+  int getIORetries() {
+    return ioRetries;
   }
   
-  public KafkaLedgerConfig withAttachRetries(int attachRetries) {
-    this.attachRetries = attachRetries;
+  public KafkaLedgerConfig withIORetries(int ioRetries) {
+    this.ioRetries = ioRetries;
+    return this;
+  }
+  
+  boolean isDrainConfirmations() {
+    return drainConfirmations;
+  }
+  
+  public KafkaLedgerConfig withDrainConfirmations(boolean drainConfirmations) {
+    this.drainConfirmations = drainConfirmations;
     return this;
   }
   
@@ -121,6 +133,7 @@ public final class KafkaLedgerConfig {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
         ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + 
         ", maxConsumerPipeYields=" + maxConsumerPipeYields + 
-        ", attachRetries=" + attachRetries + ", printConfig=" + printConfig + "]";
+        ", ioRetries=" + ioRetries + ", drainConfirmations=" + drainConfirmations + 
+        ", printConfig=" + printConfig + "]";
   }
 }
