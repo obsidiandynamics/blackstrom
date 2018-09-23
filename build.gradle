@@ -40,7 +40,7 @@ allprojects {
   }
   
   ext {
-    commonsLangVersion = "3.8"
+    commonsLangVersion = "3.8.1"
     equalsverifierVersion = "2.5.2"
     fulcrumVersion = "0.17.0"
     hdrHistogramVersion = "2.1.10"

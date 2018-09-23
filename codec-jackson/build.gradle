@@ -2,7 +2,7 @@ def packageName = "blackstrom-codec-jackson"
 version = project(":").version
 
 dependencies {
-  def jacksonVersion = "2.9.6"
+  def jacksonVersion = "2.9.7"
 
   compile project(":")
   compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
