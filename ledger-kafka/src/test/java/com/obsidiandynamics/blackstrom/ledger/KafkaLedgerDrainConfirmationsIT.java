@@ -19,6 +19,7 @@ import com.obsidiandynamics.flow.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.zerolog.*;
 
 @RunWith(Parameterized.class)
 public final class KafkaLedgerDrainConfirmationsIT {
@@ -73,7 +74,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
    */
   @Test
   public void testMultipleConsumers() {
-    System.out.println("Starting test");
+    final Zlg zlg = Zlg.forDeclaringClass().get();
+    zlg.i("Starting test");
     
     final int messages = 400;
     final int messageIntervalMillis = 10;
@@ -95,7 +97,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
     new Thread(() -> {
       for (int c = 0; c < consumers; c++) {
         if (c != 0) Threads.sleep(consumerJoinIntervalMillis);
-        
+
+        zlg.i("Attaching consumer");
         ledger.attach(new MessageHandler() {
           int lastCount = 1;
           
@@ -145,8 +148,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
         Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= 1);
       }
     }, "LedgerAttachThread").start();
-    
-    
+
+    zlg.i("Starting publisher");
     for (int m = 0; m < messages; m++) {
       ledger.append(new Command(String.valueOf(m), null, 0)
                     .withMessageId(new DefaultMessageId(0, m))
