@@ -161,6 +161,7 @@ public final class KafkaLedger implements Ledger {
     // may be user-specified in config
     final Properties consumerDefaults = new PropsBuilder()
         .withSystemDefault("session.timeout.ms", 6_000)
+        .withSystemDefault("max.poll.interval.ms", 60_000)
         .withSystemDefault("heartbeat.interval.ms", 2_000)
         .withSystemDefault("max.poll.records", 10_000)
         .build();

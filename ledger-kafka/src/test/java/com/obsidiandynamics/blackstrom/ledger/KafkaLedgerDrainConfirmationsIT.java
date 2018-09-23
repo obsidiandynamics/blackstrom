@@ -37,7 +37,6 @@ public final class KafkaLedgerDrainConfirmationsIT {
   private final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers("localhost:9092")
       .withConsumerProps(new MapBuilder<Object, Object>()
-                         .with("max.poll.interval.ms", "60000")
                          .build());
   
   private final String topic = TestTopic.of(KafkaLedgerDrainConfirmationsIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
