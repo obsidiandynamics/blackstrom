@@ -291,6 +291,7 @@ public final class KafkaLedger implements Ledger {
           offsetsAcceptedSnapshot = consumerState.offsetsAccepted;
           consumerState.offsetsAccepted = new HashMap<>();
         } else {
+          zlg.d("Offsets pending: %s", z -> z.arg(consumerState.offsetsPending));
           offsetsAcceptedSnapshot = null;
         }
       }

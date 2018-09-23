@@ -16,6 +16,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.flow.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
@@ -33,7 +34,11 @@ public final class KafkaLedgerDrainConfirmationsIT {
     new KafkaDocker().withComposeFile("stack/docker-compose.yaml").start();
   }
   
-  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+  private final KafkaClusterConfig config = new KafkaClusterConfig()
+      .withBootstrapServers("localhost:9092")
+      .withConsumerProps(new MapBuilder<Object, Object>()
+                         .with("max.poll.interval.ms", "60000")
+                         .build());
   
   private final String topic = TestTopic.of(KafkaLedgerDrainConfirmationsIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
   

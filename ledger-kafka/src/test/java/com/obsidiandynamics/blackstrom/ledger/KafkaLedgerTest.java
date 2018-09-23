@@ -309,8 +309,9 @@ public final class KafkaLedgerTest {
     }).when(intervalSleep).run();
     
     KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, logTarget.logger());
-    logTarget.entries().assertCount(1);
+    logTarget.entries().assertCount(2);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending").assertCount(1);
     final Map<TopicPartition, OffsetAndMetadata> expectedOffsets = MapBuilder
         .init(new TopicPartition("topic", 0), new OffsetAndMetadata(100L))
         .build();
