@@ -142,7 +142,10 @@ public final class KafkaLedgerDrainConfirmationsIT {
                   Threads.sleep(sleepNeeded);
                   confirmation.confirm();
                 });
-              } catch (RejectedExecutionException e) {}
+              } catch (RejectedExecutionException e) {
+                zlg.i("Executor terminated: confirming offset %d in handler thread", z -> z.arg(offset));
+                confirmation.confirm();
+              }
             }
           }
         });
@@ -192,5 +195,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
         }
       }
     }
+    
+    zlg.i("Test passed");
   }
 }
