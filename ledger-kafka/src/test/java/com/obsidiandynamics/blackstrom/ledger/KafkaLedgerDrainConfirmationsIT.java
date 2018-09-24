@@ -98,6 +98,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     
     final Map<Long, AtomicInteger> receiveCounts = new ConcurrentHashMap<>();
     final AtomicInteger totalReceived = new AtomicInteger();
+    final AtomicInteger totalConfirmed = new AtomicInteger();
     executor = Executors.newFixedThreadPool(8);
     
     new Thread(() -> {
@@ -147,10 +148,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
                   final long sleepNeeded = confirmNoSoonerThan - System.currentTimeMillis();
                   Threads.sleep(sleepNeeded);
                   confirmation.confirm();
+                  totalConfirmed.incrementAndGet();
                 });
               } catch (RejectedExecutionException e) {
                 zlg.i("Executor terminated: confirming offset %d in handler thread", z -> z.arg(offset));
                 confirmation.confirm();
+                totalConfirmed.incrementAndGet();
               }
             }
           }
@@ -201,7 +204,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
         }
       }
     }
+
+    ledger.dispose();
     
+    zlg.i("Awaiting final confirmations");
+    Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= receiveCounts.size());
+    Wait.MEDIUM.untilTrue(() -> totalReceived.get() == totalConfirmed.get());
     zlg.i("Test passed");
   }
 }
