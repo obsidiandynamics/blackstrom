@@ -58,7 +58,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
   @After
   public void after() {
     if (executor != null) {
-      executor.shutdownNow();
+      executor.shutdown();
     }
     
     if (ledger != null) {
