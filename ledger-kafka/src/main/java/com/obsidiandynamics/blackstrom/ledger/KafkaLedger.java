@@ -17,7 +17,6 @@ import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.retry.*;
-import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.yconf.util.*;
@@ -278,7 +277,13 @@ public final class KafkaLedger implements Ledger {
   }
   
   static Runnable sleepFor(long sleepMillis) {
-    return () -> Threads.sleep(sleepMillis);
+    return () -> {
+      try {
+        Thread.sleep(sleepMillis);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    };
   }
 
   static void drainOffsets(String topic, Consumer<String, Message> consumer, ConsumerState consumerState, 
@@ -307,6 +312,10 @@ public final class KafkaLedger implements Ledger {
         return;
       } else {
         intervalSleep.run();
+        if (Thread.interrupted()) {
+          zlg.d("Offset drain interrupted");
+          return;
+        }
       }
     }
   }
