@@ -118,6 +118,10 @@ public final class KafkaLedgerDrainConfirmationsIT {
             if (sandbox.contains(message)) {
               final Confirmation confirmation = context.begin(message);
               final long offset = ((DefaultMessageId) message.getMessageId()).getOffset();
+              if (message.getXid().equals(String.valueOf(messages - 1))) {
+                zlg.d("Received last message at offset %d", z -> z.arg(offset));
+              }
+              
               final AtomicInteger count = receiveCounts.compute(offset, (__, _count) -> {
                 if (_count == null) {
                   return new AtomicInteger(1);
