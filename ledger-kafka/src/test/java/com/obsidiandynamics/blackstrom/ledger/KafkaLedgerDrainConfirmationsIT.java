@@ -28,6 +28,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
+
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -78,7 +80,6 @@ public final class KafkaLedgerDrainConfirmationsIT {
    */
   @Test
   public void testMultipleConsumers() {
-    final Zlg zlg = Zlg.forDeclaringClass().get();
     zlg.i("Starting test");
     
     final int messages = 400;
@@ -91,6 +92,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
                              .withKafka(new KafkaCluster<>(config))
                              .withTopic(topic)
                              .withDrainConfirmations(true)
+                             .withZlg(zlg)
                              .withCodec(new KryoMessageCodec(true)));
     ledger.init();
     
