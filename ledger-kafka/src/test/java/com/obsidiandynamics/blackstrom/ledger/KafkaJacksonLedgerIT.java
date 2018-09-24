@@ -32,7 +32,7 @@ public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaTimeouts.TOPIC_CREATE);
+      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaTimeouts.TOPIC_OPERATION);
     }
   }
   

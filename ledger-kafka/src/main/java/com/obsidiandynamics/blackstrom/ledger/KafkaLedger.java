@@ -414,8 +414,6 @@ public final class KafkaLedger implements Ledger {
   private static void logException(Zlg zlg, Exception cause, String messageFormat, Object... messageArgs) {
     if (cause != null) {
       zlg.w(String.format(messageFormat, messageArgs), cause);
-    } else {
-      zlg.d("COMMITTED");
     }
   }
 

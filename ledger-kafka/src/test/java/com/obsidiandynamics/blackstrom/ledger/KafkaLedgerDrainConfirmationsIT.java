@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.junit.*;
@@ -39,23 +40,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
   private final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers("localhost:9092")
       .withConsumerProps(new MapBuilder<Object, Object>()
+                         .with("default.api.timeout.ms", "5000")
                          .build());
-  
-  private final String topic = TestTopic.of(KafkaLedgerDrainConfirmationsIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
-  
-  private final Sandbox sandbox = Sandbox.forInstance(this);
   
   private ExecutorService executor;
   
   private KafkaLedger ledger;
-  
-  @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException {
-    try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
-      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaTimeouts.TOPIC_CREATE);
-    }
-  }
   
   @After
   public void after() {
@@ -65,6 +55,20 @@ public final class KafkaLedgerDrainConfirmationsIT {
     
     if (ledger != null) {
       ledger.dispose();
+    }
+  }
+  
+  private String createTopic(String label, int partitions) throws InterruptedException, ExecutionException, TimeoutException {
+    try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
+      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
+      
+      final String topicPrefix = KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
+      final Set<String> allTopics = admin.listTopics(KafkaTimeouts.TOPIC_OPERATION);
+      final List<String> testTopics = allTopics.stream().filter(topic -> topic.startsWith(topicPrefix)).collect(Collectors.toList());
+      admin.deleteTopics(testTopics, KafkaTimeouts.TOPIC_OPERATION);
+      final String topicName = topicPrefix + "-" + System.currentTimeMillis();
+      admin.createTopics(Collections.singleton(new NewTopic(topicName, partitions, (short) 1)), KafkaTimeouts.TOPIC_OPERATION);
+      return topicName;
     }
   }
   
@@ -82,15 +86,18 @@ public final class KafkaLedgerDrainConfirmationsIT {
   public void testMultipleConsumers() {
     zlg.i("Starting test");
     
+    final int partitions = 1;
     final int messages = 400;
     final int messageIntervalMillis = 10;
     final int consumers = 4;
     final int consumerJoinIntervalMillis = 1000;
     final int commitDelayMillis = 100;
     
+    final String topicName = Exceptions.wrap(() -> createTopic("MultiPartition", partitions), RuntimeException::new);
+    
     ledger = new KafkaLedger(new KafkaLedgerConfig()
                              .withKafka(new KafkaCluster<>(config))
-                             .withTopic(topic)
+                             .withTopic(topicName)
                              .withDrainConfirmations(true)
                              .withZlg(zlg)
                              .withCodec(new KryoMessageCodec(true)));
@@ -116,45 +123,43 @@ public final class KafkaLedgerDrainConfirmationsIT {
     
           @Override
           public void onMessage(MessageContext context, Message message) {
-            if (sandbox.contains(message)) {
-              final Confirmation confirmation = context.begin(message);
-              final long offset = ((DefaultMessageId) message.getMessageId()).getOffset();
-              if (message.getXid().equals(String.valueOf(messages - 1))) {
-                zlg.d("Received last message at offset %d", z -> z.arg(offset));
+            final Confirmation confirmation = context.begin(message);
+            final long offset = ((DefaultMessageId) message.getMessageId()).getOffset();
+            if (message.getXid().equals(String.valueOf(messages - 1))) {
+              zlg.d("Received last message at offset %d", z -> z.arg(offset));
+            }
+            
+            final AtomicInteger count = receiveCounts.compute(offset, (__, _count) -> {
+              if (_count == null) {
+                return new AtomicInteger(1);
+              } else {
+                _count.incrementAndGet();
+                return _count;
               }
-              
-              final AtomicInteger count = receiveCounts.compute(offset, (__, _count) -> {
-                if (_count == null) {
-                  return new AtomicInteger(1);
-                } else {
-                  _count.incrementAndGet();
-                  return _count;
-                }
-              });
-              
-              // log any message that has been processed more than once (unless it is a one-off)
-              final int currentCount = count.get();
-              if (lastCount == 1 && currentCount > 2 || lastCount == 2 && currentCount > 1) {
-                System.err.format("FAILURE in message %s; count=%d\n", message, currentCount);
-              }
-              lastCount = count.get();
-              totalReceived.incrementAndGet();
-              
-              // delay offset commits for a more pronounced effect (increases likelihood of repeated messages
-              // after rebalancing)
-              final long confirmNoSoonerThan = System.currentTimeMillis() + commitDelayMillis;
-              try {
-                executor.submit(() -> {
-                  final long sleepNeeded = confirmNoSoonerThan - System.currentTimeMillis();
-                  Threads.sleep(sleepNeeded);
-                  confirmation.confirm();
-                  totalConfirmed.incrementAndGet();
-                });
-              } catch (RejectedExecutionException e) {
-                zlg.i("Executor terminated: confirming offset %d in handler thread", z -> z.arg(offset));
+            });
+            
+            // log any message that has been processed more than once (unless it is a one-off)
+            final int currentCount = count.get();
+            if (lastCount == 1 && currentCount > 2 || lastCount == 2 && currentCount > 1) {
+              System.err.format("FAILURE in message %s; count=%d\n", message, currentCount);
+            }
+            lastCount = count.get();
+            totalReceived.incrementAndGet();
+            
+            // delay offset commits for a more pronounced effect (increases likelihood of repeated messages
+            // after rebalancing)
+            final long confirmNoSoonerThan = System.currentTimeMillis() + commitDelayMillis;
+            try {
+              executor.submit(() -> {
+                final long sleepNeeded = confirmNoSoonerThan - System.currentTimeMillis();
+                Threads.sleep(sleepNeeded);
                 confirmation.confirm();
                 totalConfirmed.incrementAndGet();
-              }
+              });
+            } catch (RejectedExecutionException e) {
+              zlg.i("Executor terminated: confirming offset %d in handler thread", z -> z.arg(offset));
+              confirmation.confirm();
+              totalConfirmed.incrementAndGet();
             }
           }
         });
@@ -168,8 +173,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     zlg.i("Starting publisher");
     for (int m = 0; m < messages; m++) {
       ledger.append(new Command(String.valueOf(m), null, 0)
-                    .withMessageId(new DefaultMessageId(0, m))
-                    .withShardKey(sandbox.key()));
+                    .withMessageId(new DefaultMessageId(0, m)));
       Threads.sleep(messageIntervalMillis);
 
       // wait for at least one message to be received before publishing more

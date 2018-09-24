@@ -34,7 +34,7 @@ public final class KafkaJacksonGroupLedgerIT extends AbstractGroupLedgerTest {
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaTimeouts.TOPIC_CREATE);
+      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaTimeouts.TOPIC_OPERATION);
     }
   }
   
