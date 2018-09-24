@@ -2,9 +2,11 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.errors.*;
@@ -17,6 +19,7 @@ import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.retry.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.yconf.util.*;
@@ -84,6 +87,8 @@ public final class KafkaLedger implements Ledger {
   private final Map<Integer, ConsumerState> consumerStates = new HashMap<>();
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
+  
+  private volatile boolean disposing;
 
   public KafkaLedger(KafkaLedgerConfig config) {
     kafka = config.getKafka();
@@ -200,7 +205,8 @@ public final class KafkaLedger implements Ledger {
 
             if (drainConfirmations) {
               // blocks until all pending offsets have been confirmed, and performs a sync commit
-              drainOffsets(topic, consumer, consumerState, ioRetries, sleepFor(OFFSET_DRAIN_CHECK_INTERVAL_MILLIS), zlg);
+              drainOffsets(topic, consumer, consumerState, ioRetries, sleepFor(OFFSET_DRAIN_CHECK_INTERVAL_MILLIS), 
+                           KafkaLedger.this::isDisposing, zlg);
             }
           }
 
@@ -277,18 +283,16 @@ public final class KafkaLedger implements Ledger {
   }
   
   static Runnable sleepFor(long sleepMillis) {
-    return () -> {
-      try {
-        Thread.sleep(sleepMillis);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    };
+    return () -> Threads.sleep(sleepMillis);
+  }
+  
+  boolean isDisposing() {
+    return disposing;
   }
 
   static void drainOffsets(String topic, Consumer<String, Message> consumer, ConsumerState consumerState, 
-                           int ioRetries, Runnable intervalSleep, Zlg zlg) {
-    for (;;) {
+                           int ioRetries, Runnable intervalSleep, BooleanSupplier isDisposingCheck, Zlg zlg) {
+    while (! isDisposingCheck.getAsBoolean()) {
       final boolean allPendingOffsetsConfirmed;
       final Map<Integer, Long> offsetsAcceptedSnapshot;
       synchronized (consumerState.lock) {
@@ -304,18 +308,16 @@ public final class KafkaLedger implements Ledger {
 
       if (allPendingOffsetsConfirmed) {
         zlg.d("All offsets confirmed: %s", z -> z.arg(offsetsAcceptedSnapshot));
-        new Retry()
-        .withAttempts(ioRetries)
-        .withFaultHandler(zlg::w)
-        .withErrorHandler(zlg::e)
-        .run(() -> consumer.commitSync(toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic)));
+        if (! offsetsAcceptedSnapshot.isEmpty()) {
+          new Retry()
+          .withAttempts(ioRetries)
+          .withFaultHandler(zlg::w)
+          .withErrorHandler(zlg::e)
+          .run(() -> consumer.commitSync(toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic)));
+        }
         return;
       } else {
         intervalSleep.run();
-        if (Thread.interrupted()) {
-          zlg.d("Offset drain interrupted");
-          return;
-        }
       }
     }
   }
@@ -412,11 +414,14 @@ public final class KafkaLedger implements Ledger {
   private static void logException(Zlg zlg, Exception cause, String messageFormat, Object... messageArgs) {
     if (cause != null) {
       zlg.w(String.format(messageFormat, messageArgs), cause);
+    } else {
+      zlg.d("COMMITTED");
     }
   }
 
   @Override
   public void dispose() {
+    disposing = true;
     Terminator.blank()
     .add(retryThread)
     .add(receivers)
