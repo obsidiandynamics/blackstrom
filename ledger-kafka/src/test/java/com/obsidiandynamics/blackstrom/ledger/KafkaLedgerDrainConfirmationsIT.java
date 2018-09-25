@@ -118,9 +118,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
                              .withCodec(new KryoMessageCodec(true)));
     ledger.init();
     
-    final Map<Integer, Map<Long, AtomicInteger>> receiveCountsPerPartition = new TreeMap<>();
+    final Map<Integer, AtomicIntegerArray> receiveCountsPerPartition = new TreeMap<>();
     for (int p = 0; p < partitions; p++) {
-      receiveCountsPerPartition.put(p, new ConcurrentHashMap<>());
+      receiveCountsPerPartition.put(p, new AtomicIntegerArray(messages));
     }
     final AtomicInteger totalReceived = new AtomicInteger();
     final AtomicInteger totalConfirmed = new AtomicInteger();
@@ -132,13 +132,6 @@ public final class KafkaLedgerDrainConfirmationsIT {
 
         zlg.i("Attaching consumer");
         ledger.attach(new MessageHandler() {
-          final int[] lastCounts = new int[partitions];
-          {
-            for (int p = 0; p < partitions; p++) {
-              lastCounts[p] = 1;
-            }
-          }
-          
           @Override
           public String getGroupId() {
             return "group";
@@ -153,23 +146,16 @@ public final class KafkaLedgerDrainConfirmationsIT {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
             
-            final Map<Long, AtomicInteger> receiveCounts = receiveCountsPerPartition.get(partition);
-            final AtomicInteger count = receiveCounts.compute(offset, (__, _count) -> {
-              if (_count == null) {
-                return new AtomicInteger(1);
-              } else {
-                _count.incrementAndGet();
-                return _count;
-              }
-            });
+            final AtomicIntegerArray receiveCounts = receiveCountsPerPartition.get(partition);
+            final int count = receiveCounts.incrementAndGet((int) offset);
             
             // log any message that has been processed more than once (unless it is a one-off)
-            final int lastCount = lastCounts[partition];
-            final int currentCount = count.get();
-            if (lastCount == 1 && currentCount > 2 || lastCount == 2 && currentCount > 1) {
-              System.err.format("FAILURE in message %s; count=%d\n", message.getMessageId(), currentCount);
+            final int lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
+            if (lastCount == 1 && count > 2 || lastCount == 2 && count > 1) {
+              System.err.format("FAILURE in message %s; count=%d\n", message.getMessageId(), count);
+            } else if (count > 1) {
+              zlg.d("Seeing boundary duplicate: offset=%d, partition=%d, count=%d", z -> z.arg(offset).arg(partition).arg(count));
             }
-            lastCounts[partition] = count.get();
             totalReceived.incrementAndGet();
             
             // delay offset commits for a more pronounced effect (increases likelihood of repeated messages
@@ -212,22 +198,20 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final int expectedMessages = messages * partitions;
     Wait.MEDIUM.untilTrue(() -> getUniqueCount(receiveCountsPerPartition) == expectedMessages);
     
-    for (Map.Entry<Integer, Map<Long, AtomicInteger>> countEntry : receiveCountsPerPartition.entrySet()) {
+    for (Map.Entry<Integer, AtomicIntegerArray> countEntry : receiveCountsPerPartition.entrySet()) {
       final int partition = countEntry.getKey();
-      final Map<Long, AtomicInteger> receiveCounts = countEntry.getValue();
+      final AtomicIntegerArray receiveCounts = countEntry.getValue();
       // the counts must all be 1 or 2; we only allow a count of 2 for one-off messages, signifying
       // an overlap between consumer rebalancing (which is a Kafka thing)
-      final SortedMap<Long, AtomicInteger> receiveCountsSorted = new TreeMap<>();
-      receiveCountsSorted.putAll(receiveCounts);
       int lastReceiveCount = 1;
       boolean passed = false;
       try {
-        for (Map.Entry<Long, AtomicInteger> receiveCountEntry : receiveCounts.entrySet()) {
-          final int receiveCount = receiveCountEntry.getValue().get();
+        for (int offset = 0; offset < receiveCounts.length(); offset++) {
+          final int receiveCount = receiveCounts.get(offset);
           if (lastReceiveCount == 2) {
-            assertTrue("offset=" + receiveCountEntry.getKey(), receiveCount == 1);
+            assertTrue("offset=" + offset, receiveCount == 1);
           } else {
-            assertTrue("offset=" + receiveCountEntry.getKey(), receiveCount == 1 || receiveCount == 2);
+            assertTrue("offset=" + offset, receiveCount == 1 || receiveCount == 2);
           }
           lastReceiveCount = receiveCount;
         }
@@ -235,8 +219,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
       } finally {
         if (! passed) {
           System.err.println("partition: " + partition);
-          for (Map.Entry<Long, AtomicInteger> receiveCountEntry : receiveCounts.entrySet()) {
-            System.err.println("  entry: " + receiveCountEntry);
+          for (int offset = 0; offset < receiveCounts.length(); offset++) {
+            System.err.println("  offset: " + offset + ", count: " + receiveCounts.get(offset));
           }
         }
       }
@@ -250,7 +234,15 @@ public final class KafkaLedgerDrainConfirmationsIT {
     zlg.i("Test passed: %s", z -> z.arg(testLabel));
   }
   
-  private static int getUniqueCount(Map<Integer, Map<Long, AtomicInteger>> receiveCountsPerPartition) {
-    return receiveCountsPerPartition.values().stream().collect(Collectors.summingInt(Map::size));
+  private static int getUniqueCount(Map<Integer, AtomicIntegerArray> receiveCountsPerPartition) {
+    int totalUnique = 0;
+    for (AtomicIntegerArray receiveCounts : receiveCountsPerPartition.values()) {
+      for (int offset = 0; offset < receiveCounts.length(); offset++) {
+        if (receiveCounts.get(offset) != 0) {
+          totalUnique++;
+        }
+      }
+    }
+    return totalUnique;
   }
 }
