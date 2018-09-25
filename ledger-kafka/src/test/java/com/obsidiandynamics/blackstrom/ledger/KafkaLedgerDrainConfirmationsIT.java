@@ -75,6 +75,11 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
   }
   
+  @Test
+  public void testMultipleConsumersWithMultiplePartitions() {
+    test("MultiConsMultiPart", 16, 400, 10, 4, 1_000, 100);
+  }
+  
   /**
    *  Verifies that messages can be processed exactly once in the presence of multiple consumers
    *  contending for a single group ID. Message flow should transition from one consumer to the
@@ -84,19 +89,25 @@ public final class KafkaLedgerDrainConfirmationsIT {
    *  assignee will resume processing from the last confirmed offset, even if it means processing
    *  the message twice. (The test accounts for this, by allowing one-off messages to have two
    *  receivals, providing that these don't occur in succession.)
+   *  
+   *  @param testLabel How to label this test.
+   *  @param partitions The number of partitions.
+   *  @param messages The number of messages (per partition).
+   *  @param messageIntervalMillis Interval between sending each group of messages (one message per partition).
+   *  @param consumers The number of consumers.
+   *  @param consumerJoinIntervalMillis Interval between consumers joining.
+   *  @param commitDelayMillis Delay between receiving a message and committing the offset.
    */
-  @Test
-  public void testMultipleConsumers() {
-    zlg.i("Starting test");
+  private void test(String testLabel,
+                    int partitions,
+                    int messages,
+                    int messageIntervalMillis,
+                    int consumers,
+                    int consumerJoinIntervalMillis,
+                    int commitDelayMillis) {
+    zlg.i("Starting test %s", z -> z.arg(testLabel));
     
-    final int partitions = 16;
-    final int messages = 400;
-    final int messageIntervalMillis = 10;
-    final int consumers = 4;
-    final int consumerJoinIntervalMillis = 1000;
-    final int commitDelayMillis = 100;
-    
-    final String topicName = Exceptions.wrap(() -> createTopic("MultiPartition", partitions), RuntimeException::new);
+    final String topicName = Exceptions.wrap(() -> createTopic(testLabel, partitions), RuntimeException::new);
     
     ledger = new KafkaLedger(new KafkaLedgerConfig()
                              .withKafka(new KafkaCluster<>(config))
@@ -236,7 +247,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     zlg.i("Awaiting final confirmations");
     Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= getUniqueCount(receiveCountsPerPartition));
     Wait.MEDIUM.untilTrue(() -> totalReceived.get() == totalConfirmed.get());
-    zlg.i("Test passed");
+    zlg.i("Test passed: %s", z -> z.arg(testLabel));
   }
   
   private static int getUniqueCount(Map<Integer, Map<Long, AtomicInteger>> receiveCountsPerPartition) {
