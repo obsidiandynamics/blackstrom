@@ -56,8 +56,8 @@ public final class KafkaRig {
 
   private static void before() throws InterruptedException, ExecutionException, TimeoutException {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
-      admin.describeCluster(KafkaTimeouts.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(encoding.getTopic())), KafkaTimeouts.TOPIC_OPERATION);
+      admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
+      admin.createTopics(Collections.singleton(TestTopic.newOf(encoding.getTopic())), KafkaDefaults.TOPIC_OPERATION);
     }
   }
   
