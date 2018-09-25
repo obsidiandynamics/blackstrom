@@ -102,6 +102,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
                              .withKafka(new KafkaCluster<>(config))
                              .withTopic(topicName)
                              .withDrainConfirmations(true)
+                             .withDrainConfirmationsTimeout(Integer.MAX_VALUE)
                              .withZlg(zlg)
                              .withCodec(new KryoMessageCodec(true)));
     ledger.init();

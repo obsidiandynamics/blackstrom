@@ -59,6 +59,8 @@ public final class KafkaLedger implements Ledger {
   
   private final boolean drainConfirmations;
   
+  private final int drainConfirmationsTimeout;
+  
   private final WorkerThread retryThread;
   
   private static final class RetryTask {
@@ -99,6 +101,7 @@ public final class KafkaLedger implements Ledger {
     maxConsumerPipeYields = config.getMaxConsumerPipeYields();
     ioRetries = config.getIORetries();
     drainConfirmations = config.isDrainConfirmations();
+    drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
     codecLocator = CodecRegistry.register(config.getCodec());
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
@@ -165,7 +168,6 @@ public final class KafkaLedger implements Ledger {
     // may be user-specified in config
     final Properties consumerDefaults = new PropsBuilder()
         .withSystemDefault("session.timeout.ms", 6_000)
-        .withSystemDefault("max.poll.interval.ms", 60_000)
         .withSystemDefault("heartbeat.interval.ms", 2_000)
         .withSystemDefault("max.poll.records", 10_000)
         .build();
@@ -206,7 +208,7 @@ public final class KafkaLedger implements Ledger {
             if (drainConfirmations) {
               // blocks until all pending offsets have been confirmed, and performs a sync commit
               drainOffsets(topic, consumer, consumerState, ioRetries, sleepFor(OFFSET_DRAIN_CHECK_INTERVAL_MILLIS), 
-                           KafkaLedger.this::isDisposing, zlg);
+                           drainConfirmationsTimeout, KafkaLedger.this::isDisposing, zlg);
             }
           }
 
@@ -291,7 +293,9 @@ public final class KafkaLedger implements Ledger {
   }
 
   static void drainOffsets(String topic, Consumer<String, Message> consumer, ConsumerState consumerState, 
-                           int ioRetries, Runnable intervalSleep, BooleanSupplier isDisposingCheck, Zlg zlg) {
+                           int ioRetries, Runnable intervalSleep, int drainTimeoutMillis, 
+                           BooleanSupplier isDisposingCheck, Zlg zlg) {
+    final long drainUntilTime = System.currentTimeMillis() + drainTimeoutMillis;
     while (! isDisposingCheck.getAsBoolean()) {
       final boolean allPendingOffsetsConfirmed;
       final Map<Integer, Long> offsetsAcceptedSnapshot;
@@ -316,8 +320,13 @@ public final class KafkaLedger implements Ledger {
           .run(() -> consumer.commitSync(toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic)));
         }
         return;
-      } else {
+      } else if (System.currentTimeMillis() < drainUntilTime) {
         intervalSleep.run();
+      } else {
+        synchronized (consumerState.lock) {
+          zlg.w("Drain timed out (%,d ms). Pending offsets %s", z -> z.arg(drainTimeoutMillis).arg(consumerState.offsetsPending));
+        }
+        return;
       }
     }
   }

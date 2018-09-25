@@ -304,7 +304,7 @@ public final class KafkaLedgerTest {
     final Runnable intervalSleep = mock(Runnable.class);
     
     final AtomicBoolean disposing = new AtomicBoolean();
-    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, disposing::get, logTarget.logger());
+    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
     verify(consumer, never()).commitSync(Classes.<Map<TopicPartition, OffsetAndMetadata>>cast(any(Map.class)));
@@ -326,7 +326,7 @@ public final class KafkaLedgerTest {
     }).when(intervalSleep).run();
     
     final AtomicBoolean disposing = new AtomicBoolean();
-    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, disposing::get, logTarget.logger());
+    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(2);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending").assertCount(1);
@@ -337,6 +337,23 @@ public final class KafkaLedgerTest {
   }
   
   @Test
+  public void testDrainOffsetsWithPendingOffsetsTimeout() {
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final ConsumerState consumerState = new ConsumerState();
+    final MockLogTarget logTarget = new MockLogTarget();
+    final Runnable intervalSleep = mock(Runnable.class);
+    consumerState.offsetsAccepted.put(0, 100L);
+    consumerState.offsetsPending.put(0, 100L);
+    
+    final AtomicBoolean disposing = new AtomicBoolean();
+    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 0, disposing::get, logTarget.logger());
+    logTarget.entries().assertCount(2);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.WARN).containing("Drain timed out (0 ms). Pending offsets");
+    verify(consumer, never()).commitSync(Classes.<Map<TopicPartition, OffsetAndMetadata>>cast(any(Map.class)));
+  }
+  
+  @Test
   public void testDrainOffsetsWhileDisposing() {
     final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
     final ConsumerState consumerState = new ConsumerState();
@@ -344,7 +361,7 @@ public final class KafkaLedgerTest {
     final Runnable intervalSleep = mock(Runnable.class);
     
     final AtomicBoolean disposing = new AtomicBoolean(true);
-    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, disposing::get, logTarget.logger());
+    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(0);
     verify(consumer, never()).commitSync(Classes.<Map<TopicPartition, OffsetAndMetadata>>cast(any(Map.class)));
   }

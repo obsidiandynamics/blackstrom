@@ -35,6 +35,11 @@ public final class KafkaLedgerConfig {
   @YInject
   private boolean drainConfirmations;
   
+  /** Upper bound on the time to allow for offset drainage (in milliseconds). The default value 
+   *  is based on the default of {@code max.poll.interval.ms} — {@code 300000}. */
+  @YInject
+  private int drainConfirmationsTimeout = 300_000;
+  
   @YInject
   private boolean printConfig;
 
@@ -124,6 +129,15 @@ public final class KafkaLedgerConfig {
     return this;
   }
   
+  int getDrainConfirmationsTimeout() {
+    return drainConfirmationsTimeout;
+  }
+  
+  public KafkaLedgerConfig withDrainConfirmationsTimeout(int drainConfirmationsTimeoutMillis) {
+    this.drainConfirmationsTimeout = drainConfirmationsTimeoutMillis;
+    return this;
+  }
+  
   boolean isPrintConfig() {
     return printConfig;
   }
@@ -134,6 +148,6 @@ public final class KafkaLedgerConfig {
         ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + 
         ", maxConsumerPipeYields=" + maxConsumerPipeYields + 
         ", ioRetries=" + ioRetries + ", drainConfirmations=" + drainConfirmations + 
-        ", printConfig=" + printConfig + "]";
+        ", drainConfirmationsTimeout=" + drainConfirmationsTimeout + ", printConfig=" + printConfig + "]";
   }
 }

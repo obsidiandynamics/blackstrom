@@ -44,6 +44,7 @@ public final class KafkaLedgerConfigTest {
         .withZlg(Zlg.forDeclaringClass().get())
         .withIORetries(5)
         .withDrainConfirmations(true)
+        .withDrainConfirmationsTimeout(60_000)
         .withPrintConfig(true);
     
     assertNotNull(config.getKafka());
@@ -54,6 +55,7 @@ public final class KafkaLedgerConfigTest {
     assertNotNull(config.getZlg());
     assertEquals(5, config.getIORetries());
     assertTrue(config.isDrainConfirmations());
+    assertEquals(60_000, config.getDrainConfirmationsTimeout());
     assertTrue(config.isPrintConfig());
   }
 }
