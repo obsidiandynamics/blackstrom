@@ -170,8 +170,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
             
             // log any message that has been processed more than once (unless it is a one-off)
             final int lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
-            if (lastCount == 1 && count > 2 || lastCount == 2 && count > 1) {
+            if (lastCount > 1 && count > 1) {
               System.err.format("FAILURE in message %s; count=%d\n", message.getMessageId(), count);
+              zlg.w("FAILURE in message %s; count=%d", z -> z.arg(message::getMessageId).arg(count));
             } else if (count > 1) {
               zlg.d("Seeing boundary duplicate: offset=%d, partition=%d, count=%d", z -> z.arg(offset).arg(partition).arg(count));
             }
@@ -220,17 +221,17 @@ public final class KafkaLedgerDrainConfirmationsIT {
     for (Map.Entry<Integer, AtomicIntegerArray> countEntry : receiveCountsPerPartition.entrySet()) {
       final int partition = countEntry.getKey();
       final AtomicIntegerArray receiveCounts = countEntry.getValue();
-      // the counts must all be 1 or 2; we only allow a count of 2 for one-off messages, signifying
+      // the counts must all be 1; we only allow a spike in the count for one-off messages, signifying
       // an overlap between consumer rebalancing (which is a Kafka thing)
       int lastReceiveCount = 1;
       boolean passed = false;
       try {
         for (int offset = 0; offset < receiveCounts.length(); offset++) {
           final int receiveCount = receiveCounts.get(offset);
-          if (lastReceiveCount == 2) {
+          if (lastReceiveCount > 1) {
             assertTrue("offset=" + offset, receiveCount == 1);
           } else {
-            assertTrue("offset=" + offset, receiveCount == 1 || receiveCount == 2);
+            assertTrue("offset=" + offset, receiveCount >= 1);
           }
           lastReceiveCount = receiveCount;
         }
