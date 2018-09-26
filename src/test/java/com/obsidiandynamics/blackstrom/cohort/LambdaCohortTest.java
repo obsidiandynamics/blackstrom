@@ -35,7 +35,9 @@ public final class LambdaCohortTest {
     final MessageContext messageContext = mock(MessageContext.class);
     final LambdaCohort l = LambdaCohort.builder().build();
     final Query query = new Query("X0", null, 1_000);
+    final QueryResponse queryResponse = new QueryResponse("X0", null);
     final Command command = new Command("X0", null, 1_000);
+    final CommandResponse commandResponse = new CommandResponse("X0", null);
     final Notice notice = new Notice("X0", null);
     final Proposal proposal = new Proposal("X0", new String[0], null, 1_000);
     final Vote vote = new Vote("X0", null);
@@ -43,7 +45,9 @@ public final class LambdaCohortTest {
     
     l.init(initContext);
     l.onQuery(messageContext, query);
+    l.onQueryResponse(messageContext, queryResponse);
     l.onCommand(messageContext, command);
+    l.onCommandResponse(messageContext, commandResponse);
     l.onNotice(messageContext, notice);
     l.onProposal(messageContext, proposal);
     l.onVote(messageContext, vote);
@@ -58,7 +62,9 @@ public final class LambdaCohortTest {
     final Initable onInit = mock(Initable.class);
     final Disposable onDispose = mock(Disposable.class);
     final QueryProcessor onQuery = mock(QueryProcessor.class);
+    final QueryResponseProcessor onQueryResponse = mock(QueryResponseProcessor.class);
     final CommandProcessor onCommand = mock(CommandProcessor.class);
+    final CommandResponseProcessor onCommandResponse = mock(CommandResponseProcessor.class);
     final NoticeProcessor onNotice = mock(NoticeProcessor.class);
     final ProposalProcessor onProposal = mock(ProposalProcessor.class);
     final VoteProcessor onVote = mock(VoteProcessor.class);
@@ -67,7 +73,9 @@ public final class LambdaCohortTest {
     final InitContext initContext = mock(InitContext.class);
     final MessageContext messageContext = mock(MessageContext.class);
     final Query query = new Query("X0", null, 1_000);
+    final QueryResponse queryResponse = new QueryResponse("X0", null);
     final Command command = new Command("X0", null, 1_000);
+    final CommandResponse commandResponse = new CommandResponse("X0", null);
     final Notice notice = new Notice("X0", null);
     final Proposal proposal = new Proposal("X0", new String[0], null, 1_000);
     final Vote vote = new Vote("X0", null);
@@ -77,7 +85,9 @@ public final class LambdaCohortTest {
         .onInit(onInit)
         .onDispose(onDispose)
         .onQuery(onQuery)
+        .onQueryResponse(onQueryResponse)
         .onCommand(onCommand)
+        .onCommandResponse(onCommandResponse)
         .onNotice(onNotice)
         .onProposal(onProposal)
         .onVote(onVote)
@@ -92,8 +102,14 @@ public final class LambdaCohortTest {
     l.onQuery(messageContext, query);
     verify(onQuery).onQuery(eq(messageContext), eq(query));
     
+    l.onQueryResponse(messageContext, queryResponse);
+    verify(onQueryResponse).onQueryResponse(eq(messageContext), eq(queryResponse));
+    
     l.onCommand(messageContext, command);
     verify(onCommand).onCommand(eq(messageContext), eq(command));
+    
+    l.onCommandResponse(messageContext, commandResponse);
+    verify(onCommandResponse).onCommandResponse(eq(messageContext), eq(commandResponse));
     
     l.onNotice(messageContext, notice);
     verify(onNotice).onNotice(eq(messageContext), eq(notice));
@@ -110,6 +126,7 @@ public final class LambdaCohortTest {
     l.dispose();
     verify(onDispose).dispose();
     
-    verifyNoMoreInteractions(initContext, messageContext, onInit, onDispose, onQuery, onCommand, onNotice, onProposal, onVote, onOutcome);
+    verifyNoMoreInteractions(initContext, messageContext, onInit, onDispose, onQuery, onQueryResponse, 
+                             onCommand, onCommandResponse, onNotice, onProposal, onVote, onOutcome);
   }
 }

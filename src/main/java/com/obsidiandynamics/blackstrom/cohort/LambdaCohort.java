@@ -13,8 +13,12 @@ public final class LambdaCohort implements Cohort {
   private final Disposable onDispose;
   
   private final QueryProcessor onQuery;
+
+  private final QueryResponseProcessor onQueryResponse;
   
   private final CommandProcessor onCommand;
+
+  private final CommandResponseProcessor onCommandResponse;
   
   private final NoticeProcessor onNotice;
   
@@ -28,7 +32,9 @@ public final class LambdaCohort implements Cohort {
                Initable onInit, 
                Disposable onDispose, 
                QueryProcessor onQuery,
+               QueryResponseProcessor onQueryResponse,
                CommandProcessor onCommand,
+               CommandResponseProcessor onCommandResponse,
                NoticeProcessor onNotice,
                ProposalProcessor onProposal,
                VoteProcessor onVote,
@@ -37,7 +43,9 @@ public final class LambdaCohort implements Cohort {
     this.onInit = onInit;
     this.onDispose = onDispose;
     this.onQuery = onQuery;
+    this.onQueryResponse = onQueryResponse;
     this.onCommand = onCommand;
+    this.onCommandResponse = onCommandResponse;
     this.onNotice = onNotice;
     this.onProposal = onProposal;
     this.onVote = onVote;
@@ -65,8 +73,18 @@ public final class LambdaCohort implements Cohort {
   }
 
   @Override
+  public void onQueryResponse(MessageContext context, QueryResponse queryResponse) {
+    onQueryResponse.onQueryResponse(context, queryResponse);
+  }
+
+  @Override
   public void onCommand(MessageContext context, Command command) {
     onCommand.onCommand(context, command);
+  }
+
+  @Override
+  public void onCommandResponse(MessageContext context, CommandResponse commandResponse) {
+    onCommandResponse.onCommandResponse(context, commandResponse);
   }
 
   @Override
