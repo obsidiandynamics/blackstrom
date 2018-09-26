@@ -9,7 +9,7 @@ jdk:
   - oraclejdk10
 
 install:
-  - travis_retry ./gradlew dependencies
+  - travis_retry ./gradlew --info :dependencies blackstrom-codec-jackson:dependencies blackstrom-codec-kryo:dependencies blackstrom-ledger-meteor:dependencies blackstrom-ledger-kafka:dependencies blackstrom-sim:dependencies 
 script:
   - ./gradlew build verify javadocJar --stacktrace --info
 after_success:
