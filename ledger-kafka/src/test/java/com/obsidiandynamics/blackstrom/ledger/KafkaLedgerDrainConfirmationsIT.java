@@ -43,6 +43,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
       .withBootstrapServers("localhost:9092")
       .withConsumerProps(new MapBuilder<Object, Object>()
                          .with("default.api.timeout.ms", "5000")
+                         .with("session.timeout.ms", "60000")
                          .with("partition.assignment.strategy", RoundRobinAssignor.class.getName())
                          .build());
   
