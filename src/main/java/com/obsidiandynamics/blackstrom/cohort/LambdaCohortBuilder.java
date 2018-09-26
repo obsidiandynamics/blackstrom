@@ -94,6 +94,51 @@ public final class LambdaCohortBuilder {
     return this;
   }
   
+  private boolean hasOnQuery() {
+    return onQuery != DEF_ON_QUERY;
+  }
+  
+  private boolean hasOnQueryResponse() {
+    return onQueryResponse != DEF_ON_QUERY_RESPONSE;
+  }
+  
+  private boolean hasOnCommand() {
+    return onCommand != DEF_ON_COMMAND;
+  }
+  
+  private boolean hasOnCommandResponse() {
+    return onCommandResponse != DEF_ON_COMMAND_RESPONSE;
+  }
+  
+  private boolean hasOnNotice() {
+    return onNotice != DEF_ON_NOTICE;
+  }
+  
+  private boolean hasOnProposal() {
+    return onProposal != DEF_ON_PROPOSAL;
+  }
+  
+  private boolean hasOnVote() {
+    return onVote != DEF_ON_VOTE;
+  }
+  
+  private boolean hasOnOutcome() {
+    return onOutcome != DEF_ON_OUTCOME;
+  }
+  
+  public LambdaCohortBuilder onUnhandled(GenericMessageProcessor onUnhandled) {
+    if (! hasOnQuery()) onQuery(onUnhandled::onMessage);
+    if (! hasOnQueryResponse()) onQueryResponse(onUnhandled::onMessage);
+    if (! hasOnCommand()) onCommand(onUnhandled::onMessage);
+    if (! hasOnCommandResponse()) onCommandResponse(onUnhandled::onMessage);
+    if (! hasOnNotice()) onNotice(onUnhandled::onMessage);
+    if (! hasOnProposal()) onProposal(onUnhandled::onMessage);
+    if (! hasOnVote()) onVote(onUnhandled::onMessage);
+    if (! hasOnOutcome()) onOutcome(onUnhandled::onMessage);
+    
+    return this;
+  }
+  
   public LambdaCohort build() {
     return new LambdaCohort(groupId, onInit, onDispose, onQuery, onQueryResponse, onCommand, onCommandResponse,
                             onNotice, onProposal, onVote, onOutcome);

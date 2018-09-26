@@ -33,7 +33,6 @@ public final class LambdaCohortTest {
   public void testDefaultHandlers() {
     final InitContext initContext = mock(InitContext.class);
     final MessageContext messageContext = mock(MessageContext.class);
-    final LambdaCohort l = LambdaCohort.builder().build();
     final Query query = new Query("X0", null, 1_000);
     final QueryResponse queryResponse = new QueryResponse("X0", null);
     final Command command = new Command("X0", null, 1_000);
@@ -42,6 +41,8 @@ public final class LambdaCohortTest {
     final Proposal proposal = new Proposal("X0", new String[0], null, 1_000);
     final Vote vote = new Vote("X0", null);
     final Outcome outcome = new Outcome("X0", Resolution.COMMIT, null, new Response[0], null);
+    
+    final LambdaCohort l = LambdaCohort.builder().build();
     
     l.init(initContext);
     l.onQuery(messageContext, query);
@@ -58,6 +59,37 @@ public final class LambdaCohortTest {
   }
   
   @Test
+  public void testOnUnhandledWithNoOtherHandlers() {
+    final InitContext initContext = mock(InitContext.class);
+    final MessageContext messageContext = mock(MessageContext.class);
+    final Query query = new Query("X0", null, 1_000);
+    final QueryResponse queryResponse = new QueryResponse("X0", null);
+    final Command command = new Command("X0", null, 1_000);
+    final CommandResponse commandResponse = new CommandResponse("X0", null);
+    final Notice notice = new Notice("X0", null);
+    final Proposal proposal = new Proposal("X0", new String[0], null, 1_000);
+    final Vote vote = new Vote("X0", null);
+    final Outcome outcome = new Outcome("X0", Resolution.COMMIT, null, new Response[0], null);
+    
+    final GenericMessageProcessor onUnhandled = mock(GenericMessageProcessor.class);
+    final LambdaCohort l = LambdaCohort.builder().onUnhandled(onUnhandled).build();
+    
+    l.init(initContext);
+    l.onQuery(messageContext, query);
+    l.onQueryResponse(messageContext, queryResponse);
+    l.onCommand(messageContext, command);
+    l.onCommandResponse(messageContext, commandResponse);
+    l.onNotice(messageContext, notice);
+    l.onProposal(messageContext, proposal);
+    l.onVote(messageContext, vote);
+    l.onOutcome(messageContext, outcome);
+    l.dispose();
+    
+    verify(onUnhandled, times(8)).onMessage(eq(messageContext), isNotNull());
+    verifyNoMoreInteractions(initContext, messageContext);
+  }
+  
+  @Test
   public void testHandlers() {
     final Initable onInit = mock(Initable.class);
     final Disposable onDispose = mock(Disposable.class);
@@ -69,6 +101,7 @@ public final class LambdaCohortTest {
     final ProposalProcessor onProposal = mock(ProposalProcessor.class);
     final VoteProcessor onVote = mock(VoteProcessor.class);
     final OutcomeProcessor onOutcome = mock(OutcomeProcessor.class);
+    final GenericMessageProcessor onUnhandled = mock(GenericMessageProcessor.class);
     
     final InitContext initContext = mock(InitContext.class);
     final MessageContext messageContext = mock(MessageContext.class);
@@ -92,6 +125,7 @@ public final class LambdaCohortTest {
         .onProposal(onProposal)
         .onVote(onVote)
         .onOutcome(onOutcome)
+        .onUnhandled(onUnhandled)
         .build();
     
     assertNull(l.getGroupId());
@@ -127,6 +161,6 @@ public final class LambdaCohortTest {
     verify(onDispose).dispose();
     
     verifyNoMoreInteractions(initContext, messageContext, onInit, onDispose, onQuery, onQueryResponse, 
-                             onCommand, onCommandResponse, onNotice, onProposal, onVote, onOutcome);
+                             onCommand, onCommandResponse, onNotice, onProposal, onVote, onOutcome, onUnhandled);
   }
 }
