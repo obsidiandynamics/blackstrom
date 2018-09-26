@@ -130,12 +130,14 @@ public final class KafkaLedgerDrainConfirmationsIT {
     // The minimum an received offset must move by before adding a new consumer. This value shouldn't be smaller
     // than two, as it guarantees a clean boundary between consumer rebalancing.
     final int minOffsetMove = 10;
+    final int maxOffsetMoveWaitMillis = 30_000;
     
     new Thread(() -> {
       int[] latestOffsetsFromLastRebalance = getLatestOffsets(receiveCountsPerPartition);
       for (int c = 0; c < consumers; c++) {
         if (c != 0) {
           Threads.sleep(consumerJoinIntervalMillis);
+          final long waitUntilTime = System.currentTimeMillis() + maxOffsetMoveWaitMillis;
           for (;;) {
             final int[] latestOffsets = getLatestOffsets(receiveCountsPerPartition);
             if (offsetsMoved(latestOffsetsFromLastRebalance, latestOffsets, minOffsetMove)) {
@@ -144,7 +146,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
             } else {
               zlg.d("Offsets haven't moved significantly since last rebalance: %s",
                     z -> z.arg(Arrays.toString(latestOffsets)));
-              Threads.sleep(10);
+              if (System.currentTimeMillis() > waitUntilTime) {
+                zlg.d("Offsets don't appear to be moving; no more consumers will be provisioned");
+                return;
+              } else {
+                Threads.sleep(10);
+              }
             }
           }
         }
