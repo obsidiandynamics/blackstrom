@@ -126,9 +126,27 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final AtomicInteger totalConfirmed = new AtomicInteger();
     executor = Executors.newFixedThreadPool(8);
     
+    // The minimum an received offset must move by before adding a new consumer. This value shouldn't be smaller
+    // than two, as it guarantees a clean boundary between consumer rebalancing.
+    final int minOffsetMove = 10;
+    
     new Thread(() -> {
+      int[] latestOffsetsFromLastRebalance = getLatestOffsets(receiveCountsPerPartition);
       for (int c = 0; c < consumers; c++) {
-        if (c != 0) Threads.sleep(consumerJoinIntervalMillis);
+        if (c != 0) {
+          Threads.sleep(consumerJoinIntervalMillis);
+          for (;;) {
+            final int[] latestOffsets = getLatestOffsets(receiveCountsPerPartition);
+            if (offsetsMoved(latestOffsetsFromLastRebalance, latestOffsets, minOffsetMove)) {
+              latestOffsetsFromLastRebalance = latestOffsets;
+              break;
+            } else {
+              zlg.d("Offsets haven't moved significantly since last rebalance: %s",
+                    z -> z.arg(Arrays.toString(latestOffsets)));
+              Threads.sleep(10);
+            }
+          }
+        }
 
         zlg.i("Attaching consumer");
         ledger.attach(new MessageHandler() {
@@ -244,5 +262,31 @@ public final class KafkaLedgerDrainConfirmationsIT {
       }
     }
     return totalUnique;
+  }
+
+  private static int[] getLatestOffsets(Map<Integer, AtomicIntegerArray> receiveCountsPerPartition) {
+    final int[] latestOffsets = new int[receiveCountsPerPartition.size()];
+    for (Map.Entry<Integer, AtomicIntegerArray> receiveCountsEntry : receiveCountsPerPartition.entrySet()) {
+      latestOffsets[receiveCountsEntry.getKey()] = getLatestOffset(receiveCountsEntry.getValue());
+    }
+    return latestOffsets;
+  }
+  
+  private static int getLatestOffset(AtomicIntegerArray receiveCounts) {
+    for (int offset = receiveCounts.length(); --offset >= 0;) {
+      if (receiveCounts.get(offset) != 0) {
+        return offset;
+      }
+    }
+    return -1;
+  }
+  
+  private static boolean offsetsMoved(int[] offsetsBefore, int[] offsetsAfter, int minMagnitude) {
+    for (int p = 0; p < offsetsBefore.length; p++) {
+      if (offsetsAfter[p] - offsetsBefore[p] < minMagnitude) {
+        return false;
+      }
+    }
+    return true;
   }
 }
