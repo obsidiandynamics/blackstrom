@@ -119,9 +119,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
                              .withCodec(new KryoMessageCodec(true)));
     ledger.init();
     
-    final Map<Integer, AtomicIntegerArray> receiveCountsPerPartition = new TreeMap<>();
+    final AtomicIntegerArray[] receiveCountsPerPartition = new AtomicIntegerArray[partitions];
     for (int p = 0; p < partitions; p++) {
-      receiveCountsPerPartition.put(p, new AtomicIntegerArray(messages));
+      receiveCountsPerPartition[p] = new AtomicIntegerArray(messages);
     }
     final AtomicInteger totalReceived = new AtomicInteger();
     final AtomicInteger totalConfirmed = new AtomicInteger();
@@ -172,7 +172,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
             
-            final AtomicIntegerArray receiveCounts = receiveCountsPerPartition.get(partition);
+            final AtomicIntegerArray receiveCounts = receiveCountsPerPartition[partition];
             final int count = receiveCounts.incrementAndGet((int) offset);
             
             // log any message that has been processed more than once (unless it is a one-off)
@@ -225,9 +225,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final int expectedMessages = messages * partitions;
     Wait.MEDIUM.untilTrue(() -> getUniqueCount(receiveCountsPerPartition) == expectedMessages);
     
-    for (Map.Entry<Integer, AtomicIntegerArray> countEntry : receiveCountsPerPartition.entrySet()) {
-      final int partition = countEntry.getKey();
-      final AtomicIntegerArray receiveCounts = countEntry.getValue();
+    for (int p = 0; p < partitions; p++) {
+      final AtomicIntegerArray receiveCounts = receiveCountsPerPartition[p];
       // the counts must all be 1; we only allow a spike in the count for one-off messages, signifying
       // an overlap between consumer rebalancing (which is a Kafka thing)
       int lastReceiveCount = 1;
@@ -236,16 +235,16 @@ public final class KafkaLedgerDrainConfirmationsIT {
         for (int offset = 0; offset < receiveCounts.length(); offset++) {
           final int receiveCount = receiveCounts.get(offset);
           if (lastReceiveCount > 1) {
-            assertTrue("offset=" + offset, receiveCount == 1);
+            assertTrue("offset=" + offset + ", partition=" + p, receiveCount == 1);
           } else {
-            assertTrue("offset=" + offset, receiveCount >= 1);
+            assertTrue("offset=" + offset + ", partition=" + p, receiveCount >= 1);
           }
           lastReceiveCount = receiveCount;
         }
         passed = true;
       } finally {
         if (! passed) {
-          System.err.println("partition: " + partition);
+          System.err.println("partition: " + p);
           for (int offset = 0; offset < receiveCounts.length(); offset++) {
             System.err.println("  offset: " + offset + ", count: " + receiveCounts.get(offset));
           }
@@ -261,9 +260,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
     zlg.i("Test passed: %s", z -> z.arg(testLabel));
   }
   
-  private static int getUniqueCount(Map<Integer, AtomicIntegerArray> receiveCountsPerPartition) {
+  private static int getUniqueCount(AtomicIntegerArray[] receiveCountsPerPartition) {
     int totalUnique = 0;
-    for (AtomicIntegerArray receiveCounts : receiveCountsPerPartition.values()) {
+    for (AtomicIntegerArray receiveCounts : receiveCountsPerPartition) {
       for (int offset = 0; offset < receiveCounts.length(); offset++) {
         if (receiveCounts.get(offset) != 0) {
           totalUnique++;
@@ -273,10 +272,10 @@ public final class KafkaLedgerDrainConfirmationsIT {
     return totalUnique;
   }
 
-  private static int[] getLatestOffsets(Map<Integer, AtomicIntegerArray> receiveCountsPerPartition) {
-    final int[] latestOffsets = new int[receiveCountsPerPartition.size()];
-    for (Map.Entry<Integer, AtomicIntegerArray> receiveCountsEntry : receiveCountsPerPartition.entrySet()) {
-      latestOffsets[receiveCountsEntry.getKey()] = getLatestOffset(receiveCountsEntry.getValue());
+  private static int[] getLatestOffsets(AtomicIntegerArray[] receiveCountsPerPartition) {
+    final int[] latestOffsets = new int[receiveCountsPerPartition.length];
+    for (int p = 0; p < receiveCountsPerPartition.length; p++) {
+      latestOffsets[p] = getLatestOffset(receiveCountsPerPartition[p]);
     }
     return latestOffsets;
   }
