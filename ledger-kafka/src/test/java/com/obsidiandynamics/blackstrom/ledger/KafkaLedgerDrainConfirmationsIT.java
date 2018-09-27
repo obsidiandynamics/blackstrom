@@ -178,6 +178,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
             final Confirmation confirmation = context.begin(message);
             final int partition = ((DefaultMessageId) message.getMessageId()).getShard();
             final long offset = ((DefaultMessageId) message.getMessageId()).getOffset();
+            
             if (offset == messages - 1) {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
@@ -236,10 +237,26 @@ public final class KafkaLedgerDrainConfirmationsIT {
     
     // await receival of all messages
     final int expectedMessages = messages * partitions;
-    Wait.MEDIUM.until(() -> {
-      final int uniqueCount = getUniqueCount(receiveCountsPerPartition);
-      assertEquals(expectedMessages, uniqueCount);
-    });
+    boolean allReceived = false;
+    try {
+      Wait.MEDIUM.until(() -> {
+        final int uniqueCount = getUniqueCount(receiveCountsPerPartition);
+        assertEquals(expectedMessages, uniqueCount);
+      });
+      allReceived = true;
+    } finally {
+      if (! allReceived) {
+        for (int p = 0; p < partitions; p++) {
+          final AtomicIntegerArray receiveCounts = receiveCountsPerPartition[p];
+          for (int offset = 0; offset < receiveCounts.length(); offset++) {
+            final int receiveCount = receiveCounts.get(offset);
+            if (receiveCount == 0) {
+              System.err.format("Missing offset %d for partition %d\n", offset, p);
+            }
+          }
+        }
+      }
+    }
     
     boolean passedOverall = true;
     final List<String> errors = new ArrayList<>();
