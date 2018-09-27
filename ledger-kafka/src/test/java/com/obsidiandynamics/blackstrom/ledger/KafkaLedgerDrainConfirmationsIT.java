@@ -45,6 +45,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
       .withConsumerProps(new MapBuilder<Object, Object>()
                          .with("default.api.timeout.ms", "5000")
                          .with("session.timeout.ms", "60000")
+                         .with("max.poll.interval.ms", "300000")
                          .with("partition.assignment.strategy", RoundRobinAssignor.class.getName())
                          .build());
   
@@ -234,25 +235,33 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final int expectedMessages = messages * partitions;
     Wait.MEDIUM.untilTrue(() -> getUniqueCount(receiveCountsPerPartition) == expectedMessages);
     
+    boolean passedOverall = true;
+    final List<String> errors = new ArrayList<>();
     for (int p = 0; p < partitions; p++) {
       final AtomicIntegerArray receiveCounts = receiveCountsPerPartition[p];
       // the counts must all be 1; we only allow a spike in the count for one-off messages, signifying
       // an overlap between consumer rebalancing (which is a Kafka thing)
       int lastReceiveCount = 1;
-      boolean passed = false;
+      boolean passedForCurrentPartition = true;
       try {
         for (int offset = 0; offset < receiveCounts.length(); offset++) {
           final int receiveCount = receiveCounts.get(offset);
           if (lastReceiveCount > 1) {
-            assertTrue("offset=" + offset + ", partition=" + p, receiveCount == 1);
+            if (receiveCount != 1) {
+              passedForCurrentPartition = false;
+              errors.add("offset=" + offset + ", partition=" + p + ", receiveCount=" + receiveCount);
+            }
           } else {
-            assertTrue("offset=" + offset + ", partition=" + p, receiveCount >= 1);
+            if (receiveCount <= 0) {
+              passedForCurrentPartition = false;
+              errors.add("offset=" + offset + ", partition=" + p + ", receiveCount=" + receiveCount);
+            }
           }
           lastReceiveCount = receiveCount;
         }
-        passed = true;
       } finally {
-        if (! passed) {
+        if (! passedForCurrentPartition) {
+          passedOverall = false;
           System.err.println("partition: " + p);
           for (int offset = 0; offset < receiveCounts.length(); offset++) {
             System.err.println("  offset: " + offset + ", count: " + receiveCounts.get(offset));
@@ -260,6 +269,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
         }
       }
     }
+    
+    assertTrue("errors=" + errors, passedOverall);
 
     ledger.dispose();
     

@@ -13,6 +13,7 @@ import org.apache.kafka.common.errors.*;
 import org.apache.kafka.common.serialization.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
+import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.ConsumerState.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.jackdaw.*;
@@ -77,11 +78,25 @@ public final class KafkaLedger implements Ledger {
   private final QueueConsumer<RetryTask> retryQueueConsumer = retryQueue.consumer();
 
   static final class ConsumerState {
+    static final class MutableOffset {
+      long offset = -1;
+
+      public boolean tryAdvance(long newOffset) {
+        if (newOffset > offset) {
+          offset = newOffset;
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+    
     final Object lock = new Object();
     
     Map<TopicPartition, OffsetAndMetadata> offsetsConfirmed = new HashMap<>();
     Map<Integer, Long> offsetsPending = new HashMap<>();
     Map<Integer, Long> offsetsAccepted = new HashMap<>();
+    Map<Integer, MutableOffset> offsetsProcessed = new HashMap<>();
     Set<Integer> assignedPartitions = Collections.emptySet();
   }
 
@@ -351,14 +366,24 @@ public final class KafkaLedger implements Ledger {
 
   static void handleRecord(MessageHandler handler, ConsumerState consumerState, MessageContext context,
                            ConsumerRecord<String, Message> record, Zlg zlg) {
+    final int partition = record.partition();
+    final long offset = record.offset();
     final boolean accepted;
     if (consumerState != null) {
       synchronized (consumerState.lock) {
-        accepted = consumerState.assignedPartitions.contains(record.partition());
-        if (accepted) {
-          consumerState.offsetsPending.put(record.partition(), record.offset());
-          consumerState.offsetsAccepted.put(record.partition(), record.offset());
+        final boolean canAccept = consumerState.assignedPartitions.contains(partition);
+        if (canAccept) {
+          final MutableOffset mutableOffset = consumerState.offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());
+          accepted = mutableOffset.tryAdvance(offset);
+          if (accepted) {
+            consumerState.offsetsPending.put(partition, offset);
+            consumerState.offsetsAccepted.put(partition, offset);
+          } else {
+            zlg.d("Skipping message at offset %d, partition: %d: monotonicity constraint violated (previous offset %d)", 
+                  z -> z.arg(record::offset).arg(record::partition).arg(mutableOffset.offset));
+          }
         } else {
+          accepted = false;
           zlg.d("Skipping message at offset %d: partition %d has been reassigned", z -> z.arg(record::offset).arg(record::partition));
         }
       }
@@ -367,11 +392,11 @@ public final class KafkaLedger implements Ledger {
     }
     
     if (accepted) {
-      final DefaultMessageId messageId = new DefaultMessageId(record.partition(), record.offset());
+      final DefaultMessageId messageId = new DefaultMessageId(partition, offset);
       final Message message = record.value();
       message.setMessageId(messageId);
       message.setShardKey(record.key());
-      message.setShard(record.partition());
+      message.setShard(partition);
       handler.onMessage(context, message);
     }
   }
