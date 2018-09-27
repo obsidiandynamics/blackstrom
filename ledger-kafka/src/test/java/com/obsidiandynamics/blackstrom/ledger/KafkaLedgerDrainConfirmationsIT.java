@@ -53,8 +53,6 @@ public final class KafkaLedgerDrainConfirmationsIT {
   
   private KafkaLedger ledger;
   
-  private final String timestamp = new SimpleDateFormat(KafkaDefaults.TOPIC_DATE_FORMAT).format(new Date());
-  
   @After
   public void after() {
     if (executor != null) {
@@ -66,22 +64,14 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
   }
   
-  private static String getUniquePrefix(String label) {
-    return KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
-  }
-  
-  private String getUniqueName(String label) {
-    return getUniquePrefix(label) + "-" + timestamp;
-  }
-  
   private String createTopic(String label, int partitions) throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
       
-      final String uniquePrefix = getUniquePrefix(label);
+      final String topicPrefix = KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
       final Set<String> allTopics = admin.listTopics(KafkaDefaults.TOPIC_OPERATION);
-      final List<String> testTopics = allTopics.stream().filter(topic -> topic.startsWith(uniquePrefix)).collect(Collectors.toList());
-
+      final List<String> testTopics = allTopics.stream().filter(topic -> topic.startsWith(topicPrefix)).collect(Collectors.toList());
+      
       new Retry()
       .withAttempts(10)
       .withBackoff(10_000)
@@ -89,20 +79,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
       .withErrorHandler(zlg::e)
       .withExceptionMatcher(Retry.isA(TimeoutException.class))
       .run(() -> admin.deleteTopics(testTopics, KafkaDefaults.TOPIC_OPERATION));
-
-      final Set<String> allGroups = admin.listConsumerGroups(KafkaDefaults.CONSUMER_GROUP_OPERATION);
-      final List<String> testGroups = allGroups.stream().filter(group -> group.startsWith(uniquePrefix)).collect(Collectors.toList());
-      zlg.d("Deleting groups %s", z -> z.arg(testGroups));
-
-      new Retry()
-      .withAttempts(10)
-      .withBackoff(10_000)
-      .withFaultHandler(zlg::w)
-      .withErrorHandler(zlg::e)
-      .withExceptionMatcher(Retry.isA(TimeoutException.class))
-      .run(() -> admin.deleteConsumerGroups(testGroups, KafkaDefaults.CONSUMER_GROUP_OPERATION));
       
-      final String topicName = getUniqueName(label);
+      final String topicName = topicPrefix + "-" + new SimpleDateFormat(KafkaDefaults.TOPIC_DATE_FORMAT).format(new Date());
       admin.createTopics(Collections.singleton(new NewTopic(topicName, partitions, (short) 1)), KafkaDefaults.TOPIC_OPERATION);
       return topicName;
     }
@@ -164,7 +142,6 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final int minOffsetMove = 10;
     final int maxOffsetMoveWaitMillis = 30_000;
     
-    final String groupId = getUniqueName(testLabel);
     new Thread(() -> {
       int[] latestOffsetsFromLastRebalance = getLatestOffsets(receiveCountsPerPartition);
       for (int c = 0; c < consumers; c++) {
@@ -193,7 +170,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
         ledger.attach(new MessageHandler() {
           @Override
           public String getGroupId() {
-            return groupId;
+            return "group";
           }
     
           @Override
@@ -210,9 +187,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
             
             // log any message that has been processed more than once (unless it is a one-off)
             final int lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
-            if (lastCount > 1 && count > 1) {
-              System.err.format("FAILURE in message %s; count=%d\n", message.getMessageId(), count);
-              zlg.w("FAILURE in message %s; count=%d", z -> z.arg(message::getMessageId).arg(count));
+            if (lastCount == 0) {
+              zlg.w("FAILURE in message %s; count=%d, lastCount=%d", z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
+              System.err.format("FAILURE in message %s; count=%d, lastCount=%d\n", message.getMessageId(), count, lastCount);
+            } else if (lastCount > 1 && count > 1) {
+              zlg.w("FAILURE in message %s; count=%d, lastCount=%d", z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
+              System.err.format("FAILURE in message %s; count=%d, lastCount=%d\n", message.getMessageId(), count, lastCount);
             } else if (count > 1) {
               zlg.d("Seeing boundary duplicate: offset=%d, partition=%d, count=%d", z -> z.arg(offset).arg(partition).arg(count));
             }
@@ -256,7 +236,10 @@ public final class KafkaLedgerDrainConfirmationsIT {
     
     // await receival of all messages
     final int expectedMessages = messages * partitions;
-    Wait.MEDIUM.untilTrue(() -> getUniqueCount(receiveCountsPerPartition) == expectedMessages);
+    Wait.MEDIUM.until(() -> {
+      final int uniqueCount = getUniqueCount(receiveCountsPerPartition);
+      assertEquals(expectedMessages, uniqueCount);
+    });
     
     boolean passedOverall = true;
     final List<String> errors = new ArrayList<>();
