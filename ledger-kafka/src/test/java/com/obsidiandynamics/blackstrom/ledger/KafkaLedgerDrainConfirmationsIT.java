@@ -92,6 +92,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
 
       final Set<String> allGroups = admin.listConsumerGroups(KafkaDefaults.CONSUMER_GROUP_OPERATION);
       final List<String> testGroups = allGroups.stream().filter(group -> group.startsWith(uniquePrefix)).collect(Collectors.toList());
+      zlg.d("Deleting groups %s", z -> z.arg(testGroups));
 
       new Retry()
       .withAttempts(10)
