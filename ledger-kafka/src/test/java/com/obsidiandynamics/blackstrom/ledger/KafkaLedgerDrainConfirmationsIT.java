@@ -22,6 +22,7 @@ import com.obsidiandynamics.flow.*;
 import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
+import com.obsidiandynamics.retry.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
 
@@ -62,14 +63,22 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
   }
   
-  private String createTopic(String label, int partitions) throws InterruptedException, ExecutionException, TimeoutException {
+  private String createTopic(String label, int partitions) throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
       
       final String topicPrefix = KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
       final Set<String> allTopics = admin.listTopics(KafkaDefaults.TOPIC_OPERATION);
       final List<String> testTopics = allTopics.stream().filter(topic -> topic.startsWith(topicPrefix)).collect(Collectors.toList());
-      admin.deleteTopics(testTopics, KafkaDefaults.TOPIC_OPERATION);
+      
+      new Retry()
+      .withAttempts(10)
+      .withBackoff(10_000)
+      .withFaultHandler(zlg::w)
+      .withErrorHandler(zlg::e)
+      .withExceptionMatcher(Retry.isA(TimeoutException.class))
+      .run(() -> admin.deleteTopics(testTopics, KafkaDefaults.TOPIC_OPERATION));
+      
       final String topicName = topicPrefix + "-" + new SimpleDateFormat(KafkaDefaults.TOPIC_DATE_FORMAT).format(new Date());
       admin.createTopics(Collections.singleton(new NewTopic(topicName, partitions, (short) 1)), KafkaDefaults.TOPIC_OPERATION);
       return topicName;
