@@ -20,6 +20,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.*;
+import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.ConsumerState.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
@@ -223,6 +224,23 @@ public final class KafkaLedgerTest {
   }
   
   @Test
+  public void testHandleRecordWithMonotonicConstraintViolation() {
+    final MessageHandler handler = mock(MessageHandler.class);
+    final ConsumerState consumerState = new ConsumerState();
+    consumerState.assignedPartitions = new HashSet<>(Arrays.asList(0));
+    consumerState.offsetsProcessed.computeIfAbsent(0, __ -> new MutableOffset()).offset = 0;
+    final Message message = new Command("xid", null, 0);
+    final ConsumerRecord<String, Message> record = new ConsumerRecord<>("topic", 0, 0L, "key", message);
+    final MockLogTarget logTarget = new MockLogTarget();
+    
+    KafkaLedger.handleRecord(handler, consumerState, null, record, logTarget.logger());
+    verify(handler, never()).onMessage(isNull(), eq(message));
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG)
+    .containing("Skipping message at offset 0, partition: 0: monotonicity constraint violated (previous offset 0)").assertCount(1);
+  }
+  
+  @Test
   public void testHandleRecordWithUnassignedTopic() {
     final MessageHandler handler = mock(MessageHandler.class);
     final ConsumerState consumerState = new ConsumerState();
@@ -233,7 +251,8 @@ public final class KafkaLedgerTest {
     KafkaLedger.handleRecord(handler, consumerState, null, record, logTarget.logger());
     verify(handler, never()).onMessage(isNull(), eq(message));
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Skipping message at offset").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG)
+    .containing("Skipping message at offset 0: partition 0 has been reassigned").assertCount(1);
   }
   
   @Test

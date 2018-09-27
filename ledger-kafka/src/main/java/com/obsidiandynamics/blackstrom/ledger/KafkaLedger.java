@@ -242,7 +242,7 @@ public final class KafkaLedger implements Ledger {
         final List<TopicPartition> partitions = infos.stream()
             .map(i -> new TopicPartition(i.topic(), i.partition()))
             .collect(Collectors.toList());
-        zlg.d("infos=%s, partitions=%s", z -> z.arg(infos).arg(partitions));
+        zlg.t("infos=%s, partitions=%s", z -> z.arg(infos).arg(partitions));
         final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
         consumer.assign(partitions);
         for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
