@@ -16,6 +16,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.ConsumerState.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.flow.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
@@ -93,10 +94,24 @@ public final class KafkaLedger implements Ledger {
     
     final Object lock = new Object();
     
+    /** The total number of records that have been queued through the consumer pipeline that are yet to
+     *  be considered for processing. (Some of these records may be discarded when they emerge from the
+     *  pipeline.) */
+    int queuedRecords;
+    
+    /** Offsets that have been marked as confirmed (via the {@link Flow}) instances. */
     Map<TopicPartition, OffsetAndMetadata> offsetsConfirmed = new HashMap<>();
+    
+    /** Pending offsets for messages that have been accepted for processing, but haven't yet been confirmed. */
     Map<Integer, Long> offsetsPending = new HashMap<>();
+    
+    /** Offsets for messages that have been accepted for processing. This map is cleared after drainage. */
     Map<Integer, Long> offsetsAccepted = new HashMap<>();
-    Map<Integer, MutableOffset> offsetsProcessed = new HashMap<>();
+    
+    /** A perpetual tracking of all offsets that have been processed, ensuring monotonicity. */
+    final Map<Integer, MutableOffset> offsetsProcessed = new HashMap<>();
+    
+    /** Partitions that have been assigned to this consumer. */
     Set<Integer> assignedPartitions = Collections.emptySet();
   }
 
@@ -267,8 +282,24 @@ public final class KafkaLedger implements Ledger {
     final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
     final String consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
-      for (ConsumerRecord<String, Message> record : records) {
-        handleRecord(handler, consumerState, context, record, zlg);
+      final boolean queueBatch;
+      if (consumerState != null) {
+        synchronized (consumerState) {
+          if (! consumerState.assignedPartitions.isEmpty()) {
+            consumerState.queuedRecords += records.count();
+            queueBatch = true;
+          } else {
+            queueBatch = false;
+          }
+        }
+      } else {
+        queueBatch = true;
+      }
+      
+      if (queueBatch) {
+        for (ConsumerRecord<String, Message> record : records) {
+          handleRecord(handler, consumerState, context, record, zlg);
+        }
       }
     };
     final ConsumerPipe<String, Message> consumerPipe = 
@@ -315,12 +346,18 @@ public final class KafkaLedger implements Ledger {
       final boolean allPendingOffsetsConfirmed;
       final Map<Integer, Long> offsetsAcceptedSnapshot;
       synchronized (consumerState.lock) {
-        allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
-        if (allPendingOffsetsConfirmed) {
-          offsetsAcceptedSnapshot = consumerState.offsetsAccepted;
-          consumerState.offsetsAccepted = new HashMap<>();
+        if (consumerState.queuedRecords == 0) {
+          allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
+          if (allPendingOffsetsConfirmed) {
+            offsetsAcceptedSnapshot = consumerState.offsetsAccepted;
+            consumerState.offsetsAccepted = new HashMap<>();
+          } else {
+            zlg.d("Offsets pending: %s", z -> z.arg(consumerState.offsetsPending));
+            offsetsAcceptedSnapshot = null;
+          }
         } else {
-          zlg.d("Offsets pending: %s", z -> z.arg(consumerState.offsetsPending));
+          zlg.d("Pipeline backlogged: %d records queued", z -> z.arg(consumerState.queuedRecords));
+          allPendingOffsetsConfirmed = false;
           offsetsAcceptedSnapshot = null;
         }
       }
@@ -339,7 +376,8 @@ public final class KafkaLedger implements Ledger {
         intervalSleep.run();
       } else {
         synchronized (consumerState.lock) {
-          zlg.w("Drain timed out (%,d ms). Pending offsets %s", z -> z.arg(drainTimeoutMillis).arg(consumerState.offsetsPending));
+          zlg.w("Drain timed out (%,d ms). Pending offsets %s, %d records queued", 
+                z -> z.arg(drainTimeoutMillis).arg(consumerState.offsetsPending).arg(consumerState.queuedRecords));
         }
         return;
       }
@@ -371,6 +409,7 @@ public final class KafkaLedger implements Ledger {
     final boolean accepted;
     if (consumerState != null) {
       synchronized (consumerState.lock) {
+        consumerState.queuedRecords--;
         final boolean canAccept = consumerState.assignedPartitions.contains(partition);
         if (canAccept) {
           final MutableOffset mutableOffset = consumerState.offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());

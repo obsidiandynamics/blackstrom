@@ -53,6 +53,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
   
   private KafkaLedger ledger;
   
+  private final String timestamp = new SimpleDateFormat(KafkaDefaults.TOPIC_DATE_FORMAT).format(new Date());
+
   @After
   public void after() {
     if (executor != null) {
@@ -64,14 +66,22 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
   }
   
+  private static String getUniquePrefix(String label) {
+    return KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
+  }
+  
+  private String getUniqueName(String label) {
+    return getUniquePrefix(label) + "-" + timestamp;
+  }
+  
   private String createTopic(String label, int partitions) throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
       
-      final String topicPrefix = KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
+      final String uniquePrefix = getUniquePrefix(label);
       final Set<String> allTopics = admin.listTopics(KafkaDefaults.TOPIC_OPERATION);
-      final List<String> testTopics = allTopics.stream().filter(topic -> topic.startsWith(topicPrefix)).collect(Collectors.toList());
-      
+      final List<String> testTopics = allTopics.stream().filter(topic -> topic.startsWith(uniquePrefix)).collect(Collectors.toList());
+
       new Retry()
       .withAttempts(10)
       .withBackoff(10_000)
@@ -79,8 +89,20 @@ public final class KafkaLedgerDrainConfirmationsIT {
       .withErrorHandler(zlg::e)
       .withExceptionMatcher(Retry.isA(TimeoutException.class))
       .run(() -> admin.deleteTopics(testTopics, KafkaDefaults.TOPIC_OPERATION));
+
+      final Set<String> allGroups = admin.listConsumerGroups(KafkaDefaults.CONSUMER_GROUP_OPERATION);
+      final List<String> testGroups = allGroups.stream().filter(group -> group.startsWith(uniquePrefix)).collect(Collectors.toList());
+      zlg.d("Deleting groups %s", z -> z.arg(testGroups));
       
-      final String topicName = topicPrefix + "-" + new SimpleDateFormat(KafkaDefaults.TOPIC_DATE_FORMAT).format(new Date());
+      new Retry()
+      .withAttempts(10)
+      .withBackoff(10_000)
+      .withFaultHandler(zlg::w)
+      .withErrorHandler(zlg::e)
+      .withExceptionMatcher(Retry.isA(TimeoutException.class))
+      .run(() -> admin.deleteConsumerGroups(testGroups, KafkaDefaults.CONSUMER_GROUP_OPERATION));
+      
+      final String topicName = getUniqueName(label);
       admin.createTopics(Collections.singleton(new NewTopic(topicName, partitions, (short) 1)), KafkaDefaults.TOPIC_OPERATION);
       return topicName;
     }
@@ -142,6 +164,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final int minOffsetMove = 10;
     final int maxOffsetMoveWaitMillis = 30_000;
     
+    final String groupId = getUniqueName(testLabel);
     new Thread(() -> {
       int[] latestOffsetsFromLastRebalance = getLatestOffsets(receiveCountsPerPartition);
       for (int c = 0; c < consumers; c++) {
@@ -170,7 +193,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
         ledger.attach(new MessageHandler() {
           @Override
           public String getGroupId() {
-            return "group";
+            return groupId;
           }
     
           @Override
