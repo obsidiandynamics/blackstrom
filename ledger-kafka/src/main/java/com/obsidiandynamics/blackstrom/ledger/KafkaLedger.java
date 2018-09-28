@@ -282,11 +282,20 @@ public final class KafkaLedger implements Ledger {
     final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
     final String consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
+      for (ConsumerRecord<String, Message> record : records) {
+        handleRecord(handler, consumerState, context, record, zlg);
+      }
+    };
+    final ConsumerPipe<String, Message> consumerPipe = 
+        new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
+    consumerPipes.add(consumerPipe);
+    final RecordHandler<String, Message> recordHandler = records -> {
       final boolean queueBatch;
       if (consumerState != null) {
-        synchronized (consumerState) {
+        final int recordCount = records.count();
+        synchronized (consumerState.lock) {
           if (! consumerState.assignedPartitions.isEmpty()) {
-            consumerState.queuedRecords += records.count();
+            consumerState.queuedRecords += recordCount;
             queueBatch = true;
           } else {
             queueBatch = false;
@@ -297,29 +306,21 @@ public final class KafkaLedger implements Ledger {
       }
       
       if (queueBatch) {
-        for (ConsumerRecord<String, Message> record : records) {
-          handleRecord(handler, consumerState, context, record, zlg);
-        }
-      }
-    };
-    final ConsumerPipe<String, Message> consumerPipe = 
-        new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
-    consumerPipes.add(consumerPipe);
-    final RecordHandler<String, Message> recordHandler = records -> {
-      for (int yields = 0;;) {
-        final boolean enqueued = consumerPipe.receive(records);
-
-        if (consumerState != null) {
-          commitOffsets(consumer, consumerState, zlg);
-        }
-
-        if (enqueued) {
-          break;
-        } else if (yields < maxConsumerPipeYields) {
-          yields++;
-          Thread.yield();
-        } else {
-          Thread.sleep(PIPELINE_BACKOFF_MILLIS);
+        for (int yields = 0;;) {
+          final boolean enqueued = consumerPipe.receive(records);
+  
+          if (consumerState != null) {
+            commitOffsets(consumer, consumerState, zlg);
+          }
+  
+          if (enqueued) {
+            break;
+          } else if (yields < maxConsumerPipeYields) {
+            yields++;
+            Thread.yield();
+          } else {
+            Thread.sleep(PIPELINE_BACKOFF_MILLIS);
+          }
         }
       }
     };
