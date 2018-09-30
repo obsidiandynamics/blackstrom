@@ -140,10 +140,12 @@ public final class KafkaLedger implements Ledger {
 
     // may be user-specified in config
     final Properties producerDefaults = new PropsBuilder()
+        .withSystemDefault("enable.idempotence", true)
         .withSystemDefault("batch.size", 1 << 18)
         .withSystemDefault("linger.ms", 1)
         .withSystemDefault("compression.type", "lz4")
         .withSystemDefault("request.timeout.ms", 10_000)
+        .withSystemDefault("retries", Integer.MAX_VALUE)
         .withSystemDefault("retry.backoff.ms", 100)
         .build();
 
@@ -154,7 +156,6 @@ public final class KafkaLedger implements Ledger {
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .with("acks", "all")
         .with("max.in.flight.requests.per.connection", 1)
-        .with("retries", 0)
         .with("max.block.ms", Long.MAX_VALUE)
         .build();
     

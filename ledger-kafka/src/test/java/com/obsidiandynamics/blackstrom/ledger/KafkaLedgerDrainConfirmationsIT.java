@@ -24,6 +24,7 @@ import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.retry.*;
 import com.obsidiandynamics.threads.*;
+import com.obsidiandynamics.yconf.util.*;
 import com.obsidiandynamics.zerolog.*;
 
 @RunWith(Parameterized.class)
@@ -42,10 +43,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
   
   private final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers("localhost:9092")
-      .withConsumerProps(new MapBuilder<Object, Object>()
-                         .with("default.api.timeout.ms", "5000")
-                         .with("session.timeout.ms", "60000")
-                         .with("max.poll.interval.ms", "300000")
+      .withProducerProps(new PropsBuilder()
+                         .build())
+      .withConsumerProps(new PropsBuilder()
+                         .with("default.api.timeout.ms", 5_000)
+                         .with("session.timeout.ms", 60_000)
+                         .with("max.poll.interval.ms", 300_000)
                          .with("partition.assignment.strategy", RoundRobinAssignor.class.getName())
                          .build());
   
