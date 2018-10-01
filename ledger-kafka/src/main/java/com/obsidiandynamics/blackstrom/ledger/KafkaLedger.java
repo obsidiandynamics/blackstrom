@@ -149,7 +149,7 @@ public final class KafkaLedger implements Ledger {
         .withSystemDefault("batch.size", 1 << 18)
         .withSystemDefault("linger.ms", 1)
         .withSystemDefault("compression.type", "lz4")
-        .withSystemDefault("request.timeout.ms", 10_000)
+        .withSystemDefault("request.timeout.ms", 120_000)
         .withSystemDefault("retries", Integer.MAX_VALUE)
         .withSystemDefault("retry.backoff.ms", 100)
         .build();
