@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 
 import org.apache.kafka.common.*;
@@ -8,6 +10,7 @@ import org.apache.kafka.common.serialization.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaMessageDeserializer implements Deserializer<Message> {
@@ -26,6 +29,7 @@ public final class KafkaMessageDeserializer implements Deserializer<Message> {
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {
     codec = CodecRegistry.forLocator((String) configs.get(CodecRegistry.CONFIG_CODEC_LOCATOR));
+    mustExist(codec, NullArgumentException::new);
   }
 
   @Override
