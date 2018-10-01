@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.function.*;
@@ -243,6 +244,7 @@ public final class KafkaLedger implements Ledger {
     .withAttempts(ioRetries)
     .withFaultHandler(zlg::w)
     .withErrorHandler(zlg::e)
+    .withExceptionMatcher(Retry.isA(RetriableException.class))
     .run(() -> {
       if (groupId != null) {
         final ConsumerRebalanceListener rebalanceListener = new ConsumerRebalanceListener() {
@@ -387,6 +389,7 @@ public final class KafkaLedger implements Ledger {
           .withAttempts(ioRetries)
           .withFaultHandler(zlg::w)
           .withErrorHandler(zlg::e)
+          .withExceptionMatcher(Retry.isA(RetriableException.class))
           .run(() -> consumer.commitSync(toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic)));
         }
         return;
