@@ -186,6 +186,21 @@ public final class KafkaLedgerTest {
   }
   
   @Test
+  public void testAttachAfterDispose() {
+    ledger = MockKafkaLedger.create();
+    assertFalse(ledger.isDisposing());
+    ledger.dispose();
+    assertTrue(ledger.isDisposing());
+    
+    final MessageHandler handler = mock(MessageHandler.class);
+    ledger.attach(handler);
+
+    ledger.append(new Proposal("B100", new String[0], null, 0));
+    Threads.sleep(10);
+    verifyNoMoreInteractions(handler);
+  }
+  
+  @Test
   public void testAppendAfterDispose() {
     ledger = MockKafkaLedger.create();
     assertFalse(ledger.isDisposing());

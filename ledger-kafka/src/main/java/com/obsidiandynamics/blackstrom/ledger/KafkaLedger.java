@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
 import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.*;
 import java.util.function.*;
 import java.util.stream.*;
 
@@ -39,7 +40,11 @@ public final class KafkaLedger implements Ledger {
 
   private final Zlg zlg;
 
+  /** A process-unique handle to the codec that's held by the {@link CodecRegistry}. */
   private final String codecLocator;
+  
+  /** Prevents deregistering the codec while new consumers are being attached to the ledger. */
+  private final ReentrantReadWriteLock codecLock = new ReentrantReadWriteLock();
 
   private final ConsumerPipeConfig consumerPipeConfig;
   
@@ -185,6 +190,17 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void attach(MessageHandler handler) {
+    codecLock.readLock().lock();
+    try {
+      if (! disposing) {
+        _attach(handler);
+      }
+    } finally {
+      codecLock.readLock().unlock();
+    }
+  }
+
+  private void _attach(MessageHandler handler) {
     final String groupId = handler.getGroupId();
     final String consumerGroupId;
     final String autoOffsetReset;
@@ -503,6 +519,11 @@ public final class KafkaLedger implements Ledger {
     .add(flows)
     .terminate()
     .joinSilently();
-    CodecRegistry.deregister(codecLocator);
+    codecLock.writeLock().lock();
+    try {
+      CodecRegistry.deregister(codecLocator);
+    } finally {
+      codecLock.writeLock().unlock();
+    }
   }
 }
