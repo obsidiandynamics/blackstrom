@@ -11,6 +11,7 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
 
 public abstract class AbstractGroupLedgerTest {
@@ -73,20 +74,38 @@ public abstract class AbstractGroupLedgerTest {
   @Test
   public final void testPubSub() {
     ledger = createLedger();
+    ledger.init();
+    
     final int numHandlers = 3;
     final int numMessages = 5;
     final List<TestHandler> handlers = new ArrayList<>(numHandlers);
     
-    for (int i = 0; i < numHandlers; i++) {
-      final TestHandler handler = new TestHandler("test-group");
-      handlers.add(handler);
-      ledger.attach(handler);
-    }
-    ledger.init();
+    // register an initial handler first, allowing the ledger to direct traffic to it following an initial rebalance
+    final TestHandler initialHandler = new TestHandler("test-group");
+    handlers.add(initialHandler);
+    ledger.attach(initialHandler);
     
+    // wait until at least one message is received by the initial handler before adding new ones (avoids spurious
+    // rebalancing and duplicate messages depending on ledger implementation, e.g. Kafka)
+    final Thread addMoreHandlersThread = new Thread(() -> {
+      wait.until(() -> {
+        assertTrue(handlers.get(0).received.size() > 0);
+      });
+      
+      for (int i = 0; i < numHandlers - 1; i++) {
+        final TestHandler handler = new TestHandler("test-group");
+        handlers.add(handler);
+        ledger.attach(handler);
+      }
+    }, "AddMoreHandlersThread");
+    addMoreHandlersThread.start();
+
     for (int i = 0; i < numMessages; i++) {
       appendMessage("test");
     }
+    
+    // wait for all handlers to join before proceeding with further assertions
+    Threads.runUninterruptedly(addMoreHandlersThread::join);
     
     boolean success = false;
     try {
