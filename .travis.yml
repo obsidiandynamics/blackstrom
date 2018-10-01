@@ -7,6 +7,7 @@ jdk:
   - oraclejdk8
   - oraclejdk9
   - oraclejdk10
+  - openjdk11
 
 install:
   - travis_retry ./gradlew --info :dependencies blackstrom-codec-jackson:dependencies blackstrom-codec-kryo:dependencies blackstrom-ledger-meteor:dependencies blackstrom-ledger-kafka:dependencies blackstrom-sim:dependencies --refresh-dependencies 
