@@ -191,7 +191,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
                 zlg.d("Previous consumer seems to have stopped receiving messages; no more consumers will be provisioned");
                 return;
               } else {
-                Threads.sleep(10);
+                Threads.sleep(50);
               }
             }
           }
@@ -209,7 +209,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
                 zlg.d("Offsets don't appear to be moving; no more consumers will be provisioned");
                 return;
               } else {
-                Threads.sleep(10);
+                Threads.sleep(50);
               }
             }
           }
@@ -269,7 +269,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
         
         // wait for at least one message to be received before adding more consumers into the mix
         // (prevents adding contending consumers before at least one has been assigned a partition)
-        Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= 1);
+        Wait.LONG.untilTrue(() -> totalReceived.get() >= 1);
       }
     }, "LedgerAttachThread").start();
 
@@ -281,26 +281,30 @@ public final class KafkaLedgerDrainConfirmationsIT {
       Threads.sleep(messageIntervalMillis);
 
       // wait for at least one message to be received before publishing more
-      // (prevents over-publishing before at a consumer has been assigned a partition)
+      // (prevents over-publishing before a consumer has been assigned a partition)
       Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= 1);
     }
     
     // await receival of all messages
+    zlg.i("Awaiting message receival");
     final int expectedMessages = messages * partitions;
     boolean allReceived = false;
     try {
-      Wait.MEDIUM.until(() -> {
+      Wait.LONG.until(() -> {
         final int uniqueCount = getUniqueCount(receiveCountsPerPartition);
         assertEquals(expectedMessages, uniqueCount);
       });
       allReceived = true;
     } finally {
       if (! allReceived) {
+        zlg.w("Test failed");
         for (int p = 0; p < partitions; p++) {
           final AtomicIntegerArray receiveCounts = receiveCountsPerPartition[p];
           for (int offset = 0; offset < receiveCounts.length(); offset++) {
             final int receiveCount = receiveCounts.get(offset);
             if (receiveCount == 0) {
+              final int _offset = offset, _p = p;
+              zlg.w("Missing offset %d for partition %d", z -> z.arg(_offset).arg(_p));
               System.err.format("Missing offset %d for partition %d\n", offset, p);
             }
           }
