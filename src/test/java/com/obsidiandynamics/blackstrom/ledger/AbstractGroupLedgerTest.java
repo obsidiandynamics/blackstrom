@@ -4,6 +4,7 @@ import static junit.framework.TestCase.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 
@@ -87,6 +88,7 @@ public abstract class AbstractGroupLedgerTest {
     
     // wait until at least one message is received by the initial handler before adding new ones (avoids spurious
     // rebalancing and duplicate messages depending on ledger implementation, e.g. Kafka)
+    final AtomicBoolean awaitedInitialHandler = new AtomicBoolean();
     final Thread addMoreHandlersThread = new Thread(() -> {
       wait.until(() -> {
         assertTrue(handlers.get(0).received.size() > 0);
@@ -97,6 +99,8 @@ public abstract class AbstractGroupLedgerTest {
         handlers.add(handler);
         ledger.attach(handler);
       }
+      
+      awaitedInitialHandler.set(true);
     }, "AddMoreHandlersThread");
     addMoreHandlersThread.start();
 
@@ -106,6 +110,7 @@ public abstract class AbstractGroupLedgerTest {
     
     // wait for all handlers to join before proceeding with further assertions
     Threads.runUninterruptedly(addMoreHandlersThread::join);
+    assertTrue(awaitedInitialHandler.get());
     
     boolean success = false;
     try {
