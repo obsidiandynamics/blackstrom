@@ -160,7 +160,13 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
     final AtomicInteger totalReceived = new AtomicInteger();
     final AtomicInteger totalConfirmed = new AtomicInteger();
+    final AtomicIntegerArray receivedPerConsumer = new AtomicIntegerArray(consumers);
     executor = Executors.newFixedThreadPool(8);
+    
+    // The time to wait for the previous consumer to have received at least one message before
+    // creating the next consumer. Ensures that one consumer (and its peers) have rebalanced before
+    // adding another consumer into the mix.
+    final int maxPreviousConsumerReceiveWaitMillis = 30_000;
     
     // The minimum an received offset must move by before adding a new consumer. This value shouldn't be smaller
     // than two, as it guarantees a clean boundary between consumer rebalancing.
@@ -171,9 +177,26 @@ public final class KafkaLedgerDrainConfirmationsIT {
     new Thread(() -> {
       int[] latestOffsetsFromLastRebalance = getLatestOffsets(receiveCountsPerPartition);
       for (int c = 0; c < consumers; c++) {
+        final int consumerIndex = c;
         if (c != 0) {
           Threads.sleep(consumerJoinIntervalMillis);
-          final long waitUntilTime = System.currentTimeMillis() + maxOffsetMoveWaitMillis;
+          final long previousConsumerReceiveWaitUntilTime = System.currentTimeMillis() + maxPreviousConsumerReceiveWaitMillis;
+          for (;;) {
+            final int previousCounsumerReceived = receivedPerConsumer.get(c - 1);
+            if (previousCounsumerReceived > 0) {
+              break;
+            } else {
+              zlg.d("Previous consumer (at index %d) hasn't yet received a single message", z -> z.arg(consumerIndex - 1));
+              if (System.currentTimeMillis() > previousConsumerReceiveWaitUntilTime) {
+                zlg.d("Previous consumer seems to have stopped receiving messages; no more consumers will be provisioned");
+                return;
+              } else {
+                Threads.sleep(10);
+              }
+            }
+          }
+          
+          final long offsetMoveWaitUntilTime = System.currentTimeMillis() + maxOffsetMoveWaitMillis;
           for (;;) {
             final int[] latestOffsets = getLatestOffsets(receiveCountsPerPartition);
             if (offsetsMoved(latestOffsetsFromLastRebalance, latestOffsets, minOffsetMove)) {
@@ -182,7 +205,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
             } else {
               zlg.d("Offsets haven't moved significantly since last rebalance: %s",
                     z -> z.arg(Arrays.toString(latestOffsets)));
-              if (System.currentTimeMillis() > waitUntilTime) {
+              if (System.currentTimeMillis() > offsetMoveWaitUntilTime) {
                 zlg.d("Offsets don't appear to be moving; no more consumers will be provisioned");
                 return;
               } else {
@@ -209,6 +232,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
             
+            receivedPerConsumer.incrementAndGet(consumerIndex);
             final AtomicIntegerArray receiveCounts = receiveCountsPerPartition[partition];
             final int count = receiveCounts.incrementAndGet((int) offset);
             
