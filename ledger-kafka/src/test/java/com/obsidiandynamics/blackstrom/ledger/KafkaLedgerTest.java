@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static java.util.Collections.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -25,6 +26,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.jackdaw.*;
+import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
@@ -398,5 +400,83 @@ public final class KafkaLedgerTest {
     KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(0);
     verify(consumer, never()).commitSync(Classes.<Map<TopicPartition, OffsetAndMetadata>>cast(any(Map.class)));
+  }
+  
+  @Test
+  public void testDrainOffsetsWithBackloggedPipeline() {
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final ConsumerState consumerState = new ConsumerState();
+    final MockLogTarget logTarget = new MockLogTarget();
+    final Runnable intervalSleep = mock(Runnable.class);
+    consumerState.queuedRecords = 1;
+    consumerState.offsetsAccepted.put(0, 100L);
+    doAnswer(__ -> {
+      synchronized (consumerState.lock) {
+        consumerState.queuedRecords = 0;
+      }
+      return null;
+    }).when(intervalSleep).run();
+    
+    final AtomicBoolean disposing = new AtomicBoolean();
+    KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
+    logTarget.entries().assertCount(2);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Pipeline backlogged").assertCount(1);
+    final Map<TopicPartition, OffsetAndMetadata> expectedOffsets = MapBuilder
+        .init(new TopicPartition("topic", 0), new OffsetAndMetadata(100L))
+        .build();
+    verify(consumer).commitSync(eq(expectedOffsets));
+  }
+  
+  @Test
+  public void testQueueRecordsWithConsumerStateAndAssignedPartitions() throws InterruptedException {
+    final ConsumerState consumerState = new ConsumerState();
+    consumerState.assignedPartitions = Collections.singleton(0);
+    final MockLogTarget logTarget = new MockLogTarget();
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final RecordHandler<String, Message> recordHandler = Classes.cast(mock(RecordHandler.class));
+    final ConsumerPipe<String, Message> consumerPipe = new ConsumerPipe<>(new ConsumerPipeConfig().withAsync(false), recordHandler, null);
+    final ConsumerRecords<String, Message> records = getSingletonBatch();
+    
+    KafkaLedger.queueRecords(consumer, consumerState, consumerPipe, records, 1, logTarget.logger());
+    verify(recordHandler).onReceive(isNotNull());
+    assertEquals(1, consumerState.queuedRecords);
+    logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testQueueRecordsWithConsumerStateAndNoAssignedPartitions() throws InterruptedException {
+    final ConsumerState consumerState = new ConsumerState();
+    consumerState.assignedPartitions = Collections.emptySet();
+    final MockLogTarget logTarget = new MockLogTarget();
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final RecordHandler<String, Message> recordHandler = Classes.cast(mock(RecordHandler.class));
+    final ConsumerPipe<String, Message> consumerPipe = new ConsumerPipe<>(new ConsumerPipeConfig().withAsync(false), recordHandler, null);
+    final ConsumerRecords<String, Message> records = getSingletonBatch();
+    
+    KafkaLedger.queueRecords(consumer, consumerState, consumerPipe, records, 1, logTarget.logger());
+    verifyNoMoreInteractions(recordHandler);
+    assertEquals(0, consumerState.queuedRecords);
+    logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testQueueRecordsWithoutConsumerState() throws InterruptedException {
+    final MockLogTarget logTarget = new MockLogTarget();
+    final Consumer<String, Message> consumer = Classes.cast(mock(Consumer.class));
+    final RecordHandler<String, Message> recordHandler = Classes.cast(mock(RecordHandler.class));
+    final ConsumerPipe<String, Message> consumerPipe = new ConsumerPipe<>(new ConsumerPipeConfig().withAsync(false), recordHandler, null);
+    final ConsumerRecords<String, Message> records = getSingletonBatch();
+    
+    KafkaLedger.queueRecords(consumer, null, consumerPipe, records, 1, logTarget.logger());
+    verify(recordHandler).onReceive(isNotNull());
+    logTarget.entries().assertCount(0);
+  }
+  
+  private static ConsumerRecords<String, Message> getSingletonBatch() {
+    final String key = "key";
+    final Message value = null;
+    return new ConsumerRecords<>(singletonMap(new TopicPartition("topic", 0), 
+                                              singletonList(new ConsumerRecord<>("topic", 0, 0L, key, value))));
   }
 }

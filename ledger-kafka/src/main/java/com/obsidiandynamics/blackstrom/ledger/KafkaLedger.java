@@ -308,45 +308,54 @@ public final class KafkaLedger implements Ledger {
         new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
-      final boolean queueBatch;
-      if (consumerState != null) {
-        final int recordCount = records.count();
-        synchronized (consumerState.lock) {
-          if (! consumerState.assignedPartitions.isEmpty()) {
-            consumerState.queuedRecords += recordCount;
-            queueBatch = true;
-          } else {
-            queueBatch = false;
-          }
-        }
-      } else {
-        queueBatch = true;
-      }
-      
-      if (queueBatch) {
-        for (int yields = 0;;) {
-          final boolean enqueued = consumerPipe.receive(records);
-  
-          if (consumerState != null) {
-            commitOffsets(consumer, consumerState, zlg);
-          }
-  
-          if (enqueued) {
-            break;
-          } else if (yields < maxConsumerPipeYields) {
-            yields++;
-            Thread.yield();
-          } else {
-            Thread.sleep(PIPELINE_BACKOFF_MILLIS);
-          }
-        }
-      }
+      queueRecords(consumer, consumerState, consumerPipe, records, maxConsumerPipeYields, zlg);
     };
 
     final String threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
     final AsyncReceiver<String, Message> receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
+  }
+
+  static void queueRecords(Consumer<String, Message> consumer, 
+                           ConsumerState consumerState,
+                           ConsumerPipe<String, Message> consumerPipe,
+                           ConsumerRecords<String, Message> records,
+                           int maxConsumerPipeYields,
+                           Zlg zlg) throws InterruptedException {
+    final boolean queueBatch;
+    if (consumerState != null) {
+      final int recordCount = records.count();
+      synchronized (consumerState.lock) {
+        if (! consumerState.assignedPartitions.isEmpty()) {
+          consumerState.queuedRecords += recordCount;
+          queueBatch = true;
+        } else {
+          queueBatch = false;
+        }
+      }
+    } else {
+      queueBatch = true;
+    }
+    
+    if (queueBatch) {
+      for (int yields = 0;;) {
+        final boolean enqueued = consumerPipe.receive(records);
+ 
+        if (consumerState != null) {
+          commitOffsets(consumer, consumerState, zlg);
+        }
+ 
+        if (enqueued) {
+          break;
+        } else if (yields < maxConsumerPipeYields) {
+          yields++;
+          Thread.yield();
+        } else {
+          Thread.sleep(PIPELINE_BACKOFF_MILLIS);
+        }
+      }
+    }
   }
   
   static Runnable sleepFor(long sleepMillis) {
