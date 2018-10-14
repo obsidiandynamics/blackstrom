@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.handler;
 
+@FunctionalInterface
 public interface Groupable {
   String getGroupId();
   
