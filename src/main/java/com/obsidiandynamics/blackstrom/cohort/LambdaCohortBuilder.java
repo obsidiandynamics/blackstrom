@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.cohort;
 
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.factor.*;
+import com.obsidiandynamics.blackstrom.handler.*;
 
 public final class LambdaCohortBuilder {
   private static final Initable DEF_ON_INIT = new Initable.Nop() {};
@@ -126,7 +127,7 @@ public final class LambdaCohortBuilder {
     return onOutcome != DEF_ON_OUTCOME;
   }
   
-  public LambdaCohortBuilder onUnhandled(GenericMessageProcessor onUnhandled) {
+  public LambdaCohortBuilder onUnhandled(MessageTarget onUnhandled) {
     if (! hasOnQuery()) onQuery(onUnhandled::onMessage);
     if (! hasOnQueryResponse()) onQueryResponse(onUnhandled::onMessage);
     if (! hasOnCommand()) onCommand(onUnhandled::onMessage);

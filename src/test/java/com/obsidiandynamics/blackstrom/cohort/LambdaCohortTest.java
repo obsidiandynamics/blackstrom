@@ -71,7 +71,7 @@ public final class LambdaCohortTest {
     final Vote vote = new Vote("X0", null);
     final Outcome outcome = new Outcome("X0", Resolution.COMMIT, null, new Response[0], null);
     
-    final GenericMessageProcessor onUnhandled = mock(GenericMessageProcessor.class);
+    final MessageTarget onUnhandled = mock(MessageTarget.class);
     final LambdaCohort l = LambdaCohort.builder().onUnhandled(onUnhandled).build();
     
     l.init(initContext);
@@ -101,7 +101,7 @@ public final class LambdaCohortTest {
     final ProposalProcessor onProposal = mock(ProposalProcessor.class);
     final VoteProcessor onVote = mock(VoteProcessor.class);
     final OutcomeProcessor onOutcome = mock(OutcomeProcessor.class);
-    final GenericMessageProcessor onUnhandled = mock(GenericMessageProcessor.class);
+    final MessageTarget onUnhandled = mock(MessageTarget.class);
     
     final InitContext initContext = mock(InitContext.class);
     final MessageContext messageContext = mock(MessageContext.class);
