@@ -40,6 +40,12 @@ public final class JacksonMessageCodecTest {
   public ExpectedException thrown = ExpectedException.none();
   
   @Test
+  public void testGetMapper() {
+    final JacksonMessageCodec codec = new JacksonMessageCodec(false);
+    assertNotNull(codec.getMapper());
+  }
+  
+  @Test
   public void testProposalNullObjective() throws Exception {
     final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
     MessageCodec c;

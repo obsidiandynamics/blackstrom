@@ -9,7 +9,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
-public final class KryoMessageCodec implements MessageCodec {
+public class KryoMessageCodec implements MessageCodec {
   public static final int ENCODING_VERSION = 4;
   
   private static final int DEF_MESSAGE_BUFFER_SIZE = 128;

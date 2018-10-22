@@ -11,7 +11,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.yconf.*;
 
 @Y
-public final class JacksonMessageCodec implements MessageCodec {  
+public class JacksonMessageCodec implements MessageCodec {  
   public static final int ENCODING_VERSION = 2;
   
   private static final JacksonExpansion[] defExpansions = { new JacksonDefaultOutcomeMetadataExpansion() };
@@ -21,10 +21,22 @@ public final class JacksonMessageCodec implements MessageCodec {
 
   private final ObjectMapper mapper;
   
+  private static ObjectMapper createDefaultBaseMapper() {
+    return new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, true)
+        .setSerializationInclusion(Include.NON_NULL);
+  }
+  
   public JacksonMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
                              @YInject(name="expansions") JacksonExpansion... expansions) {
-    mapper = new ObjectMapper();
-    mapper.setSerializationInclusion(Include.NON_NULL);
+    this(createDefaultBaseMapper(), mapPayload, expansions);
+  }
+  
+  public JacksonMessageCodec(ObjectMapper mapper,
+                             boolean mapPayload, 
+                             JacksonExpansion... expansions) {
+    this.mapper = mapper;
     
     final SimpleModule module = new SimpleModule();
     module.addSerializer(Message.class, new JacksonMessageSerializer());
@@ -36,6 +48,15 @@ public final class JacksonMessageCodec implements MessageCodec {
     for (JacksonExpansion expansion : expansions) expansion.accept(module);
     
     mapper.registerModule(module);
+  }
+  
+  /**
+   *  Obtains the underlying object mapper.
+   *  
+   *  @return The backing {@link ObjectMapper} instance.
+   */
+  public ObjectMapper getMapper() {
+    return mapper;
   }
   
   @Override
