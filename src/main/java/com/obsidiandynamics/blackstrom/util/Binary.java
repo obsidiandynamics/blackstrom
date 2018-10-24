@@ -22,6 +22,7 @@ public final class Binary {
   
   public static final class NotAnUnsignedByteException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
+    
     NotAnUnsignedByteException(String m) { super(m); }
   }
   
@@ -64,13 +65,15 @@ public final class Binary {
   
   /**
    *  Dumps the contents of the given byte array to a formatted hex string, using a multi-line,
-   *  8 + 8 layout with an ASCII side-note, commonly used in hex editors.<p>
+   *  8 + 8 layout with an ASCII side-note, commonly used in hex editors. <p>
    *  
    *  A typical hex dump resembles the following:<br>
+   *  <pre>
    *  {@code
    *  3C 3D 3E 3F 40 41 42 43   44 45 46 47 48 49 4A 4B   <=>?@ABCDEFGHIJK
    *  4C 4D 4E 4F 50 51 52 53   54                        LMNOPQRST
    *  }
+   *  </pre>
    *  
    *  @param bytes The byte array.
    *  @return The formatted string, potentially containing newline characters.
