@@ -55,7 +55,7 @@ public final class MultiNodeQueueRigTest {
   }
   
   private void test(long runs, int branches, boolean lowLatency) throws Exception {
-    final CheckedSupplier<JChannel, Exception> _channelFactory = Group::newLoopbackChannel;
+    final CheckedSupplier<JChannel, Exception> _channelFactory = Protocols::newLoopbackChannel;
     final int maxYields = lowLatency ? Integer.MAX_VALUE : 100;
     final MultiNodeQueueLedger ledger = new MultiNodeQueueLedger(new MultiNodeQueueLedger.Config()
                                                                  .withMaxYields(maxYields));

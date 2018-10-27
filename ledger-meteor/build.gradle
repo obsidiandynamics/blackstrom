@@ -2,9 +2,6 @@ def packageName = "blackstrom-ledger-meteor"
 version = project(":").version
   
 dependencies {
-  def meteorVersion = "0.12.0"
-  def hazelcastVersion = "3.10.3"
-  
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.obsidiandynamics.meteor:meteor-core:${meteorVersion}"

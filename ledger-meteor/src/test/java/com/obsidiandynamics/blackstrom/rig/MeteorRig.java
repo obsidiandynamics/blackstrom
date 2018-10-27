@@ -75,8 +75,7 @@ public final class MeteorRig {
           .setProperty("hazelcast.max.no.heartbeat.seconds", String.valueOf(5))
           .setProperty("hazelcast.partition.count", String.valueOf(hazelcastPartitions))
           .setGroupConfig(new GroupConfig()
-                          .setName(cluster)
-                          .setPassword(""))
+                          .setName(cluster))
           .setNetworkConfig(new NetworkConfig()
                             .setJoin(new JoinConfig()
                                      .setMulticastConfig(new MulticastConfig()
@@ -129,7 +128,7 @@ public final class MeteorRig {
   }
   
   private static JChannel createChannel() throws Exception {
-    return Group.newUdpChannel(null);
+    return Protocols.newUdpChannel(null);
   }
   
   static {

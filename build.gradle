@@ -1,6 +1,6 @@
 plugins {
   id "com.jfrog.bintray" version "1.8.4"
-  id "com.github.johnrengelman.shadow" version "2.0.4"
+  id "com.github.johnrengelman.shadow" version "4.0.1"
   id "com.github.ben-manes.versions" version "0.20.0"
 }
 apply plugin: "maven-publish"
@@ -42,15 +42,21 @@ allprojects {
   ext {
     commonsLangVersion = "3.8.1"
     equalsverifierVersion = "3.0"
-    fulcrumVersion = "0.18.0"
+    fulcrumVersion = "0.24.0"
+    hazelcastVersion = "3.11"
     hdrHistogramVersion = "2.1.10"
+    jackdawVersion = "1.10.0"
+    jacksonVersion = "2.9.7"
     jgroupsVersion = "4.0.15.Final"
     junitVersion = "4.12"
     log4jVersion = "1.2.17"
+    kafkaVersion = "2.0.0"
+    kryoVersion = "4.0.2"
+    meteorVersion = "0.13.0"
     mockitoVersion = "2.23.0"
     slf4jVersion = "1.7.25"
-    yconfVersion = "0.8.0"
-    zerologVersion = "0.19.0"
+    yconfVersion = "0.9.0"
+    zerologVersion = "0.20.0"
   }
   
   dependencies {
@@ -75,6 +81,7 @@ allprojects {
 
   compileTestJava {
     options.compilerArgs += "-proc:none"
+    options.compilerArgs += "-Xlint:deprecation"
   }
   
   tasks.withType(JavaCompile) {

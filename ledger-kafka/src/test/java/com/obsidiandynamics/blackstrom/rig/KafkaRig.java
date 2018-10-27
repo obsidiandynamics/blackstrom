@@ -77,7 +77,7 @@ public final class KafkaRig {
   }
   
   private static JChannel createChannel() throws Exception {
-    return Group.newUdpChannel(null);
+    return Protocols.newUdpChannel(null);
   }
   
   static {
