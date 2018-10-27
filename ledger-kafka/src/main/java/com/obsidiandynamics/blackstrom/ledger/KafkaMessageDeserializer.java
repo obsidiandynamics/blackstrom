@@ -9,7 +9,7 @@ import org.apache.kafka.common.serialization.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.format.*;
 import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.zerolog.*;
 

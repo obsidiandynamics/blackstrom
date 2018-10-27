@@ -4,6 +4,8 @@ version = project(":").version
 dependencies {
   compile project(":")
   compile "com.esotericsoftware:kryo:${kryoVersion}"
+  
+  testCompile "com.obsidiandynamics.fulcrum:fulcrum-format:${fulcrumVersion}"
 }
 
 task addLauncherApps() {

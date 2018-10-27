@@ -13,7 +13,7 @@ import com.esotericsoftware.kryo.io.*;
 import com.obsidiandynamics.blackstrom.bank.*;
 import com.obsidiandynamics.blackstrom.codec.KryoMessageSerializer.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.format.*;
 import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.testmark.*;
 import com.obsidiandynamics.threads.*;
