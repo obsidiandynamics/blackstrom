@@ -13,13 +13,9 @@ modules:
   - name: zerolog
     groupId: com.obsidiandynamics.zerolog
     artifactId: zerolog-core
-- path: ledger-meteor
-  dependencies:
   - name: meteor
     groupId: com.obsidiandynamics.meteor
     artifactId: meteor-core
-- path: ledger-kafka
-  dependencies:
   - name: jackdaw
     groupId: com.obsidiandynamics.jackdaw
     artifactId: jackdaw-core
