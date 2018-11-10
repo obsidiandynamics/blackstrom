@@ -29,7 +29,7 @@ public final class KafkaMessageDeserializer implements Deserializer<Message> {
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {
     codec = CodecRegistry.forLocator((String) configs.get(CodecRegistry.CONFIG_CODEC_LOCATOR));
-    mustExist(codec, NullArgumentException::new);
+    mustExist(codec);
   }
 
   @Override
