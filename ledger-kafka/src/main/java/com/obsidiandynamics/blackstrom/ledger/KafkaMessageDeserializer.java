@@ -10,7 +10,6 @@ import org.apache.kafka.common.serialization.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.format.*;
-import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaMessageDeserializer implements Deserializer<Message> {
