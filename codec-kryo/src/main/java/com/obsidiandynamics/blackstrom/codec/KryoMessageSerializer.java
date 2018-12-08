@@ -143,7 +143,7 @@ final class KryoMessageSerializer extends Serializer<Message> {
   }
 
   @Override
-  public Message read(Kryo kryo, Input in, Class<Message> type) {
+  public Message read(Kryo kryo, Input in, Class<? extends Message> type) {
     final byte messageTypeOrdinal = in.readByte();
     final MessageType messageType = MessageType.values()[messageTypeOrdinal];
     final String xid = in.readString();

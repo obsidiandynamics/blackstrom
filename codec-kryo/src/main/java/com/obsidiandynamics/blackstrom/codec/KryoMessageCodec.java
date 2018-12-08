@@ -4,7 +4,7 @@ import java.util.function.*;
 
 import com.esotericsoftware.kryo.*;
 import com.esotericsoftware.kryo.io.*;
-import com.esotericsoftware.kryo.pool.*;
+import com.esotericsoftware.kryo.util.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.yconf.*;
 
@@ -14,54 +14,58 @@ public class KryoMessageCodec implements MessageCodec {
   
   private static final int DEF_MESSAGE_BUFFER_SIZE = 128;
   
-  private static final KryoExpansion[] defExpansions = { new KryoDefaultOutcomeMetadataExpansion() };
+  private static final KryoExpansion[] DEF_EXPANSIONS = { new KryoDefaultOutcomeMetadataExpansion() };
   
   @FunctionalInterface
   public interface KryoExpansion extends Consumer<Kryo> {}
   
-  private final KryoPool pool;
+  private final Pool<Kryo> pool;
   
   private final KryoMessageSerializer messageSerializer;
   
   public KryoMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
                           @YInject(name="expansions") KryoExpansion... expansions) {
     messageSerializer = new KryoMessageSerializer(mapPayload);
-    pool = new KryoPool.Builder(() -> {
-      final Kryo kryo = new Kryo();
-      for (KryoExpansion expansion : defExpansions) expansion.accept(kryo);
-      for (KryoExpansion expansion : expansions) expansion.accept(kryo);
-      kryo.setReferences(false);
-      return kryo;
-    }).softReferences().build();
+    pool = new Pool<Kryo>(true, false) {
+      @Override
+      protected Kryo create () {
+        final Kryo kryo = new Kryo();
+        kryo.setReferences(false);
+        kryo.setRegistrationRequired(false);
+        for (KryoExpansion expansion : DEF_EXPANSIONS) expansion.accept(kryo);
+        for (KryoExpansion expansion : expansions) expansion.accept(kryo);
+        return kryo;
+      }
+    };
   }
   
-  private Kryo acquire() {
-    return pool.borrow();
+  private Kryo obtain() {
+    return pool.obtain();
   }
   
-  private void release(Kryo kryo) {
-    pool.release(kryo);
+  private void free(Kryo kryo) {
+    pool.free(kryo);
   }
   
   @Override
   public byte[] encode(Message message) {
-    final Kryo kryo = acquire();
+    final Kryo kryo = obtain();
     try {
       final Output out = new Output(DEF_MESSAGE_BUFFER_SIZE, -1);
       kryo.writeObject(out, message, messageSerializer);
       return out.toBytes();
     } finally {
-      release(kryo);
+      free(kryo);
     }
   }
 
   @Override
   public Message decode(byte[] bytes) {
-    final Kryo kryo = acquire();
+    final Kryo kryo = obtain();
     try {
       return kryo.readObject(new Input(bytes), Message.class, messageSerializer);
     } finally {
-      release(kryo);
+      free(kryo);
     }
   }
 }

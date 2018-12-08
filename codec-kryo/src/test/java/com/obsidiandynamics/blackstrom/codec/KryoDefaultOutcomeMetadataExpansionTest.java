@@ -13,6 +13,7 @@ public final class KryoDefaultOutcomeMetadataExpansionTest {
   public void testSerializeDeserialize() {
     final Kryo kryo = new Kryo();
     kryo.setReferences(false);
+    kryo.setRegistrationRequired(false);
     new KryoDefaultOutcomeMetadataExpansion().accept(kryo);
     
     final OutcomeMetadata meta = new OutcomeMetadata(100);

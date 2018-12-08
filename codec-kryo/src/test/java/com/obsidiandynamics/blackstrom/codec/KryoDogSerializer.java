@@ -11,7 +11,7 @@ public final class KryoDogSerializer extends Serializer<KryoDog> {
   }
 
   @Override
-  public KryoDog read(Kryo kryo, Input input, Class<KryoDog> type) {
+  public KryoDog read(Kryo kryo, Input input, Class<? extends KryoDog> type) {
     final String name = input.readString();
     final KryoAnimal<?> friend = (KryoAnimal<?>) kryo.readClassAndObject(input);
     return new KryoDog().named(name).withFriend(friend);

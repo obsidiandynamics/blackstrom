@@ -11,7 +11,7 @@ public final class KryoDefaultOutcomeMetadataSerializer extends Serializer<Outco
   }
   
   @Override
-  public OutcomeMetadata read(Kryo kryo, Input in, Class<OutcomeMetadata> type) {
+  public OutcomeMetadata read(Kryo kryo, Input in, Class<? extends OutcomeMetadata> type) {
     final long proposalTimestamp = in.readLong();
     return new OutcomeMetadata(proposalTimestamp);
   }
