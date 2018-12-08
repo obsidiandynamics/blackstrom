@@ -127,10 +127,6 @@ public final class LambdaCohortBuilder {
     return onOutcome != DEF_ON_OUTCOME;
   }
   
-  public LambdaCohortBuilder onUnhandledConfirm() {
-    return onUnhandled(MessageContext::beginAndConfirm);
-  }
-  
   public LambdaCohortBuilder onUnhandled(MessageTarget onUnhandled) {
     if (! hasOnQuery()) onQuery(onUnhandled::onMessage);
     if (! hasOnQueryResponse()) onQueryResponse(onUnhandled::onMessage);
