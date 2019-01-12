@@ -45,7 +45,7 @@ allprojects {
     fulcrumVersion = "0.28.0"
     hazelcastVersion = "3.11"
     hdrHistogramVersion = "2.1.10"
-    jackdawVersion = "1.16.0"
+    jackdawVersion = "1.17.0"
     jacksonVersion = "2.9.8"
     jgroupsVersion = "4.0.15.Final"
     junitVersion = "4.12"
