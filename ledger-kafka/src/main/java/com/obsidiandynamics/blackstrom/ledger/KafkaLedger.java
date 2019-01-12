@@ -29,7 +29,7 @@ import com.obsidiandynamics.yconf.util.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaLedger implements Ledger {
-  private static final int POLL_TIMEOUT_MILLIS = 1_000;
+  private static final int POLL_TIMEOUT_MILLIS = 100;
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
   private static final int RETRY_BACKOFF_MILLIS = 100;
   private static final long OFFSET_DRAIN_CHECK_INTERVAL_MILLIS = 10;
@@ -394,12 +394,13 @@ public final class KafkaLedger implements Ledger {
       if (allPendingOffsetsConfirmed) {
         zlg.d("All offsets confirmed: %s", z -> z.arg(offsetsAcceptedSnapshot));
         if (! offsetsAcceptedSnapshot.isEmpty()) {
+          final Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic);
           new Retry()
           .withAttempts(ioRetries)
           .withFaultHandler(zlg::w)
           .withErrorHandler(zlg::e)
           .withExceptionMatcher(Retry.isA(RetriableException.class))
-          .run(() -> consumer.commitSync(toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic)));
+          .run(() -> consumer.commitSync(kafkaOffsets));
         }
         return;
       } else if (System.currentTimeMillis() < drainUntilTime) {
