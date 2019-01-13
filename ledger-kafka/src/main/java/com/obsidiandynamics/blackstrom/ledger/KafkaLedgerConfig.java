@@ -36,110 +36,154 @@ public final class KafkaLedgerConfig {
   private boolean drainConfirmations;
   
   /** Upper bound on the time to allow for offset drainage (in milliseconds). The default value 
-   *  is based on the default of {@code max.poll.interval.ms} — {@code 300000}. */
+   *  is based on the default of {@code max.poll.interval.ms} — {@code 300_000}. */
   @YInject
   private int drainConfirmationsTimeout = 300_000;
   
   @YInject
   private boolean printConfig;
 
-  Kafka<String, Message> getKafka() {
+  public Kafka<String, Message> getKafka() {
     return kafka;
   }
 
-  public KafkaLedgerConfig withKafka(Kafka<String, Message> kafka) {
+  public void setKafka(Kafka<String, Message> kafka) {
     this.kafka = kafka;
+  }
+
+  public KafkaLedgerConfig withKafka(Kafka<String, Message> kafka) {
+    setKafka(kafka);
     return this;
   }
 
-  String getTopic() {
+  public String getTopic() {
     return topic;
   }
 
-  public KafkaLedgerConfig withTopic(String topic) {
+  public void setTopic(String topic) {
     this.topic = topic;
+  }
+
+  public KafkaLedgerConfig withTopic(String topic) {
+    setTopic(topic);
     return this;
   }
 
-  MessageCodec getCodec() {
+  public MessageCodec getCodec() {
     return codec;
   }
 
-  public KafkaLedgerConfig withCodec(MessageCodec codec) {
+  public void setCodec(MessageCodec codec) {
     this.codec = codec;
+  }
+
+  public KafkaLedgerConfig withCodec(MessageCodec codec) {
+    setCodec(codec);
     return this;
   }
 
-  ProducerPipeConfig getProducerPipeConfig() {
+  public ProducerPipeConfig getProducerPipeConfig() {
     return producerPipeConfig;
   }
 
-  public KafkaLedgerConfig withProducerPipeConfig(ProducerPipeConfig producerPipeConfig) {
+  public void setProducerPipeConfig(ProducerPipeConfig producerPipeConfig) {
     this.producerPipeConfig = producerPipeConfig;
+  }
+
+  public KafkaLedgerConfig withProducerPipeConfig(ProducerPipeConfig producerPipeConfig) {
+    setProducerPipeConfig(producerPipeConfig);
     return this;
   }
 
-  ConsumerPipeConfig getConsumerPipeConfig() {
+  public ConsumerPipeConfig getConsumerPipeConfig() {
     return consumerPipeConfig;
   }
 
-  public KafkaLedgerConfig withConsumerPipeConfig(ConsumerPipeConfig consumerPipeConfig) {
+  public void setConsumerPipeConfig(ConsumerPipeConfig consumerPipeConfig) {
     this.consumerPipeConfig = consumerPipeConfig;
+  }
+
+  public KafkaLedgerConfig withConsumerPipeConfig(ConsumerPipeConfig consumerPipeConfig) {
+    setConsumerPipeConfig(consumerPipeConfig);
     return this;
   }
   
-  int getMaxConsumerPipeYields() {
+  public int getMaxConsumerPipeYields() {
     return maxConsumerPipeYields;
   }
   
-  public KafkaLedgerConfig withMaxConsumerPipeYields(int maxConsumerPipeYields) {
+  public void setMaxConsumerPipeYields(int maxConsumerPipeYields) {
     this.maxConsumerPipeYields = maxConsumerPipeYields;
+  }
+  
+  public KafkaLedgerConfig withMaxConsumerPipeYields(int maxConsumerPipeYields) {
+    setMaxConsumerPipeYields(maxConsumerPipeYields);
     return this;
   }
 
-  Zlg getZlg() {
+  public Zlg getZlg() {
     return zlg;
   }
 
-  public KafkaLedgerConfig withZlg(Zlg zlg) {
+  public void setZlg(Zlg zlg) {
     this.zlg = zlg;
+  }
+
+  public KafkaLedgerConfig withZlg(Zlg zlg) {
+    setZlg(zlg);
     return this;
   }
 
-  int getIORetries() {
+  public int getIoRetries() {
     return ioRetries;
   }
   
-  public KafkaLedgerConfig withIORetries(int ioRetries) {
+  public void setIoRetries(int ioRetries) {
     this.ioRetries = ioRetries;
+  }
+  
+  public KafkaLedgerConfig withIoRetries(int ioRetries) {
+    setIoRetries(ioRetries);
     return this;
   }
   
-  boolean isDrainConfirmations() {
+  public boolean isDrainConfirmations() {
     return drainConfirmations;
   }
   
-  public KafkaLedgerConfig withDrainConfirmations(boolean drainConfirmations) {
+  public void setDrainConfirmations(boolean drainConfirmations) {
     this.drainConfirmations = drainConfirmations;
+  }
+  
+  public KafkaLedgerConfig withDrainConfirmations(boolean drainConfirmations) {
+    setDrainConfirmations(drainConfirmations);
     return this;
+  }
+  
+  public boolean isPrintConfig() {
+    return printConfig;
+  }
+
+  public void setPrintConfig(boolean printConfig) {
+    this.printConfig = printConfig;
   }
   
   public KafkaLedgerConfig withPrintConfig(boolean printConfig) {
-    this.printConfig = printConfig;
+    setPrintConfig(printConfig);
     return this;
   }
   
-  int getDrainConfirmationsTimeout() {
+  public int getDrainConfirmationsTimeout() {
     return drainConfirmationsTimeout;
   }
   
-  public KafkaLedgerConfig withDrainConfirmationsTimeout(int drainConfirmationsTimeoutMillis) {
+  public void setDrainConfirmationsTimeout(int drainConfirmationsTimeoutMillis) {
     this.drainConfirmationsTimeout = drainConfirmationsTimeoutMillis;
-    return this;
   }
   
-  boolean isPrintConfig() {
-    return printConfig;
+  public KafkaLedgerConfig withDrainConfirmationsTimeout(int drainConfirmationsTimeoutMillis) {
+    setDrainConfirmationsTimeout(drainConfirmationsTimeoutMillis);
+    return this;
   }
 
   @Override

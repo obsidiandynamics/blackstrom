@@ -134,7 +134,7 @@ public final class KafkaLedger implements Ledger {
     printConfig = config.isPrintConfig();
     consumerPipeConfig = config.getConsumerPipeConfig();
     maxConsumerPipeYields = config.getMaxConsumerPipeYields();
-    ioRetries = config.getIORetries();
+    ioRetries = config.getIoRetries();
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
     codecLocator = CodecRegistry.register(config.getCodec());

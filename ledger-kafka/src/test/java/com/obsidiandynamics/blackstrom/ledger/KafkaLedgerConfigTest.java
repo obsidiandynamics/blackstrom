@@ -29,7 +29,7 @@ public final class KafkaLedgerConfigTest {
     assertNotNull(config.getConsumerPipeConfig());
     assertEquals(50, config.getMaxConsumerPipeYields());
     assertNotNull(config.getZlg());
-    assertEquals(5, config.getIORetries());
+    assertEquals(5, config.getIoRetries());
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
     Assertions.assertToStringOverride(config);
@@ -44,7 +44,7 @@ public final class KafkaLedgerConfigTest {
         .withConsumerPipeConfig(new ConsumerPipeConfig())
         .withMaxConsumerPipeYields(50)
         .withZlg(Zlg.forDeclaringClass().get())
-        .withIORetries(5)
+        .withIoRetries(5)
         .withDrainConfirmations(true)
         .withDrainConfirmationsTimeout(60_000)
         .withPrintConfig(true);
@@ -55,7 +55,7 @@ public final class KafkaLedgerConfigTest {
     assertNotNull(config.getConsumerPipeConfig());
     assertEquals(50, config.getMaxConsumerPipeYields());
     assertNotNull(config.getZlg());
-    assertEquals(5, config.getIORetries());
+    assertEquals(5, config.getIoRetries());
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
     assertTrue(config.isPrintConfig());
