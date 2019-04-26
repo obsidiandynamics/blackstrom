@@ -11,8 +11,8 @@ public final class NonDisposableLedger implements Ledger {
   }
 
   @Override
-  public void attach(MessageHandler handler) {
-    backing.attach(handler);
+  public Object attach(MessageHandler handler) {
+    return backing.attach(handler);
   }
 
   @Override

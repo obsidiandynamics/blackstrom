@@ -43,7 +43,7 @@ public final class MeteorLedger implements Ledger {
   }
   
   @Override
-  public void attach(MessageHandler handler) {
+  public Object attach(MessageHandler handler) {
     final String group = handler.getGroupId();
     final SubscriberConfig subConfig = new SubscriberConfig()
         .withZlg(config.getZlg())
@@ -69,6 +69,7 @@ public final class MeteorLedger implements Ledger {
     final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
     subscriber.attachReceiver(record -> receive(codec, record, config.getZlg(), handler, context), 
                               config.getPollInterval());
+    return handlerId;
   }
   
   static void receive(MessageCodec codec, Record record, Zlg zlg, MessageHandler handler, MessageContext context) {

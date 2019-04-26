@@ -10,7 +10,7 @@ import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.junit.*;
 
 @RunWith(Parameterized.class)
-public final class BalancedLedgerGroupTest extends AbstractGroupLedgerTest {  
+public final class BalancedGroupLedgerTest extends AbstractGroupLedgerTest {  
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);

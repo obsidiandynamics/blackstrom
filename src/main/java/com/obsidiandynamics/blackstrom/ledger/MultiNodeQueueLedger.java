@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -67,18 +69,10 @@ public final class MultiNodeQueueLedger implements Ledger {
     private final MessageContext context;
     private int yields;
     
-    NodeWorker(MessageHandler handler, String groupId, QueueConsumer<Message> consumer) {
+    NodeWorker(MessageHandler handler, String groupId, Object handlerId, QueueConsumer<Message> consumer) {
       this.handler = handler;
       this.groupId = groupId;
       this.consumer = consumer;
-      
-      final UUID handlerId;
-      if (groupId != null) {
-        handlerId = UUID.randomUUID();
-        subscribedHandlerIds.add(handlerId);
-      } else {
-        handlerId = null;
-      }
       context = new DefaultMessageContext(MultiNodeQueueLedger.this, handlerId, NopRetention.getInstance());
     }
     
@@ -119,15 +113,20 @@ public final class MultiNodeQueueLedger implements Ledger {
   }
   
   @Override
-  public void attach(MessageHandler handler) {
-    if (handler.getGroupId() != null && ! groups.add(handler.getGroupId())) return;
+  public Object attach(MessageHandler handler) {
+    final UUID handlerId = handler.getGroupId() != null ? UUID.randomUUID() : null;
     
-    final NodeWorker nodeWorker = new NodeWorker(handler, handler.getGroupId(), queue.consumer());
-    final WorkerThread thread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().daemon().withName(MultiNodeQueueLedger.class, handler.getGroupId()))
-        .onCycle(nodeWorker)
-        .buildAndStart();
-    threads.add(thread);
+    if (handler.getGroupId() == null || groups.add(handler.getGroupId())) {
+      final NodeWorker nodeWorker = new NodeWorker(handler, handler.getGroupId(), handlerId, queue.consumer());
+      final WorkerThread thread = WorkerThread.builder()
+          .withOptions(new WorkerOptions().daemon().withName(MultiNodeQueueLedger.class, handler.getGroupId()))
+          .onCycle(nodeWorker)
+          .buildAndStart();
+      threads.add(thread);
+      ifPresent(handlerId, subscribedHandlerIds::add);
+    }
+    
+    return handlerId;
   }
   
   private final AtomicLong appends = new AtomicLong();

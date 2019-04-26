@@ -10,7 +10,7 @@ public final class LedgerTest {
   public void testDefaultMethods() {
     final Ledger ledger = new Ledger() {
       @Override
-      public void attach(MessageHandler handler) {
+      public Object attach(MessageHandler handler) {
         throw new UnsupportedOperationException();
       }
 

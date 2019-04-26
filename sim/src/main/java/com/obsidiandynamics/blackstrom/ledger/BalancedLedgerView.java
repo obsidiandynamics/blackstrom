@@ -128,11 +128,12 @@ public final class BalancedLedgerView implements Ledger {
   }
 
   @Override
-  public void attach(MessageHandler handler) {
+  public Object attach(MessageHandler handler) {
     final ConsumerGroup group = handler.getGroupId() != null ? hub.getOrCreateGroup(handler.getGroupId()) : null;
     final Consumer consumer = new Consumer(handler, group);
     consumers.put(consumer.handlerId, consumer);
     consumer.start();
+    return consumer.handlerId;
   }
 
   @Override

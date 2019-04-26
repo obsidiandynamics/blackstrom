@@ -81,11 +81,14 @@ public abstract class AbstractGroupLedgerTest {
     final int numHandlers = 3;
     final int numMessages = 5;
     final List<TestHandler> handlers = new ArrayList<>(numHandlers);
+    final List<Object> handlerIds = new ArrayList<>();
     
     // register an initial handler first, allowing the ledger to direct traffic to it following an initial rebalance
     final TestHandler initialHandler = new TestHandler("test-group");
     handlers.add(initialHandler);
-    ledger.attach(initialHandler);
+    final Object initialHandlerId = ledger.attach(initialHandler);
+    assertNotNull(initialHandlerId); // group-based handler ID can never be null
+    handlerIds.add(initialHandlerId);
     
     // wait until at least one message is received by the initial handler before adding new ones (avoids spurious
     // rebalancing and duplicate messages depending on ledger implementation, e.g. Kafka)
@@ -98,7 +101,9 @@ public abstract class AbstractGroupLedgerTest {
       for (int i = 0; i < numHandlers - 1; i++) {
         final TestHandler handler = new TestHandler("test-group");
         handlers.add(handler);
-        ledger.attach(handler);
+        final Object handlerId = ledger.attach(handler);
+        assertNotNull(handlerId); // group-based handler ID can never be null
+        handlerIds.add(handlerId);
       }
       
       awaitedInitialHandler.set(true);
@@ -113,7 +118,7 @@ public abstract class AbstractGroupLedgerTest {
     Threads.runUninterruptedly(addMoreHandlersThread::join);
     assertTrue(awaitedInitialHandler.get());
     
-    boolean success = false;
+    boolean successCountingMessages = false;
     try {
       wait.until(() -> {
         int totalReceived = 0;
@@ -123,14 +128,34 @@ public abstract class AbstractGroupLedgerTest {
         }
         assertEquals(numMessages, totalReceived);
       });
-      success = true;
+      successCountingMessages = true;
     } finally {
-      if (! success) {
+      if (! successCountingMessages) {
         for (TestHandler handler : handlers) {
           System.out.println("---");
           for (Message m : handler.received) {
             System.out.println("- " + m);
           }
+        }
+      }
+    }
+    
+    boolean successCountingAssignees = false;
+    try {
+      wait.until(() -> {
+        int totalAssignees = 0;
+        for (Object handlerId : handlerIds) {
+          if (ledger.isAssigned(handlerId, 0)) { // shard 0 should work with all ledger types
+            totalAssignees += 1;
+          }
+        }
+        assertEquals(1, totalAssignees);
+      });
+      successCountingAssignees = true;
+    } finally {
+      if (! successCountingAssignees) {
+        for (Object handlerId : handlerIds) {
+          System.out.format("handler: %s, isAssigned: %b\n", handlerId, ledger.isAssigned(handlerId, 0));
         }
       }
     }

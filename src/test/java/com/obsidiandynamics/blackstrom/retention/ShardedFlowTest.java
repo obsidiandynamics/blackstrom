@@ -52,7 +52,7 @@ public class ShardedFlowTest {
     final List<Long> confirmed = new CopyOnWriteArrayList<>();
     final Ledger ledger = new Ledger() {
       @Override 
-      public void attach(MessageHandler handler) {
+      public Object attach(MessageHandler handler) {
         throw new UnsupportedOperationException();
       }
 

@@ -35,8 +35,8 @@ public final class MonitorEngineTest {
   
   private final InitContext initContext = new DefaultInitContext(new Ledger() {
     @Override 
-    public void attach(MessageHandler handler) {
-      ledger.attach(handler);
+    public Object attach(MessageHandler handler) {
+      return ledger.attach(handler);
     }
 
     @Override 

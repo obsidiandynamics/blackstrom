@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.factor;
 
+import static com.obsidiandynamics.func.Functions.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -45,6 +46,7 @@ public final class FallibleFactorTest {
     
     @Override
     public void onProposal(MessageContext context, Proposal proposal) {
+      assertTrue(context.isAssigned(proposal));
       proposals.add(proposal);
       try {
         context.getLedger().append(new Vote(proposal.getXid(), new Response("test", Intent.ACCEPT, null)));
@@ -75,7 +77,7 @@ public final class FallibleFactorTest {
   
   @After
   public void after() {
-    if (manifold != null) manifold.dispose();
+    ifPresentVoid(manifold, Manifold::dispose);
   }
   
   @Test

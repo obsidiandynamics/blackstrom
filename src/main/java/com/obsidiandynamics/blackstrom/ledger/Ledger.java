@@ -13,7 +13,7 @@ public interface Ledger extends Disposable.Nop {
   
   default void init() {}
   
-  void attach(MessageHandler handler);
+  Object attach(MessageHandler handler);
   
   void append(Message message, AppendCallback callback);
   

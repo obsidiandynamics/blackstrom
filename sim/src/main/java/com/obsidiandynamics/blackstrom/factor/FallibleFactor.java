@@ -25,7 +25,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   
   private final Ledger interceptedLedger = new Ledger() {
     @Override 
-    public void attach(MessageHandler handler) {
+    public Object attach(MessageHandler handler) {
       throw new UnsupportedOperationException();
     }
 
@@ -41,7 +41,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
 
     @Override
     public boolean isAssigned(Object handlerId, int shard) {
-      return interceptedLedger.isAssigned(handlerId, shard);
+      return backingLedger.isAssigned(handlerId, shard);
     }
   };
   

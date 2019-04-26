@@ -191,18 +191,20 @@ public final class KafkaLedger implements Ledger {
   }
 
   @Override
-  public void attach(MessageHandler handler) {
+  public Object attach(MessageHandler handler) {
     codecLock.readLock().lock();
     try {
       if (! disposing) {
-        _attach(handler);
+        return _attach(handler);
+      } else {
+        return null;
       }
     } finally {
       codecLock.readLock().unlock();
     }
   }
 
-  private void _attach(MessageHandler handler) {
+  private Integer _attach(MessageHandler handler) {
     final String groupId = handler.getGroupId();
     final String autoOffsetReset;
     if (groupId != null) {
@@ -314,6 +316,8 @@ public final class KafkaLedger implements Ledger {
     final AsyncReceiver<String, Message> receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
+    
+    return handlerId;
   }
 
   static void queueRecords(Consumer<String, Message> consumer, 

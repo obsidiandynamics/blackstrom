@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -34,19 +36,16 @@ public final class StackLedger implements Ledger {
   private volatile ContextualHandler[] contextualHandlers = new ContextualHandler[0];
 
   @Override
-  public void attach(MessageHandler handler) {
-    if (handler.getGroupId() != null && ! groups.add(handler.getGroupId())) return;
+  public Object attach(MessageHandler handler) {
+    final UUID handlerId = handler.getGroupId() != null ? UUID.randomUUID() : null;
     
-    final UUID handlerId;
-    if (handler.getGroupId() != null) {
-      handlerId = UUID.randomUUID();
-      subscribedHandlerIds.add(handlerId);
-    } else {
-      handlerId = null;
+    if (handler.getGroupId() == null || groups.add(handler.getGroupId())) {
+      final MessageContext context = new DefaultMessageContext(this, handlerId, NopRetention.getInstance());
+      contextualHandlers = ArrayCopy.append(contextualHandlers, new ContextualHandler(handler, context));
+      ifPresent(handlerId, subscribedHandlerIds::add);
     }
     
-    final MessageContext context = new DefaultMessageContext(this, handlerId, NopRetention.getInstance());
-    contextualHandlers = ArrayCopy.append(contextualHandlers, new ContextualHandler(handler, context));
+    return handlerId;
   }
 
   @Override

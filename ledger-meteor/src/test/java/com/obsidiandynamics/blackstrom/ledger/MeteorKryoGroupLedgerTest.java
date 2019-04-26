@@ -16,7 +16,7 @@ import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.testmark.*;
 
 @RunWith(Parameterized.class)
-public final class MeteorKryoLedgerGroupTest extends AbstractGroupLedgerTest {  
+public final class MeteorKryoGroupLedgerTest extends AbstractGroupLedgerTest {  
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -55,6 +55,6 @@ public final class MeteorKryoLedgerGroupTest extends AbstractGroupLedgerTest {
   
   public static void main(String[] args) {
     Testmark.enable();
-    JUnitCore.runClasses(MeteorKryoLedgerGroupTest.class);
+    JUnitCore.runClasses(MeteorKryoGroupLedgerTest.class);
   }
 }
