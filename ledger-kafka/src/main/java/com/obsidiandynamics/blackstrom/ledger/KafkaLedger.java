@@ -203,13 +203,10 @@ public final class KafkaLedger implements Ledger {
 
   private void _attach(MessageHandler handler) {
     final String groupId = handler.getGroupId();
-    final String consumerGroupId;
     final String autoOffsetReset;
     if (groupId != null) {
-      consumerGroupId = groupId;
       autoOffsetReset = OffsetResetStrategy.EARLIEST.name().toLowerCase();
     } else {
-      consumerGroupId = null;
       autoOffsetReset = OffsetResetStrategy.LATEST.name().toLowerCase();
     }
     
@@ -222,7 +219,7 @@ public final class KafkaLedger implements Ledger {
 
     // set by the application — required for correctness (overrides user config)
     final Properties consumerOverrides = new PropsBuilder()
-        .with("group.id", consumerGroupId)
+        .with("group.id", groupId)
         .with("auto.offset.reset", autoOffsetReset)
         .with("enable.auto.commit", false)
         .with("auto.commit.interval.ms", 0)
