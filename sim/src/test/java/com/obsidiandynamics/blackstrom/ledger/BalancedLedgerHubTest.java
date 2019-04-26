@@ -579,7 +579,7 @@ public final class BalancedLedgerHubTest {
         assertTrue("numPartialReceipts=" + numPartialReceipts, numPartialReceipts >= minCount);
         assertTrue("numPartialReceipts=" + numPartialReceipts, numPartialReceipts <= maxCount);
         
-        // count the number of handlers accross all view that have received the full list of expected 
+        // count the number of handlers across all view that have received the full list of expected 
         // messages for this shard
         final long numFullReceipts = views.stream().map(view -> {
           return view.handlers.stream()
