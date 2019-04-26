@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.hazelcast.core.*;
@@ -23,11 +24,11 @@ public final class MeteorLedger implements Ledger {
   
   private final MessageCodec codec;
   
-  private final List<Subscriber> allSubscribers = new ArrayList<>();
+  private final List<Subscriber> allSubscribers = new CopyOnWriteArrayList<>();
   
-  private final Map<Integer, Subscriber> groupSubscribers = new HashMap<>();
+  private final Map<Integer, Subscriber> groupSubscribers = new ConcurrentHashMap<>();
   
-  private final List<ShardedFlow> flows = new ArrayList<>(); 
+  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
@@ -109,6 +110,11 @@ public final class MeteorLedger implements Ledger {
     final Subscriber subscriber = groupSubscribers.get(handlerId);
     final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
     subscriber.confirm(defaultMessageId.getOffset());
+  }
+
+  @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    return handlerId == null || groupSubscribers.get(handlerId).isAssigned();
   }
   
   @Override

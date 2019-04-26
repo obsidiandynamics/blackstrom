@@ -51,29 +51,40 @@ public class ShardedFlowTest {
   public void testShards() {
     final List<Long> confirmed = new CopyOnWriteArrayList<>();
     final Ledger ledger = new Ledger() {
-      @Override public void attach(MessageHandler handler) {
+      @Override 
+      public void attach(MessageHandler handler) {
         throw new UnsupportedOperationException();
       }
 
-      @Override public void append(Message message, AppendCallback callback) {
+      @Override 
+      public void append(Message message, AppendCallback callback) {
         throw new UnsupportedOperationException();
       }
 
-      @Override public void confirm(Object handlerId, MessageId messageId) {
+      @Override 
+      public void confirm(Object handlerId, MessageId messageId) {
         confirmed.add(((DefaultMessageId) messageId).getOffset());
+      }
+
+      @Override
+      public boolean isAssigned(Object handlerId, int shard) {
+        throw new UnsupportedOperationException();
       }
     };
     
     final MessageContext context = new MessageContext() {
-      @Override public Ledger getLedger() {
+      @Override 
+      public Ledger getLedger() {
         return ledger;
       }
       
-      @Override public Object getHandlerId() {
+      @Override 
+      public Object getHandlerId() {
         return null;
       }
       
-      @Override public void beginAndConfirm(Message message) {
+      @Override 
+      public void beginAndConfirm(Message message) {
         throw new UnsupportedOperationException();
       }
 

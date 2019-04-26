@@ -34,23 +34,33 @@ public final class MonitorEngineTest {
   private final Timesert wait = Wait.SHORT;
   
   private final InitContext initContext = new DefaultInitContext(new Ledger() {
-    @Override public void attach(MessageHandler handler) {
+    @Override 
+    public void attach(MessageHandler handler) {
       ledger.attach(handler);
     }
 
-    @Override public void append(Message message, AppendCallback callback) {
+    @Override 
+    public void append(Message message, AppendCallback callback) {
       ledger.append(message, callback);
     }
     
-    @Override public void confirm(Object handlerId, MessageId messageId) {
+    @Override 
+    public void confirm(Object handlerId, MessageId messageId) {
       ledger.confirm(handlerId, messageId);
     }
+
+    @Override
+    public boolean isAssigned(Object handlerId, int shard) {
+      return ledger.isAssigned(handlerId, shard);
+    }
     
-    @Override public void init() {
+    @Override 
+    public void init() {
       ledger.init();
     }
     
-    @Override public void dispose() {
+    @Override 
+    public void dispose() {
       ledger.dispose();
     }
   });

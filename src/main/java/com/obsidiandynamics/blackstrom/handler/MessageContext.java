@@ -19,4 +19,8 @@ public interface MessageContext {
   default void beginAndConfirm(Message message) {
     begin(message).confirm();
   }
+  
+  default boolean isAssigned(Message message) {
+    return getLedger().isAssigned(getHandlerId(), message.getShard());
+  }
 }

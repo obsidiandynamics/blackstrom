@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import static junit.framework.TestCase.*;
 
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -39,6 +40,7 @@ public abstract class AbstractLedgerTest {
       if (! sandbox.contains(message)) return;
       
       zlg.t("Received %s", z -> z.arg(message));
+      assertTrue(context.isAssigned(message));
       final long xid = Long.parseLong(message.getXid());
       if (lastBallotId == -1) {
         lastBallotId = xid;

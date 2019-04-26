@@ -17,6 +17,8 @@ public interface Ledger extends Disposable.Nop {
   
   void append(Message message, AppendCallback callback);
   
+  boolean isAssigned(Object handlerId, int shard);
+  
   default void append(Message message) {
     append(message, getDefaultAppendCallback());
   }

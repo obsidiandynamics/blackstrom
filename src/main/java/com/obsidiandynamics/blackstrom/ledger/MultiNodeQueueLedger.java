@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
@@ -44,12 +45,10 @@ public final class MultiNodeQueueLedger implements Ledger {
   }
   
   /** Tracks presence of group members. */
-  private final Set<String> groups = new HashSet<>();
+  private final Set<String> groups = new CopyOnWriteArraySet<>();
   
-  private final List<WorkerThread> threads = new ArrayList<>();
+  private final List<WorkerThread> threads = new CopyOnWriteArrayList<>();
   
-  private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
-
   private final NodeQueue<Message> queue = new NodeQueue<>();
   
   private final int debugMessageCounts;
@@ -58,16 +57,29 @@ public final class MultiNodeQueueLedger implements Ledger {
   
   private final LogLine logLine;
   
+  /** Handler IDs that have been admitted to group-based message consumption. */
+  private final Set<UUID> subscribedHandlerIds = new CopyOnWriteArraySet<>();
+  
   private class NodeWorker implements WorkerCycle {
     private final MessageHandler handler;
     private final QueueConsumer<Message> consumer;
     private final String groupId;
+    private final MessageContext context;
     private int yields;
     
     NodeWorker(MessageHandler handler, String groupId, QueueConsumer<Message> consumer) {
       this.handler = handler;
       this.groupId = groupId;
       this.consumer = consumer;
+      
+      final UUID handlerId;
+      if (groupId != null) {
+        handlerId = UUID.randomUUID();
+        subscribedHandlerIds.add(handlerId);
+      } else {
+        handlerId = null;
+      }
+      context = new DefaultMessageContext(MultiNodeQueueLedger.this, handlerId, NopRetention.getInstance());
     }
     
     private final AtomicLong consumed = new AtomicLong();
@@ -110,9 +122,10 @@ public final class MultiNodeQueueLedger implements Ledger {
   public void attach(MessageHandler handler) {
     if (handler.getGroupId() != null && ! groups.add(handler.getGroupId())) return;
     
+    final NodeWorker nodeWorker = new NodeWorker(handler, handler.getGroupId(), queue.consumer());
     final WorkerThread thread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(MultiNodeQueueLedger.class, handler.getGroupId()))
-        .onCycle(new NodeWorker(handler, handler.getGroupId(), queue.consumer()))
+        .onCycle(nodeWorker)
         .buildAndStart();
     threads.add(thread);
   }
@@ -130,6 +143,11 @@ public final class MultiNodeQueueLedger implements Ledger {
     
     queue.add(message);
     callback.onAppend(message.getMessageId(), null);
+  }
+
+  @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    return handlerId == null || subscribedHandlerIds.contains(handlerId);
   }
   
   @Override

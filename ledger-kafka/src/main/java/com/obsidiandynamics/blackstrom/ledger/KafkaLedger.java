@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.function.*;
@@ -54,11 +55,11 @@ public final class KafkaLedger implements Ledger {
 
   private final ProducerPipe<String, Message> producerPipe;
 
-  private final List<AsyncReceiver<String, Message>> receivers = new ArrayList<>();
+  private final List<AsyncReceiver<String, Message>> receivers = new CopyOnWriteArrayList<>();
 
-  private final List<ConsumerPipe<String, Message>> consumerPipes = new ArrayList<>();
+  private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
   
-  private final List<ShardedFlow> flows = new ArrayList<>(); 
+  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
   
   private final boolean printConfig;
   
@@ -121,7 +122,7 @@ public final class KafkaLedger implements Ledger {
   }
 
   /** Maps handler IDs to consumer offsets. */
-  private final Map<Integer, ConsumerState> consumerStates = new HashMap<>();
+  private final Map<Integer, ConsumerState> consumerStates = new ConcurrentHashMap<>();
 
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
@@ -516,6 +517,11 @@ public final class KafkaLedger implements Ledger {
     if (cause != null) {
       zlg.w(String.format(messageFormat, messageArgs), cause);
     }
+  }
+
+  @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    return handlerId == null || consumerStates.get(handlerId).assignedPartitions.contains(shard);
   }
 
   @Override

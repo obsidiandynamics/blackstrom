@@ -1,10 +1,12 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.worker.*;
 
@@ -27,11 +29,23 @@ public final class SingleNodeQueueLedger implements Ledger {
   }
   
   /** Tracks presence of group members. */
-  private final Set<String> groups = new HashSet<>();
+  private final Set<String> groups = new CopyOnWriteArraySet<>();
   
-  private volatile MessageHandler[] handlers = new MessageHandler[0];
+  private static final class ContextualHandler {
+    final MessageHandler handler;
+    
+    final MessageContext context;
+
+    ContextualHandler(MessageHandler handler, MessageContext context) {
+      this.handler = handler;
+      this.context = context;
+    }
+  }
   
-  private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
+  private volatile ContextualHandler[] contextualHandlers = new ContextualHandler[0];
+  
+  /** Handler IDs that have been admitted to group-based message consumption. */
+  private final Set<UUID> subscribedHandlerIds = new CopyOnWriteArraySet<>();
   
   private final WorkerThread thread;
   
@@ -60,8 +74,8 @@ public final class SingleNodeQueueLedger implements Ledger {
   private void cycle(WorkerThread thread) throws InterruptedException {
     final Message m = consumer.poll();
     if (m != null) {
-      for (MessageHandler handler : handlers) {
-        handler.onMessage(context, m);
+      for (ContextualHandler contextualHandler : contextualHandlers) {
+        contextualHandler.handler.onMessage(contextualHandler.context, m);
       }
     } else if (yields++ < maxYields) {
       Thread.yield();
@@ -78,15 +92,27 @@ public final class SingleNodeQueueLedger implements Ledger {
   public void attach(MessageHandler handler) {
     if (handler.getGroupId() != null && ! groups.add(handler.getGroupId())) return;
     
-    final List<MessageHandler> handlersList = new ArrayList<>(Arrays.asList(handlers));
-    handlersList.add(handler);
-    handlers = handlersList.toArray(new MessageHandler[handlersList.size()]);
+    final UUID handlerId;
+    if (handler.getGroupId() != null) {
+      handlerId = UUID.randomUUID();
+      subscribedHandlerIds.add(handlerId);
+    } else {
+      handlerId = null;
+    }
+    
+    final MessageContext context = new DefaultMessageContext(this, handlerId, NopRetention.getInstance());
+    contextualHandlers = ArrayCopy.append(contextualHandlers, new ContextualHandler(handler, context));
   }
 
   @Override
   public void append(Message message, AppendCallback callback) {
     queue.add(message);
     callback.onAppend(message.getMessageId(), null);
+  }
+
+  @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    return handlerId == null || subscribedHandlerIds.contains(handlerId);
   }
 
   @Override

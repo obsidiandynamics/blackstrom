@@ -38,6 +38,11 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
     public void confirm(Object handlerId, MessageId messageId) {
       backingLedger.confirm(handlerId, messageId);
     }
+
+    @Override
+    public boolean isAssigned(Object handlerId, int shard) {
+      return interceptedLedger.isAssigned(handlerId, shard);
+    }
   };
   
   public FallibleFactor(Factor backingFactor) {

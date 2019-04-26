@@ -26,5 +26,10 @@ public final class NonDisposableLedger implements Ledger {
   }
 
   @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    return backing.isAssigned(handlerId, shard);
+  }
+
+  @Override
   public void dispose() {}
 }

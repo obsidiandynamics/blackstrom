@@ -15,6 +15,11 @@ public final class LedgerTest {
       }
 
       @Override
+      public boolean isAssigned(Object handlerId, int shard) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
       public void append(Message message, AppendCallback callback) {}
     };
     ledger.init();

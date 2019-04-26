@@ -1,30 +1,52 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.func.*;
 
 public final class StackLedger implements Ledger {
-  private final List<MessageHandler> handlers = new ArrayList<>();
+  private final Set<UUID> subscribedHandlerIds = new CopyOnWriteArraySet<>();
   
   private final LinkedList<Message> queue = new LinkedList<>();
   
   private final Object lock = new Object();
   
-  private final MessageContext context = new DefaultMessageContext(this, null, NopRetention.getInstance());
-  
   /** Tracks presence of group members. */
-  private final Set<String> groups = new HashSet<>();
+  private final Set<String> groups = new CopyOnWriteArraySet<>();
   
   private boolean delivering;
+  
+  private static final class ContextualHandler {
+    final MessageHandler handler;
+    
+    final MessageContext context;
+
+    ContextualHandler(MessageHandler handler, MessageContext context) {
+      this.handler = handler;
+      this.context = context;
+    }
+  }
+  
+  private volatile ContextualHandler[] contextualHandlers = new ContextualHandler[0];
 
   @Override
   public void attach(MessageHandler handler) {
     if (handler.getGroupId() != null && ! groups.add(handler.getGroupId())) return;
     
-    handlers.add(handler);
+    final UUID handlerId;
+    if (handler.getGroupId() != null) {
+      handlerId = UUID.randomUUID();
+      subscribedHandlerIds.add(handlerId);
+    } else {
+      handlerId = null;
+    }
+    
+    final MessageContext context = new DefaultMessageContext(this, handlerId, NopRetention.getInstance());
+    contextualHandlers = ArrayCopy.append(contextualHandlers, new ContextualHandler(handler, context));
   }
 
   @Override
@@ -36,12 +58,17 @@ public final class StackLedger implements Ledger {
         delivering = true;
         do {
           final Message head = queue.removeFirst();
-          for (int i = handlers.size(); --i >= 0;) {
-            handlers.get(i).onMessage(context, head);
+          for (ContextualHandler contextualHandler : contextualHandlers) {
+            contextualHandler.handler.onMessage(contextualHandler.context, head);
           }
         } while (! queue.isEmpty());
         delivering = false;
       }
     }
+  }
+
+  @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    return handlerId == null || subscribedHandlerIds.contains(handlerId);
   }
 }

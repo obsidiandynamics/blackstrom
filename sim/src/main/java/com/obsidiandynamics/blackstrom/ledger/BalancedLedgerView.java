@@ -20,7 +20,7 @@ public final class BalancedLedgerView implements Ledger {
   
   private final Accumulator[] accumulators;
   
-  private class Consumer implements Terminable {
+  private final class Consumer implements Terminable {
     private static final int CONSUME_WAIT_MILLIS = 1;
     
     private final MessageHandler handler;
@@ -147,6 +147,13 @@ public final class BalancedLedgerView implements Ledger {
     final ConsumerGroup group = consumer.group;
     final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
     group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset());
+  }
+
+  @Override
+  public boolean isAssigned(Object handlerId, int shard) {
+    final Consumer consumer = consumers.get(handlerId);
+    final ConsumerGroup group = consumer.group;
+    return group == null || group.isAssignee(shard, handlerId);
   }
 
   @Override
