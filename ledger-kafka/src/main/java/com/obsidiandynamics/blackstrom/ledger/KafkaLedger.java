@@ -121,6 +121,11 @@ public final class KafkaLedger implements Ledger {
     
     /** Partitions that have been assigned to this consumer. */
     Set<Integer> assignedPartitions = Collections.emptySet();
+    
+    /** Partitions that are still held by this consumer. Differs from {@link #assignedPartitions} in that
+     *  it doesn't get cleared in the {@code onPartitionsRevoked()} callback and persists until the
+     *  {@code onPartitionsAssigned()} callback. */
+    Set<Integer> heldPartitions = Collections.emptySet();
   }
 
   /** Maps handler IDs to consumer offsets. */
@@ -268,6 +273,7 @@ public final class KafkaLedger implements Ledger {
             final Set<Integer> assignedPartitions = partitions.stream().map(TopicPartition::partition).collect(Collectors.toSet());
             synchronized (consumerState.lock) {
               consumerState.assignedPartitions = assignedPartitions;
+              consumerState.heldPartitions = assignedPartitions;
             }
           }
         };
@@ -528,7 +534,14 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public boolean isAssigned(Object handlerId, int shard) {
-    return handlerId == null || consumerStates.get(handlerId).assignedPartitions.contains(shard);
+    if (handlerId == null) {
+      return true;
+    } else {
+      final ConsumerState consumerState = consumerStates.get(handlerId);
+      synchronized (consumerState.lock) {
+        return consumerState.heldPartitions.contains(shard);
+      }
+    }
   }
 
   @Override
