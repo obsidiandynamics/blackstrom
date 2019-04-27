@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -494,6 +496,7 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
+    mustExist(handlerId, illegalState("Cannot confirm in an ungrouped context"));
     final ConsumerState consumerState = consumerStates.get(handlerId);
     confirm((DefaultMessageId) messageId, consumerState, topic, zlg);
   }

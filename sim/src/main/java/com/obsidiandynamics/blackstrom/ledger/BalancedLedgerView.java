@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -146,6 +148,7 @@ public final class BalancedLedgerView implements Ledger {
   public void confirm(Object handlerId, MessageId messageId) {
     final Consumer consumer = consumers.get(handlerId);
     final ConsumerGroup group = consumer.group;
+    mustExist(group, illegalState("Cannot confirm in an ungrouped context"));
     final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
     group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset());
   }
