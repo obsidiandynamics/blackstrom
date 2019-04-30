@@ -7,6 +7,7 @@ import java.util.concurrent.*;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.*;
+import com.fasterxml.jackson.databind.node.*;
 
 final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
   private static final long serialVersionUID = 1L;
@@ -26,7 +27,7 @@ final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
   }
   
   private Class<?> classForName(String className) throws PayloadDeserializationException {
-    final Class<?> existing = classCache.get(className);
+    final var existing = classCache.get(className);
     if (existing != null) {
       return existing;
     } else {
@@ -43,12 +44,20 @@ final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
 
   @Override
   public Payload deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-    final JsonNode root = p.getCodec().readTree(p);
-    final String payloadClassName = root.get("payloadClass").asText();
-    final Class<?> payloadClass = classForName(payloadClassName);
+    final var rootNode = p.getCodec().<ObjectNode>readTree(p);
+    final var payloadClassName = rootNode.get("@payloadClass").asText();
+    final var payloadNode = rootNode.get("@payload");
+    final var payloadClass = classForName(payloadClassName);
+    final Object payload;
+    if (payloadNode != null) {
+      // payload was encapsulated, implying that it was an array or a scalar
+      payload = p.getCodec().treeToValue(payloadNode, payloadClass);
+    } else {
+      // payload was inlined
+      rootNode.remove("@payloadClass"); // remove property to prevent problems with downstream deserializers
+      payload = p.getCodec().treeToValue(rootNode, payloadClass);
+    }
     
-    final JsonNode payloadNode = root.get("payload");
-    final Object payload = p.getCodec().treeToValue(payloadNode, payloadClass);
     return Payload.pack(payload);
   }
 }
