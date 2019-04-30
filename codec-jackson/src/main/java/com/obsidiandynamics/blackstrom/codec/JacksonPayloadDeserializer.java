@@ -44,9 +44,9 @@ final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
 
   @Override
   public Payload deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-    final var rootNode = p.getCodec().<ObjectNode>readTree(p);
-    final var payloadClassName = rootNode.get("@payloadClass").asText();
-    final var payloadNode = rootNode.get("@payload");
+    final var thisNode = p.getCodec().<ObjectNode>readTree(p);
+    final var payloadClassName = thisNode.get("@payloadClass").asText();
+    final var payloadNode = thisNode.get("@payload");
     final var payloadClass = classForName(payloadClassName);
     final Object payload;
     if (payloadNode != null) {
@@ -54,8 +54,8 @@ final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
       payload = p.getCodec().treeToValue(payloadNode, payloadClass);
     } else {
       // payload was inlined
-      rootNode.remove("@payloadClass"); // remove property to prevent problems with downstream deserializers
-      payload = p.getCodec().treeToValue(rootNode, payloadClass);
+      thisNode.remove("@payloadClass"); // remove property to prevent problems with downstream deserializers
+      payload = p.getCodec().treeToValue(thisNode, payloadClass);
     }
     
     return Payload.pack(payload);
