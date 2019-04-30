@@ -1,6 +1,6 @@
 package com.obsidiandynamics.blackstrom.codec;
 
-import org.apache.commons.lang3.builder.*;
+import java.util.*;
 
 import com.obsidiandynamics.func.*;
 
@@ -31,9 +31,7 @@ public final class Payload {
   
   @Override
   public int hashCode() {
-    return new HashCodeBuilder()
-        .append(value)
-        .toHashCode();
+    return Objects.hashCode(value);
   }
   
   @Override
@@ -41,10 +39,8 @@ public final class Payload {
     if (this == obj) {
       return true;
     } else if (obj instanceof Payload) {
-      final Payload that = (Payload) obj;
-      return new EqualsBuilder()
-          .append(value,  that.value)
-          .isEquals();
+      final var that = (Payload) obj;
+      return Objects.equals(value, that.value);
     } else {
       return false;
     }

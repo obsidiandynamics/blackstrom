@@ -62,13 +62,15 @@ public final class JacksonPayloadSerializationTest {
   @Test
   public void testArray() throws IOException {
     final var mapper = createObjectMapper();
-    final var p = Payload.pack(new long[] {0, 1, 3});
+    final var written = new long[] {0, 1, 3};
+    final var p = Payload.pack(written);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
     final var d = mapper.readValue(encoded, Payload.class);
-    assertEquals(p, d);
+    final var read = d.<long[]>unpack();
+    assertArrayEquals(written, read);
   }
 
   @Test

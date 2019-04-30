@@ -22,8 +22,8 @@ public final class DefaultMessageId implements MessageId {
   
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
+    final var prime = 31;
+    var result = 1;
     result = prime * result + (int) (offset ^ (offset >>> 32));
     result = prime * result + shard;
     return result;
@@ -34,7 +34,7 @@ public final class DefaultMessageId implements MessageId {
     if (this == obj) {
       return true;
     } else if (obj instanceof DefaultMessageId) {
-      final DefaultMessageId that = (DefaultMessageId) obj;
+      final var that = (DefaultMessageId) obj;
       return shard == that.shard && offset == that.offset;
     } else {
       return false;
