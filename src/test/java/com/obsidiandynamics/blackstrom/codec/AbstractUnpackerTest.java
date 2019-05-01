@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.codec;
 
 import static com.obsidiandynamics.func.Functions.*;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -65,7 +66,7 @@ public abstract class AbstractUnpackerTest {
       super(validateType(TYPE, type), value);
     }
     
-    public SchemaFoo_v0 create(String value) {
+    public static SchemaFoo_v0 instantiate(String value) {
       return new SchemaFoo_v0(TYPE, value);
     }
   }
@@ -93,5 +94,15 @@ public abstract class AbstractUnpackerTest {
     final var pubVers = new ContentVersions()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class);
+    
+    final var pub = SchemaFoo_v0.instantiate("foo version 0");
+    final var pubV = pubVers.pack(pub);
+    final var subV = roundTrip(pubV);
+    
+    final var subVers = new ContentVersions()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class);
+    final var sub = subVers.unpack(subV);
+    assertEquals(pub, sub);
   }
 }
