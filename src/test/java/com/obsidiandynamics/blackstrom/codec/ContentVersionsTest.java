@@ -49,6 +49,17 @@ public final class ContentVersionsTest {
       vers.withSnapshot(contentType, 0, CreateBar_vLatest.class);
     }).isInstanceOf(IllegalMappingException.class).hasMessage("Next mapping (v0) is not ahead of the preceding (v1)");
   }
+
+  @Test
+  public void testWithSnapshot_existingMapping() {
+    final var contentType = "test:foo/create";
+    final var vers = new ContentVersions()
+        .withSnapshot(contentType, 0, CreateFoo_v0.class);
+    
+    Assertions.assertThatThrownBy(() -> {
+      vers.withSnapshot(contentType, 1, CreateFoo_v0.class);
+    }).isInstanceOf(IllegalMappingException.class).hasMessage("A mapping already exists for content " + CreateFoo_v0.class);
+  }
   
   @Test
   public void testWithUnpacker_duplicate() {

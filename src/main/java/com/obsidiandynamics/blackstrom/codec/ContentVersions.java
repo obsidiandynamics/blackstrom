@@ -85,6 +85,9 @@ public final class ContentVersions {
     ContentHandle.validateContentType(contentType);
     ContentHandle.validateContentVersion(contentVersion);
     mustExist(contentClass, "Content class cannot be null");
+    final var existingMapping = classToVersion.get(contentClass);
+    mustBeNull(existingMapping, 
+               withMessage(() -> "A mapping already exists for content " + contentClass, IllegalMappingException::new));
     final var mappings = getOrCreateVersionMappings(contentType);
     final var mapping = new VersionMapping(new ContentHandle(contentType, contentVersion), contentClass);
     mappings.add(mapping);
@@ -108,7 +111,7 @@ public final class ContentVersions {
     mustExist(versionable, "Versionable content cannot be null");
     final var packed = versionable.getPacked();
     final var unpacker = checkedGetUnpacker(packed.getClass());
-    final var mapping = resolveMapperForHandle(versionable.getHandle());
+    final var mapping = mappingForHandle(versionable.getHandle());
     if (mapping != null) {
       return unpacker.unpack(Classes.cast(packed), mapping.contentClass);
     } else {
@@ -116,7 +119,7 @@ public final class ContentVersions {
     }
   }
   
-  private VersionMapping resolveMapperForHandle(ContentHandle handle) {
+  private VersionMapping mappingForHandle(ContentHandle handle) {
     final var mappings = typeToVersions.get(handle.getType());
     if (mappings != null) {
       final var desiredVersion = handle.getVersion();
