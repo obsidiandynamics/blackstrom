@@ -53,6 +53,7 @@ allprojects {
   }
   
   ext {
+    assertjVersion = "3.12.2"
     commonsLangVersion = "3.9"
     equalsverifierVersion = "3.1.8"
     fulcrumVersion = "0.32.0"
@@ -67,6 +68,7 @@ allprojects {
     kryoVersion = "5.0.0-RC1"
     meteorVersion = "0.20.0"
     mockitoVersion = "2.27.0"
+    pojotesterVersion = "0.9.0"
     slf4jVersion = "1.7.25"
     yconfVersion = "0.16.0"
     zerologVersion = "0.27.0"
@@ -76,13 +78,17 @@ allprojects {
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-assert:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-await:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-junit:${fulcrumVersion}"
+    testCompile "com.obsidiandynamics.fulcrum:fulcrum-mockito:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-testmark:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.fulcrum:fulcrum-threads:${fulcrumVersion}"
+    testCompile "com.obsidiandynamics.fulcrum:fulcrum-verifier:${fulcrumVersion}"
     testCompile "com.obsidiandynamics.yconf:yconf-snakeyaml:${yconfVersion}"
     testCompile "junit:junit:${junitVersion}"
     testCompile "org.mockito:mockito-core:${mockitoVersion}"
     testCompile "org.hdrhistogram:HdrHistogram:${hdrHistogramVersion}"
     testCompile "nl.jqno.equalsverifier:equalsverifier:${equalsverifierVersion}"
+    testCompile "com.obsidiandynamics.pojotester:pojotester:${pojotesterVersion}"
+    testCompile "org.assertj:assertj-core:${assertjVersion}"
 
     testRuntime "org.slf4j:slf4j-log4j12:${slf4jVersion}"
     testRuntime "log4j:log4j:${log4jVersion}"

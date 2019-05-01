@@ -26,14 +26,14 @@ public class KryoMessageCodec implements MessageCodec {
   public KryoMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
                           @YInject(name="expansions") KryoExpansion... expansions) {
     messageSerializer = new KryoMessageSerializer(mapPayload);
-    pool = new Pool<Kryo>(true, false) {
+    pool = new Pool<>(true, false) {
       @Override
       protected Kryo create () {
-        final Kryo kryo = new Kryo();
+        final var kryo = new Kryo();
         kryo.setReferences(false);
         kryo.setRegistrationRequired(false);
-        for (KryoExpansion expansion : DEF_EXPANSIONS) expansion.accept(kryo);
-        for (KryoExpansion expansion : expansions) expansion.accept(kryo);
+        for (var expansion : DEF_EXPANSIONS) expansion.accept(kryo);
+        for (var expansion : expansions) expansion.accept(kryo);
         return kryo;
       }
     };
@@ -49,9 +49,9 @@ public class KryoMessageCodec implements MessageCodec {
   
   @Override
   public byte[] encode(Message message) {
-    final Kryo kryo = obtain();
+    final var kryo = obtain();
     try {
-      final Output out = new Output(DEF_MESSAGE_BUFFER_SIZE, -1);
+      final var out = new Output(DEF_MESSAGE_BUFFER_SIZE, -1);
       kryo.writeObject(out, message, messageSerializer);
       return out.toBytes();
     } finally {
@@ -61,7 +61,7 @@ public class KryoMessageCodec implements MessageCodec {
 
   @Override
   public Message decode(byte[] bytes) {
-    final Kryo kryo = obtain();
+    final var kryo = obtain();
     try {
       return kryo.readObject(new Input(bytes), Message.class, messageSerializer);
     } finally {
