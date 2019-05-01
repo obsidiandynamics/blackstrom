@@ -28,7 +28,7 @@ public final class JacksonPayloadSerializationTest {
   }
   
   private static void logEncoded(String encoded) {
-    zlg.t("encoded %s", z ->z.arg(encoded));
+    zlg.t("encoded %s", z -> z.arg(encoded));
   }
   
   private static final class TestClass {
