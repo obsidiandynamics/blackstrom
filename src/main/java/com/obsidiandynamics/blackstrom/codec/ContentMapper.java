@@ -9,7 +9,7 @@ import com.obsidiandynamics.func.*;
 /**
  *  Registry of {@link Unpacker} implementations and version mapping snapshots.
  */
-public final class ContentVersions {
+public final class ContentMapper {
   private final Map<Class<? extends PackedForm>, Unpacker<?>> unpackers = new HashMap<>();
   
   private final Map<String, VersionMappings> typeToVersions = new LinkedHashMap<>();
@@ -72,7 +72,7 @@ public final class ContentVersions {
     return typeToVersions.toString();
   }
   
-  public ContentVersions withUnpacker(Unpacker<?> unpacker) {
+  public ContentMapper withUnpacker(Unpacker<?> unpacker) {
     mustExist(unpacker, "Unpacker cannot be null");
     final var packedClass = unpacker.getPackedType();
     mustBeFalse(unpackers.containsKey(packedClass), 
@@ -81,7 +81,7 @@ public final class ContentVersions {
     return this;
   }
   
-  public ContentVersions withSnapshot(String contentType, int contentVersion, Class<?> contentClass) {
+  public ContentMapper withSnapshot(String contentType, int contentVersion, Class<?> contentClass) {
     ContentHandle.validateContentType(contentType);
     ContentHandle.validateContentVersion(contentVersion);
     mustExist(contentClass, "Content class cannot be null");

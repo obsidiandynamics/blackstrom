@@ -120,18 +120,106 @@ public abstract class AbstractUnpackerTest {
 
   @Test
   public final void testPubSubSameVersion() {
-    final var pubVers = new ContentVersions()
+    final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withSnapshot("foo", 0, SchemaFoo_v0.class);
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubV = pubVers.pack(pub);
+    final var pubV = pubConmap.pack(pub);
     final var subV = roundTrip(pubV);
     
-    final var subVers = new ContentVersions()
+    final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withSnapshot("foo", 0, SchemaFoo_v0.class);
-    final var sub = subVers.unpack(subV);
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub = subConmap.unpack(subV);
     assertEquals(pub, sub);
+  }
+
+  @Test
+  public final void testPubSubSameVersionWrappedInPayload() {
+    final var pubConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    
+    final var pub = SchemaFoo_v0.instantiate("foo version 0");
+    final var pubV = pubConmap.pack(pub);
+    final var pubP = Payload.pack(pubV);
+    final var subP = roundTrip(pubP);
+    final var subV = Payload.<Versionable>unpack(subP);
+    
+    final var subConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub = subConmap.unpack(subV);
+    assertEquals(pub, sub);
+  }
+
+  @Test
+  public final void testPubSubUnsupportedVersion() {
+    final var pubConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    
+    final var pub = SchemaFoo_v1.instantiate("foo version 1");
+    final var pubV = pubConmap.pack(pub);
+    final var subV = roundTrip(pubV);
+    
+    final var subConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub = subConmap.unpack(subV);
+    assertNull(sub);
+  }
+  
+  static final class Versionables {
+    Versionable[] items;
+    
+    public Versionables() {}
+
+    Versionables(Versionable... items) {
+      this.items = items;
+    }
+
+    public final Versionable[] getItems() {
+      return items;
+    }
+
+    public final void setItems(Versionable[] items) {
+      this.items = items;
+    }
+  }
+
+  @Test
+  public final void testPubSubMixedVersions() {
+    final var pubConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    
+    final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
+    final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
+    final var pubVs = new Versionables(pubConmap.pack(pub1), pubConmap.pack(pub0));
+    final var subVs = roundTrip(pubVs);
+    
+    final var subConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub1 = subConmap.unpack(subVs.items[0]);
+    assertNull(sub1);
+    final var sub0 = subConmap.unpack(subVs.items[1]);
+    assertEquals(pub0, sub0);
   }
 }
