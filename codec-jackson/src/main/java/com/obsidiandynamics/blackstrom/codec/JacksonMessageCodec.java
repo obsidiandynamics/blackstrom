@@ -41,13 +41,13 @@ public class JacksonMessageCodec implements MessageCodec {
     final var module = new SimpleModule();
     module.addSerializer(Message.class, new JacksonMessageSerializer());
     module.addDeserializer(Message.class, new JacksonMessageDeserializer(mapPayload));
-    module.addSerializer(Payload.class, new JacksonPayloadSerializer());
-    module.addDeserializer(Payload.class, new JacksonPayloadDeserializer());
     
     for (var expansion : DEF_EXPANSIONS) expansion.accept(module);
     for (var expansion : expansions) expansion.accept(module);
     
     mapper.registerModule(module);
+    mapper.registerModule(new JacksonPayloadModule());
+    mapper.registerModule(new JacksonVersionableModule());
   }
   
   /**

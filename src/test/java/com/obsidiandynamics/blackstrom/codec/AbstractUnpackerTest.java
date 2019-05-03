@@ -71,16 +71,46 @@ public abstract class AbstractUnpackerTest {
     }
   }
 
-  static final class SchemaBar_v0 {}
+  static final class SchemaFoo_v1 extends BaseSchema {
+    private static final String TYPE = SchemaFoo_v1.class.getSimpleName();
+    
+    public SchemaFoo_v1(String type, String value) {
+      super(validateType(TYPE, type), value);
+    }
+    
+    public static SchemaFoo_v1 instantiate(String value) {
+      return new SchemaFoo_v1(TYPE, value);
+    }
+  }
 
-  static final class SchemaFoo_v1 {}
+  static final class SchemaBar_v0 extends BaseSchema {
+    private static final String TYPE = SchemaBar_v0.class.getSimpleName();
+    
+    public SchemaBar_v0(String type, String value) {
+      super(validateType(TYPE, type), value);
+    }
+    
+    public static SchemaBar_v0 instantiate(String value) {
+      return new SchemaBar_v0(TYPE, value);
+    }
+  }
 
-  static final class SchemaBar_v1 {}
+  static final class SchemaBar_v1 extends BaseSchema {
+    private static final String TYPE = SchemaBar_v1.class.getSimpleName();
+    
+    public SchemaBar_v1(String type, String value) {
+      super(validateType(TYPE, type), value);
+    }
+    
+    public static SchemaBar_v1 instantiate(String value) {
+      return new SchemaBar_v1(TYPE, value);
+    }
+  }
 
   private Unpacker<?> unpacker;
 
   @Before
-  public final void before() {
+  public final void beforeBase() {
     unpacker = getUnpacker();
   }
 
@@ -90,7 +120,6 @@ public abstract class AbstractUnpackerTest {
 
   @Test
   public final void testPubSubSameVersion() {
-    final var unpacker = getUnpacker();
     final var pubVers = new ContentVersions()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class);

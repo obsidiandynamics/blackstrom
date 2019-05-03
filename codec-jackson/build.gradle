@@ -6,6 +6,7 @@ dependencies {
   compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
   compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
   
+  testCompile project(":").sourceSets.test.output
   testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
 
