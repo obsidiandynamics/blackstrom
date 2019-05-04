@@ -109,8 +109,8 @@ public final class ContentMapperTest {
     }).isInstanceOf(NoSuchMappingException.class).hasMessage("No mapping for " + CreateFoo_vLatest.class);
   }
 
-  private static Variant emulatePacked(String contentType, int contentVersion, Object content) {
-    return new Variant(new ContentHandle(contentType, contentVersion), new IdentityPackedForm(content), null);
+  private static UniVariant emulatePacked(String contentType, int contentVersion, Object content) {
+    return new UniVariant(new ContentHandle(contentType, contentVersion), new IdentityPackedForm(content), null);
   }
 
   @Test

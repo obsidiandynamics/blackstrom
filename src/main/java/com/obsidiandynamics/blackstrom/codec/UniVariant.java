@@ -6,12 +6,12 @@ import java.util.*;
 
 import com.obsidiandynamics.func.*;
 
-public final class Variant {
+public final class UniVariant {
   private final ContentHandle handle;
   private final PackedForm packed;
   private final Object content;
   
-  Variant(ContentHandle handle, PackedForm packed, Object content) {
+  UniVariant(ContentHandle handle, PackedForm packed, Object content) {
     this.handle = mustExist(handle, "Content handle cannot be null");
     mustBeTrue(packed != null ^ content != null, illegalArgument("Either the packed form or the unpacked content must be specified"));
     this.packed = packed;
@@ -44,8 +44,8 @@ public final class Variant {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof Variant) {
-      final var that = (Variant) obj;
+    } else if (obj instanceof UniVariant) {
+      final var that = (UniVariant) obj;
       return Objects.equals(handle, that.handle) && Objects.equals(packed, that.packed) && Objects.equals(content, that.content);
     } else {
       return false;
@@ -54,6 +54,6 @@ public final class Variant {
 
   @Override
   public String toString() {
-    return Variant.class.getSimpleName() + " [handle=" + handle + ", packed=" + packed + ", content=" + content + "]";
+    return UniVariant.class.getSimpleName() + " [handle=" + handle + ", packed=" + packed + ", content=" + content + "]";
   }
 }

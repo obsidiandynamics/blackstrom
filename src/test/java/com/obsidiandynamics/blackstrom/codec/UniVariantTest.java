@@ -6,17 +6,17 @@ import com.obsidiandynamics.verifier.*;
 
 import nl.jqno.equalsverifier.*;
 
-public final class VariantTest {
+public final class UniVariantTest {
   @Test
   public void testPojo() {
-    PojoVerifier.forClass(Variant.class)
+    PojoVerifier.forClass(UniVariant.class)
     .constructorArgs(new ConstructorArgs()
                      .with(ContentHandle.class, new ContentHandle("type", 1))
                      .with(PackedForm.class, new IdentityPackedForm(null))
                      .with(Object.class, null))
     .verify();
     
-    PojoVerifier.forClass(Variant.class)
+    PojoVerifier.forClass(UniVariant.class)
     .constructorArgs(new ConstructorArgs()
                      .with(ContentHandle.class, new ContentHandle("type", 1))
                      .with(PackedForm.class, null)
@@ -26,6 +26,6 @@ public final class VariantTest {
   
   @Test
   public void testEqualsHashCode() {
-    EqualsVerifier.forClass(Variant.class).verify();
+    EqualsVerifier.forClass(UniVariant.class).verify();
   }
 }

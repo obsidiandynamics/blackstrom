@@ -7,15 +7,15 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.*;
 import com.fasterxml.jackson.databind.node.*;
 
-final class JacksonVariantDeserializer extends StdDeserializer<Variant> {
+final class JacksonVariantDeserializer extends StdDeserializer<UniVariant> {
   private static final long serialVersionUID = 1L;
   
   JacksonVariantDeserializer() {
-    super(Variant.class);
+    super(UniVariant.class);
   }
   
   @Override
-  public Variant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public UniVariant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
     final var thisNode = p.getCodec().<ObjectNode>readTree(p);
     final var contentType = thisNode.get("@contentType").asText();
     final var contentVersion = thisNode.get("@contentVersion").asInt();
@@ -31,6 +31,6 @@ final class JacksonVariantDeserializer extends StdDeserializer<Variant> {
       contentNode = thisNode;
     }
     
-    return new Variant(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(p, contentNode), null);
+    return new UniVariant(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(p, contentNode), null);
   }
 }

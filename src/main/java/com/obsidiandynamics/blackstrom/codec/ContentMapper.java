@@ -95,19 +95,19 @@ public final class ContentMapper {
     return this;
   }
   
-  public Variant prepare(Object content) {
+  public UniVariant prepare(Object content) {
     mustExist(content, "Content must not be null");
     final var mapping = mustExist(classToVersion, content.getClass(), "No mapping for %s", NoSuchMappingException::new);
     final var handle = mapping.handle;
     return prepare(content, handle);
   }
   
-  public Variant prepare(Object content, ContentHandle handle) {
+  public UniVariant prepare(Object content, ContentHandle handle) {
     mustExist(content, "Content must not be null");
-    return new Variant(handle, null, content);
+    return new UniVariant(handle, null, content);
   }
   
-  public Object map(Variant variant) {
+  public Object map(UniVariant variant) {
     mustExist(variant, "Variant cannot be null");
     final var packed = variant.getPacked();
     final var unpacker = checkedGetUnpacker(packed.getClass());

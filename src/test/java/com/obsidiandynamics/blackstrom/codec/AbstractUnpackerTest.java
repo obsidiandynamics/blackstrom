@@ -151,7 +151,7 @@ public abstract class AbstractUnpackerTest {
     final var pubV = pubConmap.prepare(pub);
     final var pubP = Payload.pack(pubV);
     final var subP = roundTrip(pubP);
-    final var subV = Payload.<Variant>unpack(subP);
+    final var subV = Payload.<UniVariant>unpack(subP);
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
@@ -183,19 +183,19 @@ public abstract class AbstractUnpackerTest {
   }
   
   static final class Variants {
-    Variant[] items;
+    UniVariant[] items;
     
     public Variants() {}
 
-    Variants(Variant... items) {
+    Variants(UniVariant... items) {
       this.items = items;
     }
 
-    public final Variant[] getItems() {
+    public final UniVariant[] getItems() {
       return items;
     }
 
-    public final void setItems(Variant[] items) {
+    public final void setItems(UniVariant[] items) {
       this.items = items;
     }
   }
