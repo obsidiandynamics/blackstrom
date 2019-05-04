@@ -16,14 +16,14 @@ import com.fasterxml.jackson.databind.module.*;
 import com.fasterxml.jackson.databind.node.*;
 import com.obsidiandynamics.zerolog.*;
 
-public final class JacksonVersionableSerializationTest {
+public final class JacksonVariantSerializationTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static ObjectMapper createObjectMapper() {
     final var mapper = new ObjectMapper();
     final var m = new SimpleModule();
-    m.addSerializer(Versionable.class, new JacksonVersionableSerializer());
-    m.addDeserializer(Versionable.class, new JacksonVersionableDeserializer());
+    m.addSerializer(Variant.class, new JacksonVariantSerializer());
+    m.addDeserializer(Variant.class, new JacksonVariantDeserializer());
     mapper.registerModule(m);
     return mapper;
   }
@@ -64,17 +64,17 @@ public final class JacksonVersionableSerializationTest {
     }
   }
   
-  private static Versionable emulatePacked(ObjectMapper mapper, String contentType, int contentVersion, Object content) {
+  private static Variant emulatePacked(ObjectMapper mapper, String contentType, int contentVersion, Object content) {
     final var packed = mapper.<JsonNode>valueToTree(content);
     final var parser = new TreeTraversingParser(packed);
-    return new Versionable(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(parser, packed), null);
+    return new Variant(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(parser, packed), null);
   }
   
-  private static Versionable pack(String contentType, int contentVersion, Object content) {
-    return new Versionable(new ContentHandle(contentType, contentVersion), null, content);
+  private static Variant prepare(String contentType, int contentVersion, Object content) {
+    return new Variant(new ContentHandle(contentType, contentVersion), null, content);
   }
   
-  private static void assertPackedNode(JsonNode expectedNode, Versionable v) {
+  private static void assertPackedNode(JsonNode expectedNode, Variant v) {
     final var packedForm = mustBeSubtype(v.getPacked(), JacksonPackedForm.class, AssertionError::new);
     assertEquals(expectedNode, packedForm.getNode());
   }
@@ -113,7 +113,7 @@ public final class JacksonVersionableSerializationTest {
     }
   }
   
-  private static void assertUnpacked(Object expected, Versionable v) {
+  private static void assertUnpacked(Object expected, Variant v) {
     final var packed = mustBeSubtype(v.getPacked(), JacksonPackedForm.class, AssertionError::new);
     final var unpacked = JacksonUnpacker.getInstance().unpack(packed, expected.getClass());
     assertTrue(expected + " != " + unpacked, Objects.deepEquals(expected, unpacked));
@@ -128,7 +128,7 @@ public final class JacksonVersionableSerializationTest {
   
   @Test
   public void testPrepackedScalar_failWithUnsupportedPackedForm() throws IOException {
-    final var p = new Versionable(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
+    final var p = new Variant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
     
     Assertions.assertThatThrownBy(() -> {
       mapper.writeValueAsString(p);
@@ -145,19 +145,19 @@ public final class JacksonVersionableSerializationTest {
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(text("scalar"), d);
     assertUnpacked("scalar", d);
   }
   
   @Test
   public void testSerializeScalar() throws IOException {
-    final var p = pack("test/scalar", 1, "scalar");
+    final var p = prepare("test/scalar", 1, "scalar");
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(text("scalar"), d);
     assertUnpacked("scalar", d);
   }
@@ -170,7 +170,7 @@ public final class JacksonVersionableSerializationTest {
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(array(number(0), number(1), number(2)), d);
     assertUnpacked(array, d);
   }
@@ -178,12 +178,12 @@ public final class JacksonVersionableSerializationTest {
   @Test
   public void testSerializeArray() throws IOException {
     final var array = new int[] {0, 1, 2};
-    final var p = pack("test/array", 1, array);
+    final var p = prepare("test/array", 1, array);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(array(number(0), number(1), number(2)), d);
     assertUnpacked(array, d);
   }
@@ -198,7 +198,7 @@ public final class JacksonVersionableSerializationTest {
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(object(field("a", array(text("w"), text("x"))), field("b", array(text("y"), text("z")))), d);
     assertUnpacked(map, d);
   }
@@ -208,12 +208,12 @@ public final class JacksonVersionableSerializationTest {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
-    final var p = pack("test/map", 1, map);
+    final var p = prepare("test/map", 1, map);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(object(field("a", array(text("w"), text("x"))), field("b", array(text("y"), text("z")))), d);
     assertUnpacked(map, d);
   }
@@ -226,7 +226,7 @@ public final class JacksonVersionableSerializationTest {
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj, d);
   }
@@ -234,12 +234,12 @@ public final class JacksonVersionableSerializationTest {
   @Test
   public void testSerializeObject() throws IOException {
     final var obj = new TestClass("someString", 42);
-    final var p = pack("test/obj", 1, obj);
+    final var p = prepare("test/obj", 1, obj);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, Versionable.class);
+    final var d = mapper.readValue(encoded, Variant.class);
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj, d);
   }

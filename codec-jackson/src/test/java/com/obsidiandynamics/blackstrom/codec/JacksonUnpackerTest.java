@@ -78,7 +78,7 @@ public final class JacksonUnpackerTest extends AbstractUnpackerTest {
     
     mapper = new ObjectMapper()
         .registerModule(module)
-        .registerModule(new JacksonVersionableModule())
+        .registerModule(new JacksonVariantModule())
         .registerModule(new JacksonPayloadModule());
   }
 

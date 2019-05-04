@@ -47,7 +47,7 @@ public class JacksonMessageCodec implements MessageCodec {
     
     mapper.registerModule(module);
     mapper.registerModule(new JacksonPayloadModule());
-    mapper.registerModule(new JacksonVersionableModule());
+    mapper.registerModule(new JacksonVariantModule());
   }
   
   /**

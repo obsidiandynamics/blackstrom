@@ -95,23 +95,23 @@ public final class ContentMapper {
     return this;
   }
   
-  public Versionable pack(Object content) {
+  public Variant prepare(Object content) {
     mustExist(content, "Content must not be null");
     final var mapping = mustExist(classToVersion, content.getClass(), "No mapping for %s", NoSuchMappingException::new);
     final var handle = mapping.handle;
-    return pack(content, handle);
+    return prepare(content, handle);
   }
   
-  public Versionable pack(Object content, ContentHandle handle) {
+  public Variant prepare(Object content, ContentHandle handle) {
     mustExist(content, "Content must not be null");
-    return new Versionable(handle, null, content);
+    return new Variant(handle, null, content);
   }
   
-  public Object unpack(Versionable versionable) {
-    mustExist(versionable, "Versionable content cannot be null");
-    final var packed = versionable.getPacked();
+  public Object map(Variant variant) {
+    mustExist(variant, "Variant cannot be null");
+    final var packed = variant.getPacked();
     final var unpacker = checkedGetUnpacker(packed.getClass());
-    final var mapping = mappingForHandle(versionable.getHandle());
+    final var mapping = mappingForHandle(variant.getHandle());
     if (mapping != null) {
       return unpacker.unpack(Classes.cast(packed), mapping.contentClass);
     } else {

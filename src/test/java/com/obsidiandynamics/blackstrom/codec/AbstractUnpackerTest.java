@@ -127,7 +127,7 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubV = pubConmap.pack(pub);
+    final var pubV = pubConmap.prepare(pub);
     final var subV = roundTrip(pubV);
     
     final var subConmap = new ContentMapper()
@@ -135,7 +135,7 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
         .withSnapshot("foo", 1, SchemaFoo_v1.class)
         .withSnapshot("bar", 0, SchemaBar_v0.class);
-    final var sub = subConmap.unpack(subV);
+    final var sub = subConmap.map(subV);
     assertEquals(pub, sub);
   }
 
@@ -148,17 +148,17 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubV = pubConmap.pack(pub);
+    final var pubV = pubConmap.prepare(pub);
     final var pubP = Payload.pack(pubV);
     final var subP = roundTrip(pubP);
-    final var subV = Payload.<Versionable>unpack(subP);
+    final var subV = Payload.<Variant>unpack(subP);
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
         .withSnapshot("foo", 1, SchemaFoo_v1.class)
         .withSnapshot("bar", 0, SchemaBar_v0.class);
-    final var sub = subConmap.unpack(subV);
+    final var sub = subConmap.map(subV);
     assertEquals(pub, sub);
   }
 
@@ -171,31 +171,31 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v1.instantiate("foo version 1");
-    final var pubV = pubConmap.pack(pub);
+    final var pubV = pubConmap.prepare(pub);
     final var subV = roundTrip(pubV);
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
         .withSnapshot("bar", 0, SchemaBar_v0.class);
-    final var sub = subConmap.unpack(subV);
+    final var sub = subConmap.map(subV);
     assertNull(sub);
   }
   
-  static final class Versionables {
-    Versionable[] items;
+  static final class Variants {
+    Variant[] items;
     
-    public Versionables() {}
+    public Variants() {}
 
-    Versionables(Versionable... items) {
+    Variants(Variant... items) {
       this.items = items;
     }
 
-    public final Versionable[] getItems() {
+    public final Variant[] getItems() {
       return items;
     }
 
-    public final void setItems(Versionable[] items) {
+    public final void setItems(Variant[] items) {
       this.items = items;
     }
   }
@@ -210,16 +210,16 @@ public abstract class AbstractUnpackerTest {
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubVs = new Versionables(pubConmap.pack(pub1), pubConmap.pack(pub0));
+    final var pubVs = new Variants(pubConmap.prepare(pub1), pubConmap.prepare(pub0));
     final var subVs = roundTrip(pubVs);
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
         .withSnapshot("bar", 0, SchemaBar_v0.class);
-    final var sub1 = subConmap.unpack(subVs.items[0]);
+    final var sub1 = subConmap.map(subVs.items[0]);
     assertNull(sub1);
-    final var sub0 = subConmap.unpack(subVs.items[1]);
+    final var sub0 = subConmap.map(subVs.items[1]);
     assertEquals(pub0, sub0);
   }
 }
