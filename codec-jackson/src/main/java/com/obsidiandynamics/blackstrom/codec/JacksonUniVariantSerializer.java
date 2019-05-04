@@ -9,10 +9,10 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.*;
 import com.fasterxml.jackson.databind.ser.std.*;
 
-final class JacksonVariantSerializer extends StdSerializer<UniVariant> {
+final class JacksonUniVariantSerializer extends StdSerializer<UniVariant> {
   private static final long serialVersionUID = 1L;
 
-  JacksonVariantSerializer() {
+  JacksonUniVariantSerializer() {
     super(UniVariant.class);
   }
 

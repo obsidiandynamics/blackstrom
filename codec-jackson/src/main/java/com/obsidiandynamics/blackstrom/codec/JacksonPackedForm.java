@@ -24,11 +24,6 @@ final class JacksonPackedForm implements PackedForm {
   public JsonNode getNode() {
     return node;
   }
-
-  @Override
-  public String toString() {
-    return JacksonPackedForm.class.getSimpleName() + " [parser=" + parser + ", node=" + node + "]";
-  }
   
   @Override
   public boolean equals(Object obj) {
@@ -45,5 +40,10 @@ final class JacksonPackedForm implements PackedForm {
   @Override
   public int hashCode() {
     return Objects.hashCode(node);
+  }
+
+  @Override
+  public String toString() {
+    return JacksonPackedForm.class.getSimpleName() + " [parser=" + parser + ", node=" + node + "]";
   }
 }

@@ -12,7 +12,6 @@ import org.junit.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.module.*;
 import com.fasterxml.jackson.databind.node.*;
 import com.obsidiandynamics.zerolog.*;
 
@@ -20,12 +19,7 @@ public final class JacksonVariantSerializationTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static ObjectMapper createObjectMapper() {
-    final var mapper = new ObjectMapper();
-    final var m = new SimpleModule();
-    m.addSerializer(UniVariant.class, new JacksonVariantSerializer());
-    m.addDeserializer(UniVariant.class, new JacksonVariantDeserializer());
-    mapper.registerModule(m);
-    return mapper;
+    return new ObjectMapper().registerModule(new JacksonVariantModule());
   }
   
   private static void logEncoded(String encoded) {
@@ -127,7 +121,7 @@ public final class JacksonVariantSerializationTest {
   }
   
   @Test
-  public void testPrepackedScalar_failWithUnsupportedPackedForm() throws IOException {
+  public void testUniVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
     final var p = new UniVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
     
     Assertions.assertThatThrownBy(() -> {
@@ -139,7 +133,7 @@ public final class JacksonVariantSerializationTest {
   }
   
   @Test
-  public void testPrepackedScalar() throws IOException {
+  public void testUniVariant_prepackedScalar() throws IOException {
     final var p = emulatePacked(mapper, "test/scalar", 1, "scalar");
     
     final var encoded = mapper.writeValueAsString(p);
@@ -151,7 +145,7 @@ public final class JacksonVariantSerializationTest {
   }
   
   @Test
-  public void testSerializeScalar() throws IOException {
+  public void testUniVariant_serializeScalar() throws IOException {
     final var p = prepare("test/scalar", 1, "scalar");
     
     final var encoded = mapper.writeValueAsString(p);
@@ -163,7 +157,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testPrepackedArray() throws IOException {
+  public void testUniVariant_prepackedArray() throws IOException {
     final var array = new int[] {0, 1, 2};
     final var p = emulatePacked(mapper, "test/array", 1, array);
     
@@ -176,7 +170,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testSerializeArray() throws IOException {
+  public void testUniVariant_serializeArray() throws IOException {
     final var array = new int[] {0, 1, 2};
     final var p = prepare("test/array", 1, array);
     
@@ -189,7 +183,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testPrepackedMap() throws IOException {
+  public void testUniVariant_prepackedMap() throws IOException {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -204,7 +198,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testSerializeMap() throws IOException {
+  public void testUniVariant_serializeMap() throws IOException {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -219,7 +213,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testPrepackedObject() throws IOException {
+  public void testUniVariant_prepackedObject() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = emulatePacked(mapper, "test/obj", 1, obj);
     
@@ -232,7 +226,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testSerializeObject() throws IOException {
+  public void testUniVariant_serializeObject() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = prepare("test/obj", 1, obj);
     
@@ -242,5 +236,57 @@ public final class JacksonVariantSerializationTest {
     final var d = mapper.readValue(encoded, UniVariant.class);
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj, d);
+  }
+
+  @Test
+  public void testUniVariant_serializeObject_readInterfaceType() throws IOException {
+    final var obj = new TestClass("someString", 42);
+    final var p = prepare("test/obj", 1, obj);
+    
+    final var encoded = mapper.writeValueAsString(p);
+    logEncoded(encoded);
+    
+    final var d = (UniVariant) mapper.readValue(encoded, Variant.class);
+    assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
+    assertUnpacked(obj, d);
+  }
+
+  @Test
+  public void testMultiVariant_serializeObject() throws IOException {
+    final var obj0 = new TestClass("someString", 42);
+    final var obj1 = new TestClass("someOtherString", 83);
+    final var p0 = prepare("test/obj-0", 1, obj0);
+    final var p1 = prepare("test/obj-1", 1, obj1);
+    final var mp = new MultiVariant(new UniVariant[] {p0, p1});
+    
+    final var encoded = mapper.writeValueAsString(mp);
+    logEncoded(encoded);
+    
+    final var md = mapper.readValue(encoded, MultiVariant.class);
+    assertEquals(2, md.getVariants().length);
+    
+    final var d0 = md.getVariants()[0];
+    assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d0);
+    assertUnpacked(obj0, d0);
+    
+    final var d1 = md.getVariants()[1];
+    assertPackedNode(object(field("a", text("someOtherString")), field("b", number(83))), d1);
+    assertUnpacked(obj1, d1);
+  }
+
+  @Test
+  public void testMultiVariant_serializeObject_readInterfaceType() throws IOException {
+    final var obj0 = new TestClass("someString", 42);
+    final var p0 = prepare("test/obj-0", 1, obj0);
+    final var mp = new MultiVariant(new UniVariant[] {p0});
+    
+    final var encoded = mapper.writeValueAsString(mp);
+    logEncoded(encoded);
+    
+    final var md = (MultiVariant) mapper.readValue(encoded, Variant.class);
+    assertEquals(1, md.getVariants().length);
+    final var d = md.getVariants()[0];
+    assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
+    assertUnpacked(obj0, d);
   }
 }

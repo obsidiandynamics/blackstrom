@@ -6,12 +6,12 @@ import java.util.*;
 
 import com.obsidiandynamics.func.*;
 
-public final class UniVariant {
+public final class UniVariant implements Variant {
   private final ContentHandle handle;
   private final PackedForm packed;
   private final Object content;
   
-  UniVariant(ContentHandle handle, PackedForm packed, Object content) {
+  public UniVariant(ContentHandle handle, PackedForm packed, Object content) {
     this.handle = mustExist(handle, "Content handle cannot be null");
     mustBeTrue(packed != null ^ content != null, illegalArgument("Either the packed form or the unpacked content must be specified"));
     this.packed = packed;
