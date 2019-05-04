@@ -7,9 +7,8 @@ import java.util.*;
 import com.obsidiandynamics.func.*;
 
 /**
- *  Provides functionality for encapsulating arbitrary content into {@link Variant}
- *  containers, and mapping from an encapsulated {@link Variant} back to the original
- *  content. <p>
+ *  Provides functionality for encapsulating arbitrary object content into {@link Variant}
+ *  containers, and mapping from a {@link Variant} back to the original object content. <p>
  *  
  *  A {@link ContentMapper} serves as a registry of {@link Unpacker} implementations 
  *  and version-to-class mappings. All operations on {@link Variant}s must be performed 
@@ -20,29 +19,37 @@ import com.obsidiandynamics.func.*;
  *  by consulting the mappings stored herein. These are then written out as part of 
  *  the object's wire representation during the subsequent serialization process. <p>
  *  
- *  When a {@link Variant} is <em>mapped</em> to a Java class following 
- *  deserialization, the {@link ContentMapper} resolves a corresponding mapping for the
- *  stored content type and version pair (if one exists), which yields the concrete 
- *  class type. This class type, and the {@link PackedForm} is given to an appropriate
- *  {@link Unpacker}, which completes the deserialization process and maps the packed
- *  content to its Java class form. If no mapping exists for the packed content type
- *  and version, it is assumed that the content is unsupported, and a {@code null} is
- *  returned. <p>
+ *  Upon deserialization, the wire form is parsed to a limited extent — capturing
+ *  the inline content type and version headers, but keeping the content-specific payload
+ *  elements in an intermediate {@link PackedForm} (which varies depending on the codec), 
+ *  without attempting to map the serialized content back to its native Java class.
+ *  The {@link PackedForm} is encapsulated inside the returned {@link UniVariant}. In
+ *  the case of a {@link MultiVariant}, multiple {@link PackedForm}s may be 
+ *  encapsulated. <p>
  *  
- *  A {@link Variant} may be of the type {@link MultiVariant}, which encapsulates multiple
+ *  When a {@link Variant} is <em>mapped</em> to a Java class following deserialization, 
+ *  the {@link ContentMapper} first resolves a corresponding mapping for the
+ *  stored content type and version pair, which yields the concrete class type (if a 
+ *  configured mapping exists). This class type together with the {@link PackedForm} is 
+ *  then handed to an appropriate {@link Unpacker}, which completes the deserialization 
+ *  process and maps the packed content to its terminal Java class form. If no mapping is 
+ *  configured for the packed content type and version, it is assumed that the content is 
+ *  unsupported, and a {@code null} is returned. <p>
+ *  
+ *  A {@link Variant} may be of the type {@link MultiVariant}, which houses multiple
  *  {@link UniVariant}s. This allows the mapping process to enumerate over the variants
- *  in a fallback manner, trying the first variant then advancing to the next until either
- *  all variants are exhausted (yielding {@code null}) or a supported content type and
- *  version is located. <p>
+ *  in a fallback manner, trying the first variant then advancing to the next, until either
+ *  all variants are exhausted (yielding a {@code null}) or a supported content type and
+ *  version is located (yielding the reconstituted object). <p>
  *  
  *  The specifics of the (de)serialization will depend on the particular codec employed.
- *  The appropriate (de)serializers must be registered prior to utilising {@link Variant} 
- *  containers. Furthermore, the mapping process following a deserialization requires a
- *  suitable {@link Unpacker} implementation. This must be registered directly with the
- *  {@link ContentMapper} for every supported codec, as unpacking may require capabilities
- *  beyond what is supported by serialization framework. For example, deserialization may
- *  acquire and release pooled resources, making two-pass deserialization impossible 
- *  without the special handling provided by an {@link Unpacker}. 
+ *  The appropriate (de)serializers must be registered with the codec library prior to 
+ *  (de)serializing {@link Variant} containers. Furthermore, the mapping process following 
+ *  a deserialization requires a suitable {@link Unpacker} implementation. The latter must 
+ *  be registered directly with the {@link ContentMapper} for every supported codec, as 
+ *  unpacking may require capabilities beyond those natively supported by codec library. 
+ *  For example, deserialization may acquire and release pooled resources, making two-pass 
+ *  deserialization impossible without the special handling provided by an {@link Unpacker}. 
  */
 public final class ContentMapper {
   private final Map<Class<? extends PackedForm>, Unpacker<?>> unpackers = new HashMap<>();

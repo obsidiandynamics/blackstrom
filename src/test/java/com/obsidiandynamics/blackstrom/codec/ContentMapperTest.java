@@ -7,7 +7,6 @@ import org.assertj.core.api.*;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.codec.ContentMapper.*;
-import com.obsidiandynamics.func.*;
 
 public final class ContentMapperTest {
   private static final class CreateFoo_v0 {}
