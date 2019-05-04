@@ -7,7 +7,7 @@ import java.util.*;
 public final class MultiVariant implements Variant {
   private final UniVariant[] variants;
 
-  public MultiVariant(UniVariant[] variants) {
+  public MultiVariant(UniVariant... variants) {
     this.variants = mustExist(variants, "Variants cannot be null");
     mustBeGreater(variants.length, 0, illegalArgument("Variants cannot be empty"));
   }
