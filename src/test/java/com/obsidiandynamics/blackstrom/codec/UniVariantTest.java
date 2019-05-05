@@ -37,4 +37,11 @@ public final class UniVariantTest {
       new UniVariant(new ContentHandle("outer", 0), null, multi);
     }).isInstanceOf(IllegalArgumentException.class).hasMessage("Cannot nest content of type Variant");
   }
+  
+  @Test
+  public void testConstructor_bothPackedAndContentSupplied() {
+    Assertions.assertThatThrownBy(() -> {
+      new UniVariant(new ContentHandle("outer", 0), new IdentityPackedForm("someContent"), "someContent");
+    }).isInstanceOf(IllegalArgumentException.class).hasMessage("Either the packed form or the original content must be specified");
+  }
 }

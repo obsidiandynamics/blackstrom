@@ -13,7 +13,7 @@ public final class UniVariant implements Variant {
   
   public UniVariant(ContentHandle handle, PackedForm packed, Object content) {
     this.handle = mustExist(handle, "Content handle cannot be null");
-    mustBeTrue(packed != null ^ content != null, illegalArgument("Either the packed form or the unpacked content must be specified"));
+    mustBeTrue(packed != null ^ content != null, illegalArgument("Either the packed form or the original content must be specified"));
     mustBeFalse(content instanceof Variant, 
                 withMessage(() -> "Cannot nest content of type " + Variant.class.getSimpleName(), 
                             IllegalArgumentException::new));
