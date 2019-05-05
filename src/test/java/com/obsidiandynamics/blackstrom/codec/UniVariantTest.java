@@ -1,5 +1,6 @@
 package com.obsidiandynamics.blackstrom.codec;
 
+import org.assertj.core.api.*;
 import org.junit.*;
 
 import com.obsidiandynamics.verifier.*;
@@ -27,5 +28,13 @@ public final class UniVariantTest {
   @Test
   public void testEqualsHashCode() {
     EqualsVerifier.forClass(UniVariant.class).verify();
+  }
+  
+  @Test
+  public void testConstructor_nestedVariant() {
+    final var multi = new MultiVariant(new UniVariant(new ContentHandle("inner", 0), null, "someContent"));
+    Assertions.assertThatThrownBy(() -> {
+      new UniVariant(new ContentHandle("outer", 0), null, multi);
+    }).isInstanceOf(IllegalArgumentException.class).hasMessage("Cannot nest content of type Variant");
   }
 }

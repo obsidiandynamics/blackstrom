@@ -15,29 +15,37 @@ public final class PayloadTest {
   }
 
   @Test
-  public void testPackNull() {
+  public void testPack_null() {
     assertNull(Payload.pack(null));
   }
   
   @Test
-  public void testPackNotNull() {
-    final Payload p = Payload.pack("value");
+  public void testPack_notNull() {
+    final var p = Payload.pack("value");
     assertNotNull(p);
     assertEquals("value", p.unpack());
   }
   
   @Test
-  public void testUnpackNull() {
+  public void testPack_payload() {
+    final var inner = Payload.pack("value");
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> {
+      Payload.pack(inner);
+    }).isInstanceOf(IllegalArgumentException.class).hasMessage("Cannot nest payload of type Payload");
+  }
+  
+  @Test
+  public void testUnpack_null() {
     assertNull(Payload.unpack(null));
   }
   
   @Test
-  public void testUnpackNotNull() {
+  public void testUnpack_notNull() {
     assertEquals("value", Payload.unpack(Payload.pack("value")));
   }
   
   @Test
-  public void testUnpackNonPayload() {
+  public void testUnpack_nonPayload() {
     assertEquals("value", Payload.unpack("value"));
   }
   

@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.codec;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 
 import com.obsidiandynamics.func.*;
@@ -8,7 +10,10 @@ public final class Payload {
   private final Object value;
   
   private Payload(Object value) {
-    this.value = value;
+    this.value = mustExist(value, "Value cannot be null");
+    mustBeFalse(value instanceof Payload, 
+                withMessage(() -> "Cannot nest payload of type " + Payload.class.getSimpleName(), 
+                            IllegalArgumentException::new));
   }
   
   public <T> T unpack() {
