@@ -150,7 +150,7 @@ public final class ContentMapper {
     return this;
   }
 
-  public ContentMapper withMapping(String contentType, int contentVersion, Class<?> contentClass) {
+  public ContentMapper withVersion(String contentType, int contentVersion, Class<?> contentClass) {
     ContentHandle.validateContentType(contentType);
     ContentHandle.validateContentVersion(contentVersion);
     mustExist(contentClass, "Content class cannot be null");

@@ -27,9 +27,9 @@ public final class ContentMapperTest {
   public void testPrintSnapshots_nonEmpty() {
     final var v1 = 1;
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", v1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", v1, CreateBar_v1.class);
     assertEquals("{test:foo/create=[0 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateFoo_v0, "+
         "1 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateFoo_v1], " + 
         "test:bar/create=[1 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateBar_v1]}", 
@@ -37,28 +37,28 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testWithMapping_nonIncreasingVersion() {
+  public void testWithVersion_nonIncreasingVersion() {
     final var contentType = "test:foo/create";
     final var conmap = new ContentMapper()
-        .withMapping(contentType, 1, CreateFoo_v0.class);
+        .withVersion(contentType, 1, CreateFoo_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
-      conmap.withMapping(contentType, 1, CreateBar_v1.class);
+      conmap.withVersion(contentType, 1, CreateBar_v1.class);
     }).isInstanceOf(IllegalMappingException.class).hasMessage("Next mapping (v1) is not ahead of the preceding (v1)");
 
     Assertions.assertThatThrownBy(() -> {
-      conmap.withMapping(contentType, 0, CreateBar_v1.class);
+      conmap.withVersion(contentType, 0, CreateBar_v1.class);
     }).isInstanceOf(IllegalMappingException.class).hasMessage("Next mapping (v0) is not ahead of the preceding (v1)");
   }
 
   @Test
-  public void testWithMapping_existingMapping() {
+  public void testWithVersion_existingMapping() {
     final var contentType = "test:foo/create";
     final var conmap = new ContentMapper()
-        .withMapping(contentType, 0, CreateFoo_v0.class);
+        .withVersion(contentType, 0, CreateFoo_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
-      conmap.withMapping(contentType, 1, CreateFoo_v0.class);
+      conmap.withVersion(contentType, 1, CreateFoo_v0.class);
     }).isInstanceOf(IllegalMappingException.class).hasMessage("A mapping already exists for content " + CreateFoo_v0.class);
   }
 
@@ -77,10 +77,10 @@ public final class ContentMapperTest {
     final var vLegacy = 0;
     final var v1 = 1;
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", vLegacy, CreateFoo_v0.class)
-        .withMapping("test:bar/create", vLegacy, CreateBar_v0.class)
-        .withMapping("test:foo/create", v1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", vLegacy, CreateFoo_v0.class)
+        .withVersion("test:bar/create", vLegacy, CreateBar_v0.class)
+        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", v1, CreateBar_v1.class);
 
     {
       final var p = conmap.relaxed().capture(new CreateFoo_v0());
@@ -105,10 +105,10 @@ public final class ContentMapperTest {
     final var vLegacy = 0;
     final var v1 = 1;
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", vLegacy, CreateFoo_v0.class)
-        .withMapping("test:bar/create", vLegacy, CreateBar_v0.class)
-        .withMapping("test:foo/create", v1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", vLegacy, CreateFoo_v0.class)
+        .withVersion("test:bar/create", vLegacy, CreateBar_v0.class)
+        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", v1, CreateBar_v1.class);
 
     final var mp = conmap.relaxed().capture(new CreateFoo_v0(), new CreateBar_v1());
     assertEquals(2, mp.getVariants().length);
@@ -125,7 +125,7 @@ public final class ContentMapperTest {
   @Test
   public void testRelaxedCaptureSingle_missingMapping() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.relaxed().capture(new CreateFoo_v1());
@@ -137,10 +137,10 @@ public final class ContentMapperTest {
     final var vLegacy = 0;
     final var v1 = 1;
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", vLegacy, CreateFoo_v0.class)
-        .withMapping("test:bar/create", vLegacy, CreateBar_v0.class)
-        .withMapping("test:foo/create", v1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", vLegacy, CreateFoo_v0.class)
+        .withVersion("test:bar/create", vLegacy, CreateBar_v0.class)
+        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", v1, CreateBar_v1.class);
 
     {
       final var p = conmap.compactRelaxed().capture(new CreateFoo_v0());
@@ -165,10 +165,10 @@ public final class ContentMapperTest {
     final var vLegacy = 0;
     final var v1 = 1;
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", vLegacy, CreateFoo_v0.class)
-        .withMapping("test:bar/create", vLegacy, CreateBar_v0.class)
-        .withMapping("test:foo/create", v1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", vLegacy, CreateFoo_v0.class)
+        .withVersion("test:bar/create", vLegacy, CreateBar_v0.class)
+        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", v1, CreateBar_v1.class);
 
     final var p = mustBeSubtype(conmap.compactRelaxed().capture(new Object[] { new CreateFoo_v0() }), UniVariant.class, AssertionError::new);
     assertEquals(new ContentHandle("test:foo/create", 0), p.getHandle());
@@ -179,10 +179,10 @@ public final class ContentMapperTest {
     final var vLegacy = 0;
     final var v1 = 1;
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", vLegacy, CreateFoo_v0.class)
-        .withMapping("test:bar/create", vLegacy, CreateBar_v0.class)
-        .withMapping("test:foo/create", v1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", vLegacy, CreateFoo_v0.class)
+        .withVersion("test:bar/create", vLegacy, CreateBar_v0.class)
+        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", v1, CreateBar_v1.class);
 
     final var mp = mustBeSubtype(conmap.compactRelaxed().capture(new CreateFoo_v0(), new CreateBar_v1()), MultiVariant.class, AssertionError::new);
     assertEquals(2, mp.getVariants().length);
@@ -199,9 +199,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureSingle_normal() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var mp = conmap.strict().capture(new CreateBar_v0());
     assertEquals(1, mp.getVariants().length);
@@ -211,9 +211,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureSingle_missingMapping() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.strict().capture(new CreateBar_v1());
@@ -223,9 +223,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureSingle_insufficientVariants() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.strict().capture(new CreateFoo_v1());
@@ -235,9 +235,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureMultiple_normalWithOne() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var mp = conmap.strict().capture(new Object[] { new CreateBar_v0() });
     assertEquals(1, mp.getVariants().length);
@@ -247,9 +247,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureMultiple_normalWithMany() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var mp = conmap.strict().capture(new Object[] { new CreateFoo_v1(), new CreateFoo_v0() });
     assertEquals(2, mp.getVariants().length);
@@ -260,9 +260,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureMultiple_nonDecreasingVersion() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.strict().capture(new Object[] { new CreateFoo_v0(), new CreateFoo_v1() });
@@ -274,9 +274,9 @@ public final class ContentMapperTest {
   @Test
   public void testStrictCaptureMultiple_mixedContentTypes() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.strict().capture(new Object[] { new CreateFoo_v1(), new CreateBar_v0() });
@@ -288,9 +288,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureSingle_normal() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var p = mustBeSubtype(conmap.compactStrict().capture(new CreateBar_v0()), UniVariant.class, AssertionError::new);
     assertEquals(new ContentHandle("test:bar/create", 0), p.getHandle());
@@ -299,9 +299,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureSingle_missingMapping() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.compactStrict().capture(new CreateBar_v1());
@@ -311,9 +311,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureSingle_insufficientVariants() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.compactStrict().capture(new CreateFoo_v1());
@@ -323,9 +323,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureMultiple_normalWithOne() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var p = mustBeSubtype(conmap.compactStrict().capture(new Object[] { new CreateBar_v0() }), UniVariant.class, AssertionError::new);
     assertEquals(new ContentHandle("test:bar/create", 0), p.getHandle());
@@ -334,9 +334,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureMultiple_normalWithMany() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var mp = mustBeSubtype(conmap.compactStrict().capture(new Object[] { new CreateFoo_v1(), new CreateFoo_v0() }), MultiVariant.class, AssertionError::new);
     assertEquals(2, mp.getVariants().length);
@@ -347,9 +347,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureMultiple_nonDecreasingVersion() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.compactStrict().capture(new Object[] { new CreateFoo_v0(), new CreateFoo_v1() });
@@ -361,9 +361,9 @@ public final class ContentMapperTest {
   @Test
   public void testCompactStrictCaptureMultiple_mixedContentTypes() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
       conmap.compactStrict().capture(new Object[] { new CreateFoo_v1(), new CreateBar_v0() });
@@ -380,10 +380,10 @@ public final class ContentMapperTest {
   public void testMap_uni_matching() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 1, CreateBar_v1.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 1, CreateBar_v1.class);
 
     {
       final var v0 = new CreateFoo_v0();
@@ -411,8 +411,8 @@ public final class ContentMapperTest {
   public void testMap_uni_noMatchingContentType() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class);
 
     final var v0 = new CreateBar_v0();
     final var p = emulatePacked("test:bar/create", 0, v0);
@@ -424,7 +424,7 @@ public final class ContentMapperTest {
   public void testMap_uni_noMatchingLegacyVersion() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class);
 
     final var v1 = new CreateFoo_v1();
     final var p = emulatePacked("test:foo/create", 1, v1);
@@ -436,7 +436,7 @@ public final class ContentMapperTest {
   public void testMap_uni_obsoletedVersion() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class);
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class);
 
     final var v0 = new CreateFoo_v0();
     final var p = emulatePacked("test:foo/create", 0, v0);
@@ -447,7 +447,7 @@ public final class ContentMapperTest {
   @Test
   public void testMap_uni_noUnpacker() {
     final var conmap = new ContentMapper()
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class);
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class);
 
     final var v1 = new CreateFoo_v1();
     final var p = emulatePacked("test:foo/create", 1, v1);
@@ -460,10 +460,10 @@ public final class ContentMapperTest {
   public void testMap_multi_matchingFirst() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class)
-        .withMapping("test:foo/create", 1, CreateFoo_v1.class)
-        .withMapping("test:bar/create", 1, CreateBar_v1.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class)
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 1, CreateBar_v1.class);
 
     final var v1 = new CreateFoo_v1();
     final var v0 = new CreateFoo_v0();
@@ -476,8 +476,8 @@ public final class ContentMapperTest {
   public void testMap_multi_matchingFallback() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
-        .withMapping("test:foo/create", 0, CreateFoo_v0.class)
-        .withMapping("test:bar/create", 0, CreateBar_v0.class);
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class)
+        .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     final var v1 = new CreateFoo_v1();
     final var v0 = new CreateFoo_v0();

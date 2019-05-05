@@ -126,9 +126,9 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_relaxedSingle_match() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
     final var pubV = pubConmap.relaxed().capture(pub);
@@ -136,9 +136,9 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subV);
     assertEquals(pub, sub);
     
@@ -151,9 +151,9 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_relaxedSingle_matchWrappedInPayload() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
     final var pubV = pubConmap.relaxed().capture(pub);
@@ -163,9 +163,9 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subV);
     assertEquals(pub, sub);
   }
@@ -174,9 +174,9 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_relaxedSingle_unsupportedVersion() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v1.instantiate("foo version 1");
     final var pubV = pubConmap.relaxed().capture(pub);
@@ -184,8 +184,8 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subV);
     assertNull(sub);
   }
@@ -194,9 +194,9 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_strictMultiple_firstMatch() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
@@ -205,9 +205,9 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subVs);
     assertEquals(pub1, sub);
     
@@ -220,9 +220,9 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_strictMultiple_fallbackMatch() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
@@ -231,8 +231,8 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subVs);
     assertEquals(pub0, sub);
     
@@ -245,8 +245,8 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_compactStrictSingle_match() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pubVs = pubConmap.compactStrict().capture(pub1);
@@ -254,9 +254,9 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subVs);
     assertEquals(pub1, sub);
     
@@ -269,9 +269,9 @@ public abstract class AbstractUnpackerTest {
   public final void testPubSub_compactStrictMultiple_fallbackMatch() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("foo", 1, SchemaFoo_v1.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("foo", 1, SchemaFoo_v1.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
@@ -281,8 +281,8 @@ public abstract class AbstractUnpackerTest {
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
-        .withMapping("foo", 0, SchemaFoo_v0.class)
-        .withMapping("bar", 0, SchemaBar_v0.class);
+        .withVersion("foo", 0, SchemaFoo_v0.class)
+        .withVersion("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subVs);
     assertEquals(pub0, sub);
     
