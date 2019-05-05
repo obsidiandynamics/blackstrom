@@ -4,8 +4,6 @@ import static com.obsidiandynamics.func.Functions.*;
 
 import java.io.*;
 
-import org.junit.*;
-
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.*;
@@ -61,8 +59,8 @@ public final class JacksonUnpackerTest extends AbstractUnpackerTest {
   
   private ObjectMapper mapper;
   
-  @Before
-  public void before() {
+  @Override
+  protected void init() {
     final var module = new SimpleModule() {
       private static final long serialVersionUID = 1L;
       

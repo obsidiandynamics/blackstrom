@@ -11,7 +11,6 @@ import org.junit.rules.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.module.*;
 import com.obsidiandynamics.blackstrom.codec.JacksonPayloadDeserializer.*;
 import com.obsidiandynamics.zerolog.*;
 
@@ -19,12 +18,7 @@ public final class JacksonPayloadSerializationTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
   
   private static ObjectMapper createObjectMapper() {
-    final var mapper = new ObjectMapper();
-    final var m = new SimpleModule();
-    m.addSerializer(Payload.class, new JacksonPayloadSerializer());
-    m.addDeserializer(Payload.class, new JacksonPayloadDeserializer());
-    mapper.registerModule(m);
-    return mapper;
+    return new ObjectMapper().registerModule(new JacksonPayloadModule());
   }
   
   private static void logEncoded(String encoded) {

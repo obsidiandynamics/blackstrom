@@ -21,12 +21,12 @@ public final class KryoUniVariantSerializer extends Serializer<UniVariant> {
       output.writeVarInt(packed.getBytes().length, true);
       output.writeBytes(packed.getBytes());
     } else {
-      // packing required
+      // content serialization is required
       try (var contentBuffer = new Output(DEF_CONTENT_BUFFER_SIZE, -1)) {
-        kryo.writeObject(output, v.getContent());
-        final int contentBufferSize = contentBuffer.position();
-        output.writeVarInt(contentBufferSize, true);
-        output.writeBytes(contentBuffer.getBuffer(), 0, contentBufferSize);
+        kryo.writeObject(contentBuffer, v.getContent());
+        final var contentLength = contentBuffer.position();
+        output.writeVarInt(contentLength, true);
+        output.writeBytes(contentBuffer.getBuffer(), 0, contentLength);
       }
     }
   }

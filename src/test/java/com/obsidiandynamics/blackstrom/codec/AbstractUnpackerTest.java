@@ -112,8 +112,11 @@ public abstract class AbstractUnpackerTest {
 
   @Before
   public final void beforeBase() {
+    init();
     unpacker = getUnpacker();
   }
+  
+  protected abstract void init();
 
   protected abstract Unpacker<?> getUnpacker();
 
