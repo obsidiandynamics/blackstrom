@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
+import org.assertj.core.api.*;
 import org.junit.*;
 
 public abstract class AbstractUnpackerTest {
@@ -119,7 +120,7 @@ public abstract class AbstractUnpackerTest {
   protected abstract <T> T roundTrip(T obj);
 
   @Test
-  public final void testPubSubSameVersion() {
+  public final void testPubSub_relaxedSingle_match() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
@@ -137,10 +138,14 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     final var sub = subConmap.map(subV);
     assertEquals(pub, sub);
+    
+    final var resubV = roundTrip(subV); // tests serialization of a pre-packed variant
+    final var resub = subConmap.map(resubV);
+    assertEquals(pub, resub);
   }
 
   @Test
-  public final void testPubSubSameVersionWrappedInPayload() {
+  public final void testPubSub_relaxedSingle_matchWrappedInPayload() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
@@ -163,7 +168,7 @@ public abstract class AbstractUnpackerTest {
   }
 
   @Test
-  public final void testPubSubUnsupportedVersion() {
+  public final void testPubSub_relaxedSingle_unsupportedVersion() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
@@ -182,26 +187,8 @@ public abstract class AbstractUnpackerTest {
     assertNull(sub);
   }
   
-  static final class Variants {
-    UniVariant[] items;
-    
-    public Variants() {}
-
-    Variants(UniVariant... items) {
-      this.items = items;
-    }
-
-    public final UniVariant[] getItems() {
-      return items;
-    }
-
-    public final void setItems(UniVariant[] items) {
-      this.items = items;
-    }
-  }
-
   @Test
-  public final void testPubSubMixedVersions() {
+  public final void testPubSub_strictMultiple_firstMatch() {
     final var pubConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
@@ -210,16 +197,94 @@ public abstract class AbstractUnpackerTest {
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubVs = new Variants(pubConmap.relaxed().prepare(pub1), pubConmap.relaxed().prepare(pub0));
+    final var pubVs = pubConmap.strict().prepare(pub1, pub0);
+    final var subVs = roundTrip(pubVs);
+    
+    final var subConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub = subConmap.map(subVs);
+    assertEquals(pub1, sub);
+    
+    final var resubVs = roundTrip(subVs); // tests serialization of a pre-packed variant
+    final var resub = subConmap.map(resubVs);
+    assertEquals(pub1, resub);
+  }
+  
+  @Test
+  public final void testPubSub_strictMultiple_fallbackMatch() {
+    final var pubConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    
+    final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
+    final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
+    final var pubVs = pubConmap.strict().prepare(pub1, pub0);
     final var subVs = roundTrip(pubVs);
     
     final var subConmap = new ContentMapper()
         .withUnpacker(unpacker)
         .withSnapshot("foo", 0, SchemaFoo_v0.class)
         .withSnapshot("bar", 0, SchemaBar_v0.class);
-    final var sub1 = subConmap.map(subVs.items[0]);
-    assertNull(sub1);
-    final var sub0 = subConmap.map(subVs.items[1]);
-    assertEquals(pub0, sub0);
+    final var sub = subConmap.map(subVs);
+    assertEquals(pub0, sub);
+    
+    final var resubVs = roundTrip(subVs); // tests serialization of a pre-packed variant
+    final var resub = subConmap.map(resubVs);
+    assertEquals(pub0, resub);
+  }
+  
+  @Test
+  public final void testPubSub_compactStrictSingle_match() {
+    final var pubConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    
+    final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
+    final var pubVs = pubConmap.compactStrict().prepare(pub1);
+    final var subVs = roundTrip(pubVs);
+    
+    final var subConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub = subConmap.map(subVs);
+    assertEquals(pub1, sub);
+    
+    final var resubVs = roundTrip(subVs); // tests serialization of a pre-packed variant
+    final var resub = subConmap.map(resubVs);
+    assertEquals(pub1, resub);
+  }
+  
+  @Test
+  public final void testPubSub_compactStrictMultiple_fallbackMatch() {
+    final var pubConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("foo", 1, SchemaFoo_v1.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    
+    final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
+    final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
+    final var pubVs = pubConmap.compactStrict().prepare(pub1, pub0);
+    Assertions.assertThatObject(pubVs).isInstanceOf(MultiVariant.class);
+    final var subVs = roundTrip(pubVs);
+    
+    final var subConmap = new ContentMapper()
+        .withUnpacker(unpacker)
+        .withSnapshot("foo", 0, SchemaFoo_v0.class)
+        .withSnapshot("bar", 0, SchemaBar_v0.class);
+    final var sub = subConmap.map(subVs);
+    assertEquals(pub0, sub);
+    
+    final var resubVs = roundTrip(subVs); // tests serialization of a pre-packed variant
+    final var resub = subConmap.map(resubVs);
+    assertEquals(pub0, resub);
   }
 }
