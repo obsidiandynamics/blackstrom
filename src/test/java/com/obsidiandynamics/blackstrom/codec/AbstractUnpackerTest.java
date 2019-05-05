@@ -127,7 +127,7 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubV = pubConmap.uni().prepare(pub);
+    final var pubV = pubConmap.relaxed().prepare(pub);
     final var subV = roundTrip(pubV);
     
     final var subConmap = new ContentMapper()
@@ -148,7 +148,7 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubV = pubConmap.uni().prepare(pub);
+    final var pubV = pubConmap.relaxed().prepare(pub);
     final var pubP = Payload.pack(pubV);
     final var subP = roundTrip(pubP);
     final var subV = Payload.<UniVariant>unpack(subP);
@@ -171,7 +171,7 @@ public abstract class AbstractUnpackerTest {
         .withSnapshot("bar", 0, SchemaBar_v0.class);
     
     final var pub = SchemaFoo_v1.instantiate("foo version 1");
-    final var pubV = pubConmap.uni().prepare(pub);
+    final var pubV = pubConmap.relaxed().prepare(pub);
     final var subV = roundTrip(pubV);
     
     final var subConmap = new ContentMapper()
@@ -210,7 +210,7 @@ public abstract class AbstractUnpackerTest {
     
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
-    final var pubVs = new Variants(pubConmap.uni().prepare(pub1), pubConmap.uni().prepare(pub0));
+    final var pubVs = new Variants(pubConmap.relaxed().prepare(pub1), pubConmap.relaxed().prepare(pub0));
     final var subVs = roundTrip(pubVs);
     
     final var subConmap = new ContentMapper()

@@ -167,26 +167,63 @@ public final class ContentMapper {
   private VersionMapping checkedGetMapping(Class<?> cls) {
     return mustExist(classToVersion, cls, "No mapping for %s", NoSuchMappingException::new);
   }
+  
+  public interface Preparer {
+    Variant prepare(Object content);
+    
+    Variant prepare(Object... contentItems);
+  }
 
-  public final class UniPreparer {
+  public final class StandardRelaxedPreparer implements Preparer {
+    @Override
     public UniVariant prepare(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
       final var handle = mapping.handle;
-      return prepare(content, handle);
+      return new UniVariant(handle, null, content);
     }
 
-    public UniVariant prepare(Object content, ContentHandle handle) {
-      mustExist(content, "Content cannot be null");
-      return new UniVariant(handle, null, content);
+    @Override
+    public MultiVariant prepare(Object... contentItems) {
+      mustExist(contentItems, "Content items cannot be null");
+      mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
+      
+      final var variants = new UniVariant[contentItems.length];
+      for (var i = 0; i < contentItems.length; i++) {
+        variants[i] = prepare(contentItems[i]);
+      }
+      return new MultiVariant(variants);
     }
   }
 
-  private final UniPreparer uniPreparer = new UniPreparer();
+  private final StandardRelaxedPreparer relaxedPreparer = new StandardRelaxedPreparer();
 
-  public UniPreparer uni() { return uniPreparer; }
+  public StandardRelaxedPreparer relaxed() { return relaxedPreparer; }
+  
+  public final class CompactRelaxedPreparer implements Preparer {
+    @Override
+    public UniVariant prepare(Object content) {
+      return relaxedPreparer.prepare(content);
+    }
 
-  public final class StandardOmniPreparer {
+    @Override
+    public Variant prepare(Object... contentItems) {
+      mustExist(contentItems, "Content items cannot be null");
+      mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
+      if (contentItems.length == 1) {
+        return relaxedPreparer.prepare(contentItems[0]);
+      } else {
+        return relaxedPreparer.prepare(contentItems);
+      }
+    }
+  }
+  
+  private final CompactRelaxedPreparer compactRelaxedPreparer = new CompactRelaxedPreparer();
+  
+  public CompactRelaxedPreparer compactRelaxed() { return compactRelaxedPreparer; }
+
+  public final class StandardStrictPreparer implements Preparer {
+    @Override
     public MultiVariant prepare(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
@@ -194,6 +231,7 @@ public final class ContentMapper {
       return new MultiVariant(new UniVariant(mapping.handle, null, content));
     }
 
+    @Override
     public MultiVariant prepare(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
@@ -227,11 +265,12 @@ public final class ContentMapper {
     }
   }
 
-  private final StandardOmniPreparer omniPreparer = new StandardOmniPreparer();
+  private final StandardStrictPreparer strictPreparer = new StandardStrictPreparer();
 
-  public StandardOmniPreparer omni() { return omniPreparer; }
+  public StandardStrictPreparer strict() { return strictPreparer; }
   
-  public final class CompactOmniPreparer {
+  public final class CompactStrictPreparer implements Preparer {
+    @Override
     public UniVariant prepare(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
@@ -239,6 +278,7 @@ public final class ContentMapper {
       return new UniVariant(mapping.handle, null, content);
     }
 
+    @Override
     public Variant prepare(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
@@ -246,14 +286,14 @@ public final class ContentMapper {
       if (contentItems.length == 1) {
         return prepare(contentItems[0]);
       } else {
-        return omniPreparer.prepare(contentItems);
+        return strictPreparer.prepare(contentItems);
       }
     }
   }
 
-  private final CompactOmniPreparer compactOmniPreparer = new CompactOmniPreparer();
+  private final CompactStrictPreparer compactStrictPreparer = new CompactStrictPreparer();
 
-  public CompactOmniPreparer compactOmni() { return compactOmniPreparer; }
+  public CompactStrictPreparer compactStrict() { return compactStrictPreparer; }
 
   public Object map(UniVariant variant) {
     mustExist(variant, "Variant cannot be null");
@@ -264,6 +304,25 @@ public final class ContentMapper {
       return unpacker.unpack(Classes.cast(packed), mapping.contentClass);
     } else {
       return null;
+    }
+  }
+  
+  public Object map(MultiVariant variant) {
+    mustExist(variant, "Variant cannot be null");
+    for (var nested : variant.getVariants()) {
+      final var mapped = map(nested);
+      if (mapped != null) {
+        return mapped;
+      }
+    }
+    return null;
+  }
+  
+  public Object map(Variant variant) {
+    if (variant instanceof UniVariant) {
+      return map((UniVariant) variant);
+    } else {
+      return map((MultiVariant) variant);
     }
   }
 
