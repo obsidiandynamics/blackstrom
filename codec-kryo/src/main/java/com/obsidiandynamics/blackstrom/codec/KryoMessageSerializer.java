@@ -134,11 +134,12 @@ final class KryoMessageSerializer extends Serializer<Message> {
       out.writeVarInt(payloadBytes.length, true);
       out.writeBytes(payloadBytes);
     } else {
-      final Output buffer = new Output(DEF_PAYLOAD_BUFFER_SIZE, -1);
-      kryo.writeClassAndObject(buffer, payload);
-      final int bufferSize = buffer.position();
-      out.writeVarInt(bufferSize, true);
-      out.writeBytes(buffer.getBuffer(), 0, bufferSize);
+      try (var buffer = new Output(DEF_PAYLOAD_BUFFER_SIZE, -1)) {
+        kryo.writeClassAndObject(buffer, payload);
+        final int bufferSize = buffer.position();
+        out.writeVarInt(bufferSize, true);
+        out.writeBytes(buffer.getBuffer(), 0, bufferSize);
+      }
     }
   }
 
