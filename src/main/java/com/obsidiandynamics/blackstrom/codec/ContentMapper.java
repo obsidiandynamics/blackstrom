@@ -14,7 +14,7 @@ import com.obsidiandynamics.func.*;
  *  and version-to-class mappings. All operations on {@link Variant}s must be performed 
  *  via a suitably configured {@link ContentMapper}. <p>
  *  
- *  When a {@link Variant} is <em>prepared</em>, a content type and version pair
+ *  When a {@link Variant} is <em>captured</em>, a content type and version pair
  *  (captured in a {@link ContentHandle}) is resolved for the given content object 
  *  by consulting the mappings stored herein. These are then written out as part of 
  *  the object's wire representation during the subsequent serialization process. <p>
@@ -150,7 +150,7 @@ public final class ContentMapper {
     return this;
   }
 
-  public ContentMapper withSnapshot(String contentType, int contentVersion, Class<?> contentClass) {
+  public ContentMapper withMapping(String contentType, int contentVersion, Class<?> contentClass) {
     ContentHandle.validateContentType(contentType);
     ContentHandle.validateContentVersion(contentVersion);
     mustExist(contentClass, "Content class cannot be null");
@@ -168,15 +168,15 @@ public final class ContentMapper {
     return mustExist(classToVersion, cls, "No mapping for %s", NoSuchMappingException::new);
   }
   
-  public interface Preparer {
-    Variant prepare(Object content);
+  public interface Captor {
+    Variant capture(Object content);
     
-    Variant prepare(Object... contentItems);
+    Variant capture(Object... contentItems);
   }
 
-  public final class StandardRelaxedPreparer implements Preparer {
+  public final class StandardRelaxedCaptor implements Captor {
     @Override
-    public UniVariant prepare(Object content) {
+    public UniVariant capture(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
       final var handle = mapping.handle;
@@ -184,47 +184,47 @@ public final class ContentMapper {
     }
 
     @Override
-    public MultiVariant prepare(Object... contentItems) {
+    public MultiVariant capture(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
       
       final var variants = new UniVariant[contentItems.length];
       for (var i = 0; i < contentItems.length; i++) {
-        variants[i] = prepare(contentItems[i]);
+        variants[i] = capture(contentItems[i]);
       }
       return new MultiVariant(variants);
     }
   }
 
-  private final StandardRelaxedPreparer relaxedPreparer = new StandardRelaxedPreparer();
+  private final StandardRelaxedCaptor relaxedCaptor = new StandardRelaxedCaptor();
 
-  public StandardRelaxedPreparer relaxed() { return relaxedPreparer; }
+  public StandardRelaxedCaptor relaxed() { return relaxedCaptor; }
   
-  public final class CompactRelaxedPreparer implements Preparer {
+  public final class CompactRelaxedCaptor implements Captor {
     @Override
-    public UniVariant prepare(Object content) {
-      return relaxedPreparer.prepare(content);
+    public UniVariant capture(Object content) {
+      return relaxedCaptor.capture(content);
     }
 
     @Override
-    public Variant prepare(Object... contentItems) {
+    public Variant capture(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
       if (contentItems.length == 1) {
-        return relaxedPreparer.prepare(contentItems[0]);
+        return relaxedCaptor.capture(contentItems[0]);
       } else {
-        return relaxedPreparer.prepare(contentItems);
+        return relaxedCaptor.capture(contentItems);
       }
     }
   }
   
-  private final CompactRelaxedPreparer compactRelaxedPreparer = new CompactRelaxedPreparer();
+  private final CompactRelaxedCaptor compactRelaxedCaptor = new CompactRelaxedCaptor();
   
-  public CompactRelaxedPreparer compactRelaxed() { return compactRelaxedPreparer; }
+  public CompactRelaxedCaptor compactRelaxed() { return compactRelaxedCaptor; }
 
-  public final class StandardStrictPreparer implements Preparer {
+  public final class StandardStrictCaptor implements Captor {
     @Override
-    public MultiVariant prepare(Object content) {
+    public MultiVariant capture(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
       mapping.mappings.ensureSufficientMappings(1);
@@ -232,7 +232,7 @@ public final class ContentMapper {
     }
 
     @Override
-    public MultiVariant prepare(Object... contentItems) {
+    public MultiVariant capture(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
 
@@ -265,13 +265,13 @@ public final class ContentMapper {
     }
   }
 
-  private final StandardStrictPreparer strictPreparer = new StandardStrictPreparer();
+  private final StandardStrictCaptor strictCaptor = new StandardStrictCaptor();
 
-  public StandardStrictPreparer strict() { return strictPreparer; }
+  public StandardStrictCaptor strict() { return strictCaptor; }
   
-  public final class CompactStrictPreparer implements Preparer {
+  public final class CompactStrictCaptor implements Captor {
     @Override
-    public UniVariant prepare(Object content) {
+    public UniVariant capture(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
       mapping.mappings.ensureSufficientMappings(1);
@@ -279,21 +279,21 @@ public final class ContentMapper {
     }
 
     @Override
-    public Variant prepare(Object... contentItems) {
+    public Variant capture(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
 
       if (contentItems.length == 1) {
-        return prepare(contentItems[0]);
+        return capture(contentItems[0]);
       } else {
-        return strictPreparer.prepare(contentItems);
+        return strictCaptor.capture(contentItems);
       }
     }
   }
 
-  private final CompactStrictPreparer compactStrictPreparer = new CompactStrictPreparer();
+  private final CompactStrictCaptor compactStrictCaptor = new CompactStrictCaptor();
 
-  public CompactStrictPreparer compactStrict() { return compactStrictPreparer; }
+  public CompactStrictCaptor compactStrict() { return compactStrictCaptor; }
 
   public Object map(UniVariant variant) {
     mustExist(variant, "Variant cannot be null");
