@@ -110,11 +110,11 @@ final class KryoMessageSerializer extends Serializer<Message> {
   
   private static void serializeOutcome(Kryo kryo, Output out, Outcome m) {
     out.writeByte(m.getResolution().ordinal());
-    final AbortReason abortReason = m.getAbortReason();
+    final var abortReason = m.getAbortReason();
     out.writeByte(abortReason != null ? abortReason.ordinal() : -1);
-    final Response[] responses = m.getResponses();
+    final var responses = m.getResponses();
     out.writeVarInt(responses.length, true);
-    for (Response response : responses) {
+    for (var response : responses) {
       serializeResponse(kryo, out, response);
     }
     serializePayload(kryo, out, m.getMetadata());
@@ -130,13 +130,13 @@ final class KryoMessageSerializer extends Serializer<Message> {
     if (payload == null) {
       out.writeVarInt(0, true);
     } else if (payload instanceof PayloadBuffer) {
-      final byte[] payloadBytes = ((PayloadBuffer) payload).getBytes();
+      final var payloadBytes = ((PayloadBuffer) payload).getBytes();
       out.writeVarInt(payloadBytes.length, true);
       out.writeBytes(payloadBytes);
     } else {
       try (var buffer = new Output(DEF_PAYLOAD_BUFFER_SIZE, -1)) {
         kryo.writeClassAndObject(buffer, payload);
-        final int bufferSize = buffer.position();
+        final var bufferSize = buffer.position();
         out.writeVarInt(bufferSize, true);
         out.writeBytes(buffer.getBuffer(), 0, bufferSize);
       }
@@ -145,11 +145,11 @@ final class KryoMessageSerializer extends Serializer<Message> {
 
   @Override
   public Message read(Kryo kryo, Input in, Class<? extends Message> type) {
-    final byte messageTypeOrdinal = in.readByte();
-    final MessageType messageType = MessageType.values()[messageTypeOrdinal];
-    final String xid = in.readString();
-    final long timestamp = in.readLong();
-    final String source = in.readString();
+    final var messageTypeOrdinal = in.readByte();
+    final var messageType = MessageType.values()[messageTypeOrdinal];
+    final var xid = in.readString();
+    final var timestamp = in.readLong();
+    final var source = in.readString();
     final Message message;
     
     switch (messageType) {
@@ -187,7 +187,7 @@ final class KryoMessageSerializer extends Serializer<Message> {
         
       case $UNKNOWN:
       default:
-        final Throwable cause = new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
+        final var cause = new UnsupportedOperationException("Cannot deserialize message of type " + messageType);
         throw new MessageDeserializationException(cause);
     }
     
@@ -196,70 +196,70 @@ final class KryoMessageSerializer extends Serializer<Message> {
   }
   
   private Query deserializeQuery(Kryo kryo, Input in, String xid, long timestamp) {
-    final int ttl = in.readVarInt(true);
-    final Object objective = deserializePayload(kryo, in);
+    final var ttl = in.readVarInt(true);
+    final var objective = deserializePayload(kryo, in);
     return new Query(xid, timestamp, objective, ttl);
   }
   
   private QueryResponse deserializeQueryResponse(Kryo kryo, Input in, String xid, long timestamp) {
-    final Object result = deserializePayload(kryo, in);
+    final var result = deserializePayload(kryo, in);
     return new QueryResponse(xid, timestamp, result);
   }
   
   private Command deserializeCommand(Kryo kryo, Input in, String xid, long timestamp) {
-    final int ttl = in.readVarInt(true);
-    final Object objective = deserializePayload(kryo, in);
+    final var ttl = in.readVarInt(true);
+    final var objective = deserializePayload(kryo, in);
     return new Command(xid, timestamp, objective, ttl);
   }
   
   private CommandResponse deserializeCommandResponse(Kryo kryo, Input in, String xid, long timestamp) {
-    final Object result = deserializePayload(kryo, in);
+    final var result = deserializePayload(kryo, in);
     return new CommandResponse(xid, timestamp, result);
   }
   
   private Notice deserializeNotice(Kryo kryo, Input in, String xid, long timestamp) {
-    final Object event = deserializePayload(kryo, in);
+    final var event = deserializePayload(kryo, in);
     return new Notice(xid, timestamp, event);
   }
   
   private Proposal deserializeProposal(Kryo kryo, Input in, String xid, long timestamp) {
-    final String[] cohorts = KryoUtils.readStringArray(in);
-    final int ttl = in.readVarInt(true);
-    final Object objective = deserializePayload(kryo, in);
+    final var cohorts = KryoUtils.readStringArray(in);
+    final var ttl = in.readVarInt(true);
+    final var objective = deserializePayload(kryo, in);
     return new Proposal(xid, timestamp, cohorts, objective, ttl);
   }
   
   private Vote deserializeVote(Kryo kryo, Input in, String xid, long timestamp) {
-    final Response response = deserializeResponse(kryo, in);
+    final var response = deserializeResponse(kryo, in);
     return new Vote(xid, timestamp, response);
   }
   
   private Outcome deserializeOutcome(Kryo kryo, Input in, String xid, long timestamp) {
-    final byte resolutionOrdinal = in.readByte();
-    final Resolution resolution = Resolution.values()[resolutionOrdinal];
-    final byte abortReasonOrdinal = in.readByte();
-    final AbortReason abortReason = abortReasonOrdinal != -1 ? AbortReason.values()[abortReasonOrdinal] : null;
-    final int responsesLength = in.readVarInt(true);
-    final Response[] responses = new Response[responsesLength];
-    for (int i = 0; i < responsesLength; i++) {
+    final var resolutionOrdinal = in.readByte();
+    final var resolution = Resolution.values()[resolutionOrdinal];
+    final var abortReasonOrdinal = in.readByte();
+    final var abortReason = abortReasonOrdinal != -1 ? AbortReason.values()[abortReasonOrdinal] : null;
+    final var responsesLength = in.readVarInt(true);
+    final var responses = new Response[responsesLength];
+    for (var i = 0; i < responsesLength; i++) {
       responses[i] = deserializeResponse(kryo, in);
     }
-    final Object metadata = deserializePayload(kryo, in);
+    final var metadata = deserializePayload(kryo, in);
     return new Outcome(xid, timestamp, resolution, abortReason, responses, metadata);
   }
   
   private Response deserializeResponse(Kryo kryo, Input in) {
-    final String cohort = in.readString();
-    final byte intentOrdinal = in.readByte();
-    final Intent intent = Intent.values()[intentOrdinal];
-    final Object metadata = deserializePayload(kryo, in);
+    final var cohort = in.readString();
+    final var intentOrdinal = in.readByte();
+    final var intent = Intent.values()[intentOrdinal];
+    final var metadata = deserializePayload(kryo, in);
     return new Response(cohort, intent, metadata);
   }
   
   private Object deserializePayload(Kryo kryo, Input in) {
-    final int bufferSize = in.readVarInt(true);
+    final var bufferSize = in.readVarInt(true);
     if (bufferSize != 0) {
-      final byte[] buffer = new byte[bufferSize];
+      final var buffer = new byte[bufferSize];
       in.readBytes(buffer);
       if (mapPayload) {
         return kryo.readClassAndObject(new Input(buffer));

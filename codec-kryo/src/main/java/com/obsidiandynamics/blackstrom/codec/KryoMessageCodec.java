@@ -32,6 +32,8 @@ public class KryoMessageCodec implements MessageCodec {
         final var kryo = new Kryo();
         kryo.setReferences(false);
         kryo.setRegistrationRequired(false);
+        kryo.addDefaultSerializer(UniVariant.class, new KryoUniVariantSerializer());
+        kryo.addDefaultSerializer(MultiVariant.class, new KryoMultiVariantSerializer());
         for (var expansion : DEF_EXPANSIONS) expansion.accept(kryo);
         for (var expansion : expansions) expansion.accept(kryo);
         return kryo;
