@@ -36,16 +36,16 @@ public final class ContentMapperTest {
         "test:bar/create=[1 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateBar_v1]}", 
         conmap.printSnapshots());
   }
-  
+
   @Test
   public void testToString() {
     final var conmap = new ContentMapper()
         .withUnpacker(new IdentityUnpacker())
         .withVersion("test:foo/create", 0, CreateFoo_v0.class);
-    
+
     new ToStringAssertions(conmap)
     .contains("typeToVersions", "{test:foo/create=[0 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateFoo_v0]}");
-    
+
     new ToStringAssertions(conmap)
     .contains("unpackers", "{class com.obsidiandynamics.blackstrom.codec.IdentityPackedForm=IdentityUnpacker}");
   }
@@ -405,19 +405,16 @@ public final class ContentMapperTest {
       assertTrue(p.getPacked() instanceof IdentityPackedForm);
       assertNull(p.getContent());
       assertSame(v0, conmap.map(p));
-      assertSame(v0, conmap.map((Variant) p));
     }
     {
       final var v1 = new CreateFoo_v1();
       final var p = emulatePacked("test:foo/create", 1, v1);
       assertSame(v1, conmap.map(p));
-      assertSame(v1, conmap.map((Variant) p));
     }
     {
       final var v0 = new CreateBar_v0();
       final var p = emulatePacked("test:bar/create", 0, v0);
       assertSame(v0, conmap.map(p));
-      assertSame(v0, conmap.map((Variant) p));
     }
   }
 
@@ -431,7 +428,6 @@ public final class ContentMapperTest {
     final var v0 = new CreateBar_v0();
     final var p = emulatePacked("test:bar/create", 0, v0);
     assertNull(conmap.map(p));
-    assertNull(conmap.map((Variant) p));
   }
 
   @Test
@@ -443,7 +439,6 @@ public final class ContentMapperTest {
     final var v1 = new CreateFoo_v1();
     final var p = emulatePacked("test:foo/create", 1, v1);
     assertNull(conmap.map(p));
-    assertNull(conmap.map((Variant) p));
   }
 
   @Test
@@ -455,7 +450,6 @@ public final class ContentMapperTest {
     final var v0 = new CreateFoo_v0();
     final var p = emulatePacked("test:foo/create", 0, v0);
     assertNull(conmap.map(p));
-    assertNull(conmap.map((Variant) p));
   }
 
   @Test
@@ -483,7 +477,6 @@ public final class ContentMapperTest {
     final var v0 = new CreateFoo_v0();
     final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
     assertSame(v1, conmap.map(mp));
-    assertSame(v1, conmap.map((Variant) mp));
   }
 
   @Test
@@ -497,18 +490,16 @@ public final class ContentMapperTest {
     final var v0 = new CreateFoo_v0();
     final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
     assertSame(v0, conmap.map(mp));
-    assertSame(v0, conmap.map((Variant) mp));
   }
 
   @Test
   public void testMap_multi_obsoleted() {
     final var conmap = new ContentMapper()
-        .withUnpacker(new IdentityUnpacker());;
+        .withUnpacker(new IdentityUnpacker());
 
-        final var v1 = new CreateFoo_v1();
-        final var v0 = new CreateFoo_v0();
-        final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
-        assertNull(conmap.map(mp));
-        assertNull(conmap.map((Variant) mp));
+    final var v1 = new CreateFoo_v1();
+    final var v0 = new CreateFoo_v0();
+    final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
+    assertNull(conmap.map(mp));
   }
 }

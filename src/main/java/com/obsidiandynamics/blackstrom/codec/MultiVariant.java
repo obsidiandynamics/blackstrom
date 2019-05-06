@@ -4,6 +4,13 @@ import static com.obsidiandynamics.func.Functions.*;
 
 import java.util.*;
 
+/**
+ *  A container for multiple {@link UniVariant}s, by convention arranged in the descending
+ *  order of the content version. When mapping to the Java class, the variants are enumerated
+ *  in a fallback manner, trying the first variant then advancing to the next, until either
+ *  all variants are exhausted (yielding a {@code null}) or a supported content type and
+ *  version is located (yielding the reconstituted object). 
+ */
 public final class MultiVariant implements Variant {
   private final UniVariant[] variants;
 
@@ -15,7 +22,19 @@ public final class MultiVariant implements Variant {
   public final UniVariant[] getVariants() {
     return variants;
   }
-
+  
+  @Override
+  public Object map(ContentMapper mapper) {
+    mustExist(mapper, "Content mapper cannot be null");
+    for (var nested : variants) {
+      final var mapped = nested.map(mapper);
+      if (mapped != null) {
+        return mapped;
+      }
+    }
+    return null;
+  }
+  
   @Override
   public int hashCode() {
     return Arrays.hashCode(variants);

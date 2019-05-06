@@ -27,9 +27,10 @@ import com.obsidiandynamics.func.*;
  *  the case of a {@link MultiVariant}, multiple {@link PackedForm}s may be 
  *  encapsulated. <p>
  *  
- *  When a {@link Variant} is <em>mapped</em> to a Java class following deserialization, 
- *  the {@link ContentMapper} first resolves a corresponding mapping for the
- *  stored content type and version pair, which yields the concrete class type (if a 
+ *  When a {@link Variant} is <em>mapped</em> to a Java class following deserialization
+ *  by calling {@link Variant#map(ContentMapper)}, the {@link ContentMapper} is first
+ *  consulted to resolve a corresponding mapping for the stored content type and 
+ *  version pair, which yields the concrete class type (if a 
  *  configured mapping exists). This class type together with the {@link PackedForm} is 
  *  then handed to an appropriate {@link Unpacker}, which completes the deserialization 
  *  process and maps the packed content to its terminal Java class form. If no mapping is 
@@ -157,7 +158,7 @@ public final class ContentMapper {
   /**
    *  Maps a content type and version to a concrete class type.
    */
-  private static final class VersionMapping {
+  static final class VersionMapping {
     final VersionMappings mappings;
 
     final ContentHandle handle;
@@ -339,38 +340,15 @@ public final class ContentMapper {
 
   public CompactStrictCaptor compactStrict() { return compactStrictCaptor; }
 
-  public Object map(UniVariant variant) {
-    mustExist(variant, "Variant cannot be null");
-    final var packed = variant.getPacked();
-    final var unpacker = checkedGetUnpacker(packed.getClass());
-    final var mapping = mappingForHandle(variant.getHandle());
-    if (mapping != null) {
-      return unpacker.unpack(Classes.cast(packed), mapping.contentClass);
-    } else {
-      return null;
-    }
-  }
-  
-  public Object map(MultiVariant variant) {
-    mustExist(variant, "Variant cannot be null");
-    for (var nested : variant.getVariants()) {
-      final var mapped = map(nested);
-      if (mapped != null) {
-        return mapped;
-      }
-    }
-    return null;
-  }
-  
   public Object map(Variant variant) {
-    if (variant instanceof UniVariant) {
-      return map((UniVariant) variant);
-    } else {
-      return map((MultiVariant) variant);
-    }
+    return mustExist(variant, "Variant cannot be null").map(this);
   }
 
-  private VersionMapping mappingForHandle(ContentHandle handle) {
+  Unpacker<?> checkedGetUnpacker(Class<? extends PackedForm> packedFormClass) {
+    return mustExist(unpackers, packedFormClass, "No unpacker for %s", IllegalStateException::new);
+  }
+  
+  VersionMapping mappingForHandle(ContentHandle handle) {
     final var mappings = typeToVersions.get(handle.getType());
     if (mappings != null) {
       final var desiredVersion = handle.getVersion();
@@ -388,10 +366,6 @@ public final class ContentMapper {
     } else {
       return null;
     }
-  }
-
-  private Unpacker<?> checkedGetUnpacker(Class<? extends PackedForm> packedFormClass) {
-    return mustExist(unpackers, packedFormClass, "No unpacker for %s", IllegalStateException::new);
   }
 
   private VersionMappings getOrCreateVersionMappings(String contentType) {

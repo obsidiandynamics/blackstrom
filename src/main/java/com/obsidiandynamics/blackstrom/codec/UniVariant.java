@@ -6,6 +6,12 @@ import java.util.*;
 
 import com.obsidiandynamics.func.*;
 
+/**
+ *  An implementation of {@link Variant} that captures just one version of
+ *  a content object. The mapping process will either succeed — if the 
+ *  {@link ContentMapper} supports the captured version, or will fail with a
+ *  {@code null} if the captured version is not supported.
+ */
 public final class UniVariant implements Variant {
   private final ContentHandle handle;
   private final PackedForm packed;
@@ -31,6 +37,18 @@ public final class UniVariant implements Variant {
 
   public <T> T getContent() {
     return Classes.cast(content);
+  }
+  
+  @Override
+  public Object map(ContentMapper mapper) {
+    mustExist(mapper, "Content mapper cannot be null");
+    final var unpacker = mapper.checkedGetUnpacker(packed.getClass());
+    final var mapping = mapper.mappingForHandle(handle);
+    if (mapping != null) {
+      return unpacker.unpack(Classes.cast(packed), mapping.contentClass);
+    } else {
+      return null;
+    }
   }
   
   @Override
