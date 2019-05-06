@@ -8,6 +8,8 @@ import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.codec.ContentMapper.*;
 
+import pl.pojo.tester.internal.assertion.tostring.*;
+
 public final class ContentMapperTest {
   private static final class CreateFoo_v0 {}
 
@@ -25,15 +27,27 @@ public final class ContentMapperTest {
 
   @Test
   public void testPrintSnapshots_nonEmpty() {
-    final var v1 = 1;
     final var conmap = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
-        .withVersion("test:foo/create", v1, CreateFoo_v1.class)
-        .withVersion("test:bar/create", v1, CreateBar_v1.class);
+        .withVersion("test:foo/create", 1, CreateFoo_v1.class)
+        .withVersion("test:bar/create", 1, CreateBar_v1.class);
     assertEquals("{test:foo/create=[0 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateFoo_v0, "+
         "1 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateFoo_v1], " + 
         "test:bar/create=[1 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateBar_v1]}", 
         conmap.printSnapshots());
+  }
+  
+  @Test
+  public void testToString() {
+    final var conmap = new ContentMapper()
+        .withUnpacker(new IdentityUnpacker())
+        .withVersion("test:foo/create", 0, CreateFoo_v0.class);
+    
+    new ToStringAssertions(conmap)
+    .contains("typeToVersions", "{test:foo/create=[0 -> com.obsidiandynamics.blackstrom.codec.ContentMapperTest$CreateFoo_v0]}");
+    
+    new ToStringAssertions(conmap)
+    .contains("unpackers", "{class com.obsidiandynamics.blackstrom.codec.IdentityPackedForm=IdentityUnpacker}");
   }
 
   @Test

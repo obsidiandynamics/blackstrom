@@ -49,7 +49,16 @@ import com.obsidiandynamics.func.*;
  *  be registered directly with the {@link ContentMapper} for every supported codec, as 
  *  unpacking may require capabilities beyond those natively supported by codec library. 
  *  For example, deserialization may acquire and release pooled resources, making two-pass 
- *  deserialization impossible without the special handling provided by an {@link Unpacker}. 
+ *  deserialization impossible without the special handling provided by an 
+ *  {@link Unpacker}. <p>
+ *  
+ *  Once configured with unpackers and version mappings, this class is <em>thread-safe</em>.
+ *  
+ *  @see Variant
+ *  @see UniVariant
+ *  @see MultiVariant
+ *  @see PackedForm
+ *  @see Unpacker
  */
 public final class ContentMapper {
   private final Map<Class<? extends PackedForm>, Unpacker<?>> unpackers = new HashMap<>();
@@ -58,36 +67,63 @@ public final class ContentMapper {
 
   private final Map<Class<?>, VersionMapping> classToVersion = new HashMap<>();
 
+  /**
+   *  Thrown when registering version mappings in non-increasing order. I.e. it is required
+   *  that the successor version mapping must be registered after its predecessor, not before it.
+   */
   public static final class IllegalMappingException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
 
     IllegalMappingException(String m) { super(m); }
   }
 
+  /**
+   *  Thrown when a precise version mapping could not be resolved for a captured content
+   *  object. There must be a one-to-one relationship between captured classes and
+   *  version mappings.
+   */
   public static final class NoSuchMappingException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
 
     NoSuchMappingException(String m) { super(m); }
   }
 
+  /**
+   *  Thrown if an insufficient number of variants were supplied to a <em>strict</em> captor. In other words,
+   *  not all supported versions were accounted for by the invoking application. W
+   */
   public static final class InsufficientVariantsException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
 
     InsufficientVariantsException(String m) { super(m); }
   }
 
+  /**
+   *  Thrown if the variants supplied to a <em>strict</em> captor featured mixed content types.
+   *  If the use of heterogenous content types is required (for example, when the content
+   *  type must be altered as part of a version upgrade), use a <em>relaxed</em> captor
+   *  instead.
+   */
   public static final class MixedContentTypesException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
 
     MixedContentTypesException(String m) { super(m); }
   }
 
+  /**
+   *  Thrown by a <em>strict</em> captor when the supplied variants are in non-decreasing order
+   *  of version number. It is a requirement of a strict captor that the latest version of the
+   *  content object is provided first, then the next fallback version, and so on.
+   */
   public static final class NonDecreasingContentVersionsException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
 
     NonDecreasingContentVersionsException(String m) { super(m); }
   }
 
+  /**
+   *  Holds all {@link VersionMapping}s for a given content type.
+   */
   private static final class VersionMappings {
     private final List<VersionMapping> list = new ArrayList<>();
 
@@ -112,12 +148,15 @@ public final class ContentMapper {
     }
 
     void ensureSufficientMappings(int supplied) {
-      mustBeEqual(supplied, list.size(), 
-                  withMessage(() -> "Insufficient variants supplied; expected: " + list.size() + ", got: " + supplied, 
-                              InsufficientVariantsException::new));
+      mustBeGreaterOrEqual(supplied, list.size(), 
+                           withMessage(() -> "Insufficient variants supplied; expected: " + list.size() + ", got: " + supplied, 
+                                       InsufficientVariantsException::new));
     }
   }
 
+  /**
+   *  Maps a content type and version to a concrete class type.
+   */
   private static final class VersionMapping {
     final VersionMappings mappings;
 
@@ -137,6 +176,11 @@ public final class ContentMapper {
     }
   }
 
+  /**
+   *  Provides a string dump of all registered version mappings.
+   *  
+   *  @return A dump of registered mappings as a {@link String}.
+   */
   public String printSnapshots() {
     return typeToVersions.toString();
   }
@@ -352,5 +396,10 @@ public final class ContentMapper {
 
   private VersionMappings getOrCreateVersionMappings(String contentType) {
     return typeToVersions.computeIfAbsent(contentType, __ -> new VersionMappings());
+  }
+  
+  @Override
+  public String toString() {
+    return ContentMapper.class.getSimpleName() + " [typeToVersions=" + typeToVersions + ", unpackers=" + unpackers + "]";
   }
 }

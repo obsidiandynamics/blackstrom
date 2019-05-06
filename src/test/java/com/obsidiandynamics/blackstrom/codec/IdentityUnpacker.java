@@ -10,4 +10,9 @@ final class IdentityUnpacker implements Unpacker<IdentityPackedForm> {
   public Object unpack(IdentityPackedForm packed, Class<?> contentClass) {
     return packed.content;
   }
+
+  @Override
+  public String toString() {
+    return IdentityUnpacker.class.getSimpleName();
+  }
 }
