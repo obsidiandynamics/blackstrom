@@ -8,18 +8,19 @@ import com.obsidiandynamics.func.*;
 
 /**
  *  Provides functionality for encapsulating arbitrary object content into {@link Variant}
- *  containers, and mapping from a {@link Variant} back to the original object content. <p>
+ *  containers, and assisting in the mapping from a {@link Variant} back to the original 
+ *  object content. <p>
  *  
  *  A {@link ContentMapper} serves as a registry of {@link Unpacker} implementations 
  *  and version-to-class mappings. All operations on {@link Variant}s must be performed 
- *  via a suitably configured {@link ContentMapper}. <p>
+ *  in the context of a suitably configured {@link ContentMapper}. <p>
  *  
  *  When a {@link Variant} is <em>captured</em>, a content type and version pair
  *  (captured in a {@link ContentHandle}) is resolved for the given content object 
  *  by consulting the mappings stored herein. These are then written out as part of 
  *  the object's wire representation during the subsequent serialization process. <p>
  *  
- *  Upon deserialization, the wire form is parsed to a limited extent — capturing
+ *  Upon deserialization, the wire form is parsed to a limited extent — noting
  *  the inline content type and version headers, but keeping the content-specific payload
  *  elements in an intermediate {@link PackedForm} (which varies depending on the codec), 
  *  without attempting to map the serialized content back to its native Java class.
@@ -28,14 +29,15 @@ import com.obsidiandynamics.func.*;
  *  encapsulated. <p>
  *  
  *  When a {@link Variant} is <em>mapped</em> to a Java class following deserialization
- *  by calling {@link Variant#map(ContentMapper)}, the {@link ContentMapper} is first
+ *  (by invoking {@link Variant#map(ContentMapper)}), the {@link ContentMapper} is first
  *  consulted to resolve a corresponding mapping for the stored content type and 
  *  version pair, which yields the concrete class type (if a 
  *  configured mapping exists). This class type together with the {@link PackedForm} is 
  *  then handed to an appropriate {@link Unpacker}, which completes the deserialization 
- *  process and maps the packed content to its terminal Java class form. If no mapping is 
- *  configured for the packed content type and version, it is assumed that the content is 
- *  unsupported, and a {@code null} is returned. <p>
+ *  process and maps the packed content to its terminal Java class form, reconstructing
+ *  the original object graph. If no mapping is configured for the packed content type 
+ *  and version, it is assumed that the content is unsupported, and a {@code null} is 
+ *  silently returned. <p>
  *  
  *  A {@link Variant} may be of the type {@link MultiVariant}, which houses multiple
  *  {@link UniVariant}s. This allows the mapping process to enumerate over the variants

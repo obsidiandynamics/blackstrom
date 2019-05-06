@@ -10,7 +10,9 @@ package com.obsidiandynamics.blackstrom.codec;
  *  The mapping will only proceed if the {@link ContentMapper} is configured with 
  *  version mappings corresponding to at least one of the content version(s) captured 
  *  within the {@link Variant} container, otherwise the mapping process will silently
- *  return a {@code null}.
+ *  return a {@code null}. <p>
+ *  
+ *  All {@link Variant} implementations are immutable and thread-safe.
  *  
  *  @see ContentMapper
  *  @see UniVariant
