@@ -40,12 +40,12 @@ public final class UniVariant implements Variant {
   }
   
   @Override
-  public Object map(ContentMapper mapper) {
+  public <C> C map(ContentMapper mapper) {
     mustExist(mapper, "Content mapper cannot be null");
     final var unpacker = mapper.checkedGetUnpacker(packed.getClass());
     final var mapping = mapper.mappingForHandle(handle);
     if (mapping != null) {
-      return unpacker.unpack(Classes.cast(packed), mapping.contentClass);
+      return Classes.cast(unpacker.unpack(Classes.cast(packed), mapping.contentClass));
     } else {
       return null;
     }

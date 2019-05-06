@@ -25,9 +25,10 @@ public interface Variant {
    *  {@link ContentMapper}. If the content could not be mapped to the Java type (because
    *  no suitable mapping could be located), a {@code null} is returned.
    *  
+   *  @param <C> Mapped content type.
    *  @param mapper The mapper to aid in resolving the concrete Java type.
    *  @return The reconstructed object, or {@code null} if the captured content version 
    *          is not supported by the {@code mapper}.
    */
-  Object map(ContentMapper mapper);
+  <C> C map(ContentMapper mapper);
 }

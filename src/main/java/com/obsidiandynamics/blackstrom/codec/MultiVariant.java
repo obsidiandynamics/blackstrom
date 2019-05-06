@@ -24,10 +24,10 @@ public final class MultiVariant implements Variant {
   }
   
   @Override
-  public Object map(ContentMapper mapper) {
+  public <C> C map(ContentMapper mapper) {
     mustExist(mapper, "Content mapper cannot be null");
     for (var nested : variants) {
-      final var mapped = nested.map(mapper);
+      final var mapped = nested.<C>map(mapper);
       if (mapped != null) {
         return mapped;
       }
