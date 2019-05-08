@@ -178,13 +178,21 @@ public final class ContentMapper {
       return handle.getVersion() + " -> " + contentClass.getName();
     }
   }
+  
+  public ContentMapper() {
+    registerDefaultVersions();
+  }
+  
+  private void registerDefaultVersions() {
+    withVersion("std:nil", 1, Nil.class);
+  }
 
   /**
    *  Provides a string dump of all registered version mappings.
    *  
    *  @return A dump of registered mappings as a {@link String}.
    */
-  public String printSnapshots() {
+  public String printVersions() {
     return typeToVersions.toString();
   }
 

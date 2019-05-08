@@ -50,7 +50,7 @@ public final class UniVariantTest {
   @Test
   public void testMap_withExistingContent() {
     final var v = new UniVariant(new ContentHandle("outer", 0), null, "someContent");
-    final var conmap = new ContentMapper();
-    assertEquals(v.<String>getContent(), v.<String>map(conmap));
+    final var mapper = new ContentMapper();
+    assertEquals(v.<String>getContent(), v.<String>map(mapper));
   }
 }
