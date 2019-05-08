@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.codec;
 
+import static org.junit.Assert.*;
+
 import org.assertj.core.api.*;
 import org.junit.*;
 
@@ -43,5 +45,12 @@ public final class UniVariantTest {
     Assertions.assertThatThrownBy(() -> {
       new UniVariant(new ContentHandle("outer", 0), new IdentityPackedForm("someContent"), "someContent");
     }).isInstanceOf(IllegalArgumentException.class).hasMessage("Either the packed form or the original content must be specified");
+  }
+  
+  @Test
+  public void testMap_withExistingContent() {
+    final var v = new UniVariant(new ContentHandle("outer", 0), null, "someContent");
+    final var conmap = new ContentMapper();
+    assertEquals(v.<String>getContent(), v.<String>map(conmap));
   }
 }

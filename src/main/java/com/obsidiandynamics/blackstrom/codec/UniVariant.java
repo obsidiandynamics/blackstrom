@@ -35,19 +35,23 @@ public final class UniVariant implements Variant {
     return packed;
   }
 
-  public <T> T getContent() {
+  public <C> C getContent() {
     return Classes.cast(content);
   }
   
   @Override
   public <C> C map(ContentMapper mapper) {
     mustExist(mapper, "Content mapper cannot be null");
-    final var unpacker = mapper.checkedGetUnpacker(packed.getClass());
-    final var mapping = mapper.mappingForHandle(handle);
-    if (mapping != null) {
-      return Classes.cast(unpacker.unpack(Classes.cast(packed), mapping.contentClass));
+    if (content != null) {
+      return Classes.cast(content);
     } else {
-      return null;
+      final var unpacker = mapper.checkedGetUnpacker(packed.getClass());
+      final var mapping = mapper.mappingForHandle(handle);
+      if (mapping != null) {
+        return Classes.cast(unpacker.unpack(Classes.cast(packed), mapping.contentClass));
+      } else {
+        return null;
+      }
     }
   }
   
