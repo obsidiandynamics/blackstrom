@@ -11,5 +11,7 @@ public final class JacksonVariantModule extends SimpleModule {
     addSerializer(MultiVariant.class, new JacksonMultiVariantSerializer());
     addDeserializer(MultiVariant.class, new JacksonMultiVariantDeserializer());
     addDeserializer(Variant.class, new JacksonVariantDeserializer());
+    addSerializer(Nil.class, new JacksonNilSerializer());
+    addDeserializer(Nil.class, new JacksonNilDeserializer());
   }
 }

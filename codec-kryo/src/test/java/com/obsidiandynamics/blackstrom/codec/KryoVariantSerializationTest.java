@@ -29,6 +29,7 @@ public final class KryoVariantSerializationTest {
         kryo.setRegistrationRequired(false);
         kryo.addDefaultSerializer(UniVariant.class, new KryoUniVariantSerializer());
         kryo.addDefaultSerializer(MultiVariant.class, new KryoMultiVariantSerializer());
+        kryo.addDefaultSerializer(Nil.class, new KryoNilSerializer());
         return kryo;
       }
     };
@@ -74,7 +75,7 @@ public final class KryoVariantSerializationTest {
     return new UniVariant(new ContentHandle(contentType, contentVersion), new KryoPackedForm(writeBytes(content)), null);
   }
   
-  private static UniVariant prepare(String contentType, int contentVersion, Object content) {
+  private static UniVariant capture(String contentType, int contentVersion, Object content) {
     return new UniVariant(new ContentHandle(contentType, contentVersion), null, content);
   }
 
@@ -84,6 +85,12 @@ public final class KryoVariantSerializationTest {
     final var packed = mustBeSubtype(v.getPacked(), KryoPackedForm.class, AssertionError::new);
     final var unpacked = new KryoUnpacker(kryoPool).unpack(packed, expected.getClass());
     assertTrue(expected + " != " + unpacked, Objects.deepEquals(expected, unpacked));
+  }
+  
+  private void assertUnpackedSame(Object expected, UniVariant v) {
+    final var packed = mustBeSubtype(v.getPacked(), KryoPackedForm.class, AssertionError::new);
+    final var unpacked = new KryoUnpacker(kryoPool).unpack(packed, expected.getClass());
+    assertSame(expected, unpacked);
   }
   
   @Before
@@ -141,7 +148,7 @@ public final class KryoVariantSerializationTest {
   
   @Test
   public void testUniVariant_serializeScalar() throws IOException {
-    final var p = prepare("test/scalar", 1, "scalar");
+    final var p = capture("test/scalar", 1, "scalar");
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
@@ -165,7 +172,7 @@ public final class KryoVariantSerializationTest {
   @Test
   public void testUniVariant_serializeArray() throws IOException {
     final var array = new int[] {0, 1, 2};
-    final var p = prepare("test/array", 1, array);
+    final var p = capture("test/array", 1, array);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
@@ -193,7 +200,7 @@ public final class KryoVariantSerializationTest {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
-    final var p = prepare("test/map", 1, map);
+    final var p = capture("test/map", 1, map);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
@@ -217,7 +224,7 @@ public final class KryoVariantSerializationTest {
   @Test
   public void testUniVariant_serializeObject() throws IOException {
     final var obj = new TestClass("someString", 42);
-    final var p = prepare("test/obj", 1, obj);
+    final var p = capture("test/obj", 1, obj);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
@@ -227,11 +234,22 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
+  public void testUniVariant_serializeNil() throws IOException {
+    final var p = capture("std:nil", 1, Nil.getInstance());
+    
+    final var encoded = writeBytes(p);
+    logEncoded(encoded);
+    
+    final var d = readBytes(encoded, UniVariant.class);
+    assertUnpackedSame(Nil.getInstance(), d);
+  }
+
+  @Test
   public void testMultiVariant_serializeObject() throws IOException {
     final var obj0 = new TestClass("someString", 42);
     final var obj1 = new TestClass("someOtherString", 83);
-    final var p0 = prepare("test/obj-0", 1, obj0);
-    final var p1 = prepare("test/obj-1", 1, obj1);
+    final var p0 = capture("test/obj-0", 1, obj0);
+    final var p1 = capture("test/obj-1", 1, obj1);
     final var mp = new MultiVariant(new UniVariant[] {p0, p1});
     
     final var encoded = writeBytes(mp);
