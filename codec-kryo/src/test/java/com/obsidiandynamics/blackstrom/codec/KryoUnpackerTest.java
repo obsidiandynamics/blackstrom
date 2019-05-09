@@ -18,6 +18,7 @@ public final class KryoUnpackerTest extends AbstractUnpackerTest {
         kryo.addDefaultSerializer(Payload.class, new BasicPayloadSerializer());
         kryo.addDefaultSerializer(UniVariant.class, new KryoUniVariantSerializer());
         kryo.addDefaultSerializer(MultiVariant.class, new KryoMultiVariantSerializer());
+        kryo.addDefaultSerializer(Nil.class, new KryoNilSerializer());
         kryo.addDefaultSerializer(SchemaFoo_v0.class, new SchemaSerializer());
         kryo.addDefaultSerializer(SchemaFoo_v1.class, new SchemaSerializer());
         kryo.addDefaultSerializer(SchemaBar_v0.class, new SchemaSerializer());

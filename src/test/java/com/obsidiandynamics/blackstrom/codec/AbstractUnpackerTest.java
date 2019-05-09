@@ -306,6 +306,6 @@ public abstract class AbstractUnpackerTest {
     
     final var resubVs = roundTrip(subV); // tests serialization of a pre-packed variant
     final var resub = subMapper.map(resubVs);
-    assertEquals(Nil.getInstance(), resub);
+    assertSame(Nil.getInstance(), resub);
   }
 }
