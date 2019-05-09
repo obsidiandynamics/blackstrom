@@ -159,7 +159,7 @@ public abstract class AbstractUnpackerTest {
     final var pubV = pubMapper.relaxed().capture(pub);
     final var pubP = Payload.pack(pubV);
     final var subP = roundTrip(pubP);
-    final var subV = Payload.<UniVariant>unpack(subP);
+    final var subV = Payload.<MultiVariant>unpack(subP);
     
     final var subMapper = new ContentMapper()
         .withUnpacker(unpacker)

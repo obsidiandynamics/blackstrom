@@ -233,14 +233,19 @@ public final class ContentMapper {
     
     Variant capture(Object... contentItems);
   }
+  
+  public UniVariant capture(Object content) {
+    mustExist(content, "Content cannot be null");
+    final var mapping = checkedGetMapping(content.getClass());
+    final var handle = mapping.handle;
+    return new UniVariant(handle, null, content);
+  }
 
   public final class StandardRelaxedCaptor implements Captor {
     @Override
-    public UniVariant capture(Object content) {
-      mustExist(content, "Content cannot be null");
-      final var mapping = checkedGetMapping(content.getClass());
-      final var handle = mapping.handle;
-      return new UniVariant(handle, null, content);
+    public MultiVariant capture(Object content) {
+      final var v = ContentMapper.this.capture(content);
+      return new MultiVariant(v);
     }
 
     @Override
@@ -250,7 +255,7 @@ public final class ContentMapper {
       
       final var variants = new UniVariant[contentItems.length];
       for (var i = 0; i < contentItems.length; i++) {
-        variants[i] = capture(contentItems[i]);
+        variants[i] = ContentMapper.this.capture(contentItems[i]);
       }
       return new MultiVariant(variants);
     }
@@ -263,7 +268,7 @@ public final class ContentMapper {
   public final class CompactRelaxedCaptor implements Captor {
     @Override
     public UniVariant capture(Object content) {
-      return relaxedCaptor.capture(content);
+      return ContentMapper.this.capture(content);
     }
 
     @Override
@@ -271,7 +276,7 @@ public final class ContentMapper {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
       if (contentItems.length == 1) {
-        return relaxedCaptor.capture(contentItems[0]);
+        return capture(contentItems[0]);
       } else {
         return relaxedCaptor.capture(contentItems);
       }

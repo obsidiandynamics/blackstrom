@@ -90,7 +90,8 @@ public final class ContentMapperTest {
   @Test
   public void testCaptureAndMapNil() {
     final var mapper = new ContentMapper();
-    final var p = mapper.strict().capture(Nil.getInstance());
+    final var p = mapper.capture(Nil.getInstance());
+    assertEquals(Nil.capture(), p);
     assertSame(Nil.getInstance(), p.map(mapper));
   }
 
@@ -104,19 +105,19 @@ public final class ContentMapperTest {
 
     {
       final var p = mapper.relaxed().capture(new CreateFoo_v0());
-      assertNull(p.getPacked());
-      assertTrue(p.getContent() instanceof CreateFoo_v0);
-      assertEquals(new ContentHandle("test:foo/create", 0), p.getHandle());
+      assertNull(p.getVariants()[0].getPacked());
+      assertTrue(p.getVariants()[0].getContent() instanceof CreateFoo_v0);
+      assertEquals(new ContentHandle("test:foo/create", 0), p.getVariants()[0].getHandle());
     }
 
     {
       final var p = mapper.relaxed().capture(new CreateFoo_v1());
-      assertEquals(new ContentHandle("test:foo/create", 1), p.getHandle());
+      assertEquals(new ContentHandle("test:foo/create", 1), p.getVariants()[0].getHandle());
     }
 
     {
       final var p = mapper.relaxed().capture(new CreateBar_v1());
-      assertEquals(new ContentHandle("test:bar/create", 1), p.getHandle());
+      assertEquals(new ContentHandle("test:bar/create", 1), p.getVariants()[0].getHandle());
     }
   }
 
@@ -167,12 +168,12 @@ public final class ContentMapperTest {
 
     {
       final var p = mapper.relaxed().capture(new CreateFoo_v1());
-      assertEquals(new ContentHandle("test:foo/create", 1), p.getHandle());
+      assertEquals(new ContentHandle("test:foo/create", 1), p.getVariants()[0].getHandle());
     }
 
     {
       final var p = mapper.relaxed().capture(new CreateBar_v1());
-      assertEquals(new ContentHandle("test:bar/create", 1), p.getHandle());
+      assertEquals(new ContentHandle("test:bar/create", 1), p.getVariants()[0].getHandle());
     }
   }
 

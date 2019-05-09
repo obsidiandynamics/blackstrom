@@ -18,8 +18,8 @@ public final class Nil {
   /**
    *  Obtains a pre-captured {@link UniVariant} containing a {@link Nil} content object. <p>
    *  
-   *  This method is more efficient than capturing via a {@link ContentMapper} as it does
-   *  not require object allocation.
+   *  This method is more efficient than capturing via {@link ContentMapper#capture(Object)} 
+   *  as it does not require object allocation.
    *  
    *  @return A pre-captured {@link UniVariant} containing a {@link Nil} content object.
    */
