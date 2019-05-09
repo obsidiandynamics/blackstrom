@@ -7,7 +7,25 @@ package com.obsidiandynamics.blackstrom.codec;
 public final class Nil {
   private static final Nil INSTANCE = new Nil();
   
+  private static final ContentHandle CONTENT_HANDLE = new ContentHandle("std:nil", 1);
+  
+  private static final UniVariant CAPTURED = new UniVariant(CONTENT_HANDLE, null, INSTANCE);
+  
+  public static ContentHandle getContentHandle() { return CONTENT_HANDLE; }
+  
   public static Nil getInstance() { return INSTANCE; }
+  
+  /**
+   *  Obtains a pre-captured {@link UniVariant} containing a {@link Nil} content object. <p>
+   *  
+   *  This method is more efficient than capturing via a {@link ContentMapper} as it does
+   *  not require object allocation.
+   *  
+   *  @return A pre-captured {@link UniVariant} containing a {@link Nil} content object.
+   */
+  public static UniVariant capture() {
+    return CAPTURED;
+  }
   
   private Nil() {}
   

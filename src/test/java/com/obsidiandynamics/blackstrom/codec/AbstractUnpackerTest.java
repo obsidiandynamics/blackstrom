@@ -293,10 +293,7 @@ public abstract class AbstractUnpackerTest {
   
   @Test
   public final void testPubSub_nil() {
-    final var pubMapper = new ContentMapper()
-        .withUnpacker(unpacker);
-    
-    final var pubV = pubMapper.compactStrict().capture(Nil.getInstance());
+    final var pubV = Nil.capture();
     final var subV = roundTrip(pubV);
     
     final var subMapper = new ContentMapper()

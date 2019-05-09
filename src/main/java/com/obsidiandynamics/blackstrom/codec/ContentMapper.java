@@ -184,7 +184,7 @@ public final class ContentMapper {
   }
   
   private void registerDefaultVersions() {
-    withVersion("std:nil", 1, Nil.class);
+    withVersion(Nil.getContentHandle(), Nil.class);
   }
 
   /**
@@ -203,6 +203,11 @@ public final class ContentMapper {
                 withMessage(() -> "Duplicate unpacker for class " + packedClass.getName(), IllegalArgumentException::new));
     unpackers.put(Classes.cast(packedClass), unpacker);
     return this;
+  }
+  
+  public ContentMapper withVersion(ContentHandle contentHandle, Class<?> contentClass) {
+    mustExist(contentHandle, "Content handle cannot be null");
+    return withVersion(contentHandle.getType(), contentHandle.getVersion(), contentClass);
   }
 
   public ContentMapper withVersion(String contentType, int contentVersion, Class<?> contentClass) {

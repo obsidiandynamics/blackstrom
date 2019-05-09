@@ -25,4 +25,14 @@ public final class NilTest {
   public void testEqualsHashCode() {
     EqualsVerifier.forClass(Nil.class).verify();
   }
+  
+  @Test
+  public void testGetContentHandle() {
+    assertEquals(new ContentHandle("std:nil", 1), Nil.getContentHandle());
+  }
+  
+  @Test
+  public void testCapture() {
+    assertSame(Nil.getInstance(), Nil.capture().getContent());
+  }
 }
