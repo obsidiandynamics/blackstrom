@@ -14,7 +14,7 @@ public class KryoMessageCodec implements MessageCodec {
   
   private static final int DEF_MESSAGE_BUFFER_SIZE = 128;
   
-  private static final KryoExpansion[] DEF_EXPANSIONS = { new KryoDefaultOutcomeMetadataExpansion() };
+  private static final KryoExpansion[] DEF_EXPANSIONS = { new KryoDefaultOutcomeMetadataExpansion(), new KryoVariantExpansion() };
   
   @FunctionalInterface
   public interface KryoExpansion extends Consumer<Kryo> {}
@@ -32,9 +32,7 @@ public class KryoMessageCodec implements MessageCodec {
         final var kryo = new Kryo();
         kryo.setReferences(false);
         kryo.setRegistrationRequired(false);
-        kryo.addDefaultSerializer(UniVariant.class, new KryoUniVariantSerializer());
-        kryo.addDefaultSerializer(MultiVariant.class, new KryoMultiVariantSerializer());
-        kryo.addDefaultSerializer(Nil.class, new KryoNilSerializer());
+        
         for (var expansion : DEF_EXPANSIONS) expansion.accept(kryo);
         for (var expansion : expansions) expansion.accept(kryo);
         return kryo;

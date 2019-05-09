@@ -27,9 +27,7 @@ public final class KryoVariantSerializationTest {
         final var kryo = new Kryo();
         kryo.setReferences(false);
         kryo.setRegistrationRequired(false);
-        kryo.addDefaultSerializer(UniVariant.class, new KryoUniVariantSerializer());
-        kryo.addDefaultSerializer(MultiVariant.class, new KryoMultiVariantSerializer());
-        kryo.addDefaultSerializer(Nil.class, new KryoNilSerializer());
+        new KryoVariantExpansion().accept(kryo);
         return kryo;
       }
     };
