@@ -155,7 +155,7 @@ public final class KafkaLedger implements Ledger {
         .buildAndStart();
 
     // may be user-specified in config
-    final Properties producerDefaults = new PropsBuilder()
+    final var producerDefaults = new PropsBuilder()
         .withSystemDefault("enable.idempotence", true)
         .withSystemDefault("batch.size", 1 << 18)
         .withSystemDefault("linger.ms", 1)
@@ -167,7 +167,7 @@ public final class KafkaLedger implements Ledger {
         .build();
 
     // set by the application — required for correctness (overrides user config)
-    final Properties producerOverrides = new PropsBuilder()
+    final var producerOverrides = new PropsBuilder()
         .with("key.serializer", StringSerializer.class.getName())
         .with("value.serializer", KafkaMessageSerializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
@@ -178,14 +178,14 @@ public final class KafkaLedger implements Ledger {
     
     if (printConfig) kafka.describeProducer(zlg::i, producerDefaults, producerOverrides);
     producer = kafka.getProducer(producerDefaults, producerOverrides);
-    final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
+    final var producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
         new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, zlg::w);
     adminClient = kafka.getAdminClient();
   }
   
   private void onRetry(WorkerThread t) throws InterruptedException {
-    final RetryTask retryTask = retryQueueConsumer.poll();
+    final var retryTask = retryQueueConsumer.poll();
     if (retryTask != null) {
       append(retryTask.message, retryTask.callback);
     } else {
@@ -194,8 +194,8 @@ public final class KafkaLedger implements Ledger {
   }
   
   private static Map<TopicPartition, OffsetAndMetadata> toKafkaOffsetsMap(Map<Integer, Long> sourceMap, String topic) {
-    final Map<TopicPartition, OffsetAndMetadata> targetMap = new HashMap<>();
-    for (Map.Entry<Integer, Long> entry : sourceMap.entrySet()) {
+    final var targetMap = new HashMap<TopicPartition, OffsetAndMetadata>();
+    for (var entry : sourceMap.entrySet()) {
       targetMap.put(new TopicPartition(topic, entry.getKey()), new OffsetAndMetadata(entry.getValue()));
     }
     return targetMap;
@@ -216,7 +216,7 @@ public final class KafkaLedger implements Ledger {
   }
 
   private Integer _attach(MessageHandler handler) {
-    final String groupId = handler.getGroupId();
+    final var groupId = handler.getGroupId();
     final String autoOffsetReset;
     if (groupId != null) {
       autoOffsetReset = OffsetResetStrategy.EARLIEST.name().toLowerCase();
@@ -225,14 +225,14 @@ public final class KafkaLedger implements Ledger {
     }
     
     // may be user-specified in config
-    final Properties consumerDefaults = new PropsBuilder()
+    final var consumerDefaults = new PropsBuilder()
         .withSystemDefault("session.timeout.ms", 6_000)
         .withSystemDefault("heartbeat.interval.ms", 2_000)
         .withSystemDefault("max.poll.records", 10_000)
         .build();
 
     // set by the application — required for correctness (overrides user config)
-    final Properties consumerOverrides = new PropsBuilder()
+    final var consumerOverrides = new PropsBuilder()
         .with("group.id", groupId)
         .with("auto.offset.reset", autoOffsetReset)
         .with("enable.auto.commit", false)
@@ -243,7 +243,7 @@ public final class KafkaLedger implements Ledger {
         .build();
     
     if (printConfig) kafka.describeConsumer(zlg::i, consumerDefaults, consumerOverrides);
-    final Consumer<String, Message> consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
+    final var consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
     final ConsumerState consumerState;
     if (groupId != null) {
       consumerState = new ConsumerState();
@@ -258,7 +258,7 @@ public final class KafkaLedger implements Ledger {
     .withExceptionMatcher(Retry.isA(RetriableException.class))
     .run(() -> {
       if (groupId != null) {
-        final ConsumerRebalanceListener rebalanceListener = new ConsumerRebalanceListener() {
+        final var rebalanceListener = new ConsumerRebalanceListener() {
           @Override
           public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
             synchronized (consumerState.lock) {
@@ -274,7 +274,7 @@ public final class KafkaLedger implements Ledger {
 
           @Override
           public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-            final Set<Integer> assignedPartitions = partitions.stream().map(TopicPartition::partition).collect(Collectors.toSet());
+            final var assignedPartitions = partitions.stream().map(TopicPartition::partition).collect(Collectors.toSet());
             synchronized (consumerState.lock) {
               consumerState.assignedPartitions = assignedPartitions;
               consumerState.heldPartitions = assignedPartitions;
@@ -284,14 +284,14 @@ public final class KafkaLedger implements Ledger {
         consumer.subscribe(Collections.singletonList(topic), rebalanceListener);
         zlg.d("Subscribed to topic %s", z -> z.arg(topic));
       } else {
-        final List<PartitionInfo> infos = consumer.partitionsFor(topic);
-        final List<TopicPartition> partitions = infos.stream()
+        final var infos = consumer.partitionsFor(topic);
+        final var partitions = infos.stream()
             .map(i -> new TopicPartition(i.topic(), i.partition()))
             .collect(Collectors.toList());
         zlg.t("infos=%s, partitions=%s", z -> z.arg(infos).arg(partitions));
-        final Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
+        final var endOffsets = consumer.endOffsets(partitions);
         consumer.assign(partitions);
-        for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
+        for (var entry : endOffsets.entrySet()) {
           consumer.seek(entry.getKey(), entry.getValue());
         }
       }
@@ -302,7 +302,7 @@ public final class KafkaLedger implements Ledger {
     if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
       consumerStates.put(handlerId, consumerState);
-      final ShardedFlow flow = new ShardedFlow();
+      final var flow = new ShardedFlow();
       retention = flow;
       flows.add(flow);
     } else {
@@ -310,22 +310,22 @@ public final class KafkaLedger implements Ledger {
       retention = NopRetention.getInstance();
     }
 
-    final MessageContext context = new DefaultMessageContext(this, handlerId, retention);
-    final String consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
+    final var context = new DefaultMessageContext(this, handlerId, retention);
+    final var consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
-      for (ConsumerRecord<String, Message> record : records) {
+      for (var record : records) {
         handleRecord(handler, consumerState, context, record, zlg);
       }
     };
-    final ConsumerPipe<String, Message> consumerPipe = 
+    final var consumerPipe = 
         new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
       queueRecords(consumer, consumerState, consumerPipe, records, maxConsumerPipeYields, zlg);
     };
 
-    final String threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
-    final AsyncReceiver<String, Message> receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
+    final var threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
+    final var receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
     
@@ -340,7 +340,7 @@ public final class KafkaLedger implements Ledger {
                            Zlg zlg) throws InterruptedException {
     final boolean queueBatch;
     if (consumerState != null) {
-      final int recordCount = records.count();
+      final var recordCount = records.count();
       synchronized (consumerState.lock) {
         if (! consumerState.assignedPartitions.isEmpty()) {
           consumerState.queuedRecords += recordCount;
@@ -355,7 +355,7 @@ public final class KafkaLedger implements Ledger {
     
     if (queueBatch) {
       for (int yields = 0;;) {
-        final boolean enqueued = consumerPipe.receive(records);
+        final var enqueued = consumerPipe.receive(records);
  
         if (consumerState != null) {
           commitOffsets(consumer, consumerState, zlg);
@@ -408,7 +408,7 @@ public final class KafkaLedger implements Ledger {
       if (allPendingOffsetsConfirmed) {
         zlg.d("All offsets confirmed: %s", z -> z.arg(offsetsAcceptedSnapshot));
         if (! offsetsAcceptedSnapshot.isEmpty()) {
-          final Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic);
+          final var kafkaOffsets = toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic);
           new Retry()
           .withAttempts(ioRetries)
           .withFaultHandler(zlg::w)
@@ -455,9 +455,9 @@ public final class KafkaLedger implements Ledger {
     if (consumerState != null) {
       synchronized (consumerState.lock) {
         consumerState.queuedRecords--;
-        final boolean canAccept = consumerState.assignedPartitions.contains(partition);
+        final var canAccept = consumerState.assignedPartitions.contains(partition);
         if (canAccept) {
-          final MutableOffset mutableOffset = consumerState.offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());
+          final var mutableOffset = consumerState.offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());
           accepted = mutableOffset.tryAdvance(offset);
           if (accepted) {
             consumerState.offsetsPending.put(partition, offset);
@@ -476,8 +476,8 @@ public final class KafkaLedger implements Ledger {
     }
     
     if (accepted) {
-      final DefaultMessageId messageId = new DefaultMessageId(partition, offset);
-      final Message message = record.value();
+      final var messageId = new DefaultMessageId(partition, offset);
+      final var message = record.value();
       message.setMessageId(messageId);
       message.setShardKey(record.key());
       message.setShard(partition);
@@ -487,7 +487,7 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void append(Message message, AppendCallback callback) {
-    final ProducerRecord<String, Message> record = 
+    final var record = 
         new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
     final Callback sendCallback = (metadata, exception) -> {
       if (exception == null) {
@@ -507,15 +507,15 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
     mustExist(handlerId, illegalState("Cannot confirm in an ungrouped context"));
-    final ConsumerState consumerState = consumerStates.get(handlerId);
+    final var consumerState = consumerStates.get(handlerId);
     confirm((DefaultMessageId) messageId, consumerState, topic, zlg);
   }
 
   static void confirm(DefaultMessageId messageId, ConsumerState consumerState, String topic, Zlg zlg) {
-    final int partition = messageId.getShard();
-    final TopicPartition topicPartition = new TopicPartition(topic, partition);
-    final long offset = messageId.getOffset();
-    final OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset);
+    final var partition = messageId.getShard();
+    final var topicPartition = new TopicPartition(topic, partition);
+    final var offset = messageId.getOffset();
+    final var offsetAndMetadata = new OffsetAndMetadata(offset);
     synchronized (consumerState.lock) {
       consumerState.offsetsConfirmed.put(topicPartition, offsetAndMetadata);
       consumerState.offsetsPending.computeIfPresent(partition, (_partition, _offset) -> {
@@ -541,7 +541,7 @@ public final class KafkaLedger implements Ledger {
     if (handlerId == null) {
       return true;
     } else {
-      final ConsumerState consumerState = consumerStates.get(handlerId);
+      final var consumerState = consumerStates.get(handlerId);
       synchronized (consumerState.lock) {
         return consumerState.heldPartitions.contains(shard);
       }
