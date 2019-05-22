@@ -9,6 +9,7 @@ import java.util.concurrent.locks.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.*;
@@ -20,7 +21,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.ConsumerState.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
-import com.obsidiandynamics.flow.*;
+import com.obsidiandynamics.flow.Flow;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
@@ -38,6 +39,8 @@ public final class KafkaLedger implements Ledger {
   private static final long OFFSET_DRAIN_CHECK_INTERVAL_MILLIS = 10;
 
   private final Kafka<String, Message> kafka;
+  
+  private final AdminClient adminClient;
 
   private final String topic;
 
@@ -178,6 +181,7 @@ public final class KafkaLedger implements Ledger {
     final String producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
         new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, zlg::w);
+    adminClient = kafka.getAdminClient();
   }
   
   private void onRetry(WorkerThread t) throws InterruptedException {
@@ -561,5 +565,6 @@ public final class KafkaLedger implements Ledger {
     } finally {
       codecLock.writeLock().unlock();
     }
+    adminClient.close();
   }
 }
