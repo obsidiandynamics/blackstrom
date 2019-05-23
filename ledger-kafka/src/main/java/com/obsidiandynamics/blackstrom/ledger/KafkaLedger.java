@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import static com.obsidiandynamics.func.Functions.*;
+import static com.obsidiandynamics.zerolog.Args.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -18,7 +19,6 @@ import org.apache.kafka.common.errors.*;
 import org.apache.kafka.common.serialization.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
-import com.obsidiandynamics.blackstrom.ledger.KafkaLedger.ConsumerState.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.flow.Flow;
@@ -64,7 +64,9 @@ public final class KafkaLedger implements Ledger {
 
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
   
-  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
+  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>();
+  
+  private final ConsumerGroupOffsetsResolver offsetsResolver;
   
   private final boolean printConfig;
   
@@ -93,7 +95,7 @@ public final class KafkaLedger implements Ledger {
     static final class MutableOffset {
       long offset = -1;
 
-      public boolean tryAdvance(long newOffset) {
+      boolean tryAdvance(long newOffset) {
         if (newOffset > offset) {
           offset = newOffset;
           return true;
@@ -129,6 +131,10 @@ public final class KafkaLedger implements Ledger {
      *  it doesn't get cleared in the {@code onPartitionsRevoked()} callback and persists until the
      *  {@code onPartitionsAssigned()} callback. */
     Set<Integer> heldPartitions = Collections.emptySet();
+    
+    MutableOffset processedOffsetForPartition(int partition) {
+      return offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());
+    }
   }
 
   /** Maps handler IDs to consumer offsets. */
@@ -149,6 +155,8 @@ public final class KafkaLedger implements Ledger {
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
     codecLocator = CodecRegistry.register(config.getCodec());
+    adminClient = kafka.getAdminClient();
+    offsetsResolver = new AdminClientOffsetsResolver(adminClient);
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
         .onCycle(this::onRetry)
@@ -181,7 +189,6 @@ public final class KafkaLedger implements Ledger {
     final var producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     producerPipe = 
         new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, zlg::w);
-    adminClient = kafka.getAdminClient();
   }
   
   private void onRetry(WorkerThread t) throws InterruptedException {
@@ -259,6 +266,8 @@ public final class KafkaLedger implements Ledger {
     .run(() -> {
       if (groupId != null) {
         final var rebalanceListener = new ConsumerRebalanceListener() {
+          final Predicate<TopicPartition> topicFilter = fieldPredicate(TopicPartition::topic, topic::equals);
+          
           @Override
           public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
             synchronized (consumerState.lock) {
@@ -274,10 +283,25 @@ public final class KafkaLedger implements Ledger {
 
           @Override
           public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-            final var assignedPartitions = partitions.stream().map(TopicPartition::partition).collect(Collectors.toSet());
+            final var assignedPartitions = partitions.stream()
+                .filter(topicFilter)
+                .collect(Collectors.toSet());
+            
+            final var assignedPartitionIndexes = assignedPartitions.stream()
+                .map(TopicPartition::partition)
+                .collect(Collectors.toSet());
+            
+            final var consumerGroupOffsets = offsetsResolver.resolve(groupId, assignedPartitions);
             synchronized (consumerState.lock) {
-              consumerState.assignedPartitions = assignedPartitions;
-              consumerState.heldPartitions = assignedPartitions;
+              zlg.t("Advancing consumer offsets; group: %s, offsets: %s", 
+                    z -> z.arg(groupId).arg(map(ref(consumerGroupOffsets), PartitionOffset::summarise)));
+              for (var partitionOffset : consumerGroupOffsets.entrySet()) {
+                final var partition = partitionOffset.getKey().partition();
+                final var offset = partitionOffset.getValue().offset();
+                consumerState.processedOffsetForPartition(partition).tryAdvance(offset);
+              }
+              consumerState.assignedPartitions = assignedPartitionIndexes;
+              consumerState.heldPartitions = assignedPartitionIndexes;
             }
           }
         };
@@ -288,7 +312,7 @@ public final class KafkaLedger implements Ledger {
         final var partitions = infos.stream()
             .map(i -> new TopicPartition(i.topic(), i.partition()))
             .collect(Collectors.toList());
-        zlg.t("infos=%s, partitions=%s", z -> z.arg(infos).arg(partitions));
+        zlg.t("Assigning: infos: %s, partitions: %s", z -> z.arg(infos).arg(partitions));
         final var endOffsets = consumer.endOffsets(partitions);
         consumer.assign(partitions);
         for (var entry : endOffsets.entrySet()) {
@@ -331,7 +355,22 @@ public final class KafkaLedger implements Ledger {
     
     return handlerId;
   }
-
+  
+//  static String printOffsets(Map<TopicPartition, OffsetAndMetadata> offsets) {
+//    class TopicOffset {
+//      private final String topic;
+//      private final long offset;
+//      
+//      
+//    }
+//    
+//    offsets.entrySet().stream()
+//    .map(offset -> offset.getKey().topic())
+//    return () -> {
+//      return offsets.entryS
+//    };
+//  }
+  
   static void queueRecords(Consumer<String, Message> consumer, 
                            ConsumerState consumerState,
                            ConsumerPipe<String, Message> consumerPipe,
@@ -457,13 +496,13 @@ public final class KafkaLedger implements Ledger {
         consumerState.queuedRecords--;
         final var canAccept = consumerState.assignedPartitions.contains(partition);
         if (canAccept) {
-          final var mutableOffset = consumerState.offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());
+          final var mutableOffset = consumerState.processedOffsetForPartition(partition);
           accepted = mutableOffset.tryAdvance(offset);
           if (accepted) {
             consumerState.offsetsPending.put(partition, offset);
             consumerState.offsetsAccepted.put(partition, offset);
           } else {
-            zlg.d("Skipping message at offset %d, partition: %d: monotonicity constraint violated (previous offset %d)", 
+            zlg.d("Skipping message at offset %d, partition: %d: monotonicity constraint breached (previous offset %d)", 
                   z -> z.arg(record::offset).arg(record::partition).arg(mutableOffset.offset));
           }
         } else {

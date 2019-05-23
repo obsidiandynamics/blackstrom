@@ -6,7 +6,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 
 //TODO is this needed?
-public final class NopOffsetsResolver implements OffsetsResolver {
+public final class NopOffsetsResolver implements ConsumerGroupOffsetsResolver {
   private static final NopOffsetsResolver INSTANCE = new NopOffsetsResolver();
   
   public static NopOffsetsResolver getInstance() { return INSTANCE; }
@@ -14,7 +14,7 @@ public final class NopOffsetsResolver implements OffsetsResolver {
   private NopOffsetsResolver() {}
 
   @Override
-  public Map<TopicPartition, OffsetAndMetadata> resolve(String groupId) {
+  public Map<TopicPartition, OffsetAndMetadata> resolve(String groupId, Collection<TopicPartition> topicPartitions) {
     return Collections.emptyMap();
   }
 }

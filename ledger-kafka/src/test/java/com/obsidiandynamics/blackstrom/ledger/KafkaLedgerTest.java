@@ -254,7 +254,7 @@ public final class KafkaLedgerTest {
     verify(handler, never()).onMessage(isNull(), eq(message));
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG)
-    .containing("Skipping message at offset 0, partition: 0: monotonicity constraint violated (previous offset 0)").assertCount(1);
+    .containing("Skipping message at offset 0, partition: 0: monotonicity constraint breached (previous offset 0)").assertCount(1);
   }
   
   @Test

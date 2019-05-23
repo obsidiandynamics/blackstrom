@@ -1,8 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static java.util.Collections.*;
 import static org.junit.Assert.*;
-
-import java.util.*;
 
 import org.junit.*;
 
@@ -14,6 +13,6 @@ public final class NopOffsetsResolverTest {
   
   @Test
   public void testResolve() {
-    assertEquals(Collections.emptyMap(), NopOffsetsResolver.getInstance().resolve("testGroup"));
+    assertEquals(emptyMap(), NopOffsetsResolver.getInstance().resolve("testGroup", emptySet()));
   }
 }

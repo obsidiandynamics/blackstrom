@@ -6,6 +6,6 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 
 @FunctionalInterface
-public interface OffsetsResolver {
-  Map<TopicPartition, OffsetAndMetadata> resolve(String groupId);
+public interface ConsumerGroupOffsetsResolver {
+  Map<TopicPartition, OffsetAndMetadata> resolve(String groupId, Collection<TopicPartition> topicPartitions);
 }
