@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import com.obsidiandynamics.assertion.*;
-
 import nl.jqno.equalsverifier.*;
 
 public final class DefaultMessageIdTest {
@@ -23,6 +21,6 @@ public final class DefaultMessageIdTest {
   
   @Test
   public void testToString() {
-    Assertions.assertToStringOverride(new DefaultMessageId(2, 400));
+    assertEquals("2#400", new DefaultMessageId(2, 400).toString());
   }
 }

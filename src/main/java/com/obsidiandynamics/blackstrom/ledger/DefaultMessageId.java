@@ -24,8 +24,8 @@ public final class DefaultMessageId implements MessageId {
   public int hashCode() {
     final var prime = 31;
     var result = 1;
-    result = prime * result + (int) (offset ^ (offset >>> 32));
     result = prime * result + shard;
+    result = prime * result + Long.hashCode(offset);
     return result;
   }
 
@@ -43,6 +43,6 @@ public final class DefaultMessageId implements MessageId {
 
   @Override
   public String toString() {
-    return shard + "@" + offset;
+    return shard + "#" + offset;
   }
 }
