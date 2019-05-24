@@ -41,7 +41,7 @@ public final class JacksonMessageCodecTest {
   
   @Test
   public void testGetMapper() {
-    final JacksonMessageCodec codec = new JacksonMessageCodec(false);
+    final JacksonMessageCodec codec = new JacksonMessageCodec();
     assertNotNull(codec.getMapper());
   }
   

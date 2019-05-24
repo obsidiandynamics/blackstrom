@@ -44,7 +44,7 @@ public final class KryoMessageCodecTest {
     final Message m = new Proposal("N100", new String[] {"a", "b"}, null, 1000).withSource("test");
     MessageCodec c;
     
-    c = new KryoMessageCodec(false);
+    c = new KryoMessageCodec();
     final byte[] encoded = c.encode(m);
     logEncoded(encoded);
 
