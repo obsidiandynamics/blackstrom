@@ -11,6 +11,9 @@ import org.apache.kafka.common.*;
 
 import com.obsidiandynamics.zerolog.*;
 
+/**
+ *  Resolves offsets using a Kafka {@link AdminClient}.
+ */
 public final class AdminClientOffsetsResolver implements ConsumerGroupOffsetsResolver {
   private static final int LIST_OFFSETS_TIMEOUT = 10_000;
   
@@ -38,11 +41,13 @@ public final class AdminClientOffsetsResolver implements ConsumerGroupOffsetsRes
     final var listConsumerGroupOffsets = adminClient.listConsumerGroupOffsets(groupId, opts);
     try {
       return listConsumerGroupOffsets.partitionsToOffsetAndMetadata().get();
-    } catch (InterruptedException | ExecutionException e) {
-      // suppress IllegalArgumentException as Kafka may construct OffsetAndMetadata with a negative offset 
-      if (! (e instanceof ExecutionException && e.getCause() instanceof IllegalArgumentException)) {
+    } catch (ExecutionException e) {
+      // suppress IllegalArgumentException, as Kafka may construct OffsetAndMetadata with a negative offset 
+      if (! (e.getCause() instanceof IllegalArgumentException)) {
         zlg.w("Error resolving offsets for consumer group %s: %s", z -> z.arg(groupId).arg(e));
       }
+      return Collections.emptyMap();
+    } catch (InterruptedException e) {
       return Collections.emptyMap();
     }
   }

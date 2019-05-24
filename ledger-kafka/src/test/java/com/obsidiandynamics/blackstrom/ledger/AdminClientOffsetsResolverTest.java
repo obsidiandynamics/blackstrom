@@ -11,25 +11,22 @@ import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 import org.apache.kafka.common.internals.*;
-import org.assertj.core.api.*;
 import org.junit.*;
 
 import com.obsidiandynamics.zerolog.*;
 
 public final class AdminClientOffsetsResolverTest {
-  @Test
-  public void testResolve_noError() {
-    final var adminClient = mock(AdminClient.class);
-    final var logTarget = new MockLogTarget();
-    final var resolver = new AdminClientOffsetsResolver(adminClient).withZlg(logTarget.logger());
-    
-    final var expectedOffsets = singletonMap(new TopicPartition("test", 0), new OffsetAndMetadata(100));
-    final var result = new XListConsumerGroupOffsetsResult(KafkaFuture.completedFuture(expectedOffsets));
-    when(adminClient.listConsumerGroupOffsets(any(), any())).thenReturn(result);
-    
-    final var resolved = resolver.resolve("testGroup", emptyList());
-    assertEquals(expectedOffsets, resolved);
-    logTarget.entries().assertCount(0);
+  private AdminClient adminClient;
+  
+  private MockLogTarget logTarget;
+  
+  private AdminClientOffsetsResolver resolver;
+  
+  @Before
+  public void before() {
+    adminClient = mock(AdminClient.class);
+    logTarget = new MockLogTarget();
+    resolver = new AdminClientOffsetsResolver(adminClient).withZlg(logTarget.logger());
   }
   
   private static <T> KafkaFuture<T> completeExceptionally(Throwable cause) {
@@ -39,11 +36,18 @@ public final class AdminClientOffsetsResolverTest {
   }
   
   @Test
-  public void testResolve_genericError() {
-    final var adminClient = mock(AdminClient.class);
-    final var logTarget = new MockLogTarget();
-    final var resolver = new AdminClientOffsetsResolver(adminClient).withZlg(logTarget.logger());
+  public void testResolve_noError() {
+    final var expectedOffsets = singletonMap(new TopicPartition("test", 0), new OffsetAndMetadata(100));
+    final var result = new XListConsumerGroupOffsetsResult(KafkaFuture.completedFuture(expectedOffsets));
+    when(adminClient.listConsumerGroupOffsets(any(), any())).thenReturn(result);
     
+    final var resolved = resolver.resolve("testGroup", emptyList());
+    assertEquals(expectedOffsets, resolved);
+    logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testResolve_genericExecutionException() {
     final var cause = new Exception("Simulated");
     final var result = new XListConsumerGroupOffsetsResult(completeExceptionally(cause));
     when(adminClient.listConsumerGroupOffsets(any(), any())).thenReturn(result);
@@ -51,7 +55,30 @@ public final class AdminClientOffsetsResolverTest {
     final var resolved = resolver.resolve("testGroup", emptyList());
     assertEquals(emptyMap(), resolved);
     logTarget.entries().assertCount(1);
-    //TODO
-//    logTarget.entries().forLevel(LogLevel.WARN).containing("Error resolving offsets for consumer group testGroup: " + cause).assertCount(1);
+    logTarget.entries().forLevel(LogLevel.WARN)
+    .containing("Error resolving offsets for consumer group testGroup: " + new ExecutionException(cause))
+    .assertCount(1);
+  }
+  
+  @Test
+  public void testResolve_illegalArgumentException() {
+    final var cause = new IllegalArgumentException("Simulated");
+    final var result = new XListConsumerGroupOffsetsResult(completeExceptionally(cause));
+    when(adminClient.listConsumerGroupOffsets(any(), any())).thenReturn(result);
+    
+    final var resolved = resolver.resolve("testGroup", emptyList());
+    assertEquals(emptyMap(), resolved);
+    logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testResolve_interruptedException() {
+    final var cause = new InterruptedException("Simulated");
+    final var result = new XListConsumerGroupOffsetsResult(completeExceptionally(cause));
+    when(adminClient.listConsumerGroupOffsets(any(), any())).thenReturn(result);
+    
+    final var resolved = resolver.resolve("testGroup", emptyList());
+    assertEquals(emptyMap(), resolved);
+    logTarget.entries().assertCount(0);
   }
 }
