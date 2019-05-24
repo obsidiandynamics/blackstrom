@@ -96,12 +96,16 @@ public final class KafkaLedger implements Ledger {
       long offset = -1;
 
       boolean tryAdvance(long newOffset) {
-        if (newOffset > offset) {
+        if (canAdvance(newOffset)) {
           offset = newOffset;
           return true;
         } else {
           return false;
         }
+      }
+
+      boolean canAdvance(long newOffset) {
+        return newOffset > offset;
       }
     }
     
@@ -157,7 +161,7 @@ public final class KafkaLedger implements Ledger {
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
     final var codec = mustExist(config.getCodec(), "Codec cannot be null");
     codecLocator = CodecRegistry.register(codec);
-    adminClient = mustExist(kafka.getAdminClient(), "Admin client cannot be null");
+    adminClient = kafka.getAdminClient();
     offsetsResolver = new AdminClientOffsetsResolver(adminClient);
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
@@ -187,7 +191,7 @@ public final class KafkaLedger implements Ledger {
         .build();
     
     if (printConfig) kafka.describeProducer(zlg::i, producerDefaults, producerOverrides);
-    producer = mustExist(kafka.getProducer(producerDefaults, producerOverrides), "Producer cannot be null");
+    producer = kafka.getProducer(producerDefaults, producerOverrides);
     final var producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
     final var producerPipeConfig = mustExist(config.getProducerPipeConfig(), "Producer pipe config");
     producerPipe = new ProducerPipe<>(producerPipeConfig, producer, producerPipeThreadName, zlg::w);
