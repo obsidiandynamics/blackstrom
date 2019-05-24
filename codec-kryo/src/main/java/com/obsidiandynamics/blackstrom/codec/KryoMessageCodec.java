@@ -23,6 +23,10 @@ public class KryoMessageCodec implements MessageCodec {
   
   private final KryoMessageSerializer messageSerializer;
   
+  public KryoMessageCodec() {
+    this(true);
+  }
+  
   public KryoMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
                           @YInject(name="expansions") KryoExpansion... expansions) {
     messageSerializer = new KryoMessageSerializer(mapPayload);

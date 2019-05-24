@@ -145,17 +145,19 @@ public final class KafkaLedger implements Ledger {
   private volatile boolean disposing;
 
   public KafkaLedger(KafkaLedgerConfig config) {
-    kafka = config.getKafka();
-    topic = config.getTopic();
-    zlg = config.getZlg();
-    printConfig = config.isPrintConfig();
-    consumerPipeConfig = config.getConsumerPipeConfig();
+    mustExist(config, "Config cannot be null");
+    kafka = mustExist(config.getKafka(), "Kafka cannot be null");
+    topic = mustExist(config.getTopic(), "Topic cannot be null");
+    zlg = mustExist(config.getZlg(), "Zlg cannot be null");
+    printConfig = mustExist(config.isPrintConfig(), "Print config cannot be null");
+    consumerPipeConfig = mustExist(config.getConsumerPipeConfig(), "Consumer pipe config cannot be null");
     maxConsumerPipeYields = config.getMaxConsumerPipeYields();
     ioRetries = config.getIoRetries();
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
-    codecLocator = CodecRegistry.register(config.getCodec());
-    adminClient = kafka.getAdminClient();
+    final var codec = mustExist(config.getCodec(), "Codec cannot be null");
+    codecLocator = CodecRegistry.register(codec);
+    adminClient = mustExist(kafka.getAdminClient(), "Admin client cannot be null");
     offsetsResolver = new AdminClientOffsetsResolver(adminClient);
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
@@ -185,10 +187,10 @@ public final class KafkaLedger implements Ledger {
         .build();
     
     if (printConfig) kafka.describeProducer(zlg::i, producerDefaults, producerOverrides);
-    producer = kafka.getProducer(producerDefaults, producerOverrides);
+    producer = mustExist(kafka.getProducer(producerDefaults, producerOverrides), "Producer cannot be null");
     final var producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
-    producerPipe = 
-        new ProducerPipe<>(config.getProducerPipeConfig(), producer, producerPipeThreadName, zlg::w);
+    final var producerPipeConfig = mustExist(config.getProducerPipeConfig(), "Producer pipe config");
+    producerPipe = new ProducerPipe<>(producerPipeConfig, producer, producerPipeThreadName, zlg::w);
   }
   
   private void onRetry(WorkerThread t) throws InterruptedException {
@@ -210,6 +212,7 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public Object attach(MessageHandler handler) {
+    mustExist(handler, "Handler cannot be null");
     codecLock.readLock().lock();
     try {
       if (! disposing) {
@@ -355,21 +358,6 @@ public final class KafkaLedger implements Ledger {
     
     return handlerId;
   }
-  
-//  static String printOffsets(Map<TopicPartition, OffsetAndMetadata> offsets) {
-//    class TopicOffset {
-//      private final String topic;
-//      private final long offset;
-//      
-//      
-//    }
-//    
-//    offsets.entrySet().stream()
-//    .map(offset -> offset.getKey().topic())
-//    return () -> {
-//      return offsets.entryS
-//    };
-//  }
   
   static void queueRecords(Consumer<String, Message> consumer, 
                            ConsumerState consumerState,
@@ -526,6 +514,8 @@ public final class KafkaLedger implements Ledger {
 
   @Override
   public void append(Message message, AppendCallback callback) {
+    mustExist(message, "Message cannot be null");
+    mustExist(callback, "Callback cannot be null");
     final var record = 
         new ProducerRecord<>(topic, message.getShardIfAssigned(), message.getShardKey(), message);
     final Callback sendCallback = (metadata, exception) -> {
@@ -546,6 +536,7 @@ public final class KafkaLedger implements Ledger {
   @Override
   public void confirm(Object handlerId, MessageId messageId) {
     mustExist(handlerId, illegalState("Cannot confirm in an ungrouped context"));
+    mustExist(messageId, "Message ID cannot be null");
     final var consumerState = consumerStates.get(handlerId);
     confirm((DefaultMessageId) messageId, consumerState, topic, zlg);
   }

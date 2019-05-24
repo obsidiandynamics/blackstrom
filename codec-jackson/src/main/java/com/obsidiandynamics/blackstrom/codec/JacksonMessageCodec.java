@@ -28,6 +28,10 @@ public class JacksonMessageCodec implements MessageCodec {
         .setSerializationInclusion(Include.NON_NULL);
   }
   
+  public JacksonMessageCodec() {
+    this(true);
+  }
+  
   public JacksonMessageCodec(@YInject(name="mapPayload") boolean mapPayload, 
                              @YInject(name="expansions") JacksonExpansion... expansions) {
     this(createDefaultBaseMapper(), mapPayload, expansions);
