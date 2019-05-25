@@ -265,7 +265,7 @@ publishing {
   }
 }
 
-def packageDesc = "Transactional service mesh for the JVM"
+def packageDesc = "Transactional event fabric for the JVM"
 def repoName = "blackstrom"
 bintray {
   user = System.getenv(envUser)
