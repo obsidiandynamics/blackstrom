@@ -33,7 +33,7 @@ public final class KafkaLedgerConfig {
   private int ioRetries = 10;
   
   @YInject
-  private boolean drainConfirmations;
+  private boolean drainConfirmations = true;
   
   /** Upper bound on the time to allow for offset drainage (in milliseconds). The default value 
    *  is based on the default of {@code max.poll.interval.ms} — {@code 300_000}. */
