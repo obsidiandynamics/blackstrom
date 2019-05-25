@@ -3,12 +3,14 @@ package com.obsidiandynamics.blackstrom.ledger;
 import static java.util.Collections.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
@@ -48,22 +50,25 @@ public final class KafkaLedgerTest {
   }
   
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
-                                          boolean asyncProducer, boolean asyncConsumer, 
-                                          int pipelineSizeBatches, Zlg zlg) {
+                                          boolean asyncProducer, 
+                                          boolean asyncConsumer, 
+                                          int pipelineSizeBatches, 
+                                          Zlg zlg) {
     final var ledgerConfig = new KafkaLedgerConfig().withMaxConsumerPipeYields(1);
     return createLedger(kafka, ledgerConfig, asyncProducer, asyncConsumer, pipelineSizeBatches, zlg);
   }
   
   private static KafkaLedger createLedger(Kafka<String, Message> kafka, 
                                           KafkaLedgerConfig baseConfig,
-                                          boolean asyncProducer, boolean asyncConsumer, 
-                                          int pipelineSizeBatches, Zlg zlg) {
+                                          boolean asyncProducer, 
+                                          boolean asyncConsumer, 
+                                          int pipelineSizeBatches, 
+                                          Zlg zlg) {
     return new KafkaLedger(baseConfig
                            .withKafka(kafka)
                            .withTopic("test")
                            .withCodec(new NullMessageCodec())
                            .withZlg(zlg)
-                           .withDrainConfirmations(true)
                            .withProducerPipeConfig(new ProducerPipeConfig()
                                                    .withAsync(asyncProducer))
                            .withConsumerPipeConfig(new ConsumerPipeConfig()
@@ -157,14 +162,16 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testConfirm_commitCallbackExceptionLogger() {
+  public void testAttach_grouped_commitCallbackExceptionLogger() {
     final var logTarget = new MockLogTarget();
     final var exception = new Exception("simulated");
     final var kafka = new MockKafka<String, Message>()
         .withCommitExceptionGenerator(ExceptionGenerator.once(exception));
-    ledger = createLedger(kafka, false, true, 10, logTarget.logger());
+    final var baseConfig = new KafkaLedgerConfig().withDrainConfirmations(false);
+    ledger = createLedger(kafka, baseConfig, false, true, 10, logTarget.logger());
     final var groupId = "test";
-    
+
+    final var received = new AtomicInteger();
     ledger.attach(new MessageHandler() {
       @Override
       public String getGroupId() {
@@ -173,17 +180,118 @@ public final class KafkaLedgerTest {
 
       @Override
       public void onMessage(MessageContext context, Message message) {
+        assertTrue(context.isAssigned(message));
         try {
           context.beginAndConfirm(message);
         } catch (Throwable e) {
           e.printStackTrace();
+          fail("Unexpected exception: " + e);
         }
+        received.incrementAndGet();
+      }
+    });
+
+    ledger.append(new Proposal("B100", new String[0], null, 0));
+    wait.until(() -> {
+      assertEquals(1, received.get());
+      logTarget.entries().forLevel(LogLevel.WARN).containing("Error committing offsets").withThrowable(exception).assertCount(1);
+    });
+  }
+  
+  @Test
+  public void testAttach_grouped_receiveNormal() {
+    final var logTarget = new MockLogTarget();
+    final var groupId = "test";
+    final var kafka = new MockKafka<String, Message>(1, 100);
+    final var baseConfig = new KafkaLedgerConfig().withDrainConfirmations(true);
+    ledger = createLedger(kafka, baseConfig, false, false, 10, logTarget.logger());
+    
+    final var received = new AtomicInteger();
+    ledger.attach(new MessageHandler() {
+      @Override
+      public String getGroupId() {
+        return groupId;
+      }
+
+      @Override
+      public void onMessage(MessageContext context, Message message) {
+        assertTrue(context.isAssigned(message));
+        try {
+          context.beginAndConfirm(message);
+        } catch (Throwable e) {
+          e.printStackTrace();
+          fail("Unexpected exception: " + e);
+        }
+        received.incrementAndGet();
       }
     });
     
+    ledger.append(new Proposal("B100", new String[0], null, 0));
     wait.until(() -> {
-      ledger.append(new Proposal("B100", new String[0], null, 0));
-      logTarget.entries().forLevel(LogLevel.WARN).withThrowable(exception).assertCount(1);
+      assertEquals(1, received.get());
+    });
+  }
+  
+  @Test
+  public void testAttach_grouped_receiveSkipWithMonotonicityBreach() {
+    final var logTarget = new MockLogTarget();
+    final var adminClient = mock(AdminClient.class);
+    final var groupId = "test";
+    final var offsets = singletonMap(new TopicPartition("test", 0), new OffsetAndMetadata(0L));
+    final var listConsumerGroupOffsetsResult = new XListConsumerGroupOffsetsResult(KafkaFuture.completedFuture(offsets));
+    when(adminClient.listConsumerGroupOffsets(eq(groupId), isNotNull())).thenReturn(listConsumerGroupOffsetsResult);
+    
+    final var kafka = new MockKafka<String, Message>(1, 100)
+        .withAdminClientFactory(() -> adminClient);
+    ledger = createLedger(kafka, false, false, 10, logTarget.logger());
+    
+    final var received = new AtomicInteger();
+    ledger.attach(new MessageHandler() {
+      @Override
+      public String getGroupId() {
+        return groupId;
+      }
+
+      @Override
+      public void onMessage(MessageContext context, Message message) {
+        received.incrementAndGet();
+      }
+    });
+    
+    ledger.append(new Proposal("B100", new String[0], null, 0));
+    wait.until(() -> {
+      logTarget.entries().forLevel(LogLevel.DEBUG)
+      .containing("Skipping message at offset 0, partition 0: monotonicity constraint breached (previous offset 0)")
+      .assertCount(1);
+    });
+    assertEquals(0, received.get());
+  }
+  
+  @Test
+  public void testAttach_ungrouped_receiveNormal() {
+    final var logTarget = new MockLogTarget();
+    final var kafka = new MockKafka<String, Message>(1, 100);
+    final var baseConfig = new KafkaLedgerConfig().withDrainConfirmations(true);
+    ledger = createLedger(kafka, baseConfig, false, false, 10, logTarget.logger());
+    
+    final var received = new AtomicInteger();
+    ledger.attach(new NullGroupMessageHandler() {
+      @Override
+      public void onMessage(MessageContext context, Message message) {
+        assertTrue(context.isAssigned(message));
+        try {
+          context.beginAndConfirm(message);
+        } catch (Throwable e) {
+          e.printStackTrace();
+          fail("Unexpected exception: " + e);
+        }
+        received.incrementAndGet();
+      }
+    });
+    
+    ledger.append(new Proposal("B100", new String[0], null, 0));
+    wait.until(() -> {
+      assertEquals(1, received.get());
     });
   }
   
@@ -254,11 +362,11 @@ public final class KafkaLedgerTest {
     verify(handler, never()).onMessage(isNull(), eq(message));
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG)
-    .containing("Skipping message at offset 0, partition: 0: monotonicity constraint breached (previous offset 0)").assertCount(1);
+    .containing("Skipping message at offset 0, partition 0: monotonicity constraint breached (previous offset 0)").assertCount(1);
   }
   
   @Test
-  public void testHandleRecord_uithUnassignedTopic() {
+  public void testHandleRecord_withUnassignedTopic() {
     final var handler = mock(MessageHandler.class);
     final var consumerState = new ConsumerState();
     final var message = new Command("xid", null, 0);
@@ -303,6 +411,12 @@ public final class KafkaLedgerTest {
   @Test
   public void testCommitOffsets_withEnqueued() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
+    doAnswer(invocation -> {
+      final var callback = invocation.getArgument(1, OffsetCommitCallback.class);
+      callback.onComplete(emptyMap(), null);
+      return null;
+    }).when(consumer).commitAsync(any(), any());
+    
     final var consumerState = new ConsumerState();
     final var logTarget = new MockLogTarget();
     final var topicPartition = new TopicPartition("topic", 0);
@@ -321,6 +435,11 @@ public final class KafkaLedgerTest {
   @Test
   public void testCommitOffsets_withNoneEnqueued() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
+    doAnswer(invocation -> {
+      final var callback = invocation.getArgument(1, OffsetCommitCallback.class);
+      callback.onComplete(emptyMap(), null);
+      return null;
+    }).when(consumer).commitAsync(any(), any());
     final var consumerState = new ConsumerState();
     final var logTarget = new MockLogTarget();
     
@@ -470,6 +589,16 @@ public final class KafkaLedgerTest {
     KafkaLedger.queueRecords(consumer, null, consumerPipe, records, 1, logTarget.logger());
     verify(recordHandler).onReceive(isNotNull());
     logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testMutableOffset_tryAdvance() {
+    final var mutableOffset = new MutableOffset();
+    assertTrue(mutableOffset.tryAdvance(0));
+    assertEquals(0, mutableOffset.offset);
+    
+    assertFalse(mutableOffset.tryAdvance(0));
+    assertEquals(0, mutableOffset.offset);
   }
   
   private static ConsumerRecords<String, Message> getSingletonBatch() {

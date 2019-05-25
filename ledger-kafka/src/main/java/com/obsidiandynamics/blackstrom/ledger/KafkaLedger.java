@@ -480,7 +480,7 @@ public final class KafkaLedger implements Ledger {
     if (confirmedSnapshot != null) {
       zlg.t("Committing offsets %s", z -> z.arg(confirmedSnapshot));
       consumer.commitAsync(confirmedSnapshot, 
-                           (offsets, exception) -> logException(zlg, exception, "Error committing offsets %s", offsets));
+                           (offsets, exception) -> maybeLogException(zlg, exception, "Error committing offsets %s", offsets));
     }
   }
 
@@ -500,7 +500,7 @@ public final class KafkaLedger implements Ledger {
             consumerState.offsetsPending.put(partition, offset);
             consumerState.offsetsAccepted.put(partition, offset);
           } else {
-            zlg.d("Skipping message at offset %d, partition: %d: monotonicity constraint breached (previous offset %d)", 
+            zlg.d("Skipping message at offset %d, partition %d: monotonicity constraint breached (previous offset %d)", 
                   z -> z.arg(record::offset).arg(record::partition).arg(mutableOffset.offset));
           }
         } else {
@@ -570,10 +570,12 @@ public final class KafkaLedger implements Ledger {
     }
   }
 
-  private static void logException(Zlg zlg, Exception cause, String messageFormat, Object... messageArgs) {
-    if (cause != null) {
-      zlg.w(String.format(messageFormat, messageArgs), cause);
-    }
+  private static void maybeLogException(Zlg zlg, Exception exception, String messageFormat, Object messageArg) {
+    if (exception != null) logException(zlg, exception, messageFormat, messageArg);
+  }
+
+  private static void logException(Zlg zlg, Exception exception, String messageFormat, Object messageArg) {
+    zlg.w(messageFormat, z -> z.arg(messageArg).threw(exception));
   }
 
   @Override
