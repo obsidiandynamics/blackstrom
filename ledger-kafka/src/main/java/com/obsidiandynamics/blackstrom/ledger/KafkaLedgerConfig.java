@@ -18,10 +18,10 @@ public final class KafkaLedgerConfig {
   private MessageCodec codec;
   
   @YInject
-  private ProducerPipeConfig producerPipeConfig = new ProducerPipeConfig().withAsync(false);
+  private ProducerPipeConfig producerPipeConfig = new ProducerPipeConfig().withAsync(true);
   
   @YInject
-  private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true);
+  private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true).withBacklogBatches(16);
   
   @YInject
   private int maxConsumerPipeYields = 100;
