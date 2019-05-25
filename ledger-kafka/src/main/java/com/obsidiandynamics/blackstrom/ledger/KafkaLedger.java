@@ -120,7 +120,7 @@ public final class KafkaLedger implements Ledger {
     Map<TopicPartition, OffsetAndMetadata> offsetsConfirmed = new HashMap<>();
     
     /** Pending offsets for messages that have been accepted for processing, but haven't yet been confirmed. */
-    Map<Integer, Long> offsetsPending = new HashMap<>();
+    final Map<Integer, Long> offsetsPending = new HashMap<>();
     
     /** Offsets for messages that have been accepted for processing. This map is cleared after drainage. */
     Map<Integer, Long> offsetsAccepted = new HashMap<>();
@@ -319,7 +319,7 @@ public final class KafkaLedger implements Ledger {
         final var partitions = infos.stream()
             .map(i -> new TopicPartition(i.topic(), i.partition()))
             .collect(Collectors.toList());
-        zlg.t("Assigning: infos: %s, partitions: %s", z -> z.arg(infos).arg(partitions));
+        zlg.t("Assigning partitions; infos: %s, partitions: %s", z -> z.arg(infos).arg(partitions));
         final var endOffsets = consumer.endOffsets(partitions);
         consumer.assign(partitions);
         for (var entry : endOffsets.entrySet()) {
@@ -466,6 +466,12 @@ public final class KafkaLedger implements Ledger {
       if (! consumerState.offsetsConfirmed.isEmpty()) {
         confirmedSnapshot = consumerState.offsetsConfirmed;
         consumerState.offsetsConfirmed = new HashMap<>(confirmedSnapshot.size());
+        
+        for (var partitionOffset : confirmedSnapshot.entrySet()) {
+          final var partition = partitionOffset.getKey().partition();
+          final var offset = partitionOffset.getValue().offset();
+          consumerState.processedOffsetForPartition(partition).tryAdvance(offset);
+        }
       } else {
         confirmedSnapshot = null;
       }
@@ -480,8 +486,8 @@ public final class KafkaLedger implements Ledger {
 
   static void handleRecord(MessageHandler handler, ConsumerState consumerState, MessageContext context,
                            ConsumerRecord<String, Message> record, Zlg zlg) {
-    final int partition = record.partition();
-    final long offset = record.offset();
+    final var partition = record.partition();
+    final var offset = record.offset();
     final boolean accepted;
     if (consumerState != null) {
       synchronized (consumerState.lock) {
@@ -489,7 +495,7 @@ public final class KafkaLedger implements Ledger {
         final var canAccept = consumerState.assignedPartitions.contains(partition);
         if (canAccept) {
           final var mutableOffset = consumerState.processedOffsetForPartition(partition);
-          accepted = mutableOffset.tryAdvance(offset);
+          accepted = mutableOffset.canAdvance(offset);
           if (accepted) {
             consumerState.offsetsPending.put(partition, offset);
             consumerState.offsetsAccepted.put(partition, offset);
