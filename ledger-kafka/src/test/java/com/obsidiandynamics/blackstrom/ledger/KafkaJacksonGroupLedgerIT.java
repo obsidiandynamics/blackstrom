@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.junit.*;
@@ -31,10 +30,10 @@ public final class KafkaJacksonGroupLedgerIT extends AbstractGroupLedgerTest {
   private final String topic = TestTopic.of(KafkaJacksonGroupLedgerIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);
   
   @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException {
+  public void before() throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaDefaults.TOPIC_OPERATION);
+      TestTopic.createTopics(admin, TestTopic.newOf(topic));
     }
   }
   

@@ -4,7 +4,6 @@ import static com.obsidiandynamics.props.Props.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.jgroups.*;
@@ -54,10 +53,10 @@ public final class KafkaRig {
   private static final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers(bootstrapServers);
 
-  private static void before() throws InterruptedException, ExecutionException, TimeoutException {
+  private static void before() throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(encoding.getTopic())), KafkaDefaults.TOPIC_OPERATION);
+      TestTopic.createTopics(admin, TestTopic.newOf(encoding.getTopic()));
     }
   }
   

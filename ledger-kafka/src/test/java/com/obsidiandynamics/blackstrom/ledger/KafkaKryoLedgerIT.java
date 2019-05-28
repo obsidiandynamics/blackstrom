@@ -1,8 +1,5 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
-import java.util.*;
-import java.util.concurrent.*;
-
 import org.apache.kafka.clients.admin.*;
 import org.junit.*;
 import org.junit.runner.*;
@@ -24,10 +21,10 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
   private final String topic = TestTopic.of(KafkaKryoLedgerIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
   
   @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException {
+  public void before() throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(topic)), KafkaDefaults.TOPIC_OPERATION);
+      TestTopic.createTopics(admin, TestTopic.newOf(topic));
     }
   }
   

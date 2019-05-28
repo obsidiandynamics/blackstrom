@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.bank;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.junit.*;
@@ -39,11 +38,10 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
   }
   
   @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException {
+  public void before() throws Exception {
     try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(getTopic(Guidance.AUTONOMOUS))), KafkaDefaults.TOPIC_OPERATION);
-      admin.createTopics(Collections.singleton(TestTopic.newOf(getTopic(Guidance.COORDINATED))), KafkaDefaults.TOPIC_OPERATION);
+      TestTopic.createTopics(admin, TestTopic.newOf(getTopic(Guidance.AUTONOMOUS)), TestTopic.newOf(getTopic(Guidance.COORDINATED)));
     }
   }
   
