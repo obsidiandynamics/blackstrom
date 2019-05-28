@@ -56,22 +56,22 @@ allprojects {
     assertjVersion = "3.12.2"
     commonsLangVersion = "3.9"
     equalsverifierVersion = "3.1.9"
-    fulcrumVersion = "0.32.0"
+    fulcrumVersion = "0.33.0"
     hazelcastVersion = "3.12"
     hdrHistogramVersion = "2.1.11"
-    jackdawVersion = "1.24.0"
+    jackdawVersion = "1.25.0"
     jacksonVersion = "2.9.9"
-    jgroupsVersion = "4.0.19.Final"
+    jgroupsVersion = "4.1.0.Final"
     junitVersion = "4.12"
     log4jVersion = "1.2.17"
     kafkaVersion = "2.2.0"
     kryoVersion = "5.0.0-RC4"
-    meteorVersion = "0.20.0"
+    meteorVersion = "0.21.0"
     mockitoVersion = "2.27.0"
     pojotesterVersion = "0.9.0"
     slf4jVersion = "1.7.25"
-    yconfVersion = "0.16.0"
-    zerologVersion = "0.27.0"
+    yconfVersion = "0.17.0"
+    zerologVersion = "0.28.0"
   }
   
   dependencies {
@@ -121,7 +121,7 @@ allprojects {
   }
 
   jacoco {
-    toolVersion = "0.8.3"
+    toolVersion = "0.8.4"
   }
   
   task verify {  
