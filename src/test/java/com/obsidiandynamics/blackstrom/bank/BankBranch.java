@@ -30,7 +30,7 @@ public final class BankBranch implements Cohort.Base {
   
   private final int gcIntervalMillis = 1_000;
   
-  private final int outcomeLifetimeMillis = 1_000;
+  private final int outcomeLifetimeMillis = 60_000;
   
   private final Predicate<Message> messageFilter;
   
