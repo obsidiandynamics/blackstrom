@@ -1,7 +1,6 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import static com.obsidiandynamics.func.Functions.*;
-import static com.obsidiandynamics.zerolog.Args.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -10,7 +9,6 @@ import java.util.concurrent.locks.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.*;
@@ -40,8 +38,6 @@ public final class KafkaLedger implements Ledger {
 
   private final Kafka<String, Message> kafka;
   
-  private final AdminClient adminClient;
-
   private final String topic;
 
   private final Zlg zlg;
@@ -65,8 +61,6 @@ public final class KafkaLedger implements Ledger {
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
   
   private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>();
-  
-  private final ConsumerGroupOffsetsResolver offsetsResolver;
   
   private final boolean printConfig;
   
@@ -161,8 +155,6 @@ public final class KafkaLedger implements Ledger {
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
     final var codec = mustExist(config.getCodec(), "Codec cannot be null");
     codecLocator = CodecRegistry.register(codec);
-    adminClient = kafka.getAdminClient();
-    offsetsResolver = new AdminClientOffsetsResolver(adminClient);
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
         .onCycle(this::onRetry)
@@ -298,15 +290,7 @@ public final class KafkaLedger implements Ledger {
                 .map(TopicPartition::partition)
                 .collect(Collectors.toSet());
             
-            final var consumerGroupOffsets = offsetsResolver.resolve(groupId, assignedPartitions);
             synchronized (consumerState.lock) {
-              zlg.t("Advancing consumer offsets; group: %s, offsets: %s", 
-                    z -> z.arg(groupId).arg(map(ref(consumerGroupOffsets), PartitionOffset::summarise)));
-              for (var partitionOffset : consumerGroupOffsets.entrySet()) {
-                final var partition = partitionOffset.getKey().partition();
-                final var offset = partitionOffset.getValue().offset();
-                consumerState.processedOffsetForPartition(partition).tryAdvance(offset);
-              }
               consumerState.assignedPartitions = assignedPartitionIndexes;
               consumerState.heldPartitions = assignedPartitionIndexes;
             }
@@ -469,8 +453,9 @@ public final class KafkaLedger implements Ledger {
         
         for (var partitionOffset : confirmedSnapshot.entrySet()) {
           final var partition = partitionOffset.getKey().partition();
+          // the committed offset is always the last processed offset + 1
           final var offset = partitionOffset.getValue().offset();
-          consumerState.processedOffsetForPartition(partition).tryAdvance(offset);
+          consumerState.processedOffsetForPartition(partition).tryAdvance(offset - 1);
         }
       } else {
         confirmedSnapshot = null;
@@ -555,7 +540,7 @@ public final class KafkaLedger implements Ledger {
     final var partition = messageId.getShard();
     final var topicPartition = new TopicPartition(topic, partition);
     final var offset = messageId.getOffset();
-    final var offsetAndMetadata = new OffsetAndMetadata(offset);
+    final var offsetAndMetadata = new OffsetAndMetadata(offset + 1); // committed offset is last processed + 1
     synchronized (consumerState.lock) {
       consumerState.offsetsConfirmed.put(topicPartition, offsetAndMetadata);
       consumerState.offsetsPending.computeIfPresent(partition, (_partition, _offset) -> {
@@ -607,6 +592,5 @@ public final class KafkaLedger implements Ledger {
     } finally {
       codecLock.writeLock().unlock();
     }
-    adminClient.close();
   }
 }

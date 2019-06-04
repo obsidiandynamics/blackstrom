@@ -9,6 +9,11 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.threads.*;
 
+/**
+ *  Sample consumer. <p>
+ *  
+ *  To inspect the lag, run {@code kafka-consumer-groups --bootstrap-server localhost:9092 --describe --group run-kafka-ledger-consumer}.
+ */
 public final class RunKafkaLedgerConsumer {
   public static void main(String[] args) {
     final var groupId = "run-kafka-ledger-consumer";

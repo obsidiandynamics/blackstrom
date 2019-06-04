@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.*;
@@ -233,41 +232,6 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testAttach_grouped_receiveSkipWithMonotonicityBreach() {
-    final var logTarget = new MockLogTarget();
-    final var adminClient = mock(AdminClient.class);
-    final var groupId = "test";
-    final var offsets = singletonMap(new TopicPartition("test", 0), new OffsetAndMetadata(0L));
-    final var listConsumerGroupOffsetsResult = new XListConsumerGroupOffsetsResult(KafkaFuture.completedFuture(offsets));
-    when(adminClient.listConsumerGroupOffsets(eq(groupId), isNotNull())).thenReturn(listConsumerGroupOffsetsResult);
-    
-    final var kafka = new MockKafka<String, Message>(1, 100)
-        .withAdminClientFactory(() -> adminClient);
-    ledger = createLedger(kafka, false, false, 10, logTarget.logger());
-    
-    final var received = new AtomicInteger();
-    ledger.attach(new MessageHandler() {
-      @Override
-      public String getGroupId() {
-        return groupId;
-      }
-
-      @Override
-      public void onMessage(MessageContext context, Message message) {
-        received.incrementAndGet();
-      }
-    });
-    
-    ledger.append(new Proposal("B100", new String[0], null, 0));
-    wait.until(() -> {
-      logTarget.entries().forLevel(LogLevel.DEBUG)
-      .containing("Skipping message at offset 0, partition 0: monotonicity constraint breached (previous offset 0)")
-      .assertCount(1);
-    });
-    assertEquals(0, received.get());
-  }
-  
-  @Test
   public void testAttach_ungrouped_receiveNormal() {
     final var logTarget = new MockLogTarget();
     final var kafka = new MockKafka<String, Message>(1, 100);
@@ -389,7 +353,7 @@ public final class KafkaLedgerTest {
     
     KafkaLedger.confirm(messageId, consumerState, "topic", logTarget.logger());
     assertTrue(consumerState.offsetsConfirmed.containsKey(new TopicPartition("topic", 0)));
-    assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(100L)));
+    assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(101L)));
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.TRACE).containing("intermediate").assertCount(1);
   }
@@ -403,7 +367,7 @@ public final class KafkaLedgerTest {
     
     KafkaLedger.confirm(messageId, consumerState, "topic", logTarget.logger());
     assertTrue(consumerState.offsetsConfirmed.containsKey(new TopicPartition("topic", 0)));
-    assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(100L)));
+    assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(101L)));
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.TRACE).containing("last").assertCount(1);
   }
@@ -426,7 +390,7 @@ public final class KafkaLedgerTest {
     
     KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
     assertEquals(1, consumerState.offsetsProcessed.size());
-    assertEquals(offsetsAndMetadata.offset(), consumerState.offsetsProcessed.get(topicPartition.partition()).offset);
+    assertEquals(offsetsAndMetadata.offset() - 1, consumerState.offsetsProcessed.get(topicPartition.partition()).offset);
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets").assertCount(1);
     verify(consumer).commitAsync(eq(offsetsConfirmed), isNotNull());
