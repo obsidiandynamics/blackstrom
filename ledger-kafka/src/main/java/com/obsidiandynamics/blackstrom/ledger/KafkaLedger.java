@@ -170,24 +170,24 @@ public final class KafkaLedger implements Ledger {
 
     // may be user-specified in config
     final var producerDefaults = new PropsBuilder()
-        .withSystemDefault("enable.idempotence", true)
-        .withSystemDefault("batch.size", 1 << 18)
-        .withSystemDefault("linger.ms", 1)
-        .withSystemDefault("compression.type", "lz4")
-        .withSystemDefault("request.timeout.ms", 120_000)
-        .withSystemDefault("delivery.timeout.ms", 120_001)
-        .withSystemDefault("retries", 10_000)
-        .withSystemDefault("retry.backoff.ms", 100)
+        .withSystemDefault(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true)
+        .withSystemDefault(ProducerConfig.BATCH_SIZE_CONFIG, 1 << 18)
+        .withSystemDefault(ProducerConfig.LINGER_MS_CONFIG, 1)
+        .withSystemDefault(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4")
+        .withSystemDefault(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 120_000)
+        .withSystemDefault(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120_001)
+        .withSystemDefault(ProducerConfig.RETRIES_CONFIG, 10_000)
+        .withSystemDefault(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 100)
         .build();
 
     // set by the application — required for correctness (overrides user config)
     final var producerOverrides = new PropsBuilder()
-        .with("key.serializer", StringSerializer.class.getName())
-        .with("value.serializer", KafkaMessageSerializer.class.getName())
+        .with(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName())
+        .with(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaMessageSerializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
-        .with("acks", "all")
-        .with("max.in.flight.requests.per.connection", 1)
-        .with("max.block.ms", Long.MAX_VALUE)
+        .with(ProducerConfig.ACKS_CONFIG, "all")
+        .with(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
+        .with(ProducerConfig.MAX_BLOCK_MS_CONFIG, Long.MAX_VALUE)
         .build();
     
     if (printConfig) kafka.describeProducer(zlg::i, producerDefaults, producerOverrides);
@@ -240,19 +240,19 @@ public final class KafkaLedger implements Ledger {
     
     // may be user-specified in config
     final var consumerDefaults = new PropsBuilder()
-        .withSystemDefault("session.timeout.ms", 6_000)
-        .withSystemDefault("heartbeat.interval.ms", 2_000)
-        .withSystemDefault("max.poll.records", 10_000)
+        .withSystemDefault(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 6_000)
+        .withSystemDefault(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 2_000)
+        .withSystemDefault(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10_000)
         .build();
 
     // set by the application — required for correctness (overrides user config)
     final var consumerOverrides = new PropsBuilder()
-        .with("group.id", groupId)
-        .with("auto.offset.reset", autoOffsetReset)
-        .with("enable.auto.commit", false)
-        .with("auto.commit.interval.ms", 0)
-        .with("key.deserializer", StringDeserializer.class.getName())
-        .with("value.deserializer", KafkaMessageDeserializer.class.getName())
+        .with(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+        .with(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset)
+        .with(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false)
+        .with(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 0)
+        .with(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName())
+        .with(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaMessageDeserializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .build();
     
