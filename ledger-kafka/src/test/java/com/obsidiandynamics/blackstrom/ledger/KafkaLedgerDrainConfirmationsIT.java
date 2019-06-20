@@ -41,7 +41,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
   }
   
   private final KafkaClusterConfig config = new KafkaClusterConfig()
-      .withBootstrapServers("localhost:9092")
+      .withBootstrapServers(TestKafka.bootstrapServers())
       .withProducerProps(new PropsBuilder()
                          .build())
       .withConsumerProps(new PropsBuilder()

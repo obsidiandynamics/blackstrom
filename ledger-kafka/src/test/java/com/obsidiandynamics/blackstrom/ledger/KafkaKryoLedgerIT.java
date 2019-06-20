@@ -16,7 +16,7 @@ public final class KafkaKryoLedgerIT extends AbstractLedgerTest {
     TestKafka.start();
   }
   
-  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(TestKafka.bootstrapServers());
   
   private final String topic = TestTopic.of(KafkaKryoLedgerIT.class, "kryo", KryoMessageCodec.ENCODING_VERSION);
   

@@ -28,7 +28,7 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
     TestKafka.start();
   }
   
-  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(TestKafka.bootstrapServers());
   
   private static String getTopic(Guidance guidance) { 
     return TestTopic.of(KafkaKryoRandomBankTransferIT.class, "kryo", 

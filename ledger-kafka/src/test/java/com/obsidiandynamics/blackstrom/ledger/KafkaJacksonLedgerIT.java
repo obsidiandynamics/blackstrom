@@ -23,7 +23,7 @@ public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   
   private final String topic = TestTopic.of(KafkaJacksonLedgerIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);
   
-  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(TestKafka.bootstrapServers());
   
   @Before
   public void before() throws Exception {

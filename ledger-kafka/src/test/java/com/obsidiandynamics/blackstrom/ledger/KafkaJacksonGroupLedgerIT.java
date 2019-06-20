@@ -25,7 +25,7 @@ public final class KafkaJacksonGroupLedgerIT extends AbstractGroupLedgerTest {
     TestKafka.start();
   }
   
-  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+  private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(TestKafka.bootstrapServers());
   
   private final String topic = TestTopic.of(KafkaJacksonGroupLedgerIT.class, "json", JacksonMessageCodec.ENCODING_VERSION);
   

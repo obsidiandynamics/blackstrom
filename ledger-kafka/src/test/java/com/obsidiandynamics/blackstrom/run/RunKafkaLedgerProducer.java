@@ -11,7 +11,7 @@ import com.obsidiandynamics.threads.*;
 
 public final class RunKafkaLedgerProducer {
   public static void main(String[] args) {
-    final var kafkaConfig = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
+    final var kafkaConfig = new KafkaClusterConfig().withBootstrapServers(TestKafka.bootstrapServers());
     final var kafka = new KafkaCluster<String, Message>(kafkaConfig);
     final var ledgerConfig = new KafkaLedgerConfig()
         .withTopic("run-kafka-ledger")

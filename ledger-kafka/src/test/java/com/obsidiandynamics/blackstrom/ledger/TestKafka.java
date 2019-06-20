@@ -17,6 +17,10 @@ public final class TestKafka {
   
   private static final int PORT_CHECK_TIMEOUT = 10_000;
   
+  public static String bootstrapServers() {
+    return KAFKA_HOST + ":" + KAFKA_PORT;
+  }
+  
   public static void start() throws IOException, InterruptedException {
     try (var lock = DockerFSLock.getRoot().acquire("kafka")) {
       if (! Sockets.isRemotePortListening(KAFKA_HOST, KAFKA_PORT, PORT_CHECK_TIMEOUT)) {
