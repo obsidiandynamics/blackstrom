@@ -13,7 +13,7 @@ import com.obsidiandynamics.testmark.*;
 public final class KafkaJacksonLedgerIT extends AbstractLedgerTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
-    new KafkaDocker().withComposeFile("stack/docker-compose.yaml").start();
+    TestKafka.start();
   }
   
   @Override

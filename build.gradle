@@ -35,6 +35,16 @@ def baseJvmArgs = [
 ]
 project.ext.set("baseJvmArgs", baseJvmArgs)
 
+def getBlackstromSystemProperties() {
+  def filteredProps = new Properties()
+  for (def propKey : System.getProperties().stringPropertyNames()) {
+    if (propKey.startsWith("blackstrom.")) {
+      filteredProps.setProperty(propKey, System.getProperties().getProperty(propKey))
+    }
+  }
+  return filteredProps
+}
+
 allprojects {
   apply plugin: "java"
   apply plugin: "jacoco"
@@ -113,11 +123,13 @@ allprojects {
   test {
     exclude "**/*IT.class"
     jvmArgs += baseJvmArgs
+    systemProperties getBlackstromSystemProperties()
   }
   
   task integrationTest(type: Test, description: "Runs integration tests", group: "Verification") {
     include "**/*IT.class"
     jvmArgs += baseJvmArgs
+    systemProperties getBlackstromSystemProperties()
   }
 
   jacoco {

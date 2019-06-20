@@ -4,6 +4,7 @@ version = project(":").version
 dependencies {
   compile project(":")
   
+  testCompile "com.obsidiandynamics.fulcrum:fulcrum-fslock:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
   testCompile "org.jgroups:jgroups:${jgroupsVersion}"

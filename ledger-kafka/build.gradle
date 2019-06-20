@@ -15,6 +15,7 @@ dependencies {
   testCompile project(":blackstrom-sim")
   testCompile project(":blackstrom-sim").sourceSets.test.output
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-docker-compose:${fulcrumVersion}"
+  testCompile "com.obsidiandynamics.fulcrum:fulcrum-fslock:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-random:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"

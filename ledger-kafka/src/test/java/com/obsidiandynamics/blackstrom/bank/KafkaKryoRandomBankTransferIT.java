@@ -25,7 +25,7 @@ public final class KafkaKryoRandomBankTransferIT extends AbstractRandomBankTrans
   
   @BeforeClass
   public static void beforeClass() throws Exception {
-    new KafkaDocker().withComposeFile("stack/docker-compose.yaml").start();
+    TestKafka.start();
   }
   
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");

@@ -24,7 +24,7 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
   
   @BeforeClass
   public static void beforeClass() throws Exception {
-    new KafkaDocker().withComposeFile("stack/docker-compose.yaml").start();
+    TestKafka.start();
   }
   
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers("localhost:9092");
