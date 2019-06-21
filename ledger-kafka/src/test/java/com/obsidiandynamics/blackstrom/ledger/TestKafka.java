@@ -24,7 +24,7 @@ public final class TestKafka {
   public static void start() throws IOException, InterruptedException {
     try (var lock = DockerFSLock.getRoot().acquire("kafka")) {
       if (! Sockets.isRemotePortListening(KAFKA_HOST, KAFKA_PORT, PORT_CHECK_TIMEOUT)) {
-        if (KAFKA_HOST.equals("localhost")) {
+        if (KAFKA_HOST.equals("localhost") || KAFKA_HOST.equals("dind")) {
           final var kafkaDocker = new KafkaDocker().withComposeFile("stack/docker-compose.yaml").withPort(KAFKA_PORT);
           Exceptions.wrap(kafkaDocker::start, RuntimeException::new);
         } else {
