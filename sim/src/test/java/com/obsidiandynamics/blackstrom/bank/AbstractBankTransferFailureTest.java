@@ -46,6 +46,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     
     for (TargetFactor target : TargetFactor.values()) {
       for (RxTxFailureModes failureModes : presetFailureModesArray) {
+        zlg.i("Scenario: target: %s, failureModes: %s", z -> z.arg(target).arg(failureModes));
         boolean success = false;
         try {
           testFactorFailure(new FailureModes().set(target, failureModes));
