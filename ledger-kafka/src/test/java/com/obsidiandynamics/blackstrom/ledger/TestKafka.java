@@ -25,7 +25,10 @@ public final class TestKafka {
     try (var lock = DockerFSLock.getRoot().acquire("kafka")) {
       if (! Sockets.isRemotePortListening(KAFKA_HOST, KAFKA_PORT, PORT_CHECK_TIMEOUT)) {
         if (KAFKA_HOST.equals("localhost") || KAFKA_HOST.equals("dind")) {
-          final var kafkaDocker = new KafkaDocker().withComposeFile("stack/docker-compose.yaml").withPort(KAFKA_PORT);
+          final var kafkaDocker = new KafkaDocker()
+              .withComposeFile("stack/docker-compose.yaml")
+              .withHost(KAFKA_HOST)
+              .withPort(KAFKA_PORT);
           Exceptions.wrap(kafkaDocker::start, RuntimeException::new);
         } else {
           fail(String.format("Kafka not available on %s:%d", KAFKA_HOST, KAFKA_PORT));
