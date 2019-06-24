@@ -303,8 +303,8 @@ public final class KafkaLedger implements Ledger {
         final var partitions = infos.stream()
             .map(i -> new TopicPartition(i.topic(), i.partition()))
             .collect(Collectors.toList());
-        zlg.t("Assigning partitions; infos: %s, partitions: %s", z -> z.arg(infos).arg(partitions));
         final var endOffsets = consumer.endOffsets(partitions);
+        zlg.t("Assigning all partitions; end offsets: %s", z -> z.arg(endOffsets));
         consumer.assign(partitions);
         for (var entry : endOffsets.entrySet()) {
           consumer.seek(entry.getKey(), entry.getValue());
