@@ -36,6 +36,8 @@ public final class BankBranch implements Cohort.Base {
   
   private final AtomicLong outcomes = new AtomicLong();
   
+  private int logLevel = LogLevel.TRACE;
+  
   private long balance;
   
   private long escrow;
@@ -51,6 +53,11 @@ public final class BankBranch implements Cohort.Base {
         .onCycle(this::gcCycle)
         .build();
     if (idempotencyEnabled) gcThread.start();
+  }
+  
+  public BankBranch withLogLevel(int logLevel) {
+    this.logLevel = logLevel;
+    return this;
   }
   
   private void gcCycle(WorkerThread thread) throws InterruptedException {
@@ -77,7 +84,7 @@ public final class BankBranch implements Cohort.Base {
         }
       }
 
-      zlg.t("%s: reaped %,d lapsed outcomes", z -> z.arg(branchId).arg(deathRow::size));
+      zlg.level(logLevel).format("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow::size).log();
     }
   }
   
@@ -103,10 +110,10 @@ public final class BankBranch implements Cohort.Base {
       if (xfer == null) return; // settlement doesn't apply to this branch
     
       if (idempotencyEnabled) {
-        zlg.t("%s: %s", z -> z.arg(branchId).arg(proposal));
+        zlg.level(logLevel).format("%s: %s").arg(branchId).arg(proposal).log();
         synchronized (lock) {
           if (decided.containsKey(proposal.getXid())) {
-            zlg.t("%s: ignoring, already decided", z -> z.arg(branchId));
+            zlg.level(logLevel).format("%s: ignoring, already decided").arg(branchId).log();
             return;
           }
         }
@@ -122,13 +129,13 @@ public final class BankBranch implements Cohort.Base {
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
-          zlg.t("%s: accepting %s", z -> z.arg(branchId).arg(proposal::getXid));
+          zlg.level(logLevel).format("%s: accepting %s").arg(branchId).arg(proposal::getXid).log();
         } else {
           intent = Intent.ACCEPT;
-          zlg.t("%s: retransmitting previous acceptance", z -> z.arg(branchId));
+          zlg.level(logLevel).format("%s: retransmitting previous acceptance").arg(branchId).log();
         }
       } else {
-        zlg.t("%s: rejecting %s, balance: %,d", z -> z.arg(branchId).arg(proposal::getXid).arg(balance));
+        zlg.level(logLevel).format("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal::getXid).arg(balance).log();
         intent = Intent.REJECT;
       }
       
@@ -152,7 +159,7 @@ public final class BankBranch implements Cohort.Base {
       
       final Proposal proposal = proposals.remove(outcome.getXid());
       if (proposal == null) {
-        zlg.t("%s: no applicable outcome for ballot %s", z -> z.arg(branchId).arg(outcome::getXid));
+        zlg.level(logLevel).format("%s: no applicable outcome for ballot %s").arg(branchId).arg(outcome::getXid).log();
         return; // outcome doesn't apply to this branch
       }
       
@@ -173,7 +180,7 @@ public final class BankBranch implements Cohort.Base {
         balance += xferAmount;
       }
       
-      zlg.t("%s: finalising %s", z -> z.arg(branchId).arg(outcome));
+      zlg.level(logLevel).format("%s: finalising %s").arg(branchId).arg(outcome).log();
     } finally {
       context.beginAndConfirm(outcome);
     }
