@@ -150,13 +150,12 @@ public final class KafkaLedgerTest {
   @Test
   public void testSend_runtimeException() {
     final var logTarget = new MockLogTarget();
-    final var exception = new IllegalStateException("simulated");
     final var kafka = new MockKafka<String, Message>()
-        .withSendRuntimeExceptionGenerator(ExceptionGenerator.once(exception));
+        .withSendRuntimeExceptionGenerator(ExceptionGenerator.once(new IllegalStateException("simulated")));
     ledger = createLedger(kafka, false, true, 10, logTarget.logger());
     ledger.append(new Proposal("B100", new String[0], null, 0), AppendCallback.nop());
     wait.until(() -> {
-      logTarget.entries().forLevel(LogLevel.WARN).withThrowable(exception).assertCount(1);
+      logTarget.entries().forLevel(LogLevel.WARN).withThrowableType(ProducerException.class).assertCount(1);
     });
   }
   
