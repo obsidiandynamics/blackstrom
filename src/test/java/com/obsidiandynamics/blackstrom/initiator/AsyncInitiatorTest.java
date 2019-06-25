@@ -17,6 +17,7 @@ import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class AsyncInitiatorTest {
   private Manifold manifold;
@@ -29,7 +30,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testQueryWithFuture() throws Exception {
+  public void testQuery_withFuture() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -53,7 +54,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test(expected=TimeoutException.class)
-  public void testQueryWithFutureTimeoutDueToCancel() throws Exception {
+  public void testQuery_withFutureTimeoutDueToCancel() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     manifold = Manifold.builder()
         .withLedger(new SingleNodeQueueLedger())
@@ -74,7 +75,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test(expected=TimeoutException.class)
-  public void testQueryWithFutureTimeoutDueToNoResponse() throws Exception {
+  public void testQuery_withFutureTimeoutDueToNoResponse() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     manifold = Manifold.builder()
         .withLedger(new SingleNodeQueueLedger())
@@ -95,7 +96,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testQueryWithResponseCallback() throws Exception {
+  public void testQuery_withResponseCallback() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -123,8 +124,8 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testCommandWithFuture() throws Exception {
-    final AsyncInitiator initiator = new AsyncInitiator();
+  public void testCommand_withFuture() throws Exception {
+    final AsyncInitiator initiator = new AsyncInitiator().withLogLevel(LogLevel.TRACE);
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
         .withLedger(new SingleNodeQueueLedger())
@@ -147,7 +148,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testCommandWithResponseCallback() throws Exception {
+  public void testCommand_withResponseCallback() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -175,7 +176,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testProposalWithFuture() throws Exception {
+  public void testProposal_withFuture() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -200,7 +201,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testProposalWithResponseCallback() throws Exception {
+  public void testProposal_withResponseCallback() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -231,7 +232,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testProposalWithResponseAndAppendCallbacks() throws Exception {
+  public void testProposal_withResponseAndAppendCallbacks() throws Exception {
     final AsyncInitiator initiator = new AsyncInitiator();
     final AtomicInteger called = new AtomicInteger();
     manifold = Manifold.builder()

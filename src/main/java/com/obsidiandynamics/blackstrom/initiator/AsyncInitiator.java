@@ -10,11 +10,21 @@ import com.obsidiandynamics.blackstrom.handler.Groupable.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.func.*;
+import com.obsidiandynamics.zerolog.*;
 
 public final class AsyncInitiator implements Initiator, NullGroup, Disposable.Nop {
+  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  
   private final Map<String, Consumer<?>> pending = new ConcurrentHashMap<>();
+
+  private int logLevel = LogLevel.TRACE; 
   
   private Ledger ledger;
+  
+  public AsyncInitiator withLogLevel(int logLevel) {
+    this.logLevel = logLevel;
+    return this;
+  }
   
   @Override
   public void init(InitContext context) {
@@ -50,7 +60,7 @@ public final class AsyncInitiator implements Initiator, NullGroup, Disposable.No
   
   private <REQ extends Message, RES extends Message> CompletableFuture<RES> genericInitiate(REQ request, 
                                                                                             AppendCallback appendCallback) {
-    final CompletableFuture<RES> f = new CompletableFuture<>();
+    final var f = new CompletableFuture<RES>();
     this.genericInitiate(request, f::complete, appendCallback);
     return f;
   }
@@ -127,9 +137,12 @@ public final class AsyncInitiator implements Initiator, NullGroup, Disposable.No
   }
   
   private void onMessage(MessageContext context, Message message) {
-    final Consumer<?> callback = pending.remove(message.getXid());
+    final var callback = pending.remove(message.getXid());
     if (callback != null) {
+      zlg.level(logLevel).format("Matched response %s").arg(message).log();
       callback.accept(Classes.cast(message));
+    } else {
+      zlg.level(logLevel).format("Unmatched response %s").arg(message).log();
     }
   }
 }
