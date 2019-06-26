@@ -46,11 +46,13 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
     return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(new KafkaCluster<>(config))
                            .withTopic(getTopic(guidance))
+                           .withConsumerPipeConfig(new ConsumerPipeConfig().withAsync(false))
+                           .withProducerPipeConfig(new ProducerPipeConfig().withAsync(false))
                            .withCodec(new JacksonMessageCodec(true, new JacksonBankExpansion())));
   }
 
   @Override
   protected Timesert getWait() {
-    return Wait.LONG;
+    return Timesert.wait(300_000); //TODO too long
   }
 }
