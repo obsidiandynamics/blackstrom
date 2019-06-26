@@ -101,7 +101,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     monitor.getEngine().withLogLevel(LogLevel.INFO);
     final Sandbox sandbox = Sandbox.forInstance(this);
     final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
-    for (var branch : branches) branch.withLogLevel(LogLevel.INFO);
+    for (var branch : branches) branch.withLogLevel(LogLevel.INFO).withSendMetadata(true);
 
     ledger = createLedger(Guidance.COORDINATED);
     manifold = Manifold.builder()

@@ -42,6 +42,8 @@ public final class BankBranch implements Cohort.Base {
   
   private long escrow;
   
+  private boolean sendMetadata;
+  
   public BankBranch(String branchId, long initialBalance, boolean idempotencyEnabled, Predicate<Message> messageFilter) {
     this.branchId = branchId;
     this.idempotencyEnabled = idempotencyEnabled;
@@ -57,6 +59,11 @@ public final class BankBranch implements Cohort.Base {
   
   public BankBranch withLogLevel(int logLevel) {
     this.logLevel = logLevel;
+    return this;
+  }
+  
+  public BankBranch withSendMetadata(boolean sendMetadata) {
+    this.sendMetadata = sendMetadata;
     return this;
   }
   
@@ -122,6 +129,7 @@ public final class BankBranch implements Cohort.Base {
       final Intent intent;
       final long xferAmount = xfer.getAmount();
       final long newBalance = balance + escrow + xferAmount;
+      final boolean duplicate;
       if (newBalance >= 0) {
         final boolean inserted = proposals.put(proposal.getXid(), proposal) == null;
         if (inserted) {
@@ -129,18 +137,28 @@ public final class BankBranch implements Cohort.Base {
           if (xferAmount < 0) {
             escrow += xferAmount;
           }
+          duplicate = false;
           zlg.level(logLevel).format("%s: accepting %s").arg(branchId).arg(proposal::getXid).log();
         } else {
           intent = Intent.ACCEPT;
+          duplicate = true;
           zlg.level(logLevel).format("%s: retransmitting previous acceptance").arg(branchId).log();
         }
       } else {
+        duplicate = false;
         zlg.level(logLevel).format("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal::getXid).arg(balance).log();
         intent = Intent.REJECT;
       }
       
+      final Object metadata;
+      if (sendMetadata) {
+        metadata = Collections.singletonMap("duplicate", duplicate);
+      } else {
+        metadata = null;
+      }
+      
       try {
-        context.getLedger().append(new Vote(proposal.getXid(), new Response(branchId, intent, null))
+        context.getLedger().append(new Vote(proposal.getXid(), new Response(branchId, intent, metadata))
                                    .inResponseTo(proposal).withSource(branchId));
       } catch (Exception e) {
         e.printStackTrace();
