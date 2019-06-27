@@ -15,7 +15,7 @@ import com.obsidiandynamics.blackstrom.monitor.*;
 public abstract class BaseBankTest {  
   protected static final String[] TWO_BRANCH_IDS = BankBranch.generateIds(2);
   protected static final int PROPOSAL_TIMEOUT_MILLIS = 30_000;
-  protected static final int FUTURE_GET_TIMEOUT_MILLIS = PROPOSAL_TIMEOUT_MILLIS * 2;
+  protected static final int FUTURE_GET_TIMEOUT_MILLIS = PROPOSAL_TIMEOUT_MILLIS * 10;//TODO
   
   protected Ledger ledger;
   
