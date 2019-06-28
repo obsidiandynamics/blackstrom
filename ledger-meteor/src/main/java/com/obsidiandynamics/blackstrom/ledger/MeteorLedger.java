@@ -44,21 +44,21 @@ public final class MeteorLedger implements Ledger {
   
   @Override
   public Object attach(MessageHandler handler) {
-    final String group = handler.getGroupId();
+    final String groupId = handler.getGroupId();
     final SubscriberConfig subConfig = new SubscriberConfig()
         .withZlg(config.getZlg())
         .withStreamConfig(config.getStreamConfig())
         .withElectionConfig(config.getElectionConfig())
-        .withGroup(group);
+        .withGroup(groupId);
     final Subscriber subscriber = Subscriber.createDefault(instance, subConfig);
     allSubscribers.add(subscriber);
 
     final Integer handlerId;
     final Retention retention;
-    if (group != null) {
+    if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
       groupSubscribers.put(handlerId, subscriber);
-      final ShardedFlow flow = new ShardedFlow();
+      final ShardedFlow flow = new ShardedFlow(groupId);
       retention = flow;
       flows.add(flow);
     } else {

@@ -40,7 +40,7 @@ public final class BalancedLedgerView implements Ledger {
       final Retention retention;
       if (group != null) {
         group.join(handlerId);
-        final ShardedFlow flow = new ShardedFlow();
+        final ShardedFlow flow = new ShardedFlow(group.getGroupId());
         flows.add(flow);
         retention = flow;
       } else {

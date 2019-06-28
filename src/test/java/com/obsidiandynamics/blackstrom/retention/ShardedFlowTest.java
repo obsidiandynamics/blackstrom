@@ -33,7 +33,7 @@ public class ShardedFlowTest {
   
   @Before
   public void before() {
-    flow = new ShardedFlow();
+    flow = new ShardedFlow("testGroup");
   }
   
   @After

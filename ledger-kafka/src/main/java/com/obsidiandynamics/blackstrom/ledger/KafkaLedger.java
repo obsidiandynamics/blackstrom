@@ -317,7 +317,7 @@ public final class KafkaLedger implements Ledger {
     if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
       consumerStates.put(handlerId, consumerState);
-      final var flow = new ShardedFlow();
+      final var flow = new ShardedFlow(groupId);
       retention = flow;
       flows.add(flow);
     } else {
