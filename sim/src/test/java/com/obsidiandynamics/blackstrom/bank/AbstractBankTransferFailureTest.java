@@ -95,12 +95,11 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
 
   private void testFactorFailure(Map<TargetFactor, RxTxFailureModes> failureModes) throws InterruptedException, ExecutionException, Exception {
     final int initialBalance = 1_000;
-    final AsyncInitiator initiator = new AsyncInitiator().withLogLevel(LogLevel.INFO);
-    final DefaultMonitor monitor = new DefaultMonitor();
-    monitor.getEngine().withLogLevel(LogLevel.INFO);
+    final AsyncInitiator initiator = new AsyncInitiator().withZlg(zlg);
+    final DefaultMonitor monitor = new DefaultMonitor(new MonitorEngineConfig().withZlg(zlg));
     final Sandbox sandbox = Sandbox.forInstance(this);
     final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
-    for (var branch : branches) branch.withLogLevel(LogLevel.INFO).withSendMetadata(true);
+    for (var branch : branches) branch.withZlg(zlg).withSendMetadata(true);
 
     ledger = createLedger(Guidance.COORDINATED);
     manifold = Manifold.builder()

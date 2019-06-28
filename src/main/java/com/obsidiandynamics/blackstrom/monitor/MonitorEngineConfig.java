@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
 import com.obsidiandynamics.yconf.*;
+import com.obsidiandynamics.zerolog.*;
 
 @Y
 public final class MonitorEngineConfig {
@@ -18,6 +19,8 @@ public final class MonitorEngineConfig {
   
   @YInject
   private boolean metadataEnabled = false;
+  
+  private Zlg zlg = Zlg.forClass(MonitorEngine.class).get();
   
   boolean isTrackingEnabled() {
     return trackingEnabled;
@@ -61,6 +64,15 @@ public final class MonitorEngineConfig {
   
   public MonitorEngineConfig withMetadataEnabled(boolean metadataEnabled) {
     this.metadataEnabled = metadataEnabled;
+    return this;
+  }
+  
+  Zlg getZlg() {
+    return zlg;
+  }
+  
+  public MonitorEngineConfig withZlg(Zlg zlg) {
+    this.zlg = zlg;
     return this;
   }
 

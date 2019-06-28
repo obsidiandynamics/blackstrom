@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.bank;
 
+import static com.obsidiandynamics.zerolog.LogLevel.*;
+
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -14,7 +16,7 @@ import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class BankBranch implements Cohort.Base {
-  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  private Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final String branchId;
   
@@ -36,8 +38,6 @@ public final class BankBranch implements Cohort.Base {
   
   private final AtomicLong outcomes = new AtomicLong();
   
-  private int logLevel = LogLevel.TRACE;
-  
   private long balance;
   
   private long escrow;
@@ -57,8 +57,8 @@ public final class BankBranch implements Cohort.Base {
     if (idempotencyEnabled) gcThread.start();
   }
   
-  public BankBranch withLogLevel(int logLevel) {
-    this.logLevel = logLevel;
+  public BankBranch withZlg(Zlg zlg) {
+    this.zlg = zlg;
     return this;
   }
   
@@ -91,7 +91,7 @@ public final class BankBranch implements Cohort.Base {
         }
       }
 
-      zlg.level(logLevel).format("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow::size).log();
+      assert zlg.level(TRACE).format("%s: reaped %,d lapsed outcomes").arg(branchId).arg(deathRow::size).log();
     }
   }
   
@@ -117,10 +117,10 @@ public final class BankBranch implements Cohort.Base {
       if (xfer == null) return; // settlement doesn't apply to this branch
     
       if (idempotencyEnabled) {
-        zlg.level(logLevel).format("%s: %s").arg(branchId).arg(proposal).log();
+        assert zlg.level(TRACE).format("%s: %s").arg(branchId).arg(proposal).log();
         synchronized (lock) {
           if (decided.containsKey(proposal.getXid())) {
-            zlg.level(logLevel).format("%s: ignoring, already decided").arg(branchId).log();
+            assert zlg.level(TRACE).format("%s: ignoring, already decided").arg(branchId).log();
             return;
           }
         }
@@ -138,15 +138,15 @@ public final class BankBranch implements Cohort.Base {
             escrow += xferAmount;
           }
           duplicate = false;
-          zlg.level(logLevel).format("%s: accepting %s").arg(branchId).arg(proposal::getXid).log();
+          assert zlg.level(TRACE).format("%s: accepting %s").arg(branchId).arg(proposal::getXid).log();
         } else {
           intent = Intent.ACCEPT;
           duplicate = true;
-          zlg.level(logLevel).format("%s: retransmitting previous acceptance").arg(branchId).log();
+          assert zlg.level(TRACE).format("%s: retransmitting previous acceptance").arg(branchId).log();
         }
       } else {
         duplicate = false;
-        zlg.level(logLevel).format("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal::getXid).arg(balance).log();
+        assert zlg.level(TRACE).format("%s: rejecting %s, balance: %,d").arg(branchId).arg(proposal::getXid).arg(balance).log();
         intent = Intent.REJECT;
       }
       
@@ -177,7 +177,7 @@ public final class BankBranch implements Cohort.Base {
       
       final Proposal proposal = proposals.remove(outcome.getXid());
       if (proposal == null) {
-        zlg.level(logLevel).format("%s: no applicable outcome for ballot %s").arg(branchId).arg(outcome::getXid).log();
+        assert zlg.level(TRACE).format("%s: no applicable outcome for ballot %s").arg(branchId).arg(outcome::getXid).log();
         return; // outcome doesn't apply to this branch
       }
       
@@ -198,7 +198,7 @@ public final class BankBranch implements Cohort.Base {
         balance += xferAmount;
       }
       
-      zlg.level(logLevel).format("%s: finalising %s").arg(branchId).arg(outcome).log();
+      assert zlg.level(TRACE).format("%s: finalising %s").arg(branchId).arg(outcome).log();
     } finally {
       context.beginAndConfirm(outcome);
     }

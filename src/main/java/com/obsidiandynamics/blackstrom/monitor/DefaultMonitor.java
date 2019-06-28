@@ -17,11 +17,13 @@ public final class DefaultMonitor implements Monitor {
   
   public DefaultMonitor(MonitorEngineConfig engineConfig) {
     engine = new MonitorEngine(new MonitorAction() {
-      @Override public void appendVote(Vote vote, AppendCallback callback) {
+      @Override 
+      public void appendVote(Vote vote, AppendCallback callback) {
         ledger.append(vote, callback);
       }
 
-      @Override public void appendOutcome(Outcome outcome, AppendCallback callback) {
+      @Override 
+      public void appendOutcome(Outcome outcome, AppendCallback callback) {
         ledger.append(outcome, callback);
       }
     }, GROUP_ID, engineConfig);
