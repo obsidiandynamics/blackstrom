@@ -20,6 +20,7 @@ public final class MonitorEngineConfig {
   @YInject
   private boolean metadataEnabled = false;
   
+  @YInject
   private Zlg zlg = Zlg.forClass(MonitorEngine.class).get();
   
   boolean isTrackingEnabled() {
