@@ -25,6 +25,8 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
       context.getLedger().confirm(context.getHandlerId(), messageId);
     }
   }
+
+  private final String groupId;
   
   private final FiringStrategy.Factory firingStrategyFactory;
   
@@ -36,18 +38,19 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
   
   private boolean terminated;
   
-  public ShardedFlow() {
-    this(LazyFiringStrategy::new);
+  public ShardedFlow(String groupId) {
+    this(groupId, LazyFiringStrategy::new);
   }
   
-  public ShardedFlow(FiringStrategy.Factory firingStrategyFactory) {
+  public ShardedFlow(String groupId, FiringStrategy.Factory firingStrategyFactory) {
+    this.groupId = groupId;
     this.firingStrategyFactory = firingStrategyFactory;
   }
 
   @Override
   public Confirmation begin(MessageContext context, Message message) {
     final Flow flow = flows.computeIfAbsent(message.getShard(), shard -> {
-      final Flow newFlow = new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard-[" + shard + "]");
+      final Flow newFlow = new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard[" + shard + "]-group[" + groupId + "]");
       synchronized (terminateLock) {
         createdFlows.add(newFlow);
         if (terminated) {

@@ -50,11 +50,11 @@ final class PendingBallot {
     this.confirmation = confirmation;
   }
 
-  boolean castVote(Vote vote, Zlg zlg, int logLevel) {
+  boolean castVote(Zlg zlg, Vote vote) {
     final Response response = vote.getResponse();
     final Response existing = responses.put(response.getCohort(), response);
     if (existing != null) {
-      zlg.level(logLevel).format("Skipping redundant %s (already cast in current ballot)").arg(vote).log();
+      zlg.t("Skipping redundant %s (already cast in current ballot)", z -> z.arg(vote));
       responses.put(existing.getCohort(), existing);
       return false;
     }

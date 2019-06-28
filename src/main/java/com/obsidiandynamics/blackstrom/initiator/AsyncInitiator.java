@@ -13,16 +13,14 @@ import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class AsyncInitiator implements Initiator, NullGroup, Disposable.Nop {
-  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  private Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final Map<String, Consumer<?>> pending = new ConcurrentHashMap<>();
 
-  private int logLevel = LogLevel.TRACE; 
-  
   private Ledger ledger;
   
-  public AsyncInitiator withLogLevel(int logLevel) {
-    this.logLevel = logLevel;
+  public AsyncInitiator withZlg(Zlg zlg) {
+    this.zlg = zlg;
     return this;
   }
   
@@ -139,10 +137,10 @@ public final class AsyncInitiator implements Initiator, NullGroup, Disposable.No
   private void onMessage(MessageContext context, Message message) {
     final var callback = pending.remove(message.getXid());
     if (callback != null) {
-      zlg.level(logLevel).format("Matched response %s").arg(message).log();
+      zlg.t("Matched response %s", z -> z.arg(message));
       callback.accept(Classes.cast(message));
     } else {
-      zlg.level(logLevel).format("Unmatched response %s").arg(message).log();
+      zlg.t("Unmatched response %s", z -> z.arg(message));
     }
   }
 }

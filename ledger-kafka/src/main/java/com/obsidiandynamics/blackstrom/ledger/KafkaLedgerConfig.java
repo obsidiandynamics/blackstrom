@@ -27,7 +27,7 @@ public final class KafkaLedgerConfig {
   private int maxConsumerPipeYields = 100;
   
   @YInject
-  private Zlg zlg = Zlg.forDeclaringClass().get();
+  private Zlg zlg = Zlg.forClass(KafkaLedger.class).get();
   
   @YInject
   private int ioRetries = 10;

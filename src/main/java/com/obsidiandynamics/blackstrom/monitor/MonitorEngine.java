@@ -12,7 +12,7 @@ import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
 
 public final class MonitorEngine implements Disposable {
-  private static final Zlg zlg = Zlg.forDeclaringClass().get();
+  private final Zlg zlg;
   
   private final Map<Object, PendingBallot> pending = new HashMap<>();
   
@@ -45,10 +45,9 @@ public final class MonitorEngine implements Disposable {
   
   private final MonitorAction action;
   
-  private int logLevel = LogLevel.TRACE;
-  
   public MonitorEngine(MonitorAction action, String groupId, MonitorEngineConfig config) {
     this.groupId = groupId;
+    zlg = config.getZlg();
     trackingEnabled = config.isTrackingEnabled();
     gcIntervalMillis = config.getGCInterval();
     outcomeLifetimeMillis = config.getOutcomeLifetime();
@@ -73,11 +72,6 @@ public final class MonitorEngine implements Disposable {
                      .withName(MonitorEngine.class, groupId, "timeout", Integer.toHexString(System.identityHashCode(this))))
         .onCycle(this::timeoutCycle)
         .buildAndStart();
-  }
-  
-  public MonitorEngine withLogLevel(int logLevel) {
-    this.logLevel = logLevel;
-    return this;
   }
   
   private void gcCycle(WorkerThread thread) throws InterruptedException {
@@ -111,7 +105,7 @@ public final class MonitorEngine implements Disposable {
       if (reaped != 0) {
         reapedSoFar += reaped;
         final int _reaped = reaped;
-        zlg.i("Reaped %,d outcomes (%,d so far), pending: %,d, decided: %,d", 
+        zlg.d("Reaped %,d outcomes (%,d so far), pending: %,d, decided: %,d", 
               z -> z.arg(_reaped).arg(reapedSoFar).arg(pending::size).arg(decided::size));
       }
     }
@@ -143,7 +137,7 @@ public final class MonitorEngine implements Disposable {
   }
   
   private void timeoutCohort(Proposal proposal, String cohort) {
-    zlg.level(logLevel).format("Timed out %s for cohort %s").arg(proposal).arg(cohort).log();
+    zlg.d("Timed out %s for cohort %s", z -> z.arg(proposal).arg(cohort));
     append(new Vote(proposal.getXid(), new Response(cohort, Intent.TIMEOUT, null))
            .inResponseTo(proposal).withSource(groupId));
   }
@@ -175,7 +169,7 @@ public final class MonitorEngine implements Disposable {
       final PendingBallot newBallot = new PendingBallot(proposal);
       final PendingBallot existingBallot = pending.put(proposal.getXid(), newBallot);
       if (existingBallot != null) {
-        zlg.level(logLevel).format("Skipping redundant %s (ballot already pending)").arg(proposal).log();
+        zlg.t("Skipping redundant %s (ballot already pending)", z -> z.arg(proposal));
         pending.put(proposal.getXid(), existingBallot);
         return;
       } else {
@@ -183,26 +177,26 @@ public final class MonitorEngine implements Disposable {
       }
     }
     
-    zlg.level(logLevel).format("Initiating ballot for %s").arg(proposal).log();
+    zlg.t("Initiating ballot for %s", z -> z.arg(proposal));
   }
 
   public void onVote(MessageContext context, Vote vote) {
     synchronized (messageLock) {
       final PendingBallot ballot = pending.get(vote.getXid());
       if (ballot != null) {
-        zlg.level(logLevel).format("Received %s").arg(vote).log();
-        final boolean decided = ballot.castVote(vote, zlg, logLevel);
+        zlg.t("Received %s", z -> z.arg(vote));
+        final boolean decided = ballot.castVote(zlg, vote);
         if (decided) {
           decideBallot(ballot);
         }
       } else {
-        zlg.level(logLevel).format("Missing pending ballot for vote %s").arg(vote).log();
+        zlg.t("Missing pending ballot for vote %s", z -> z.arg(vote));
       }
     }
   }
   
   private void decideBallot(PendingBallot ballot) {
-    zlg.level(logLevel).format("Decided ballot for %s: resolution: %s").arg(ballot::getProposal).arg(ballot::getResolution).log();
+    zlg.t("Decided ballot for %s: resolution: %s", z -> z.arg(ballot::getProposal).arg(ballot::getResolution));
     final Proposal proposal = ballot.getProposal();
     final String xid = proposal.getXid();
     final Object metadata = metadataEnabled ? new OutcomeMetadata(proposal.getTimestamp()) : null;
