@@ -15,8 +15,8 @@ package com.obsidiandynamics.blackstrom.codec;
  *  All {@link Variant} implementations are immutable and thread-safe.
  *  
  *  @see ContentMapper
- *  @see UniVariant
- *  @see MultiVariant
+ *  @see MonoVariant
+ *  @see PolyVariant
  */
 public interface Variant {
   /**

@@ -9,15 +9,15 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.*;
 import com.fasterxml.jackson.databind.ser.std.*;
 
-final class JacksonUniVariantSerializer extends StdSerializer<UniVariant> {
+final class JacksonMonoVariantSerializer extends StdSerializer<MonoVariant> {
   private static final long serialVersionUID = 1L;
 
-  JacksonUniVariantSerializer() {
-    super(UniVariant.class);
+  JacksonMonoVariantSerializer() {
+    super(MonoVariant.class);
   }
 
   @Override
-  public void serialize(UniVariant v, JsonGenerator gen, SerializerProvider provider) throws IOException {
+  public void serialize(MonoVariant v, JsonGenerator gen, SerializerProvider provider) throws IOException {
     final JsonNode packedNode;
     if (v.getPacked() != null) {
       // already packed – just write out the tree

@@ -6,15 +6,15 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.ser.std.*;
 
-final class JacksonMultiVariantSerializer extends StdSerializer<MultiVariant> {
+final class JacksonPolyVariantSerializer extends StdSerializer<PolyVariant> {
   private static final long serialVersionUID = 1L;
 
-  JacksonMultiVariantSerializer() {
-    super(MultiVariant.class);
+  JacksonPolyVariantSerializer() {
+    super(PolyVariant.class);
   }
 
   @Override
-  public void serialize(MultiVariant v, JsonGenerator gen, SerializerProvider provider) throws IOException {
+  public void serialize(PolyVariant v, JsonGenerator gen, SerializerProvider provider) throws IOException {
     gen.writeObject(v.getVariants());
   }
 }

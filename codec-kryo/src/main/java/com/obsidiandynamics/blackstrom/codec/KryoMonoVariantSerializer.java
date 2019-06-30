@@ -5,11 +5,11 @@ import static com.obsidiandynamics.func.Functions.*;
 import com.esotericsoftware.kryo.*;
 import com.esotericsoftware.kryo.io.*;
 
-public final class KryoUniVariantSerializer extends Serializer<UniVariant> {
+public final class KryoMonoVariantSerializer extends Serializer<MonoVariant> {
   private static final int DEF_CONTENT_BUFFER_SIZE = 128;
 
   @Override
-  public void write(Kryo kryo, Output output, UniVariant v) {
+  public void write(Kryo kryo, Output output, MonoVariant v) {
     output.writeString(v.getHandle().getType());
     output.writeVarInt(v.getHandle().getVersion(), true);
     
@@ -32,11 +32,11 @@ public final class KryoUniVariantSerializer extends Serializer<UniVariant> {
   }
 
   @Override
-  public UniVariant read(Kryo kryo, Input input, Class<? extends UniVariant> type) {
+  public MonoVariant read(Kryo kryo, Input input, Class<? extends MonoVariant> type) {
     final var contentType = input.readString();
     final var contentVersion = input.readVarInt(true);
     final var contentLength = input.readVarInt(true);
     final var contentBytes = input.readBytes(contentLength);
-    return new UniVariant(new ContentHandle(contentType, contentVersion), new KryoPackedForm(contentBytes), null);
+    return new MonoVariant(new ContentHandle(contentType, contentVersion), new KryoPackedForm(contentBytes), null);
   }
 }

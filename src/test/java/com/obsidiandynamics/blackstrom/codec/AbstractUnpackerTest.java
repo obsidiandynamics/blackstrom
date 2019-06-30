@@ -123,7 +123,7 @@ public abstract class AbstractUnpackerTest {
   protected abstract <T> T roundTrip(T obj);
 
   @Test
-  public final void testPubSub_relaxedSingle_match() {
+  public final void testPubSub_relaxedMono_match() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 0, SchemaFoo_v0.class)
@@ -148,7 +148,7 @@ public abstract class AbstractUnpackerTest {
   }
 
   @Test
-  public final void testPubSub_relaxedSingle_matchWrappedInPayload() {
+  public final void testPubSub_relaxedMono_matchWrappedInPayload() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 0, SchemaFoo_v0.class)
@@ -159,7 +159,7 @@ public abstract class AbstractUnpackerTest {
     final var pubV = pubMapper.relaxed().capture(pub);
     final var pubP = Payload.pack(pubV);
     final var subP = roundTrip(pubP);
-    final var subV = Payload.<MultiVariant>unpack(subP);
+    final var subV = Payload.<PolyVariant>unpack(subP);
     
     final var subMapper = new ContentMapper()
         .withUnpacker(unpacker)
@@ -171,7 +171,7 @@ public abstract class AbstractUnpackerTest {
   }
 
   @Test
-  public final void testPubSub_relaxedSingle_unsupportedVersion() {
+  public final void testPubSub_relaxedMono_unsupportedVersion() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 0, SchemaFoo_v0.class)
@@ -191,7 +191,7 @@ public abstract class AbstractUnpackerTest {
   }
   
   @Test
-  public final void testPubSub_strictMultiple_firstMatch() {
+  public final void testPubSub_strictPoly_firstMatch() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 0, SchemaFoo_v0.class)
@@ -217,7 +217,7 @@ public abstract class AbstractUnpackerTest {
   }
   
   @Test
-  public final void testPubSub_strictMultiple_fallbackMatch() {
+  public final void testPubSub_strictPoly_fallbackMatch() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 0, SchemaFoo_v0.class)
@@ -242,7 +242,7 @@ public abstract class AbstractUnpackerTest {
   }
   
   @Test
-  public final void testPubSub_compactStrictSingle_match() {
+  public final void testPubSub_compactStrictMono_match() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 1, SchemaFoo_v1.class)
@@ -266,7 +266,7 @@ public abstract class AbstractUnpackerTest {
   }
   
   @Test
-  public final void testPubSub_compactStrictMultiple_fallbackMatch() {
+  public final void testPubSub_compactStrictPoly_fallbackMatch() {
     final var pubMapper = new ContentMapper()
         .withUnpacker(unpacker)
         .withVersion("foo", 0, SchemaFoo_v0.class)
@@ -276,7 +276,7 @@ public abstract class AbstractUnpackerTest {
     final var pub1 = SchemaFoo_v1.instantiate("foo version 1");
     final var pub0 = SchemaFoo_v0.instantiate("foo version 0");
     final var pubVs = pubMapper.compactStrict().capture(pub1, pub0);
-    Assertions.assertThatObject(pubVs).isInstanceOf(MultiVariant.class);
+    Assertions.assertThatObject(pubVs).isInstanceOf(PolyVariant.class);
     final var subVs = roundTrip(pubVs);
     
     final var subMapper = new ContentMapper()

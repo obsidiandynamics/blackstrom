@@ -5,21 +5,21 @@ import static com.obsidiandynamics.func.Functions.*;
 import java.util.*;
 
 /**
- *  A container for multiple {@link UniVariant}s, by convention arranged in the descending
+ *  A container for multiple {@link MonoVariant}s, by convention arranged in the descending
  *  order of the content version. When mapping to the Java class, the variants are enumerated
  *  in a fallback manner, trying the first variant then advancing to the next, until either
  *  all variants are exhausted (yielding a {@code null}) or a supported content type and
  *  version is located (yielding the reconstituted object). 
  */
-public final class MultiVariant implements Variant {
-  private final UniVariant[] variants;
+public final class PolyVariant implements Variant {
+  private final MonoVariant[] variants;
 
-  public MultiVariant(UniVariant... variants) {
+  public PolyVariant(MonoVariant... variants) {
     this.variants = mustExist(variants, "Variants cannot be null");
     mustBeGreater(variants.length, 0, illegalArgument("Variants cannot be empty"));
   }
 
-  public final UniVariant[] getVariants() {
+  public final MonoVariant[] getVariants() {
     return variants;
   }
   
@@ -44,8 +44,8 @@ public final class MultiVariant implements Variant {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof MultiVariant) {
-      final var that = (MultiVariant) obj;
+    } else if (obj instanceof PolyVariant) {
+      final var that = (PolyVariant) obj;
       return Arrays.equals(variants, that.variants);
     } else {
       return false;
@@ -54,6 +54,6 @@ public final class MultiVariant implements Variant {
 
   @Override
   public String toString() {
-    return MultiVariant.class.getSimpleName() + " [variants=" + Arrays.toString(variants) + "]";
+    return PolyVariant.class.getSimpleName() + " [variants=" + Arrays.toString(variants) + "]";
   }
 }
