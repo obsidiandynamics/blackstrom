@@ -8,6 +8,7 @@ import org.junit.*;
 
 import com.obsidiandynamics.assertion.*;
 import com.obsidiandynamics.blackstrom.codec.*;
+import com.obsidiandynamics.blackstrom.spotter.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.yconf.*;
 import com.obsidiandynamics.zerolog.*;
@@ -32,6 +33,8 @@ public final class KafkaLedgerConfigTest {
     assertEquals(5, config.getIoRetries());
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
+    assertEquals(60_000, config.getSpotterConfig().getTimeout());
+    assertEquals(20_000, config.getSpotterConfig().getGracePeriod());
     Assertions.assertToStringOverride(config);
   }
   
@@ -47,7 +50,8 @@ public final class KafkaLedgerConfigTest {
         .withIoRetries(5)
         .withDrainConfirmations(true)
         .withDrainConfirmationsTimeout(60_000)
-        .withPrintConfig(true);
+        .withPrintConfig(true)
+        .withSpotterConfig(new SpotterConfig().withTimeout(60_000));
     
     assertNotNull(config.getKafka());
     assertEquals("test", config.getTopic());
@@ -59,5 +63,6 @@ public final class KafkaLedgerConfigTest {
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
     assertTrue(config.isPrintConfig());
+    assertEquals(60_000, config.getSpotterConfig().getTimeout());
   }
 }
