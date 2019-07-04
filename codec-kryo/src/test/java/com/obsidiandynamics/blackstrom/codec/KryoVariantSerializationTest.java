@@ -69,23 +69,23 @@ public final class KryoVariantSerializationTest {
     }
   }
   
-  private UniVariant emulatePacked(Pool<Kryo> kryoPool, String contentType, int contentVersion, Object content) {
-    return new UniVariant(new ContentHandle(contentType, contentVersion), new KryoPackedForm(writeBytes(content)), null);
+  private MonoVariant emulatePacked(Pool<Kryo> kryoPool, String contentType, int contentVersion, Object content) {
+    return new MonoVariant(new ContentHandle(contentType, contentVersion), new KryoPackedForm(writeBytes(content)), null);
   }
   
-  private static UniVariant capture(String contentType, int contentVersion, Object content) {
-    return new UniVariant(new ContentHandle(contentType, contentVersion), null, content);
+  private static MonoVariant capture(String contentType, int contentVersion, Object content) {
+    return new MonoVariant(new ContentHandle(contentType, contentVersion), null, content);
   }
 
   private Pool<Kryo> kryoPool;
   
-  private void assertUnpacked(Object expected, UniVariant v) {
+  private void assertUnpacked(Object expected, MonoVariant v) {
     final var packed = mustBeSubtype(v.getPacked(), KryoPackedForm.class, AssertionError::new);
     final var unpacked = new KryoUnpacker(kryoPool).unpack(packed, expected.getClass());
     assertTrue(expected + " != " + unpacked, Objects.deepEquals(expected, unpacked));
   }
   
-  private void assertUnpackedSame(Object expected, UniVariant v) {
+  private void assertUnpackedSame(Object expected, MonoVariant v) {
     final var packed = mustBeSubtype(v.getPacked(), KryoPackedForm.class, AssertionError::new);
     final var unpacked = new KryoUnpacker(kryoPool).unpack(packed, expected.getClass());
     assertSame(expected, unpacked);
@@ -123,8 +123,8 @@ public final class KryoVariantSerializationTest {
   }
   
   @Test
-  public void testUniVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
-    final var p = new UniVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
+  public void testMonoVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
+    final var p = new MonoVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
     
     Assertions.assertThatThrownBy(() -> {
       writeBytes(p);
@@ -134,53 +134,53 @@ public final class KryoVariantSerializationTest {
   }
   
   @Test
-  public void testUniVariant_prepackedScalar() throws IOException {
+  public void testMonoVariant_prepackedScalar() throws IOException {
     final var p = emulatePacked(kryoPool, "test/scalar", 1, "scalar");
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked("scalar", d);
   }
   
   @Test
-  public void testUniVariant_serializeScalar() throws IOException {
+  public void testMonoVariant_serializeScalar() throws IOException {
     final var p = capture("test/scalar", 1, "scalar");
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked("scalar", d);
   }
 
   @Test
-  public void testUniVariant_prepackedArray() throws IOException {
+  public void testMonoVariant_prepackedArray() throws IOException {
     final var array = new int[] {0, 1, 2};
     final var p = emulatePacked(kryoPool, "test/array", 1, array);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked(array, d);
   }
 
   @Test
-  public void testUniVariant_serializeArray() throws IOException {
+  public void testMonoVariant_serializeArray() throws IOException {
     final var array = new int[] {0, 1, 2};
     final var p = capture("test/array", 1, array);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked(array, d);
   }
 
   @Test
-  public void testUniVariant_prepackedMap() throws IOException {
+  public void testMonoVariant_prepackedMap() throws IOException {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -189,12 +189,12 @@ public final class KryoVariantSerializationTest {
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked(map, d);
   }
 
   @Test
-  public void testUniVariant_serializeMap() throws IOException {
+  public void testMonoVariant_serializeMap() throws IOException {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -203,63 +203,63 @@ public final class KryoVariantSerializationTest {
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked(map, d);
   }
 
   @Test
-  public void testUniVariant_prepackedObject() throws IOException {
+  public void testMonoVariant_prepackedObject() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = emulatePacked(kryoPool, "test/obj", 1, obj);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked(obj, d);
   }
 
   @Test
-  public void testUniVariant_serializeObject() throws IOException {
+  public void testMonoVariant_serializeObject() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = capture("test/obj", 1, obj);
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpacked(obj, d);
   }
 
   @Test
-  public void testUniVariant_serializeNil() throws IOException {
+  public void testMonoVariant_serializeNil() throws IOException {
     final var p = capture("std:nil", 1, Nil.getInstance());
     
     final var encoded = writeBytes(p);
     logEncoded(encoded);
     
-    final var d = readBytes(encoded, UniVariant.class);
+    final var d = readBytes(encoded, MonoVariant.class);
     assertUnpackedSame(Nil.getInstance(), d);
   }
 
   @Test
-  public void testMultiVariant_serializeObject() throws IOException {
+  public void testPolyVariant_serializeObject() throws IOException {
     final var obj0 = new TestClass("someString", 42);
     final var obj1 = new TestClass("someOtherString", 83);
     final var p0 = capture("test/obj-0", 1, obj0);
     final var p1 = capture("test/obj-1", 1, obj1);
-    final var mp = new MultiVariant(new UniVariant[] {p0, p1});
+    final var pp = new PolyVariant(new MonoVariant[] {p0, p1});
     
-    final var encoded = writeBytes(mp);
+    final var encoded = writeBytes(pp);
     logEncoded(encoded);
     
-    final var md = readBytes(encoded, MultiVariant.class);
-    assertEquals(2, md.getVariants().length);
+    final var pd = readBytes(encoded, PolyVariant.class);
+    assertEquals(2, pd.getVariants().length);
     
-    final var d0 = md.getVariants()[0];
+    final var d0 = pd.getVariants()[0];
     assertUnpacked(obj0, d0);
     
-    final var d1 = md.getVariants()[1];
+    final var d1 = pd.getVariants()[1];
     assertUnpacked(obj1, d1);
   }
 }

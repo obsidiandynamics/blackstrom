@@ -96,7 +96,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testRelaxedCaptureSingle_normal() {
+  public void testRelaxedCaptureUni_normal() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class)
@@ -122,7 +122,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testRelaxedCaptureMultiple_normal() {
+  public void testRelaxedCapturePoly_normal() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class)
@@ -142,7 +142,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testRelaxedCaptureSingle_missingMapping() {
+  public void testRelaxedCaptureUni_missingMapping() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class);
 
@@ -152,7 +152,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testCompactRelaxedCaptureSingle_normal() {
+  public void testCompactRelaxedCaptureUni_normal() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class)
@@ -178,26 +178,26 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testCompactRelaxedCaptureMultiple_normalWithOne() {
+  public void testCompactRelaxedCapturePoly_normalWithOne() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 1, CreateBar_v1.class);
 
-    final var p = mustBeSubtype(mapper.compactRelaxed().capture(new Object[] { new CreateFoo_v0() }), UniVariant.class, AssertionError::new);
+    final var p = mustBeSubtype(mapper.compactRelaxed().capture(new Object[] { new CreateFoo_v0() }), MonoVariant.class, AssertionError::new);
     assertEquals(new ContentHandle("test:foo/create", 0), p.getHandle());
   }
 
   @Test
-  public void testCompactRelaxedCaptureMultiple_normalWithMany() {
+  public void testCompactRelaxedCapturePoly_normalWithMany() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 1, CreateBar_v1.class);
 
-    final var mp = mustBeSubtype(mapper.compactRelaxed().capture(new CreateFoo_v0(), new CreateBar_v1()), MultiVariant.class, AssertionError::new);
+    final var mp = mustBeSubtype(mapper.compactRelaxed().capture(new CreateFoo_v0(), new CreateBar_v1()), PolyVariant.class, AssertionError::new);
     assertEquals(2, mp.getVariants().length);
 
     final var p0 = mp.getVariants()[0];
@@ -210,7 +210,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureSingle_normal() {
+  public void testStrictCaptureUni_normal() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -222,7 +222,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureSingle_missingMapping() {
+  public void testStrictCaptureUni_missingMapping() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -234,7 +234,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureSingle_insufficientVariants() {
+  public void testStrictCaptureUni_insufficientVariants() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -246,7 +246,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureMultiple_normalWithOne() {
+  public void testStrictCapturePoly_normalWithOne() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -258,7 +258,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureMultiple_normalWithMany() {
+  public void testStrictCapturePoly_normalWithMany() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -271,7 +271,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureMultiple_nonDecreasingVersion() {
+  public void testStrictCapturePoly_nonDecreasingVersion() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -285,7 +285,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testStrictCaptureMultiple_mixedContentTypes() {
+  public void testStrictCapturePoly_mixedContentTypes() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -299,18 +299,18 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testCompactStrictCaptureSingle_normal() {
+  public void testCompactStrictCaptureUni_normal() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
-    final var p = mustBeSubtype(mapper.compactStrict().capture(new CreateBar_v0()), UniVariant.class, AssertionError::new);
+    final var p = mustBeSubtype(mapper.compactStrict().capture(new CreateBar_v0()), MonoVariant.class, AssertionError::new);
     assertEquals(new ContentHandle("test:bar/create", 0), p.getHandle());
   }
 
   @Test
-  public void testCompactStrictCaptureSingle_missingMapping() {
+  public void testCompactStrictCaptureUni_missingMapping() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -322,7 +322,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testCompactStrictCaptureSingle_insufficientVariants() {
+  public void testCompactStrictCaptureUni_insufficientVariants() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -334,31 +334,31 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testCompactStrictCaptureMultiple_normalWithOne() {
+  public void testCompactStrictCapturePoly_normalWithOne() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
-    final var p = mustBeSubtype(mapper.compactStrict().capture(new Object[] { new CreateBar_v0() }), UniVariant.class, AssertionError::new);
+    final var p = mustBeSubtype(mapper.compactStrict().capture(new Object[] { new CreateBar_v0() }), MonoVariant.class, AssertionError::new);
     assertEquals(new ContentHandle("test:bar/create", 0), p.getHandle());
   }
 
   @Test
-  public void testCompactStrictCaptureMultiple_normalWithMany() {
+  public void testCompactStrictCapturePoly_normalWithMany() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
-    final var mp = mustBeSubtype(mapper.compactStrict().capture(new Object[] { new CreateFoo_v1(), new CreateFoo_v0() }), MultiVariant.class, AssertionError::new);
+    final var mp = mustBeSubtype(mapper.compactStrict().capture(new Object[] { new CreateFoo_v1(), new CreateFoo_v0() }), PolyVariant.class, AssertionError::new);
     assertEquals(2, mp.getVariants().length);
     assertEquals(new ContentHandle("test:foo/create", 1), mp.getVariants()[0].getHandle());
     assertEquals(new ContentHandle("test:foo/create", 0), mp.getVariants()[1].getHandle());
   }
 
   @Test
-  public void testCompactStrictCaptureMultiple_nonDecreasingVersion() {
+  public void testCompactStrictCapturePoly_nonDecreasingVersion() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -372,7 +372,7 @@ public final class ContentMapperTest {
   }
 
   @Test
-  public void testCompactStrictCaptureMultiple_mixedContentTypes() {
+  public void testCompactStrictCapturePoly_mixedContentTypes() {
     final var mapper = new ContentMapper()
         .withVersion("test:foo/create", 0, CreateFoo_v0.class)
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
@@ -385,8 +385,8 @@ public final class ContentMapperTest {
     .hasMessage("Mixed content types unsupported; expected: test:foo/create at index 1, got: test:bar/create");
   }
 
-  private static UniVariant emulatePacked(String contentType, int contentVersion, Object content) {
-    return new UniVariant(new ContentHandle(contentType, contentVersion), new IdentityPackedForm(content), null);
+  private static MonoVariant emulatePacked(String contentType, int contentVersion, Object content) {
+    return new MonoVariant(new ContentHandle(contentType, contentVersion), new IdentityPackedForm(content), null);
   }
 
   @Test
@@ -474,7 +474,7 @@ public final class ContentMapperTest {
 
     final var v1 = new CreateFoo_v1();
     final var v0 = new CreateFoo_v0();
-    final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
+    final var mp = new PolyVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
     assertSame(v1, mapper.map(mp));
   }
 
@@ -487,7 +487,7 @@ public final class ContentMapperTest {
 
     final var v1 = new CreateFoo_v1();
     final var v0 = new CreateFoo_v0();
-    final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
+    final var mp = new PolyVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
     assertSame(v0, mapper.map(mp));
   }
 
@@ -498,7 +498,7 @@ public final class ContentMapperTest {
 
     final var v1 = new CreateFoo_v1();
     final var v0 = new CreateFoo_v0();
-    final var mp = new MultiVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
+    final var mp = new PolyVariant(emulatePacked("test:foo/create", 1, v1), emulatePacked("test:foo/create", 0, v0));
     assertNull(mapper.map(mp));
   }
 }

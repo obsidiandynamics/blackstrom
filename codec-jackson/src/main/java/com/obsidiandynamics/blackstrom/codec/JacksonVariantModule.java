@@ -6,10 +6,10 @@ public final class JacksonVariantModule extends SimpleModule {
   private static final long serialVersionUID = 1L;
   
   public JacksonVariantModule() {
-    addSerializer(UniVariant.class, new JacksonUniVariantSerializer());
-    addDeserializer(UniVariant.class, new JacksonUniVariantDeserializer());
-    addSerializer(MultiVariant.class, new JacksonMultiVariantSerializer());
-    addDeserializer(MultiVariant.class, new JacksonMultiVariantDeserializer());
+    addSerializer(MonoVariant.class, new JacksonMonoVariantSerializer());
+    addDeserializer(MonoVariant.class, new JacksonMonoVariantDeserializer());
+    addSerializer(PolyVariant.class, new JacksonPolyVariantSerializer());
+    addDeserializer(PolyVariant.class, new JacksonPolyVariantDeserializer());
     addDeserializer(Variant.class, new JacksonVariantDeserializer());
     addSerializer(Nil.class, new JacksonNilSerializer());
     addDeserializer(Nil.class, new JacksonNilDeserializer());

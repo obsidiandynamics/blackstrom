@@ -24,8 +24,8 @@ import com.obsidiandynamics.func.*;
  *  the inline content type and version headers, but keeping the content-specific payload
  *  elements in an intermediate {@link PackedForm} (which varies depending on the codec), 
  *  without attempting to map the serialized content back to its native Java class.
- *  The {@link PackedForm} is encapsulated inside the returned {@link UniVariant}. In
- *  the case of a {@link MultiVariant}, multiple {@link PackedForm}s may be 
+ *  The {@link PackedForm} is encapsulated inside the returned {@link MonoVariant}. In
+ *  the case of a {@link PolyVariant}, multiple {@link PackedForm}s may be 
  *  encapsulated. <p>
  *  
  *  When a {@link Variant} is <em>mapped</em> to a Java class following deserialization
@@ -39,8 +39,8 @@ import com.obsidiandynamics.func.*;
  *  and version, it is assumed that the content is unsupported, and a {@code null} is 
  *  silently returned. <p>
  *  
- *  A {@link Variant} may be of the type {@link MultiVariant}, which houses multiple
- *  {@link UniVariant}s. This allows the mapping process to enumerate over the variants
+ *  A {@link Variant} may be of the type {@link PolyVariant}, which houses multiple
+ *  {@link MonoVariant}s. This allows the mapping process to enumerate over the variants
  *  in a fallback manner, trying the first variant then advancing to the next, until either
  *  all variants are exhausted (yielding a {@code null}) or a supported content type and
  *  version is located (yielding the reconstituted object). <p>
@@ -58,8 +58,8 @@ import com.obsidiandynamics.func.*;
  *  Once configured with unpackers and version mappings, this class is <em>thread-safe</em>.
  *  
  *  @see Variant
- *  @see UniVariant
- *  @see MultiVariant
+ *  @see MonoVariant
+ *  @see PolyVariant
  *  @see PackedForm
  *  @see Unpacker
  */
@@ -234,30 +234,30 @@ public final class ContentMapper {
     Variant capture(Object... contentItems);
   }
   
-  public UniVariant capture(Object content) {
+  public MonoVariant capture(Object content) {
     mustExist(content, "Content cannot be null");
     final var mapping = checkedGetMapping(content.getClass());
     final var handle = mapping.handle;
-    return new UniVariant(handle, null, content);
+    return new MonoVariant(handle, null, content);
   }
 
   public final class StandardRelaxedCaptor implements Captor {
     @Override
-    public MultiVariant capture(Object content) {
+    public PolyVariant capture(Object content) {
       final var v = ContentMapper.this.capture(content);
-      return new MultiVariant(v);
+      return new PolyVariant(v);
     }
 
     @Override
-    public MultiVariant capture(Object... contentItems) {
+    public PolyVariant capture(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
       
-      final var variants = new UniVariant[contentItems.length];
+      final var variants = new MonoVariant[contentItems.length];
       for (var i = 0; i < contentItems.length; i++) {
         variants[i] = ContentMapper.this.capture(contentItems[i]);
       }
-      return new MultiVariant(variants);
+      return new PolyVariant(variants);
     }
   }
 
@@ -267,7 +267,7 @@ public final class ContentMapper {
   
   public final class CompactRelaxedCaptor implements Captor {
     @Override
-    public UniVariant capture(Object content) {
+    public MonoVariant capture(Object content) {
       return ContentMapper.this.capture(content);
     }
 
@@ -289,23 +289,23 @@ public final class ContentMapper {
 
   public final class StandardStrictCaptor implements Captor {
     @Override
-    public MultiVariant capture(Object content) {
+    public PolyVariant capture(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
       mapping.mappings.ensureSufficientMappings(1);
-      return new MultiVariant(new UniVariant(mapping.handle, null, content));
+      return new PolyVariant(new MonoVariant(mapping.handle, null, content));
     }
 
     @Override
-    public MultiVariant capture(Object... contentItems) {
+    public PolyVariant capture(Object... contentItems) {
       mustExist(contentItems, "Content items cannot be null");
       mustBeGreater(contentItems.length, 0, illegalArgument("Content items cannot be empty"));
 
-      final var variants = new UniVariant[contentItems.length];
+      final var variants = new MonoVariant[contentItems.length];
       final var content0 = contentItems[0];
       final var mapping0 = checkedGetMapping(content0.getClass());
       mapping0.mappings.ensureSufficientMappings(contentItems.length);
-      variants[0] = new UniVariant(mapping0.handle, null, content0);
+      variants[0] = new MonoVariant(mapping0.handle, null, content0);
 
       var lastVersion = mapping0.handle.getVersion();
       for (var i = 1; i < contentItems.length; i++) {
@@ -323,10 +323,10 @@ public final class ContentMapper {
                     "Mixed content types unsupported; expected: " + mapping0.handle.getType() + " at index " + _i +  
                     ", got: " + mapping.handle.getType(), 
                     MixedContentTypesException::new));
-        variants[i] = new UniVariant(mapping.handle, null, content);
+        variants[i] = new MonoVariant(mapping.handle, null, content);
       }
 
-      return new MultiVariant(variants);
+      return new PolyVariant(variants);
     }
   }
 
@@ -336,11 +336,11 @@ public final class ContentMapper {
   
   public final class CompactStrictCaptor implements Captor {
     @Override
-    public UniVariant capture(Object content) {
+    public MonoVariant capture(Object content) {
       mustExist(content, "Content cannot be null");
       final var mapping = checkedGetMapping(content.getClass());
       mapping.mappings.ensureSufficientMappings(1);
-      return new UniVariant(mapping.handle, null, content);
+      return new MonoVariant(mapping.handle, null, content);
     }
 
     @Override

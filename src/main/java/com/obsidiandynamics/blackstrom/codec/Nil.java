@@ -9,21 +9,21 @@ public final class Nil {
   
   private static final ContentHandle CONTENT_HANDLE = new ContentHandle("std:nil", 1);
   
-  private static final UniVariant CAPTURED = new UniVariant(CONTENT_HANDLE, null, INSTANCE);
+  private static final MonoVariant CAPTURED = new MonoVariant(CONTENT_HANDLE, null, INSTANCE);
   
   public static ContentHandle getContentHandle() { return CONTENT_HANDLE; }
   
   public static Nil getInstance() { return INSTANCE; }
   
   /**
-   *  Obtains a pre-captured {@link UniVariant} containing a {@link Nil} content object. <p>
+   *  Obtains a pre-captured {@link MonoVariant} containing a {@link Nil} content object. <p>
    *  
    *  This method is more efficient than capturing via {@link ContentMapper#capture(Object)} 
    *  as it does not require object allocation.
    *  
-   *  @return A pre-captured {@link UniVariant} containing a {@link Nil} content object.
+   *  @return A pre-captured {@link MonoVariant} containing a {@link Nil} content object.
    */
-  public static UniVariant capture() {
+  public static MonoVariant capture() {
     return CAPTURED;
   }
   

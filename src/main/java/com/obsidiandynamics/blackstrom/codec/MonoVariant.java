@@ -12,12 +12,12 @@ import com.obsidiandynamics.func.*;
  *  {@link ContentMapper} supports the captured version, or will fail with a
  *  {@code null} if the captured version is not supported.
  */
-public final class UniVariant implements Variant {
+public final class MonoVariant implements Variant {
   private final ContentHandle handle;
   private final PackedForm packed;
   private final Object content;
   
-  public UniVariant(ContentHandle handle, PackedForm packed, Object content) {
+  public MonoVariant(ContentHandle handle, PackedForm packed, Object content) {
     this.handle = mustExist(handle, "Content handle cannot be null");
     mustBeTrue(packed != null ^ content != null, illegalArgument("Either the packed form or the original content must be specified"));
     mustBeFalse(content instanceof Variant, 
@@ -69,8 +69,8 @@ public final class UniVariant implements Variant {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj instanceof UniVariant) {
-      final var that = (UniVariant) obj;
+    } else if (obj instanceof MonoVariant) {
+      final var that = (MonoVariant) obj;
       return Objects.equals(handle, that.handle) && Objects.equals(packed, that.packed) && Objects.equals(content, that.content);
     } else {
       return false;
@@ -79,6 +79,6 @@ public final class UniVariant implements Variant {
 
   @Override
   public String toString() {
-    return UniVariant.class.getSimpleName() + " [handle=" + handle + ", packed=" + packed + ", content=" + content + "]";
+    return MonoVariant.class.getSimpleName() + " [handle=" + handle + ", packed=" + packed + ", content=" + content + "]";
   }
 }

@@ -58,17 +58,17 @@ public final class JacksonVariantSerializationTest {
     }
   }
   
-  private static UniVariant emulatePacked(ObjectMapper mapper, String contentType, int contentVersion, Object content) {
+  private static MonoVariant emulatePacked(ObjectMapper mapper, String contentType, int contentVersion, Object content) {
     final var packed = mapper.<JsonNode>valueToTree(content);
     final var parser = new TreeTraversingParser(packed);
-    return new UniVariant(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(parser, packed), null);
+    return new MonoVariant(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(parser, packed), null);
   }
   
-  private static UniVariant capture(String contentType, int contentVersion, Object content) {
-    return new UniVariant(new ContentHandle(contentType, contentVersion), null, content);
+  private static MonoVariant capture(String contentType, int contentVersion, Object content) {
+    return new MonoVariant(new ContentHandle(contentType, contentVersion), null, content);
   }
   
-  private static void assertPackedNode(JsonNode expectedNode, UniVariant v) {
+  private static void assertPackedNode(JsonNode expectedNode, MonoVariant v) {
     final var packedForm = mustBeSubtype(v.getPacked(), JacksonPackedForm.class, AssertionError::new);
     assertEquals(expectedNode, packedForm.getNode());
   }
@@ -107,13 +107,13 @@ public final class JacksonVariantSerializationTest {
     }
   }
   
-  private static void assertUnpacked(Object expected, UniVariant v) {
+  private static void assertUnpacked(Object expected, MonoVariant v) {
     final var packed = mustBeSubtype(v.getPacked(), JacksonPackedForm.class, AssertionError::new);
     final var unpacked = JacksonUnpacker.getInstance().unpack(packed, expected.getClass());
     assertTrue(expected + " != " + unpacked, Objects.deepEquals(expected, unpacked));
   }
   
-  private static void assertUnpackedSame(Object expected, UniVariant v) {
+  private static void assertUnpackedSame(Object expected, MonoVariant v) {
     final var packed = mustBeSubtype(v.getPacked(), JacksonPackedForm.class, AssertionError::new);
     final var unpacked = JacksonUnpacker.getInstance().unpack(packed, expected.getClass());
     assertSame(expected, unpacked);
@@ -127,8 +127,8 @@ public final class JacksonVariantSerializationTest {
   }
   
   @Test
-  public void testUniVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
-    final var p = new UniVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
+  public void testMonoVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
+    final var p = new MonoVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
     
     Assertions.assertThatThrownBy(() -> {
       mapper.writeValueAsString(p);
@@ -139,57 +139,57 @@ public final class JacksonVariantSerializationTest {
   }
   
   @Test
-  public void testUniVariant_prepackedScalar() throws IOException {
+  public void testMonoVariant_prepackedScalar() throws IOException {
     final var p = emulatePacked(mapper, "test/scalar", 1, "scalar");
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(text("scalar"), d);
     assertUnpacked("scalar", d);
   }
   
   @Test
-  public void testUniVariant_serializeScalar() throws IOException {
+  public void testMonoVariant_serializeScalar() throws IOException {
     final var p = capture("test/scalar", 1, "scalar");
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(text("scalar"), d);
     assertUnpacked("scalar", d);
   }
 
   @Test
-  public void testUniVariant_prepackedArray() throws IOException {
+  public void testMonoVariant_prepackedArray() throws IOException {
     final var array = new int[] {0, 1, 2};
     final var p = emulatePacked(mapper, "test/array", 1, array);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(array(number(0), number(1), number(2)), d);
     assertUnpacked(array, d);
   }
 
   @Test
-  public void testUniVariant_serializeArray() throws IOException {
+  public void testMonoVariant_serializeArray() throws IOException {
     final var array = new int[] {0, 1, 2};
     final var p = capture("test/array", 1, array);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(array(number(0), number(1), number(2)), d);
     assertUnpacked(array, d);
   }
 
   @Test
-  public void testUniVariant_prepackedMap() throws IOException {
+  public void testMonoVariant_prepackedMap() throws IOException {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -198,13 +198,13 @@ public final class JacksonVariantSerializationTest {
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(object(field("a", array(text("w"), text("x"))), field("b", array(text("y"), text("z")))), d);
     assertUnpacked(map, d);
   }
 
   @Test
-  public void testUniVariant_serializeMap() throws IOException {
+  public void testMonoVariant_serializeMap() throws IOException {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -213,97 +213,97 @@ public final class JacksonVariantSerializationTest {
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(object(field("a", array(text("w"), text("x"))), field("b", array(text("y"), text("z")))), d);
     assertUnpacked(map, d);
   }
 
   @Test
-  public void testUniVariant_prepackedObject() throws IOException {
+  public void testMonoVariant_prepackedObject() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = emulatePacked(mapper, "test/obj", 1, obj);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj, d);
   }
 
   @Test
-  public void testUniVariant_serializeObject() throws IOException {
+  public void testMonoVariant_serializeObject() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = capture("test/obj", 1, obj);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj, d);
   }
 
   @Test
-  public void testUniVariant_serializeObject_readInterfaceType() throws IOException {
+  public void testMonoVariant_serializeObject_readInterfaceType() throws IOException {
     final var obj = new TestClass("someString", 42);
     final var p = capture("test/obj", 1, obj);
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = (UniVariant) mapper.readValue(encoded, Variant.class);
+    final var d = (MonoVariant) mapper.readValue(encoded, Variant.class);
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj, d);
   }
 
   @Test
-  public void testUniVariant_serializeNil() throws IOException {
+  public void testMonoVariant_serializeNil() throws IOException {
     final var p = capture("std:nil", 1, Nil.getInstance());
     
     final var encoded = mapper.writeValueAsString(p);
     logEncoded(encoded);
     
-    final var d = mapper.readValue(encoded, UniVariant.class);
+    final var d = mapper.readValue(encoded, MonoVariant.class);
     assertPackedNode(object(), d);
     assertUnpackedSame(Nil.getInstance(), d);
   }
 
   @Test
-  public void testMultiVariant_serializeObject() throws IOException {
+  public void testPolyVariant_serializeObject() throws IOException {
     final var obj0 = new TestClass("someString", 42);
     final var obj1 = new TestClass("someOtherString", 83);
     final var p0 = capture("test/obj-0", 1, obj0);
     final var p1 = capture("test/obj-1", 1, obj1);
-    final var mp = new MultiVariant(new UniVariant[] {p0, p1});
+    final var pp = new PolyVariant(new MonoVariant[] {p0, p1});
     
-    final var encoded = mapper.writeValueAsString(mp);
+    final var encoded = mapper.writeValueAsString(pp);
     logEncoded(encoded);
     
-    final var md = mapper.readValue(encoded, MultiVariant.class);
-    assertEquals(2, md.getVariants().length);
+    final var pd = mapper.readValue(encoded, PolyVariant.class);
+    assertEquals(2, pd.getVariants().length);
     
-    final var d0 = md.getVariants()[0];
+    final var d0 = pd.getVariants()[0];
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d0);
     assertUnpacked(obj0, d0);
     
-    final var d1 = md.getVariants()[1];
+    final var d1 = pd.getVariants()[1];
     assertPackedNode(object(field("a", text("someOtherString")), field("b", number(83))), d1);
     assertUnpacked(obj1, d1);
   }
 
   @Test
-  public void testMultiVariant_serializeObject_readInterfaceType() throws IOException {
+  public void testPolyVariant_serializeObject_readInterfaceType() throws IOException {
     final var obj0 = new TestClass("someString", 42);
     final var p0 = capture("test/obj-0", 1, obj0);
-    final var mp = new MultiVariant(new UniVariant[] {p0});
+    final var pp = new PolyVariant(new MonoVariant[] {p0});
     
-    final var encoded = mapper.writeValueAsString(mp);
+    final var encoded = mapper.writeValueAsString(pp);
     logEncoded(encoded);
     
-    final var md = (MultiVariant) mapper.readValue(encoded, Variant.class);
-    assertEquals(1, md.getVariants().length);
-    final var d = md.getVariants()[0];
+    final var pd = (PolyVariant) mapper.readValue(encoded, Variant.class);
+    assertEquals(1, pd.getVariants().length);
+    final var d = pd.getVariants()[0];
     assertPackedNode(object(field("a", text("someString")), field("b", number(42))), d);
     assertUnpacked(obj0, d);
   }
