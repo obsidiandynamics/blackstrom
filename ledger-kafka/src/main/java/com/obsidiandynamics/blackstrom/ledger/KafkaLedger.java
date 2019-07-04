@@ -361,7 +361,7 @@ public final class KafkaLedger implements Ledger {
       queueRecords(consumer, consumerState, consumerPipe, records, maxConsumerPipeYields, zlg);
     };
 
-    final var threadName = KafkaLedger.class.getSimpleName() + "-receiver-" + groupId;
+    final var threadName = KafkaLedger.class.getSimpleName() + "-topic[" + topic + "]-group[" + groupId + "]";
     final var receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
