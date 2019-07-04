@@ -325,6 +325,7 @@ public final class KafkaLedger implements Ledger {
         consumer.assign(partitions);
         for (var entry : endOffsets.entrySet()) {
           consumer.seek(entry.getKey(), entry.getValue());
+          spotter.addLot(entry.getKey().partition());
         }
       }
     });
