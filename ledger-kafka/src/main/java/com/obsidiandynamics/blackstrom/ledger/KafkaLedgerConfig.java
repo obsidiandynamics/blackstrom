@@ -2,6 +2,7 @@ package com.obsidiandynamics.blackstrom.ledger;
 
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
+import com.obsidiandynamics.blackstrom.spotter.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.yconf.*;
 import com.obsidiandynamics.zerolog.*;
@@ -42,6 +43,9 @@ public final class KafkaLedgerConfig {
   
   @YInject
   private boolean printConfig;
+  
+  @YInject
+  private SpotterConfig spotterConfig = new SpotterConfig();
 
   public Kafka<String, Message> getKafka() {
     return kafka;
@@ -185,6 +189,19 @@ public final class KafkaLedgerConfig {
     setDrainConfirmationsTimeout(drainConfirmationsTimeoutMillis);
     return this;
   }
+  
+  public SpotterConfig getSpotterConfig() {
+    return spotterConfig;
+  }
+
+  public void setSpotterConfig(SpotterConfig spotterConfig) {
+    this.spotterConfig = spotterConfig;
+  }
+
+  public KafkaLedgerConfig withSpotterConfig(SpotterConfig spotterConfig) {
+    setSpotterConfig(spotterConfig);
+    return this;
+  }
 
   @Override
   public String toString() {
@@ -192,6 +209,7 @@ public final class KafkaLedgerConfig {
         ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + 
         ", maxConsumerPipeYields=" + maxConsumerPipeYields + 
         ", ioRetries=" + ioRetries + ", drainConfirmations=" + drainConfirmations + 
-        ", drainConfirmationsTimeout=" + drainConfirmationsTimeout + ", printConfig=" + printConfig + "]";
+        ", drainConfirmationsTimeout=" + drainConfirmationsTimeout + ", printConfig=" + printConfig + 
+        ", spotterConfig=" + spotterConfig + "]";
   }
 }

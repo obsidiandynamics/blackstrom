@@ -19,6 +19,7 @@ import org.apache.kafka.common.serialization.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.blackstrom.spotter.*;
 import com.obsidiandynamics.flow.Flow;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
@@ -51,6 +52,8 @@ public final class KafkaLedger implements Ledger {
   private final ConsumerPipeConfig consumerPipeConfig;
   
   private final int maxConsumerPipeYields;
+  
+  private final SpotterConfig spotterConfig;
 
   private final Producer<String, Message> producer;
 
@@ -153,6 +156,7 @@ public final class KafkaLedger implements Ledger {
     ioRetries = config.getIoRetries();
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
+    spotterConfig = config.getSpotterConfig();
     final var codec = mustExist(config.getCodec(), "Codec cannot be null");
     codecLocator = CodecRegistry.register(codec);
     retryThread = WorkerThread.builder()
@@ -257,6 +261,8 @@ public final class KafkaLedger implements Ledger {
       consumerState = null;
     }
     
+    final var spotter = new Spotter(spotterConfig);
+    
     new Retry()
     .withAttempts(ioRetries)
     .withFaultHandler(zlg::w)
@@ -293,6 +299,17 @@ public final class KafkaLedger implements Ledger {
             synchronized (consumerState.lock) {
               consumerState.assignedPartitions = assignedPartitionIndexes;
               consumerState.heldPartitions = assignedPartitionIndexes;
+            }
+            
+            // add/remove lots from the spotter in accordance with our newly assigned partitions
+            final var lots = spotter.getLots();
+            for (var shard : lots.keySet()) {
+              if (! assignedPartitionIndexes.contains(shard)) {
+                spotter.removeLot(shard);
+              }
+            }
+            for (var shard : assignedPartitionIndexes) {
+              spotter.addLot(shard);
             }
           }
         };
@@ -336,6 +353,10 @@ public final class KafkaLedger implements Ledger {
         new ConsumerPipe<>(consumerPipeConfig, pipelinedRecordHandler, consumerPipeThreadName);
     consumerPipes.add(consumerPipe);
     final RecordHandler<String, Message> recordHandler = records -> {
+      for (var record : records) {
+        spotter.tryAdvance(record.partition(), record.offset());
+      }
+      spotter.printParkedLots();
       queueRecords(consumer, consumerState, consumerPipe, records, maxConsumerPipeYields, zlg);
     };
 
