@@ -83,7 +83,8 @@ public final class Spotter {
       if (! lapsedLots.isEmpty()) {
         final var parkedLots = new ArrayList<String>(lapsedLots.size());
         for (var lapsedLot : lapsedLots) {
-          parkedLots.add(lapsedLot.getShard() + "#" + (lapsedLot.getOffset() + 1));
+          final var offset = lapsedLot.getOffset();
+          parkedLots.add(lapsedLot.getShard() + "#" + (offset == -1 ? "?" : String.valueOf(offset + 1)));
           lapsedLot.setLogPrinted();
         }
         zlg.i("Parked: %s", z -> z.arg(parkedLots));
