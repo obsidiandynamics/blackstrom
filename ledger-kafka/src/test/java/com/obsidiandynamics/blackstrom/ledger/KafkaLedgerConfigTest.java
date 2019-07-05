@@ -16,11 +16,12 @@ import com.obsidiandynamics.zerolog.*;
 public final class KafkaLedgerConfigTest {
   @Test
   public void testConfig() throws IOException {
-    final KafkaLedgerConfig config = new MappingContext()
+    final var config = new MappingContext()
         .withParser(new SnakeyamlParser())
         .fromStream(KafkaLedgerConfigTest.class.getClassLoader().getResourceAsStream("kafkaledger.conf"))
         .map(KafkaLedgerConfig.class);
     
+    config.validate();
     assertNotNull(config.getKafka());
     assertEquals(MockKafka.class, config.getKafka().getClass());
     assertEquals("test", config.getTopic());
@@ -29,8 +30,9 @@ public final class KafkaLedgerConfigTest {
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
     assertEquals(50, config.getMaxConsumerPipeYields());
+    assertEquals(1000, config.getPollTimeout());
     assertNotNull(config.getZlg());
-    assertEquals(5, config.getIoRetries());
+    assertEquals(5, config.getIoAttempts());
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
     assertEquals(60_000, config.getSpotterConfig().getTimeout());
@@ -40,26 +42,32 @@ public final class KafkaLedgerConfigTest {
   
   @Test
   public void testFluent() {
-    final KafkaLedgerConfig config = new KafkaLedgerConfig()
+    final var codec = new IdentityMessageCodec();
+    final var config = new KafkaLedgerConfig()
         .withKafka(new MockKafka<>())
         .withTopic("test")
+        .withCodec(codec)
         .withProducerPipeConfig(new ProducerPipeConfig())
         .withConsumerPipeConfig(new ConsumerPipeConfig())
         .withMaxConsumerPipeYields(50)
+        .withPollTimeout(1000)
         .withZlg(Zlg.forDeclaringClass().get())
-        .withIoRetries(5)
+        .withIoAttempts(5)
         .withDrainConfirmations(true)
         .withDrainConfirmationsTimeout(60_000)
         .withPrintConfig(true)
         .withSpotterConfig(new SpotterConfig().withTimeout(60_000));
+    config.validate();
     
     assertNotNull(config.getKafka());
     assertEquals("test", config.getTopic());
+    assertSame(codec, config.getCodec());
     assertNotNull(config.getProducerPipeConfig());
     assertNotNull(config.getConsumerPipeConfig());
     assertEquals(50, config.getMaxConsumerPipeYields());
+    assertEquals(1000, config.getPollTimeout());
     assertNotNull(config.getZlg());
-    assertEquals(5, config.getIoRetries());
+    assertEquals(5, config.getIoAttempts());
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
     assertTrue(config.isPrintConfig());

@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.spotter.*;
@@ -25,13 +27,16 @@ public final class KafkaLedgerConfig {
   private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true).withBacklogBatches(16);
   
   @YInject
+  private int pollTimeout = 100;
+  
+  @YInject
   private int maxConsumerPipeYields = 100;
   
   @YInject
   private Zlg zlg = Zlg.forClass(KafkaLedger.class).get();
   
   @YInject
-  private int ioRetries = 10;
+  private int ioAttempts = 10;
   
   @YInject
   private boolean drainConfirmations = true;
@@ -46,13 +51,27 @@ public final class KafkaLedgerConfig {
   
   @YInject
   private SpotterConfig spotterConfig = new SpotterConfig();
+  
+  public void validate() {
+    mustExist(kafka, "Kafka cannot be null");
+    mustExist(topic, "Topic cannot be null");
+    mustExist(codec, "Codec cannot be null");
+    mustExist(producerPipeConfig, "Producer pipe config cannot be null");
+    mustExist(consumerPipeConfig, "Consumer pipe config cannot be null");
+    mustBeGreater(pollTimeout, 0, illegalArgument("Poll timeout must be greater than zero"));
+    mustBeGreaterOrEqual(maxConsumerPipeYields, 0, illegalArgument("Max consumer pipe yields cannot be negative"));
+    mustExist(zlg, "Zlg cannot be null");
+    mustBeGreater(ioAttempts, 0, illegalArgument("IO attempts must be greater than zero"));
+    mustBeGreaterOrEqual(drainConfirmationsTimeout, 0, illegalArgument("Drain confirmations timeout cannot be negative"));
+    mustExist(spotterConfig, "Spotter config cannot be null").validate();
+  }
 
   public Kafka<String, Message> getKafka() {
     return kafka;
   }
 
   public void setKafka(Kafka<String, Message> kafka) {
-    this.kafka = kafka;
+    this.kafka = mustExist(kafka, "Kafka cannot be null");
   }
 
   public KafkaLedgerConfig withKafka(Kafka<String, Message> kafka) {
@@ -65,7 +84,7 @@ public final class KafkaLedgerConfig {
   }
 
   public void setTopic(String topic) {
-    this.topic = topic;
+    this.topic = mustExist(topic, "Topic cannot be null");
   }
 
   public KafkaLedgerConfig withTopic(String topic) {
@@ -78,7 +97,7 @@ public final class KafkaLedgerConfig {
   }
 
   public void setCodec(MessageCodec codec) {
-    this.codec = codec;
+    this.codec = mustExist(codec, "Codec cannot be null");
   }
 
   public KafkaLedgerConfig withCodec(MessageCodec codec) {
@@ -91,7 +110,7 @@ public final class KafkaLedgerConfig {
   }
 
   public void setProducerPipeConfig(ProducerPipeConfig producerPipeConfig) {
-    this.producerPipeConfig = producerPipeConfig;
+    this.producerPipeConfig = mustExist(producerPipeConfig, "Producer pipe config cannot be null");
   }
 
   public KafkaLedgerConfig withProducerPipeConfig(ProducerPipeConfig producerPipeConfig) {
@@ -104,11 +123,24 @@ public final class KafkaLedgerConfig {
   }
 
   public void setConsumerPipeConfig(ConsumerPipeConfig consumerPipeConfig) {
-    this.consumerPipeConfig = consumerPipeConfig;
+    this.consumerPipeConfig = mustExist(consumerPipeConfig, "Consumer pipe config cannot be null");
   }
 
   public KafkaLedgerConfig withConsumerPipeConfig(ConsumerPipeConfig consumerPipeConfig) {
     setConsumerPipeConfig(consumerPipeConfig);
+    return this;
+  }
+  
+  public int getPollTimeout() {
+    return pollTimeout;
+  }
+  
+  public void setPollTimeout(int pollTimeoutMillis) {
+    this.pollTimeout = mustBeGreater(pollTimeoutMillis, 0, illegalArgument("Poll timeout must be greater than zero"));
+  }
+  
+  public KafkaLedgerConfig withPollTimeout(int pollTimeoutMillis) {
+    setPollTimeout(pollTimeoutMillis);
     return this;
   }
   
@@ -117,7 +149,7 @@ public final class KafkaLedgerConfig {
   }
   
   public void setMaxConsumerPipeYields(int maxConsumerPipeYields) {
-    this.maxConsumerPipeYields = maxConsumerPipeYields;
+    this.maxConsumerPipeYields = mustBeGreaterOrEqual(maxConsumerPipeYields, 0, illegalArgument("Max consumer pipe yields cannot be negative"));
   }
   
   public KafkaLedgerConfig withMaxConsumerPipeYields(int maxConsumerPipeYields) {
@@ -130,7 +162,7 @@ public final class KafkaLedgerConfig {
   }
 
   public void setZlg(Zlg zlg) {
-    this.zlg = zlg;
+    this.zlg = mustExist(zlg, "Zlg cannot be null");
   }
 
   public KafkaLedgerConfig withZlg(Zlg zlg) {
@@ -138,16 +170,16 @@ public final class KafkaLedgerConfig {
     return this;
   }
 
-  public int getIoRetries() {
-    return ioRetries;
+  public int getIoAttempts() {
+    return ioAttempts;
   }
   
-  public void setIoRetries(int ioRetries) {
-    this.ioRetries = ioRetries;
+  public void setIoAttempts(int ioAttempts) {
+    this.ioAttempts = mustBeGreater(ioAttempts, 0, illegalArgument("IO attempts must be greater than zero"));
   }
   
-  public KafkaLedgerConfig withIoRetries(int ioRetries) {
-    setIoRetries(ioRetries);
+  public KafkaLedgerConfig withIoAttempts(int ioAttempts) {
+    setIoAttempts(ioAttempts);
     return this;
   }
   
@@ -182,7 +214,8 @@ public final class KafkaLedgerConfig {
   }
   
   public void setDrainConfirmationsTimeout(int drainConfirmationsTimeoutMillis) {
-    this.drainConfirmationsTimeout = drainConfirmationsTimeoutMillis;
+    this.drainConfirmationsTimeout = mustBeGreaterOrEqual(drainConfirmationsTimeoutMillis, 0, 
+                                                          illegalArgument("Drain confirmations timeout cannot be negative"));
   }
   
   public KafkaLedgerConfig withDrainConfirmationsTimeout(int drainConfirmationsTimeoutMillis) {
@@ -195,7 +228,7 @@ public final class KafkaLedgerConfig {
   }
 
   public void setSpotterConfig(SpotterConfig spotterConfig) {
-    this.spotterConfig = spotterConfig;
+    this.spotterConfig = mustExist(spotterConfig, "Spotter config cannot be null");
   }
 
   public KafkaLedgerConfig withSpotterConfig(SpotterConfig spotterConfig) {
@@ -206,9 +239,9 @@ public final class KafkaLedgerConfig {
   @Override
   public String toString() {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
-        ", producerPipeConfig=" + producerPipeConfig + ", consumerPipeConfig=" + consumerPipeConfig + 
+        ", producerPipeConfig=" + producerPipeConfig + ", pollTimeout=" + pollTimeout + ", consumerPipeConfig=" + consumerPipeConfig + 
         ", maxConsumerPipeYields=" + maxConsumerPipeYields + 
-        ", ioRetries=" + ioRetries + ", drainConfirmations=" + drainConfirmations + 
+        ", ioRetries=" + ioAttempts + ", drainConfirmations=" + drainConfirmations + 
         ", drainConfirmationsTimeout=" + drainConfirmationsTimeout + ", printConfig=" + printConfig + 
         ", spotterConfig=" + spotterConfig + "]";
   }

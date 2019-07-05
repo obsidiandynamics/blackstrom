@@ -17,8 +17,8 @@ public final class SpotterConfig {
   private Zlg zlg = Zlg.forClass(Spotter.class).get();
   
   public void validate() {
-    mustBeGreaterOrEqual(timeout, 0, withMessage("Timeout cannot be negative", IllegalArgumentException::new));
-    mustBeGreaterOrEqual(gracePeriod, 0, withMessage("Grace period cannot be negative", IllegalArgumentException::new));
+    mustBeGreaterOrEqual(timeout, 0, illegalArgument("Timeout cannot be negative"));
+    mustBeGreaterOrEqual(gracePeriod, 0, illegalArgument("Grace period cannot be negative"));
     mustExist(zlg, "Zlg cannot be null");
   }
 
@@ -27,7 +27,7 @@ public final class SpotterConfig {
   }
 
   public void setTimeout(long timeoutMillis) {
-    this.timeout = mustBeGreaterOrEqual(timeoutMillis, 0, withMessage("Timeout cannot be negative", IllegalArgumentException::new));
+    this.timeout = mustBeGreaterOrEqual(timeoutMillis, 0, illegalArgument("Timeout cannot be negative"));
   }
 
   public SpotterConfig withTimeout(long timeoutMillis) {
@@ -40,7 +40,7 @@ public final class SpotterConfig {
   }
 
   public void setGracePeriod(long gracePeriodMillis) {
-    this.gracePeriod = mustBeGreaterOrEqual(gracePeriodMillis, 0, withMessage("Grace period cannot be negative", IllegalArgumentException::new));
+    this.gracePeriod = mustBeGreaterOrEqual(gracePeriodMillis, 0, illegalArgument("Grace period cannot be negative"));
   }
 
   public SpotterConfig withGracePeriod(long gracePeriodMillis) {

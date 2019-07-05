@@ -69,7 +69,7 @@ public final class KafkaLedger implements Ledger {
   
   private final boolean printConfig;
   
-  private final int ioRetries;
+  private final int ioAttempts;
   
   private final boolean drainConfirmations;
   
@@ -148,21 +148,22 @@ public final class KafkaLedger implements Ledger {
   private volatile boolean disposing;
 
   public KafkaLedger(KafkaLedgerConfig config) {
-    mustExist(config, "Config cannot be null");
-    kafka = mustExist(config.getKafka(), "Kafka cannot be null");
-    topic = mustExist(config.getTopic(), "Topic cannot be null");
-    zlg = mustExist(config.getZlg(), "Zlg cannot be null");
-    printConfig = mustExist(config.isPrintConfig(), "Print config cannot be null");
-    consumerPipeConfig = mustExist(config.getConsumerPipeConfig(), "Consumer pipe config cannot be null");
+    mustExist(config, "Ledger config cannot be null").validate();
+    kafka = config.getKafka();
+    topic = config.getTopic();
+    zlg = config.getZlg();
+    printConfig = config.isPrintConfig();
+    consumerPipeConfig = config.getConsumerPipeConfig();
     maxConsumerPipeYields = config.getMaxConsumerPipeYields();
-    ioRetries = config.getIoRetries();
+    ioAttempts = config.getIoAttempts();
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
     spotterConfig = config.getSpotterConfig();
-    final var codec = mustExist(config.getCodec(), "Codec cannot be null");
+    final var codec = config.getCodec();
     codecLocator = CodecRegistry.register(codec);
+    final var randomThreadId = Binary.toHex(Randomness.nextBytes(4));
     retryThread = WorkerThread.builder()
-        .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry", topic))
+        .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry-" + randomThreadId + "-[" + topic + "]"))
         .onCycle(this::onRetry)
         .buildAndStart();
 
@@ -190,8 +191,8 @@ public final class KafkaLedger implements Ledger {
     
     if (printConfig) kafka.describeProducer(zlg::i, producerDefaults, producerOverrides);
     producer = kafka.getProducer(producerDefaults, producerOverrides);
-    final var producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + topic;
-    final var producerPipeConfig = mustExist(config.getProducerPipeConfig(), "Producer pipe config");
+    final var producerPipeThreadName = ProducerPipe.class.getSimpleName() + "-" + randomThreadId + "-[" + topic + "]";
+    final var producerPipeConfig = config.getProducerPipeConfig();
     producerPipe = new ProducerPipe<>(producerPipeConfig, producer, producerPipeThreadName, zlg::w);
   }
   
@@ -266,7 +267,7 @@ public final class KafkaLedger implements Ledger {
     final var spotter = new Spotter(spotterConfig);
     
     new Retry()
-    .withAttempts(ioRetries)
+    .withAttempts(ioAttempts)
     .withFaultHandler(zlg::w)
     .withErrorHandler(zlg::e)
     .withExceptionMatcher(Retry.isA(RetriableException.class))
@@ -283,7 +284,7 @@ public final class KafkaLedger implements Ledger {
 
             if (drainConfirmations) {
               // blocks until all pending offsets have been confirmed, and performs a sync commit
-              drainOffsets(topic, consumer, consumerState, ioRetries, sleepFor(OFFSET_DRAIN_CHECK_INTERVAL_MILLIS), 
+              drainOffsets(topic, consumer, consumerState, ioAttempts, sleepFor(OFFSET_DRAIN_CHECK_INTERVAL_MILLIS), 
                            drainConfirmationsTimeout, KafkaLedger.this::isDisposing, zlg);
             }
           }
@@ -346,7 +347,8 @@ public final class KafkaLedger implements Ledger {
     }
 
     final var context = new DefaultMessageContext(this, handlerId, retention);
-    final var consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + groupId;
+    final var randomThreadId = Binary.toHex(Randomness.nextBytes(4));
+    final var consumerPipeThreadName = ConsumerPipe.class.getSimpleName() + "-" + randomThreadId + "-topic[" + topic + "]-group[" + groupId + "]";
     final RecordHandler<String, Message> pipelinedRecordHandler = records -> {
       for (var record : records) {
         handleRecord(handler, consumerState, context, record, zlg);
@@ -363,7 +365,6 @@ public final class KafkaLedger implements Ledger {
       queueRecords(consumer, consumerState, consumerPipe, records, maxConsumerPipeYields, zlg);
     };
 
-    final var randomThreadId = Binary.toHex(Randomness.nextBytes(4));
     final var threadName = KafkaLedger.class.getSimpleName() + "-" + randomThreadId + "-topic[" + topic + "]-group[" + groupId + "]";
     final var receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, zlg::w);
