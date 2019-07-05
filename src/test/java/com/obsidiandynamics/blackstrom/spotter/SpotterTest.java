@@ -96,7 +96,7 @@ public final class SpotterTest {
     Threads.sleep(5);
     spotter.printParkedLots();
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(INFO).containing("Parked: [1#0, 3#11]").assertCount(1);
+    logTarget.entries().forLevel(INFO).containing("Parked: 1#?, 3#11").assertCount(1);
     
     // verify that lots only get printed once, unless advanced
     logTarget.reset();
@@ -111,7 +111,7 @@ public final class SpotterTest {
     Threads.sleep(5);
     spotter.printParkedLots();
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(INFO).containing("Parked: [3#12]").assertCount(1);
+    logTarget.entries().forLevel(INFO).containing("Parked: 3#12 + 1 existing").assertCount(1);
   }
   
   @Test

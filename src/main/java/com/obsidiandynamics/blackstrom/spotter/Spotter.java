@@ -57,13 +57,13 @@ public final class Spotter {
   }
   
   public List<Lot> getLapsedLots() {
-    List<Lot> lapsedLots = null;
+    var lapsedLots = (List<Lot>) null;
     
     final var timeoutThreshold = System.currentTimeMillis() - timeout;
     final var graceThreshold = timeoutThreshold - gracePeriod;
     var willPrint = false;
     for (var lot : lots) {
-      if (lot != null && ! lot.isLogPrinted() && lot.getLastAdvancedTime() < timeoutThreshold) {
+      if (lot != null && lot.getLastAdvancedTime() < timeoutThreshold) {
         if (lapsedLots == null) lapsedLots = new ArrayList<>();
         lapsedLots.add(lot);
         
@@ -81,12 +81,28 @@ public final class Spotter {
       final var lapsedLots = getLapsedLots();
       
       if (! lapsedLots.isEmpty()) {
-        final var parkedLots = new ArrayList<String>(lapsedLots.size());
+        var parkedLots = (List<String>) null;
+        var existing = 0;
         for (var lapsedLot : lapsedLots) {
-          parkedLots.add(lapsedLot.getShard() + "#" + (lapsedLot.getOffset() + 1));
-          lapsedLot.setLogPrinted();
+          if (! lapsedLot.isLogPrinted()) {
+            final var offset = lapsedLot.getOffset();
+            if (parkedLots == null) parkedLots = new ArrayList<>();
+            parkedLots.add(lapsedLot.getShard() + "#" + (offset == -1 ? "?" : String.valueOf(offset + 1)));
+            lapsedLot.setLogPrinted();
+          } else {
+            existing++;
+          }
         }
-        zlg.i("Parked: %s", z -> z.arg(parkedLots));
+
+        final var _parkedLots = parkedLots;
+        if (existing > 0) {
+          if (parkedLots != null) {
+            final var _existing = existing;
+            zlg.i("Parked: %s + %d existing", z -> z.arg(String.join(", ", _parkedLots)).arg(_existing));
+          }
+        } else {
+          zlg.i("Parked: %s", z -> z.arg(String.join(", ", _parkedLots)));
+        }
       }
     }
   }

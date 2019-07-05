@@ -7,6 +7,8 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.flow.*;
 import com.obsidiandynamics.flow.Flow;
+import com.obsidiandynamics.format.*;
+import com.obsidiandynamics.random.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 
@@ -49,8 +51,10 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
 
   @Override
   public Confirmation begin(MessageContext context, Message message) {
-    final Flow flow = flows.computeIfAbsent(message.getShard(), shard -> {
-      final Flow newFlow = new Flow(firingStrategyFactory, Flow.class.getSimpleName() + "-shard[" + shard + "]-group[" + groupId + "]");
+    final var flow = flows.computeIfAbsent(message.getShard(), shard -> {
+      final var randomThreadId = Binary.toHex(Randomness.nextBytes(4));
+      final var threadName = Flow.class.getSimpleName() + "-" + randomThreadId + "-shard[" + shard + "]-group[" + groupId + "]";
+      final var newFlow = new Flow(firingStrategyFactory, threadName);
       synchronized (terminateLock) {
         createdFlows.add(newFlow);
         if (terminated) {
@@ -61,7 +65,7 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
       }
       return newFlow;
     });
-    final MessageId messageId = message.getMessageId();
+    final var messageId = message.getMessageId();
     return flow.begin(messageId, new ConfirmTask(context, messageId));
   }
 
@@ -78,7 +82,7 @@ public final class ShardedFlow implements Retention, Terminable, Joinable {
 
   @Override
   public boolean join(long timeoutMillis) throws InterruptedException {
-    final Joiner joiner = Joiner.blank();
+    final var joiner = Joiner.blank();
     synchronized (terminateLock) {
       joiner.add(createdFlows);
     }

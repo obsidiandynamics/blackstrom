@@ -21,9 +21,11 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.blackstrom.spotter.*;
 import com.obsidiandynamics.flow.Flow;
+import com.obsidiandynamics.format.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.jackdaw.AsyncReceiver.*;
 import com.obsidiandynamics.nodequeue.*;
+import com.obsidiandynamics.random.*;
 import com.obsidiandynamics.retry.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.worker.*;
@@ -361,7 +363,8 @@ public final class KafkaLedger implements Ledger {
       queueRecords(consumer, consumerState, consumerPipe, records, maxConsumerPipeYields, zlg);
     };
 
-    final var threadName = KafkaLedger.class.getSimpleName() + "-topic[" + topic + "]-group[" + groupId + "]";
+    final var randomThreadId = Binary.toHex(Randomness.nextBytes(4));
+    final var threadName = KafkaLedger.class.getSimpleName() + "-" + randomThreadId + "-topic[" + topic + "]-group[" + groupId + "]";
     final var receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
