@@ -6,7 +6,7 @@ dependencies {
   compile "com.obsidiandynamics.fulcrum:fulcrum-format:${fulcrumVersion}"
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.obsidiandynamics.meteor:meteor-core:${meteorVersion}"
-  compile "com.hazelcast:hazelcast:${hazelcastVersion}"
+  compileOnly "com.hazelcast:hazelcast:${hazelcastVersion}"
   
   testCompile project(":blackstrom-codec-jackson")
   testCompile project(":blackstrom-codec-jackson").sourceSets.test.output
@@ -19,6 +19,7 @@ dependencies {
   testCompile "com.obsidiandynamics.meteor:meteor-assurance:${meteorVersion}"
   testCompile "com.hazelcast:hazelcast:${hazelcastVersion}:tests"
   testCompile "org.jgroups:jgroups:${jgroupsVersion}"
+  testCompile "com.hazelcast:hazelcast:${hazelcastVersion}"
   
   testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }

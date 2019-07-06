@@ -5,7 +5,7 @@ dependencies {
   compile project(":")
   compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
   compile "com.obsidiandynamics.jackdaw:jackdaw-core:${jackdawVersion}"
-  compile "org.apache.kafka:kafka-clients:${kafkaVersion}"
+  compileOnly "org.apache.kafka:kafka-clients:${kafkaVersion}"
   
   testCompile project(":blackstrom-codec-jackson")
   testCompile project(":blackstrom-codec-jackson").sourceSets.test.output
@@ -19,6 +19,7 @@ dependencies {
   testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
   testCompile "com.obsidiandynamics.jackdaw:jackdaw-assurance:${jackdawVersion}"
   testCompile "org.jgroups:jgroups:${jgroupsVersion}"
+  testCompile "org.apache.kafka:kafka-clients:${kafkaVersion}"
   
   testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
