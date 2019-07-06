@@ -61,7 +61,7 @@ public final class SpotterTest {
   public void testPrintParkedLots_notExpired() {
     final var logTarget = new MockLogTarget();
     final var spotter = new Spotter(new SpotterConfig()
-                                    .withTimeout(60_000)
+                                    .withTimeout(600_000)
                                     .withZlg(logTarget.logger()));
     spotter.addLot(1);
     spotter.addLot(3);
@@ -74,13 +74,40 @@ public final class SpotterTest {
     final var logTarget = new MockLogTarget();
     final var spotter = new Spotter(new SpotterConfig()
                                     .withTimeout(0)
-                                    .withGracePeriod(60_000)
+                                    .withGracePeriod(600_000)
                                     .withZlg(logTarget.logger()));
     spotter.addLot(1);
     spotter.addLot(3);
     Threads.sleep(5);
     spotter.printParkedLots();
     logTarget.entries().assertCount(0);
+  }
+  
+  @Test
+  public void testPrintParkedLots_twoExpiredOneGraced() {
+    final var logTarget = new MockLogTarget();
+    final var gracePeriod = 600_000;
+    final var spotter = new Spotter(new SpotterConfig()
+                                    .withTimeout(0)
+                                    .withGracePeriod(gracePeriod)
+                                    .withZlg(logTarget.logger()));
+    final var l1 = spotter.addLot(1);
+    assertNotNull(l1);
+    l1.setLastAdvanceTime(System.currentTimeMillis() - gracePeriod);
+    final var l3 = spotter.addLot(3);
+    assertNotNull(l3);
+    Threads.sleep(5);
+    spotter.printParkedLots();
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(INFO).containing("Parked: 1#?").assertCount(1);
+    logTarget.entries().forLevel(INFO).containing("3#?").assertCount(0);
+    
+    // second print should show nothing
+    logTarget.reset();
+    spotter.printParkedLots();
+    logTarget.entries().assertCount(0);
+    
+    // expire
   }
   
   @Test
@@ -112,6 +139,11 @@ public final class SpotterTest {
     spotter.printParkedLots();
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(INFO).containing("Parked: 3#12 + 1 existing").assertCount(1);
+    
+    // another print should show nothing
+    logTarget.reset();
+    spotter.printParkedLots();
+    logTarget.entries().assertCount(0);
   }
   
   @Test
