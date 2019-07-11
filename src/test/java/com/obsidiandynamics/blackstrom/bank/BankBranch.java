@@ -106,12 +106,6 @@ public final class BankBranch implements Cohort.Base {
   public String getBranchId() {
     return branchId;
   }
-
-  //TODO remove after CohortBase has been fixed with beginAndConfirm default behaviour
-  @Override
-  public void onVote(MessageContext context, Vote vote) {
-    context.beginAndConfirm(vote);
-  }
   
   @Override
   public void onProposal(MessageContext context, Proposal proposal) {

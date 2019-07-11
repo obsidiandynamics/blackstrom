@@ -8,6 +8,14 @@ public interface NoticeProcessor extends ElementalProcessor {
   void onNotice(MessageContext context, Notice notice);
   
   interface Nop extends NoticeProcessor {
-    @Override default void onNotice(MessageContext context, Notice notice) {}
+    @Override 
+    default void onNotice(MessageContext context, Notice notice) {}
+  }
+  
+  interface BeginAndConfirm extends NoticeProcessor {
+    @Override 
+    default void onNotice(MessageContext context, Notice notice) {
+      context.beginAndConfirm(notice);
+    }
   }
 }
