@@ -8,6 +8,14 @@ public interface QueryProcessor extends ElementalProcessor {
   void onQuery(MessageContext context, Query query);
   
   interface Nop extends QueryProcessor {
-    @Override default void onQuery(MessageContext context, Query query) {}
+    @Override 
+    default void onQuery(MessageContext context, Query query) {}
+  }
+  
+  interface BeginAndConfirm extends QueryProcessor {
+    @Override 
+    default void onQuery(MessageContext context, Query query) {
+      context.beginAndConfirm(query);
+    }
   }
 }

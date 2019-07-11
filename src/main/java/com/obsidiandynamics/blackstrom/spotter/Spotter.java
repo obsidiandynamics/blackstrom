@@ -56,35 +56,31 @@ public final class Spotter {
     return getOrCreateLot(shard).tryAdvance(offset);
   }
   
-  public List<Lot> getLapsedLots() {
+  private List<Lot> getLapsedLots(long lastAdvancedThreshold) {
     var lapsedLots = (List<Lot>) null;
     
-    final var timeoutThreshold = System.currentTimeMillis() - timeout;
-    final var graceThreshold = timeoutThreshold - gracePeriod;
-    var willPrint = false;
     for (var lot : lots) {
-      if (lot != null && lot.getLastAdvancedTime() < timeoutThreshold) {
+      if (lot != null && lot.getLastAdvancedTime() < lastAdvancedThreshold) {
         if (lapsedLots == null) lapsedLots = new ArrayList<>();
         lapsedLots.add(lot);
-        
-        if (lot.getLastAdvancedTime() < graceThreshold) {
-          willPrint = true;
-        }
       }
     }
     
-    return willPrint ? lapsedLots : Collections.emptyList();
+    return lapsedLots != null ? lapsedLots : Collections.emptyList();
   }
   
   public void printParkedLots() {
     if (zlg.isEnabled(LogLevel.INFO)) {
-      final var lapsedLots = getLapsedLots();
+      final var timeoutThreshold = System.currentTimeMillis() - timeout;
+      final var lapsedLots = getLapsedLots(timeoutThreshold);
       
       if (! lapsedLots.isEmpty()) {
         var parkedLots = (List<String>) null;
         var existing = 0;
+        
+        final var graceThreshold = timeoutThreshold - gracePeriod;
         for (var lapsedLot : lapsedLots) {
-          if (! lapsedLot.isLogPrinted()) {
+          if (! lapsedLot.isLogPrinted() && lapsedLot.getLastAdvancedTime() < graceThreshold) {
             final var offset = lapsedLot.getOffset();
             if (parkedLots == null) parkedLots = new ArrayList<>();
             parkedLots.add(lapsedLot.getShard() + "#" + (offset == -1 ? "?" : String.valueOf(offset + 1)));

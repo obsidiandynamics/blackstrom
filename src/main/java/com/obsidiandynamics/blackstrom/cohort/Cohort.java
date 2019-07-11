@@ -18,12 +18,12 @@ OutcomeProcessor {
   Cohort, 
   Initable.Nop, 
   Disposable.Nop, 
-  QueryProcessor.Nop, 
-  QueryResponseProcessor.Nop,
-  CommandProcessor.Nop, 
-  CommandResponseProcessor.Nop,
-  NoticeProcessor.Nop,
-  ProposalProcessor.Nop, 
-  VoteProcessor.Nop, 
-  OutcomeProcessor.Nop {}
+  QueryProcessor.BeginAndConfirm, 
+  QueryResponseProcessor.BeginAndConfirm,
+  CommandProcessor.BeginAndConfirm, 
+  CommandResponseProcessor.BeginAndConfirm,
+  NoticeProcessor.BeginAndConfirm,
+  ProposalProcessor.BeginAndConfirm, 
+  VoteProcessor.BeginAndConfirm, 
+  OutcomeProcessor.BeginAndConfirm {}
 }

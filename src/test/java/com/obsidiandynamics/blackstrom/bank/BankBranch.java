@@ -106,7 +106,7 @@ public final class BankBranch implements Cohort.Base {
   public String getBranchId() {
     return branchId;
   }
-
+  
   @Override
   public void onProposal(MessageContext context, Proposal proposal) {
     try {

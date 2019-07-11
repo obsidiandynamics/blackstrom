@@ -43,4 +43,8 @@ public final class Lot {
   public long getLastAdvancedTime() {
     return lastAdvancedTime;
   }
+  
+  void setLastAdvanceTime(long lastAdvanceTime) {
+    this.lastAdvancedTime = lastAdvanceTime;
+  }
 }

@@ -8,6 +8,14 @@ public interface ProposalProcessor extends ElementalProcessor {
   void onProposal(MessageContext context, Proposal proposal);
   
   interface Nop extends ProposalProcessor {
-    @Override default void onProposal(MessageContext context, Proposal proposal) {}
+    @Override 
+    default void onProposal(MessageContext context, Proposal proposal) {}
+  }
+  
+  interface BeginAndConfirm extends ProposalProcessor {
+    @Override 
+    default void onProposal(MessageContext context, Proposal proposal) {
+      context.beginAndConfirm(proposal);
+    }
   }
 }
