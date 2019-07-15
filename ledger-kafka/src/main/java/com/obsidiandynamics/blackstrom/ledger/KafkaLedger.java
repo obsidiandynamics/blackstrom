@@ -75,6 +75,8 @@ public final class KafkaLedger implements Ledger {
   
   private final int drainConfirmationsTimeout;
   
+  private final boolean enforceMonotonicity;
+  
   private final WorkerThread retryThread;
   
   private static final class RetryTask {
@@ -124,8 +126,8 @@ public final class KafkaLedger implements Ledger {
     /** Offsets for messages that have been accepted for processing. This map is cleared after drainage. */
     Map<Integer, Long> offsetsAccepted = new HashMap<>();
     
-    /** A perpetual tracking of all offsets that have been processed, ensuring monotonicity. */
-    final Map<Integer, MutableOffset> offsetsProcessed = new HashMap<>();
+    /** A perpetual tracking of all offsets that have been processed, ensuring monotonicity. ({@code null} if disabled.) */
+    final Map<Integer, MutableOffset> offsetsProcessed;
     
     /** Partitions that have been assigned to this consumer. */
     Set<Integer> assignedPartitions = Collections.emptySet();
@@ -134,6 +136,10 @@ public final class KafkaLedger implements Ledger {
      *  it doesn't get cleared in the {@code onPartitionsRevoked()} callback and persists until the
      *  {@code onPartitionsAssigned()} callback. */
     Set<Integer> heldPartitions = Collections.emptySet();
+    
+    ConsumerState(boolean enforceMonotonicity) {
+      offsetsProcessed = enforceMonotonicity ? new HashMap<>() : null;
+    }
     
     MutableOffset processedOffsetForPartition(int partition) {
       return offsetsProcessed.computeIfAbsent(partition, __ -> new MutableOffset());
@@ -158,6 +164,7 @@ public final class KafkaLedger implements Ledger {
     ioAttempts = config.getIoAttempts();
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
+    enforceMonotonicity = config.isEnforceMonotonicity();
     spotterConfig = config.getSpotterConfig();
     final var codec = config.getCodec();
     codecLocator = CodecRegistry.register(codec);
@@ -205,14 +212,6 @@ public final class KafkaLedger implements Ledger {
     }
   }
   
-  private static Map<TopicPartition, OffsetAndMetadata> toKafkaOffsetsMap(Map<Integer, Long> sourceMap, String topic) {
-    final var targetMap = new HashMap<TopicPartition, OffsetAndMetadata>();
-    for (var entry : sourceMap.entrySet()) {
-      targetMap.put(new TopicPartition(topic, entry.getKey()), new OffsetAndMetadata(entry.getValue()));
-    }
-    return targetMap;
-  }
-
   @Override
   public Object attach(MessageHandler handler) {
     mustExist(handler, "Handler cannot be null");
@@ -259,7 +258,7 @@ public final class KafkaLedger implements Ledger {
     final var consumer = kafka.getConsumer(consumerDefaults, consumerOverrides);
     final ConsumerState consumerState;
     if (groupId != null) {
-      consumerState = new ConsumerState();
+      consumerState = new ConsumerState(enforceMonotonicity);
     } else {
       consumerState = null;
     }
@@ -429,33 +428,37 @@ public final class KafkaLedger implements Ledger {
     while (! isDisposingCheck.getAsBoolean()) {
       final boolean allPendingOffsetsConfirmed;
       final Map<Integer, Long> offsetsAcceptedSnapshot;
+      final Map<TopicPartition, OffsetAndMetadata> offsetsConfirmedSnapshot;
       synchronized (consumerState.lock) {
         if (consumerState.queuedRecords == 0) {
           allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
           if (allPendingOffsetsConfirmed) {
             offsetsAcceptedSnapshot = consumerState.offsetsAccepted;
-            consumerState.offsetsAccepted = new HashMap<>();
+            consumerState.offsetsAccepted = new HashMap<>(consumerState.offsetsAccepted.size());
+            offsetsConfirmedSnapshot = consumerState.offsetsConfirmed;
+            consumerState.offsetsConfirmed = new HashMap<>(consumerState.offsetsConfirmed.size());
           } else {
             zlg.d("Offsets pending: %s", z -> z.arg(consumerState.offsetsPending));
             offsetsAcceptedSnapshot = null;
+            offsetsConfirmedSnapshot = null;
           }
         } else {
           zlg.d("Pipeline backlogged: %d records queued", z -> z.arg(consumerState.queuedRecords));
           allPendingOffsetsConfirmed = false;
           offsetsAcceptedSnapshot = null;
+          offsetsConfirmedSnapshot = null;
         }
       }
 
       if (allPendingOffsetsConfirmed) {
         zlg.d("All offsets confirmed: %s", z -> z.arg(offsetsAcceptedSnapshot));
-        if (! offsetsAcceptedSnapshot.isEmpty()) {
-          final var kafkaOffsets = toKafkaOffsetsMap(offsetsAcceptedSnapshot, topic);
+        if (! offsetsConfirmedSnapshot.isEmpty()) {
           new Retry()
           .withAttempts(ioRetries)
           .withFaultHandler(zlg::w)
           .withErrorHandler(zlg::e)
           .withExceptionMatcher(Retry.isA(RetriableException.class))
-          .run(() -> consumer.commitSync(kafkaOffsets));
+          .run(() -> consumer.commitSync(offsetsConfirmedSnapshot));
         }
         return;
       } else if (System.currentTimeMillis() < drainUntilTime) {
@@ -477,11 +480,13 @@ public final class KafkaLedger implements Ledger {
         confirmedSnapshot = consumerState.offsetsConfirmed;
         consumerState.offsetsConfirmed = new HashMap<>(confirmedSnapshot.size());
         
-        for (var partitionOffset : confirmedSnapshot.entrySet()) {
-          final var partition = partitionOffset.getKey().partition();
-          // the committed offset is always the last processed offset + 1
-          final var offset = partitionOffset.getValue().offset();
-          consumerState.processedOffsetForPartition(partition).tryAdvance(offset - 1);
+        if (consumerState.offsetsProcessed != null) {
+          for (var partitionOffset : confirmedSnapshot.entrySet()) {
+            final var partition = partitionOffset.getKey().partition();
+            // the committed offset is always the last processed offset + 1
+            final var offset = partitionOffset.getValue().offset();
+            consumerState.processedOffsetForPartition(partition).tryAdvance(offset - 1);
+          }
         }
       } else {
         confirmedSnapshot = null;
@@ -505,14 +510,20 @@ public final class KafkaLedger implements Ledger {
         consumerState.queuedRecords--;
         final var canAccept = consumerState.assignedPartitions.contains(partition);
         if (canAccept) {
-          final var mutableOffset = consumerState.processedOffsetForPartition(partition);
-          accepted = mutableOffset.canAdvance(offset);
+          if (consumerState.offsetsProcessed != null) {
+            final var mutableOffset = consumerState.processedOffsetForPartition(partition);
+            accepted = mutableOffset.canAdvance(offset);
+            if (! accepted) {
+              zlg.d("Skipping message at offset %d, partition %d: monotonicity constraint breached (previous offset %d)", 
+                    z -> z.arg(record::offset).arg(record::partition).arg(mutableOffset.offset));
+            }
+          } else {
+            accepted = true;
+          }
+          
           if (accepted) {
             consumerState.offsetsPending.put(partition, offset);
             consumerState.offsetsAccepted.put(partition, offset);
-          } else {
-            zlg.d("Skipping message at offset %d, partition %d: monotonicity constraint breached (previous offset %d)", 
-                  z -> z.arg(record::offset).arg(record::partition).arg(mutableOffset.offset));
           }
         } else {
           accepted = false;

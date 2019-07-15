@@ -298,9 +298,9 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testHandleRecord_withAssignedTopic() {
+  public void testHandleRecord_withAssignedTopic_enforceMonotonicity() {
     final var handler = mock(MessageHandler.class);
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(true);
     consumerState.assignedPartitions = new HashSet<>(Arrays.asList(0));
     final var message = new Command("xid", null, 0);
     final var record = new ConsumerRecord<String, Message>("topic", 0, 0L, "key", message);
@@ -314,7 +314,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testHandleRecord_withMonotonicConstraintBreach() {
     final var handler = mock(MessageHandler.class);
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(true);
     consumerState.assignedPartitions = new HashSet<>(Arrays.asList(0));
     consumerState.offsetsProcessed.computeIfAbsent(0, __ -> new MutableOffset()).offset = 0;
     final var message = new Command("xid", null, 0);
@@ -331,7 +331,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testHandleRecord_withUnassignedTopic() {
     final var handler = mock(MessageHandler.class);
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     final var message = new Command("xid", null, 0);
     final var record = new ConsumerRecord<String, Message>("topic", 0, 0L, "key", message);
     final var logTarget = new MockLogTarget();
@@ -346,7 +346,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testConfirm_intermediate() {
     final var messageId = new DefaultMessageId(0, 100L);
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     consumerState.offsetsPending.put(0, 200L);
     final var logTarget = new MockLogTarget();
     
@@ -360,7 +360,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testConfirm_last() {
     final var messageId = new DefaultMessageId(0, 100L);
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     consumerState.offsetsPending.put(0, 100L);
     final var logTarget = new MockLogTarget();
     
@@ -372,7 +372,7 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testCommitOffsets_withEnqueued() {
+  public void testCommitOffsets_withEnqueued_enforceMonotonic() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
     doAnswer(invocation -> {
       final var callback = invocation.getArgument(1, OffsetCommitCallback.class);
@@ -380,7 +380,7 @@ public final class KafkaLedgerTest {
       return null;
     }).when(consumer).commitAsync(any(), any());
     
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(true);
     final var logTarget = new MockLogTarget();
     final var topicPartition = new TopicPartition("topic", 0);
     final var offsetsAndMetadata = new OffsetAndMetadata(100L);
@@ -396,18 +396,57 @@ public final class KafkaLedgerTest {
   }
   
   @Test
-  public void testCommitOffsets_withNoneEnqueued() {
+  public void testCommitOffsets_withEnqueued_nonMonotonic() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
     doAnswer(invocation -> {
       final var callback = invocation.getArgument(1, OffsetCommitCallback.class);
       callback.onComplete(emptyMap(), null);
       return null;
     }).when(consumer).commitAsync(any(), any());
-    final var consumerState = new ConsumerState();
+    
+    final var consumerState = new ConsumerState(false);
+    final var logTarget = new MockLogTarget();
+    final var topicPartition = new TopicPartition("topic", 0);
+    final var offsetsAndMetadata = new OffsetAndMetadata(100L);
+    consumerState.offsetsConfirmed.put(topicPartition, offsetsAndMetadata);
+    final var offsetsConfirmed = consumerState.offsetsConfirmed;
+    
+    KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
+    logTarget.entries().assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets").assertCount(1);
+    verify(consumer).commitAsync(eq(offsetsConfirmed), isNotNull());
+  }
+  
+  @Test
+  public void testCommitOffsets_withNoneEnqueued_enforceMonotonic() {
+    final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
+    doAnswer(invocation -> {
+      final var callback = invocation.getArgument(1, OffsetCommitCallback.class);
+      callback.onComplete(emptyMap(), null);
+      return null;
+    }).when(consumer).commitAsync(any(), any());
+    final var consumerState = new ConsumerState(true);
     final var logTarget = new MockLogTarget();
     
     KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
     assertTrue(consumerState.offsetsProcessed.isEmpty());
+    logTarget.entries().assertCount(0);
+    verify(consumer, never()).commitAsync(any(), isNotNull());
+  }
+  
+  @Test
+  public void testCommitOffsets_withNoneEnqueued_nonMonotonic() {
+    final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
+    doAnswer(invocation -> {
+      final var callback = invocation.getArgument(1, OffsetCommitCallback.class);
+      callback.onComplete(emptyMap(), null);
+      return null;
+    }).when(consumer).commitAsync(any(), any());
+    final var consumerState = new ConsumerState(false);
+    assertNull(consumerState.offsetsProcessed);
+    final var logTarget = new MockLogTarget();
+    
+    KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
     logTarget.entries().assertCount(0);
     verify(consumer, never()).commitAsync(any(), isNotNull());
   }
@@ -420,7 +459,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testDrainOffsets_withNoPendingOffsets() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
     
@@ -434,11 +473,12 @@ public final class KafkaLedgerTest {
   @Test
   public void testDrainOffsets_withPendingOffsets() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
     consumerState.offsetsAccepted.put(0, 100L);
     consumerState.offsetsPending.put(0, 100L);
+    consumerState.offsetsConfirmed.put(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     doAnswer(__ -> {
       synchronized (consumerState.lock) {
         consumerState.offsetsPending.clear();
@@ -451,14 +491,14 @@ public final class KafkaLedgerTest {
     logTarget.entries().assertCount(2);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending").assertCount(1);
-    final var expectedOffsets = singletonMap(new TopicPartition("topic", 0), new OffsetAndMetadata(100L));
+    final var expectedOffsets = singletonMap(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     verify(consumer).commitSync(eq(expectedOffsets));
   }
   
   @Test
   public void testDrainOffsets_withPendingOffsetsTimeout() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
     consumerState.offsetsAccepted.put(0, 100L);
@@ -475,7 +515,7 @@ public final class KafkaLedgerTest {
   @Test
   public void testDrainOffsets_whileDisposing() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
     
@@ -488,11 +528,12 @@ public final class KafkaLedgerTest {
   @Test
   public void testDrainOffsets_withBackloggedPipeline() {
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
     consumerState.queuedRecords = 1;
     consumerState.offsetsAccepted.put(0, 100L);
+    consumerState.offsetsConfirmed.put(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     doAnswer(__ -> {
       synchronized (consumerState.lock) {
         consumerState.queuedRecords = 0;
@@ -505,13 +546,13 @@ public final class KafkaLedgerTest {
     logTarget.entries().assertCount(2);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG).containing("Pipeline backlogged").assertCount(1);
-    final var expectedOffsets = singletonMap(new TopicPartition("topic", 0), new OffsetAndMetadata(100L));
+    final var expectedOffsets = singletonMap(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     verify(consumer).commitSync(eq(expectedOffsets));
   }
   
   @Test
   public void testQueueRecords_withConsumerStateAndAssignedPartitions() throws InterruptedException {
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     consumerState.assignedPartitions = singleton(0);
     final var logTarget = new MockLogTarget();
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));
@@ -527,7 +568,7 @@ public final class KafkaLedgerTest {
   
   @Test
   public void testQueueRecords_withConsumerStateAndNoAssignedPartitions() throws InterruptedException {
-    final var consumerState = new ConsumerState();
+    final var consumerState = new ConsumerState(false);
     consumerState.assignedPartitions = emptySet();
     final var logTarget = new MockLogTarget();
     final var consumer = Classes.<Consumer<String, Message>>cast(mock(Consumer.class));

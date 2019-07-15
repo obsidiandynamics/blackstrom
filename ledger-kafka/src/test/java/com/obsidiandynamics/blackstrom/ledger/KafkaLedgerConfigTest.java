@@ -37,6 +37,7 @@ public final class KafkaLedgerConfigTest {
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
     assertEquals(60_000, config.getSpotterConfig().getTimeout());
     assertEquals(20_000, config.getSpotterConfig().getGracePeriod());
+    assertTrue(config.isEnforceMonotonicity());
     Assertions.assertToStringOverride(config);
   }
   
@@ -55,6 +56,7 @@ public final class KafkaLedgerConfigTest {
         .withIoAttempts(5)
         .withDrainConfirmations(true)
         .withDrainConfirmationsTimeout(60_000)
+        .withEnforceMonotonicity(true)
         .withPrintConfig(true)
         .withSpotterConfig(new SpotterConfig().withTimeout(60_000));
     config.validate();
@@ -70,6 +72,7 @@ public final class KafkaLedgerConfigTest {
     assertEquals(5, config.getIoAttempts());
     assertTrue(config.isDrainConfirmations());
     assertEquals(60_000, config.getDrainConfirmationsTimeout());
+    assertTrue(config.isEnforceMonotonicity());
     assertTrue(config.isPrintConfig());
     assertEquals(60_000, config.getSpotterConfig().getTimeout());
   }
