@@ -41,6 +41,9 @@ public final class KafkaLedgerConfig {
   @YInject
   private boolean drainConfirmations = true;
   
+  @YInject
+  private boolean enforceMonotonicity;
+  
   /** Upper bound on the time to allow for offset drainage (in milliseconds). The default value 
    *  is based on the default of {@code max.poll.interval.ms} — {@code 300_000}. */
   @YInject
@@ -196,6 +199,19 @@ public final class KafkaLedgerConfig {
     return this;
   }
   
+  public boolean isEnforceMonotonicity() {
+    return enforceMonotonicity;
+  }
+  
+  public void setEnforceMonotonicity(boolean enforceMonotonicity) {
+    this.enforceMonotonicity = enforceMonotonicity;
+  }
+  
+  public KafkaLedgerConfig withEnforceMonotonicity(boolean enforceMonotonicity) {
+    setEnforceMonotonicity(enforceMonotonicity);
+    return this;
+  }
+  
   public boolean isPrintConfig() {
     return printConfig;
   }
@@ -241,7 +257,7 @@ public final class KafkaLedgerConfig {
     return KafkaLedgerConfig.class.getSimpleName() + " [kafka=" + kafka + ", topic=" + topic + ", codec=" + codec + 
         ", producerPipeConfig=" + producerPipeConfig + ", pollTimeout=" + pollTimeout + ", consumerPipeConfig=" + consumerPipeConfig + 
         ", maxConsumerPipeYields=" + maxConsumerPipeYields + 
-        ", ioRetries=" + ioAttempts + ", drainConfirmations=" + drainConfirmations + 
+        ", ioRetries=" + ioAttempts + ", drainConfirmations=" + drainConfirmations + ", enforceMonotonicity=" + enforceMonotonicity +
         ", drainConfirmationsTimeout=" + drainConfirmationsTimeout + ", printConfig=" + printConfig + 
         ", spotterConfig=" + spotterConfig + "]";
   }

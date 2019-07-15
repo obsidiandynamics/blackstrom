@@ -111,19 +111,20 @@ public final class KafkaLedgerDrainConfirmationsIT {
   }
   
   @Test
-  public void testMultipleConsumersWithMultiplePartitions() {
-    test("MultiConsMultiPart", 16, 400, 10, 4, 1_000, 100);
+  public void testMultipleConsumersWithMultiplePartitions_enforceMonotonicity() {
+    test("MultiConsMultiPart_mono", 16, 400, 10, 4, 1_000, 100, true);
+  }
+  
+  @Test
+  public void testMultipleConsumersWithMultiplePartitions_nonMonotonic() {
+    test("MultiConsMultiPart_nonMono", 16, 400, 10, 4, 1_000, 100, false);
   }
   
   /**
    *  Verifies that messages can be processed exactly once in the presence of multiple consumers
    *  contending for a single group ID. Message flow should transition from one consumer to the
    *  next as consumers are added; the prior consumer relinquishing partition assignments will
-   *  drain any pending confirmations before yielding to the new assignee. Messages may still
-   *  be processed twice at the handover boundary; this is just how Kafka works — the next
-   *  assignee will resume processing from the last confirmed offset, even if it means processing
-   *  the message twice. (The test accounts for this, by allowing a limited number of duplicates,
-   *  in line with the number of consumers.)
+   *  drain any pending confirmations before yielding to the new assignee.
    *  
    *  @param testLabel How to label this test.
    *  @param partitions The number of partitions.
@@ -132,6 +133,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
    *  @param consumers The number of consumers.
    *  @param consumerJoinIntervalMillis Interval between consumers joining.
    *  @param commitDelayMillis Delay between receiving a message and committing the offset.
+   *  @param enforceMonotonicity Whether the monotonicity constraint should be enforced.
    */
   private void test(String testLabel,
                     int partitions,
@@ -139,7 +141,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
                     int messageIntervalMillis,
                     int consumers,
                     int consumerJoinIntervalMillis,
-                    int commitDelayMillis) {
+                    int commitDelayMillis,
+                    boolean enforceMonotonicity) {
     zlg.i("Starting test %s", z -> z.arg(testLabel));
     
     final var topicName = Exceptions.wrap(() -> createTopic(testLabel, partitions), RuntimeException::new);
@@ -149,6 +152,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
                              .withTopic(topicName)
                              .withDrainConfirmations(true)
                              .withDrainConfirmationsTimeout(Integer.MAX_VALUE)
+                             .withEnforceMonotonicity(enforceMonotonicity)
                              .withZlg(zlg)
                              .withCodec(new KryoMessageCodec(true)));
     ledger.init();
@@ -167,7 +171,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     // adding another consumer into the mix.
     final var maxPreviousConsumerReceiveWaitMillis = 30_000;
     
-    // The minimum an received offset must move by before adding a new consumer. This value shouldn't be smaller
+    // The minimum a received offset must move by before adding a new consumer. This value shouldn't be smaller
     // than two, as it guarantees a clean boundary between consumer rebalancing.
     final var minOffsetMove = 10;
     final var maxOffsetMoveWaitMillis = 30_000;
@@ -235,18 +239,22 @@ public final class KafkaLedgerDrainConfirmationsIT {
             final var receiveCounts = receiveCountsPerPartition[partition];
             final var count = receiveCounts.incrementAndGet((int) offset);
             
-            // log any message that has been processed more than once (unless it is a one-off)
+            // log any message that has been processed more than once or if a preceding message has been skipped
             final var lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
             if (lastCount == 0) {
-              zlg.w("FAILURE in message %s; count=%d, lastCount=%d", z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
-              System.err.format("FAILURE in message %s; count=%d, lastCount=%d\n", message.getMessageId(), count, lastCount);
-            } if (count > 1) {
-              zlg.d("Seeing boundary duplicate: offset=%d, partition=%d, count=%d", z -> z.arg(offset).arg(partition).arg(count));
+              zlg.w("FAILURE in message %s; out-of-order: count=%d, lastCount=%d", 
+                    z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
+              System.err.format("FAILURE in message %s; out-of-order: count=%d, lastCount=%d\n", message.getMessageId(), count, lastCount);
+            } else if (count > 1) {
+              zlg.w("FAILURE in message %s; duplicate: offset=%d, partition=%d, count=%d", 
+                    z -> z.arg(message::getMessageId).arg(offset).arg(partition).arg(count));
+              System.err.format("FAILURE in message %s; duplicate: offset=%d, partition=%d, count=%d\n", 
+                                message.getMessageId(), offset, partition, count);
             }
             totalReceived.incrementAndGet();
             
             // delay offset commits for a more pronounced effect (increases likelihood of repeated messages
-            // after rebalancing)
+            // after rebalancing if drainage is not working correctly)
             final var confirmNoSoonerThan = System.currentTimeMillis() + commitDelayMillis;
             try {
               executor.submit(() -> {
@@ -311,12 +319,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
     
     final var errors = new ArrayList<>();
     
-    // This number is more of a heuristic. In an ideal run, the number of expected duplicates equals 
-    // the number of rebalances (one less than the number of consumers). Occasionally rebalances
-    // will occur more often (in-between consumer additions), especially when the brokers and the consumers
-    // are heavily loaded. So we allow for a generous grace of 3 times the expected number (which will
-    // still easily trap genuine bugs).
-    final var allowedDuplicates = (consumers - 1) * 3;
+    // assuming a properly functioning drainage, there should be no duplicates
+    final var allowedDuplicates = 0;
     for (var p = 0; p < partitions; p++) {
       final var receiveCounts = receiveCountsPerPartition[p];
       final var duplicates = getDuplicatesCount(receiveCounts);
