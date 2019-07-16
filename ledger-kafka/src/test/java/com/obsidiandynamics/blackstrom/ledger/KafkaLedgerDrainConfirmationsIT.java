@@ -150,6 +150,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
     ledger = new KafkaLedger(new KafkaLedgerConfig()
                              .withKafka(new KafkaCluster<>(config))
                              .withTopic(topicName)
+                             .withProducerPipeConfig(new ProducerPipeConfig().withAsync(true))
+                             .withConsumerPipeConfig(new ConsumerPipeConfig().withAsync(true))
                              .withDrainConfirmations(true)
                              .withDrainConfirmationsTimeout(Integer.MAX_VALUE)
                              .withEnforceMonotonicity(enforceMonotonicity)

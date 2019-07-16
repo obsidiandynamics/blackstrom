@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
 import static com.obsidiandynamics.func.Functions.*;
+import static com.obsidiandynamics.zerolog.Args.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -117,19 +118,21 @@ public final class KafkaLedger implements Ledger {
      *  pipeline.) */
     int queuedRecords;
     
-    /** Offsets that have been marked as confirmed (via the {@link Flow}) instances. */
+    /** Offsets that have been marked as confirmed (via the {@link Flow}) instances, being one higher than
+     *  the offset of the processed message. This map is cleared when the offsets are eventually committed.
+     *  (This occurs in the consumer thread.) */
     Map<TopicPartition, OffsetAndMetadata> offsetsConfirmed = new HashMap<>();
     
-    /** Pending offsets for messages that have been accepted for processing, but haven't yet been confirmed. */
+    /** Pending offsets for messages that have been accepted for processing, but haven't yet been confirmed.
+     *  Entries are removed as offsets are confirmed; eventually when the map is emptied, the ledger is
+     *  considered to be drained. */
     final Map<Integer, Long> offsetsPending = new HashMap<>();
     
-    /** Offsets for messages that have been accepted for processing. This map is cleared after drainage. */
-    Map<Integer, Long> offsetsAccepted = new HashMap<>();
-    
-    /** A perpetual tracking of all offsets that have been processed, ensuring monotonicity. ({@code null} if disabled.) */
+    /** A perpetual tracking of all offsets that have been processed, ensuring monotonicity. This map
+     *  is never cleared. (Set to {@code null} if monotonicity is not being enforced.) */
     final Map<Integer, MutableOffset> offsetsProcessed;
     
-    /** Partitions that have been assigned to this consumer. */
+    /** Partitions that have been assigned to this consumer, set by the {@code onPartitionsRevoked()} callback. */
     Set<Integer> assignedPartitions = Collections.emptySet();
     
     /** Partitions that are still held by this consumer. Differs from {@link #assignedPartitions} in that
@@ -424,34 +427,29 @@ public final class KafkaLedger implements Ledger {
   static void drainOffsets(String topic, Consumer<String, Message> consumer, ConsumerState consumerState, 
                            int ioRetries, Runnable intervalSleep, int drainTimeoutMillis, 
                            BooleanSupplier isDisposingCheck, Zlg zlg) {
-    final long drainUntilTime = System.currentTimeMillis() + drainTimeoutMillis;
+    final var drainUntilTime = System.currentTimeMillis() + drainTimeoutMillis;
     while (! isDisposingCheck.getAsBoolean()) {
       final boolean allPendingOffsetsConfirmed;
-      final Map<Integer, Long> offsetsAcceptedSnapshot;
       final Map<TopicPartition, OffsetAndMetadata> offsetsConfirmedSnapshot;
       synchronized (consumerState.lock) {
         if (consumerState.queuedRecords == 0) {
           allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
           if (allPendingOffsetsConfirmed) {
-            offsetsAcceptedSnapshot = consumerState.offsetsAccepted;
-            consumerState.offsetsAccepted = new HashMap<>(consumerState.offsetsAccepted.size());
             offsetsConfirmedSnapshot = consumerState.offsetsConfirmed;
             consumerState.offsetsConfirmed = new HashMap<>(consumerState.offsetsConfirmed.size());
           } else {
-            zlg.d("Offsets pending: %s", z -> z.arg(consumerState.offsetsPending));
-            offsetsAcceptedSnapshot = null;
+            zlg.d("Offsets pending: %s", z -> z.arg(map(ref(consumerState.offsetsPending), KafkaLedger::sortedCopy)));
             offsetsConfirmedSnapshot = null;
           }
         } else {
-          zlg.d("Pipeline backlogged: %d records queued", z -> z.arg(consumerState.queuedRecords));
+          zlg.d("Pipeline backlogged: %,d record(s) queued", z -> z.arg(consumerState.queuedRecords));
           allPendingOffsetsConfirmed = false;
-          offsetsAcceptedSnapshot = null;
           offsetsConfirmedSnapshot = null;
         }
       }
 
       if (allPendingOffsetsConfirmed) {
-        zlg.d("All offsets confirmed: %s", z -> z.arg(offsetsAcceptedSnapshot));
+        zlg.d("All offsets confirmed: %s", z -> z.arg(map(ref(offsetsConfirmedSnapshot), KafkaLedger::getOriginalOffsets)));
         if (! offsetsConfirmedSnapshot.isEmpty()) {
           new Retry()
           .withAttempts(ioRetries)
@@ -465,12 +463,35 @@ public final class KafkaLedger implements Ledger {
         intervalSleep.run();
       } else {
         synchronized (consumerState.lock) {
-          zlg.w("Drain timed out (%,d ms). Pending offsets %s, %d records queued", 
-                z -> z.arg(drainTimeoutMillis).arg(consumerState.offsetsPending).arg(consumerState.queuedRecords));
+          zlg.w("Drain timed out (%,d ms). Pending offsets: %s, %,d record(s) queued", 
+                z -> z.arg(drainTimeoutMillis).arg(map(ref(consumerState.offsetsPending), KafkaLedger::sortedCopy)).arg(consumerState.queuedRecords));
         }
         return;
       }
     }
+  }
+  
+  /**
+   *  For a given map of confirmed offsets (which are one greater than the message offsets), produces a map 
+   *  of partitions to the original message offsets.
+   *  
+   *  @param confirmedOffsets Confirmed offsets.
+   *  @return Original offsets.
+   */
+  private static SortedMap<Integer, Long> getOriginalOffsets(Map<TopicPartition, OffsetAndMetadata> confirmedOffsets) {
+    final var prev = new TreeMap<Integer, Long>();
+    for (var entry : confirmedOffsets.entrySet()) {
+      prev.put(entry.getKey().partition(), entry.getValue().offset() - 1);
+    }
+    return prev;
+  }
+  
+  private static SortedMap<Integer, Long> sortedCopy(Map<Integer, Long> original) {
+    final var sorted = new TreeMap<Integer, Long>();
+    for (var entry : original.entrySet()) {
+      sorted.put(entry.getKey(), entry.getValue());
+    }
+    return sorted;
   }
 
   static void commitOffsets(Consumer<String, Message> consumer, ConsumerState consumerState, Zlg zlg) {
@@ -494,10 +515,18 @@ public final class KafkaLedger implements Ledger {
     }
 
     if (confirmedSnapshot != null) {
-      zlg.t("Committing offsets %s", z -> z.arg(confirmedSnapshot));
+      zlg.t("Committing offsets %s", z -> z.arg(map(ref(confirmedSnapshot), KafkaLedger::simplifyOffsetsMap)));
       consumer.commitAsync(confirmedSnapshot, 
                            (offsets, exception) -> maybeLogException(zlg, exception, "Error committing offsets %s", offsets));
     }
+  }
+  
+  private static Map<Integer, Long> simplifyOffsetsMap(Map<TopicPartition, OffsetAndMetadata> offsets) {
+    final var simplified = new TreeMap<Integer, Long>();
+    for (var entry : offsets.entrySet()) {
+      simplified.put(entry.getKey().partition(), entry.getValue().offset());
+    }
+    return simplified;
   }
 
   static void handleRecord(MessageHandler handler, ConsumerState consumerState, MessageContext context,
@@ -514,7 +543,7 @@ public final class KafkaLedger implements Ledger {
             final var mutableOffset = consumerState.processedOffsetForPartition(partition);
             accepted = mutableOffset.canAdvance(offset);
             if (! accepted) {
-              zlg.d("Skipping message at offset %d, partition %d: monotonicity constraint breached (previous offset %d)", 
+              zlg.d("Skipping message at offset %d, partition %d: monotonicity constraint breached (previous offset: %d)", 
                     z -> z.arg(record::offset).arg(record::partition).arg(mutableOffset.offset));
             }
           } else {
@@ -523,7 +552,6 @@ public final class KafkaLedger implements Ledger {
           
           if (accepted) {
             consumerState.offsetsPending.put(partition, offset);
-            consumerState.offsetsAccepted.put(partition, offset);
           }
         } else {
           accepted = false;

@@ -325,7 +325,7 @@ public final class KafkaLedgerTest {
     verify(handler, never()).onMessage(isNull(), eq(message));
     logTarget.entries().assertCount(1);
     logTarget.entries().forLevel(LogLevel.DEBUG)
-    .containing("Skipping message at offset 0, partition 0: monotonicity constraint breached (previous offset 0)").assertCount(1);
+    .containing("Skipping message at offset 0, partition 0: monotonicity constraint breached (previous offset: 0)").assertCount(1);
   }
   
   @Test
@@ -354,7 +354,7 @@ public final class KafkaLedgerTest {
     assertTrue(consumerState.offsetsConfirmed.containsKey(new TopicPartition("topic", 0)));
     assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(101L)));
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(LogLevel.TRACE).containing("intermediate").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("Confirmed intermediate 100 from 200 (partition 0)").assertCount(1);
   }
   
   @Test
@@ -368,7 +368,7 @@ public final class KafkaLedgerTest {
     assertTrue(consumerState.offsetsConfirmed.containsKey(new TopicPartition("topic", 0)));
     assertTrue(consumerState.offsetsConfirmed.containsValue(new OffsetAndMetadata(101L)));
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(LogLevel.TRACE).containing("last").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("Confirmed last 100 (partition 0)").assertCount(1);
   }
   
   @Test
@@ -391,7 +391,7 @@ public final class KafkaLedgerTest {
     assertEquals(1, consumerState.offsetsProcessed.size());
     assertEquals(offsetsAndMetadata.offset() - 1, consumerState.offsetsProcessed.get(topicPartition.partition()).offset);
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets {0=100}").assertCount(1);
     verify(consumer).commitAsync(eq(offsetsConfirmed), isNotNull());
   }
   
@@ -413,7 +413,7 @@ public final class KafkaLedgerTest {
     
     KafkaLedger.commitOffsets(consumer, consumerState, logTarget.logger());
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.TRACE).containing("Committing offsets {0=100}").assertCount(1);
     verify(consumer).commitAsync(eq(offsetsConfirmed), isNotNull());
   }
   
@@ -466,7 +466,7 @@ public final class KafkaLedgerTest {
     final var disposing = new AtomicBoolean();
     KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed: {}").assertCount(1);
     verify(consumer, never()).commitSync(Classes.<Map<TopicPartition, OffsetAndMetadata>>cast(any(Map.class)));
   }
   
@@ -476,7 +476,6 @@ public final class KafkaLedgerTest {
     final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
-    consumerState.offsetsAccepted.put(0, 100L);
     consumerState.offsetsPending.put(0, 100L);
     consumerState.offsetsConfirmed.put(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     doAnswer(__ -> {
@@ -489,8 +488,8 @@ public final class KafkaLedgerTest {
     final var disposing = new AtomicBoolean();
     KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(2);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed: {0=100}").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending: {0=100}").assertCount(1);
     final var expectedOffsets = singletonMap(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     verify(consumer).commitSync(eq(expectedOffsets));
   }
@@ -501,14 +500,13 @@ public final class KafkaLedgerTest {
     final var consumerState = new ConsumerState(false);
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
-    consumerState.offsetsAccepted.put(0, 100L);
     consumerState.offsetsPending.put(0, 100L);
     
     final var disposing = new AtomicBoolean();
     KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 0, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(2);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending").assertCount(1);
-    logTarget.entries().forLevel(LogLevel.WARN).containing("Drain timed out (0 ms). Pending offsets");
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Offsets pending: {0=100}").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.WARN).containing("Drain timed out (0 ms). Pending offsets: {0:100}, 0 record(s) queued");
     verify(consumer, never()).commitSync(Classes.<Map<TopicPartition, OffsetAndMetadata>>cast(any(Map.class)));
   }
   
@@ -532,7 +530,6 @@ public final class KafkaLedgerTest {
     final var logTarget = new MockLogTarget();
     final var intervalSleep = mock(Runnable.class);
     consumerState.queuedRecords = 1;
-    consumerState.offsetsAccepted.put(0, 100L);
     consumerState.offsetsConfirmed.put(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     doAnswer(__ -> {
       synchronized (consumerState.lock) {
@@ -544,8 +541,8 @@ public final class KafkaLedgerTest {
     final var disposing = new AtomicBoolean();
     KafkaLedger.drainOffsets("topic", consumer, consumerState, 1, intervalSleep, 10_000, disposing::get, logTarget.logger());
     logTarget.entries().assertCount(2);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed").assertCount(1);
-    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Pipeline backlogged").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("All offsets confirmed: {0=100}").assertCount(1);
+    logTarget.entries().forLevel(LogLevel.DEBUG).containing("Pipeline backlogged: 1 record(s) queued").assertCount(1);
     final var expectedOffsets = singletonMap(new TopicPartition("topic", 0), new OffsetAndMetadata(101L));
     verify(consumer).commitSync(eq(expectedOffsets));
   }
