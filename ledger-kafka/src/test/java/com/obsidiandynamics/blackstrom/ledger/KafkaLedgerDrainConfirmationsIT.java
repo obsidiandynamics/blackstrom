@@ -169,12 +169,11 @@ public final class KafkaLedgerDrainConfirmationsIT {
     executor = Executors.newFixedThreadPool(8);
     
     // The time to wait for the previous consumer to have received at least one message before
-    // creating the next consumer. Ensures that one consumer (and its peers) have rebalanced before
+    // spawning the next consumer. Ensures that one consumer (and its peers) have rebalanced before
     // adding another consumer into the mix.
     final var maxPreviousConsumerReceiveWaitMillis = 30_000;
     
-    // The minimum a received offset must move by before adding a new consumer. This value shouldn't be smaller
-    // than two, as it guarantees a clean boundary between consumer rebalancing.
+    // The minimum a received offset must move by before adding a new consumer.
     final var minOffsetMove = 10;
     final var maxOffsetMoveWaitMillis = 30_000;
     
