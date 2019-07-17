@@ -300,17 +300,16 @@ public final class KafkaLedgerDrainConfirmationsIT {
         final var receiveCountsPerPartitionCopy = copy(receiveCountsPerPartition);
         final var receivedMessages = countAll(receiveCountsPerPartitionCopy);
         if (expectedMessages != receivedMessages) {
-          zlg.w("Test failed");
           for (var p = 0; p < partitions; p++) {
             final var receiveCounts = receiveCountsPerPartitionCopy[p];
             for (var offset = 0; offset < receiveCounts.length; offset++) {
               if (receiveCounts[offset] != 1) {
-                errors.add(String.format("Seeing %d messages for %d#%d", receiveCounts[offset], p, offset));
+                errors.add(String.format("Seeing %,d messages for %d#%d", receiveCounts[offset], p, offset));
               }
             }
           }
           
-          fail(String.format("Expected %d messages; got %d", expectedMessages, receivedMessages));
+          fail(String.format("Expected %,d messages; got %,d", expectedMessages, receivedMessages));
         }
       });
     } finally {
