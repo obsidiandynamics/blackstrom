@@ -29,7 +29,7 @@ import com.obsidiandynamics.zerolog.*;
 
 @RunWith(Parameterized.class)
 public final class KafkaLedgerDrainConfirmationsIT {
-  private static final Timesert WAIT = Wait.LONG;
+  private static final Timesert WAIT = Timesert.wait(300_000); //TODO too long
   
   @Parameterized.Parameters
   public static List<Object[]> data() {
