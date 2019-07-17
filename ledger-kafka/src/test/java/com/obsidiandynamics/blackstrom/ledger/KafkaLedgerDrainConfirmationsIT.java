@@ -14,6 +14,7 @@ import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
+import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
@@ -28,6 +29,8 @@ import com.obsidiandynamics.zerolog.*;
 
 @RunWith(Parameterized.class)
 public final class KafkaLedgerDrainConfirmationsIT {
+  private static final Timesert WAIT = Wait.LONG;
+  
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
@@ -169,12 +172,11 @@ public final class KafkaLedgerDrainConfirmationsIT {
     executor = Executors.newFixedThreadPool(8);
     
     // The time to wait for the previous consumer to have received at least one message before
-    // creating the next consumer. Ensures that one consumer (and its peers) have rebalanced before
+    // spawning the next consumer. Ensures that one consumer (and its peers) have rebalanced before
     // adding another consumer into the mix.
     final var maxPreviousConsumerReceiveWaitMillis = 30_000;
     
-    // The minimum a received offset must move by before adding a new consumer. This value shouldn't be smaller
-    // than two, as it guarantees a clean boundary between consumer rebalancing.
+    // The minimum a received offset must move by before adding a new consumer.
     final var minOffsetMove = 10;
     final var maxOffsetMoveWaitMillis = 30_000;
     
@@ -246,12 +248,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
             if (lastCount == 0) {
               zlg.w("FAILURE in message %s; out-of-order: count=%d, lastCount=%d", 
                     z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
-              System.err.format("FAILURE in message %s; out-of-order: count=%d, lastCount=%d\n", message.getMessageId(), count, lastCount);
             } else if (count > 1) {
               zlg.w("FAILURE in message %s; duplicate: offset=%d, partition=%d, count=%d", 
                     z -> z.arg(message::getMessageId).arg(offset).arg(partition).arg(count));
-              System.err.format("FAILURE in message %s; duplicate: offset=%d, partition=%d, count=%d\n", 
-                                message.getMessageId(), offset, partition, count);
             }
             totalReceived.incrementAndGet();
             
@@ -275,7 +274,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
         
         // wait for at least one message to be received before adding more consumers into the mix
         // (prevents adding contending consumers before at least one has been assigned a partition)
-        Wait.LONG.untilTrue(() -> totalReceived.get() >= 1);
+        WAIT.untilTrue(() -> totalReceived.get() >= 1);
       }
     }, "LedgerAttachThread").start();
 
@@ -288,90 +287,74 @@ public final class KafkaLedgerDrainConfirmationsIT {
 
       // wait for at least one message to be received before publishing more
       // (prevents over-publishing before a consumer has been assigned a partition)
-      Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= 1);
+      WAIT.untilTrue(() -> totalReceived.get() >= 1);
     }
     
     // await receival of all messages
     zlg.i("Awaiting message receival");
     final var expectedMessages = messages * partitions;
-    var allReceived = false;
+    final var errors = new ArrayList<>();
     try {
-      Wait.LONG.until(() -> {
-        final var uniqueCount = getUniqueCount(receiveCountsPerPartition);
-        assertEquals(expectedMessages, uniqueCount);
-      });
-      allReceived = true;
-    } finally {
-      if (! allReceived) {
-        zlg.w("Test failed");
-        for (var p = 0; p < partitions; p++) {
-          final var receiveCounts = receiveCountsPerPartition[p];
-          for (var offset = 0; offset < receiveCounts.length(); offset++) {
-            final var receiveCount = receiveCounts.get(offset);
-            if (receiveCount == 0) {
-              final var _offset = offset;
-              final var _p = p;
-              zlg.w("Missing offset %d for partition %d", z -> z.arg(_offset).arg(_p));
-              System.err.format("Missing offset %d for partition %d\n", offset, p);
+      WAIT.until(() -> {
+        errors.clear();
+        final var receiveCountsPerPartitionCopy = copy(receiveCountsPerPartition);
+        final var receivedMessages = countAll(receiveCountsPerPartitionCopy);
+        if (expectedMessages != receivedMessages) {
+          zlg.w("Test failed");
+          for (var p = 0; p < partitions; p++) {
+            final var receiveCounts = receiveCountsPerPartitionCopy[p];
+            for (var offset = 0; offset < receiveCounts.length; offset++) {
+              if (receiveCounts[offset] != 1) {
+                errors.add(String.format("Seeing %d messages for %d#%d", receiveCounts[offset], p, offset));
+              }
             }
           }
+          
+          fail(String.format("Expected %d messages; got %d", expectedMessages, receivedMessages));
+        }
+      });
+    } finally {
+      if (! errors.isEmpty()) {
+        for (var error : errors) {
+          zlg.w(error);
         }
       }
     }
-    
-    final var errors = new ArrayList<>();
-    
-    // assuming a properly functioning drainage, there should be no duplicates
-    final var allowedDuplicates = 0;
-    for (var p = 0; p < partitions; p++) {
-      final var receiveCounts = receiveCountsPerPartition[p];
-      final var duplicates = getDuplicatesCount(receiveCounts);
-      if (duplicates > allowedDuplicates) {
-        final var errorMessage = String.format("partition: %d, duplicates %d", p, duplicates);
-        errors.add(errorMessage);
-        System.err.println(errorMessage);
-        for (var offset = 0; offset < receiveCounts.length(); offset++) {
-          System.err.format("  offset: %d, count: %d\n", offset, receiveCounts.get(offset));
-        }
-      }
-    }
-    
-    assertEquals(Collections.emptyList(), errors);
 
     ledger.dispose();
     
     zlg.i("Awaiting final confirmations");
-    Wait.MEDIUM.untilTrue(() -> totalReceived.get() >= getUniqueCount(receiveCountsPerPartition));
-    Wait.MEDIUM.untilTrue(() -> totalReceived.get() == totalConfirmed.get());
+    WAIT.untilTrue(() -> totalReceived.get() == totalConfirmed.get());
     zlg.i("Test passed: %s", z -> z.arg(testLabel));
   }
   
-  private static int getDuplicatesCount(AtomicIntegerArray receiveCounts) {
-    var duplicates = 0;
-    for (var offset = 0; offset < receiveCounts.length(); offset++) {
-      if (receiveCounts.get(offset) > 1) {
-        duplicates++;
+  private static int[][] copy(AtomicIntegerArray[] receiveCountsPerPartition) {
+    final var copy = new int[receiveCountsPerPartition.length][];
+    for (var partition = 0; partition < copy.length; partition++) {
+      final var src = receiveCountsPerPartition[partition];
+      final var tgt = new int[src.length()];
+      copy[partition] = tgt;
+      for (var offset = 0; offset < tgt.length; offset++) {
+        tgt[offset] = src.get(offset);
       }
     }
-    return duplicates;
+    return copy;
   }
   
-  private static int getUniqueCount(AtomicIntegerArray[] receiveCountsPerPartition) {
-    var totalUnique = 0;
-    for (var receiveCounts : receiveCountsPerPartition) {
-      for (var offset = 0; offset < receiveCounts.length(); offset++) {
-        if (receiveCounts.get(offset) != 0) {
-          totalUnique++;
-        }
+  private static int countAll(int[][] receiveCountsPerPartition) {
+    var receivedCount = 0;
+    for (var partition = 0; partition < receiveCountsPerPartition.length; partition++) {
+      for (var offset = 0; offset < receiveCountsPerPartition[partition].length; offset++) {
+        receivedCount += receiveCountsPerPartition[partition][offset];
       }
     }
-    return totalUnique;
+    return receivedCount;
   }
-
+  
   private static int[] getLatestOffsets(AtomicIntegerArray[] receiveCountsPerPartition) {
     final var latestOffsets = new int[receiveCountsPerPartition.length];
-    for (var p = 0; p < receiveCountsPerPartition.length; p++) {
-      latestOffsets[p] = getLatestOffset(receiveCountsPerPartition[p]);
+    for (var partition = 0; partition < receiveCountsPerPartition.length; partition++) {
+      latestOffsets[partition] = getLatestOffset(receiveCountsPerPartition[partition]);
     }
     return latestOffsets;
   }
@@ -386,8 +369,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
   }
   
   private static boolean offsetsMoved(int[] offsetsBefore, int[] offsetsAfter, int minMagnitude) {
-    for (var p = 0; p < offsetsBefore.length; p++) {
-      if (offsetsAfter[p] - offsetsBefore[p] < minMagnitude) {
+    for (var partition = 0; partition < offsetsBefore.length; partition++) {
+      if (offsetsAfter[partition] - offsetsBefore[partition] < minMagnitude) {
         return false;
       }
     }
