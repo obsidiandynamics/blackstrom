@@ -20,7 +20,7 @@ public final class JacksonBankSettlementDeserializer extends StdDeserializer<Ban
     final JsonNode root = p.getCodec().readTree(p);
     final JsonNode transfersNode = root.get("transfers");
     final int transfersLength = transfersNode.size();
-    final Map<String, BalanceTransfer> transfers = new HashMap<>(transfersLength);
+    final Map<String, BalanceTransfer> transfers = new HashMap<>(transfersLength, 1f);
     for (Iterator<Map.Entry<String, JsonNode>> fieldIt = transfersNode.fields(); fieldIt.hasNext();) {
       final Map.Entry<String, JsonNode> field = fieldIt.next();
       final String branchId = field.getKey();

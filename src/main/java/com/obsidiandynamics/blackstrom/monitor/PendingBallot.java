@@ -21,7 +21,7 @@ final class PendingBallot {
   
   PendingBallot(Proposal proposal) {
     this.proposal = proposal;
-    responses = new HashMap<>(proposal.getCohorts().length);
+    responses = new HashMap<>(proposal.getCohorts().length, 1f);
   }
   
   Proposal getProposal() {

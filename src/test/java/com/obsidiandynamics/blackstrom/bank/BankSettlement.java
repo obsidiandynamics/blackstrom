@@ -68,7 +68,7 @@ public final class BankSettlement {
   }
 
   public static final BankSettlement randomise(String[] branchIds, long maxAbsoluteAmount) {
-    final Map<String, BalanceTransfer> transfers = new HashMap<>(branchIds.length);
+    final Map<String, BalanceTransfer> transfers = new HashMap<>(branchIds.length, 1f);
     long sum = 0;
     for (int i = 0; i < branchIds.length - 1; i++) {
       final long randomAmount = maxAbsoluteAmount - (long) (Math.random() * maxAbsoluteAmount * 2);
