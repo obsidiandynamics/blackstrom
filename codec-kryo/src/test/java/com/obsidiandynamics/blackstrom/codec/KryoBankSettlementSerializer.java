@@ -24,7 +24,7 @@ public final class KryoBankSettlementSerializer extends Serializer<BankSettlemen
   @Override
   public BankSettlement read(Kryo kryo, Input in, Class<? extends BankSettlement> type) {
     final int transfersSize = in.readVarInt(true);
-    final Map<String, BalanceTransfer> transfers = new HashMap<>(transfersSize);
+    final Map<String, BalanceTransfer> transfers = new HashMap<>(transfersSize, 1f);
     for (int i = 0; i < transfersSize; i++) {
       final BalanceTransfer xfer = deserializeTransfer(kryo, in);
       transfers.put(xfer.getBranchId(), xfer);
