@@ -49,6 +49,7 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
   protected Ledger createLedger(Guidance guidance) {
     return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(new KafkaCluster<>(config))
+                           .withDrainConfirmationsTimeout(5_000)
                            .withTopic(getTopic(guidance))
                            .withCodec( new JacksonMessageCodec(true, new JacksonBankExpansion())));
   }
