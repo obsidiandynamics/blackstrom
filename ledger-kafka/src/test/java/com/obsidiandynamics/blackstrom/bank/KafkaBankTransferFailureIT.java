@@ -45,6 +45,7 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
   protected Ledger createLedger(Guidance guidance) {
     return new KafkaLedger(new KafkaLedgerConfig()
                            .withKafka(new KafkaCluster<>(config))
+                           .withDrainConfirmations(false)
                            .withTopic(getTopic(guidance))
                            .withCodec(new JacksonMessageCodec(true, new JacksonBankExpansion())));
   }
