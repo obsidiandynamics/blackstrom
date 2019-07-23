@@ -88,7 +88,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
       final var testTopics = allTopics.stream().filter(topic -> topic.startsWith(uniquePrefix)).collect(Collectors.toList());
 
       new Retry()
-      .withAttempts(10)
+      .withAttempts(50)
       .withBackoff(10_000)
       .withFaultHandler(zlg::w)
       .withErrorHandler(zlg::e)
@@ -100,7 +100,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
       zlg.d("Deleting groups %s", z -> z.arg(testGroups));
       
       new Retry()
-      .withAttempts(10)
+      .withAttempts(50)
       .withBackoff(10_000)
       .withFaultHandler(zlg::w)
       .withErrorHandler(zlg::e)
