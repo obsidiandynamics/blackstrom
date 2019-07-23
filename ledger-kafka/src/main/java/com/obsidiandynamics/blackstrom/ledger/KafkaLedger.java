@@ -35,7 +35,6 @@ import com.obsidiandynamics.yconf.util.*;
 import com.obsidiandynamics.zerolog.*;
 
 public final class KafkaLedger implements Ledger {
-  private static final int POLL_TIMEOUT_MILLIS = 100;
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
   private static final int RETRY_BACKOFF_MILLIS = 100;
   private static final long OFFSET_DRAIN_CHECK_INTERVAL_MILLIS = 10;
@@ -55,6 +54,8 @@ public final class KafkaLedger implements Ledger {
   private final ConsumerPipeConfig consumerPipeConfig;
   
   private final int maxConsumerPipeYields;
+  
+  private final int pollTimeout;
   
   private final SpotterConfig spotterConfig;
 
@@ -164,6 +165,7 @@ public final class KafkaLedger implements Ledger {
     printConfig = config.isPrintConfig();
     consumerPipeConfig = config.getConsumerPipeConfig();
     maxConsumerPipeYields = config.getMaxConsumerPipeYields();
+    pollTimeout = config.getPollTimeout();
     ioAttempts = config.getIoAttempts();
     drainConfirmations = config.isDrainConfirmations();
     drainConfirmationsTimeout = config.getDrainConfirmationsTimeout();
@@ -368,7 +370,7 @@ public final class KafkaLedger implements Ledger {
     };
 
     final var threadName = KafkaLedger.class.getSimpleName() + "-" + randomThreadId + "-topic[" + topic + "]-group[" + groupId + "]";
-    final var receiver = new AsyncReceiver<>(consumer, POLL_TIMEOUT_MILLIS, 
+    final var receiver = new AsyncReceiver<>(consumer, pollTimeout, 
         threadName, recordHandler, zlg::w);
     receivers.add(receiver);
     
