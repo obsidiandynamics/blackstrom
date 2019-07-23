@@ -27,7 +27,7 @@ public final class KafkaLedgerConfig {
   private ConsumerPipeConfig consumerPipeConfig = new ConsumerPipeConfig().withAsync(true).withBacklogBatches(16);
   
   @YInject
-  private int pollTimeout = 100;
+  private int pollTimeout = 500;
   
   @YInject
   private int maxConsumerPipeYields = 100;
