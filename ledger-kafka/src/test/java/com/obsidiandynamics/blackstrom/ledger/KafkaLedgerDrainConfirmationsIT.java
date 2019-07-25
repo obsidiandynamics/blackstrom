@@ -49,8 +49,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
                          .build())
       .withConsumerProps(new PropsBuilder()
                          .with("default.api.timeout.ms", 5_000)
-                         .with("session.timeout.ms", 60_000)
-                         .with("max.poll.interval.ms", 300_000)
+                         .with("session.timeout.ms", 300_000)
+                         .with("max.poll.interval.ms", 1_200_000)
                          .with("partition.assignment.strategy", RoundRobinAssignor.class.getName())
                          .build());
   
