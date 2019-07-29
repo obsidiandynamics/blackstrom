@@ -370,8 +370,7 @@ public final class KafkaLedger implements Ledger {
     };
 
     final var threadName = KafkaLedger.class.getSimpleName() + "-" + randomThreadId + "-topic[" + topic + "]-group[" + groupId + "]";
-    final var receiver = new AsyncReceiver<>(consumer, pollTimeout, 
-        threadName, recordHandler, zlg::w);
+    final var receiver = new AsyncReceiver<>(consumer, pollTimeout, threadName, recordHandler, zlg::w);
     receivers.add(receiver);
     
     return handlerId;
@@ -399,7 +398,7 @@ public final class KafkaLedger implements Ledger {
     }
     
     if (queueBatch) {
-      for (int yields = 0;;) {
+      for (var yields = 0;;) {
         final var enqueued = consumerPipe.receive(records);
  
         if (consumerState != null) {
