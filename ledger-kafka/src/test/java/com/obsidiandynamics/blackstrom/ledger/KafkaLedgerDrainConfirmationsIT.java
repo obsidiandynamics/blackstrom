@@ -239,20 +239,26 @@ public final class KafkaLedgerDrainConfirmationsIT {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
             
-            receivedPerConsumer.incrementAndGet(consumerIndex);
-            final var receiveCounts = receiveCountsPerPartition[partition];
-            final var count = receiveCounts.incrementAndGet((int) offset);
-            
-            // log any message that has been processed more than once or if a preceding message has been skipped
-            final var lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
-            if (lastCount == 0) {
-              zlg.w("FAILURE in message %s; out-of-order: count=%d, lastCount=%d", 
-                    z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
-            } else if (count > 1) {
-              zlg.w("FAILURE in message %s; duplicate: offset=%d, partition=%d, count=%d", 
-                    z -> z.arg(message::getMessageId).arg(offset).arg(partition).arg(count));
+            if (offset < messages) {
+              receivedPerConsumer.incrementAndGet(consumerIndex);
+              final var receiveCounts = receiveCountsPerPartition[partition];
+              final var count = receiveCounts.incrementAndGet((int) offset);
+              
+              // log any message that has been processed more than once or if a preceding message has been skipped
+              final var lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
+              if (lastCount == 0) {
+                zlg.w("FAILURE in message %s; out-of-order: count=%d, lastCount=%d", 
+                      z -> z.arg(message::getMessageId).arg(count).arg(lastCount));
+              } else if (count > 1) {
+                zlg.w("FAILURE in message %s; duplicate: offset=%d, partition=%d, count=%d", 
+                      z -> z.arg(message::getMessageId).arg(offset).arg(partition).arg(count));
+              }
+              totalReceived.incrementAndGet();
+            } else {
+              // extraneous messages are possible (albeit rare), occurring if the producer encountered a retriable
+              // error during publishing and re-attempted to publish, although the initial publish had succeeded
+              zlg.d("Received extraneous messsage %s", z -> z.arg(message::getMessageId));
             }
-            totalReceived.incrementAndGet();
             
             // delay offset commits for a more pronounced effect (increases likelihood of repeated messages
             // after rebalancing if drainage is not working correctly)
