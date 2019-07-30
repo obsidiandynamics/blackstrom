@@ -10,6 +10,7 @@ import java.util.stream.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
+import org.assertj.core.api.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -239,7 +240,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
             
-            if (offset < messages) {
+            final boolean accepted;
+            if (accepted = offset < messages) {
               receivedPerConsumer.incrementAndGet(consumerIndex);
               final var receiveCounts = receiveCountsPerPartition[partition];
               final var count = receiveCounts.incrementAndGet((int) offset);
@@ -268,12 +270,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
                 final var sleepNeeded = confirmNoSoonerThan - System.currentTimeMillis();
                 Threads.sleep(sleepNeeded);
                 confirmation.confirm();
-                totalConfirmed.incrementAndGet();
+                if (accepted) totalConfirmed.incrementAndGet();
               });
             } catch (RejectedExecutionException e) {
               zlg.i("Executor terminated: confirming offset %d (partition %d) in handler thread", z -> z.arg(offset).arg(partition));
               confirmation.confirm();
-              totalConfirmed.incrementAndGet();
+              if (accepted) totalConfirmed.incrementAndGet();
             }
           }
         });
@@ -285,7 +287,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }, "LedgerAttachThread").start();
 
     zlg.i("Starting publisher");
-    for (var m = 0; m < messages; m++) {
+    for (var m = 0; m < messages + 100; m++) {
       for (var p = 0; p < partitions; p++) {
         ledger.append(new Command(p + "-" + m, null, 0).withShard(p));
       }
@@ -329,7 +331,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
     ledger.dispose();
     
     zlg.i("Awaiting final confirmations");
-    WAIT.untilTrue(() -> totalReceived.get() == totalConfirmed.get());
+    WAIT.until(() -> {
+      assertEquals(totalReceived.get(), totalConfirmed.get());
+    });
     zlg.i("Test passed: %s", z -> z.arg(testLabel));
   }
   
