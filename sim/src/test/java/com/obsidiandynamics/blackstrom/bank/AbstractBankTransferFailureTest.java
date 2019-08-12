@@ -17,33 +17,33 @@ import com.obsidiandynamics.zerolog.*;
 
 public abstract class AbstractBankTransferFailureTest extends BaseBankTest {  
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
-  
+
   private static final int DELIVERY_DELAY_MILLIS = 10;
-  
+
   @Test
   public final void testFactorFailures() {
     final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
-      new RxTxFailureModes() {},
-      new RxTxFailureModes() {{
-        rxFailureMode = new DuplicateDelivery(1);
-      }},
-      new RxTxFailureModes() {{
-        rxFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
-      }},
-      new RxTxFailureModes() {{
-        rxFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
-      }},
-      new RxTxFailureModes() {{
-        txFailureMode = new DuplicateDelivery(1);
-      }},
-      new RxTxFailureModes() {{
-        txFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
-      }},
-      new RxTxFailureModes() {{
-        txFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
-      }}
+                                                                               new RxTxFailureModes() {},
+                                                                               new RxTxFailureModes() {{
+                                                                                 rxFailureMode = new DuplicateDelivery(1);
+                                                                               }},
+                                                                               new RxTxFailureModes() {{
+                                                                                 rxFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                               }},
+                                                                               new RxTxFailureModes() {{
+                                                                                 rxFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                               }},
+                                                                               new RxTxFailureModes() {{
+                                                                                 txFailureMode = new DuplicateDelivery(1);
+                                                                               }},
+                                                                               new RxTxFailureModes() {{
+                                                                                 txFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                               }},
+                                                                               new RxTxFailureModes() {{
+                                                                                 txFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                               }}
     };
-    
+
     for (TargetFactor target : TargetFactor.values()) {
       for (RxTxFailureModes failureModes : presetFailureModesArray) {
         boolean success = false;
@@ -59,34 +59,34 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
       }
     }
   }
-  
+
   private enum TargetFactor {
     INITIATOR,
     COHORT,
     MONITOR
   }
-  
+
   private abstract static class RxTxFailureModes {
     FailureMode rxFailureMode; 
     FailureMode txFailureMode;
-    
+
     @Override
     public String toString() {
       return RxTxFailureModes.class.getSimpleName() + " [rxFailureMode=" + rxFailureMode + 
           ", txFailureMode=" + txFailureMode + "]";
     }
   }
-  
+
   private static class FailureModes extends EnumMap<TargetFactor, RxTxFailureModes> {
     private static final long serialVersionUID = 1L;
-    
+
     FailureModes() {
       super(TargetFactor.class);
       for (TargetFactor target : TargetFactor.values()) {
         set(target, new RxTxFailureModes() {});
       }
     }
-    
+
     FailureModes set(TargetFactor target, RxTxFailureModes rxtxFailureModes) {
       put(target, rxtxFailureModes);
       return this;
@@ -121,8 +121,8 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
 
     wait.until(() -> {
       assertEquals(initialBalance * branches.length, getTotalBalance(branches));
-      assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
-      assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
+      assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
+      assertTrue("branches=" + List.of(branches), nonZeroBalances(branches));
     });
   }
 

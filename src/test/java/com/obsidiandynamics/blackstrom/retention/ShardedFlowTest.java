@@ -26,16 +26,16 @@ public class ShardedFlowTest {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-  
+
   private final Timesert wait = Wait.SHORT;
-  
+
   private ShardedFlow flow;
-  
+
   @Before
   public void before() {
     flow = new ShardedFlow("testGroup");
   }
-  
+
   @After
   public void after() {
     if (flow != null) {
@@ -71,18 +71,18 @@ public class ShardedFlowTest {
         throw new UnsupportedOperationException();
       }
     };
-    
+
     final MessageContext context = new MessageContext() {
       @Override 
       public Ledger getLedger() {
         return ledger;
       }
-      
+
       @Override 
       public Object getHandlerId() {
         return null;
       }
-      
+
       @Override 
       public void beginAndConfirm(Message message) {
         throw new UnsupportedOperationException();
@@ -93,27 +93,27 @@ public class ShardedFlowTest {
         return flow;
       }
     };
-    
+
     final Confirmation c0 = flow.begin(context, message(0, 0));
     final Confirmation c1 = flow.begin(context, message(1, 0));
     final Confirmation c2 = flow.begin(context, message(2, 1));
     final Confirmation c3 = flow.begin(context, message(3, 1));
-    
+
     c1.confirm();
     c3.confirm();
     assertEquals(0, confirmed.size());
-    
+
     c2.confirm();
     wait.until(() -> {
-      assertEquals(Arrays.asList(3L), confirmed);
+      assertEquals(List.of(3L), confirmed);
     });
-    
+
     c0.confirm();
     wait.until(() -> {
-      assertEquals(Arrays.asList(3L, 1L), confirmed);
+      assertEquals(List.of(3L, 1L), confirmed);
     });
   }
-  
+
   /**
    *  Tests the condition where a new flow is created after the termination of the
    *  ShardedFlow container. In this case flows should be stillborn (pre-terminated).

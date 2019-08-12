@@ -23,35 +23,35 @@ import com.obsidiandynamics.zerolog.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
-  
+
   private final int scale = Testmark.getOptions(Scale.class, Scale.unity()).magnitude();
-  
+
   private static final class RandomiseRuns {
     static final boolean ENABLED = true;
     static final boolean DISABLED = false;
   }
-  
+
   private static final class Logging {
     static final boolean ENABLED = true;
     static final boolean DISABLED = false;
   }
-  
+
   private static final class Tracking {
     static final boolean ENABLED = true;
     static final boolean DISABLED = false;
   }
-  
+
   private static final class Idempotency {
     static final boolean ENABLED = true;
     static final boolean DISABLED = false;
   }
-  
+
   @Test
   public final void testRandomTransfersAutonomous() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
     testRandomTransfers(branches, 100 * scale, RandomiseRuns.ENABLED, Logging.ENABLED, Tracking.ENABLED, AUTONOMOUS, Idempotency.ENABLED);
   }
-  
+
   @Test
   public final void testRandomTransfersCoordinated() {
     final int branches = Testmark.isEnabled() ? 2 : 10;
@@ -77,7 +77,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
     final AtomicInteger commits = new AtomicInteger();
     final AtomicInteger aborts = new AtomicInteger();
     final AtomicInteger timeouts = new AtomicInteger();
-    
+
     final long started = System.currentTimeMillis();
     final WorkerThread progressMonitorThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(AbstractBankTransferTest.class, "progress"))
@@ -90,7 +90,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
                 z -> z.arg(c).arg(a).arg(t).arg(s).arg(rate));
         })
         .buildAndStart();
-    
+
     final Sandbox sandbox = Sandbox.forInstance(this);
     final Initiator initiator = (NullGroupChoreograpyInitiator) (c, o) -> {
       if (sandbox.contains(o)) {
@@ -116,7 +116,7 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         branchIds = numBranches != 2 ? BankBranch.generateIds(numBranches) : TWO_BRANCH_IDS;
         settlement = BankSettlement.randomise(branchIds, transferAmount);
       }
-      
+
       final long xidBase = System.currentTimeMillis() << 32;
       for (int run = 0; run < runs; run++) {
         if (randomiseRuns) {
@@ -146,20 +146,20 @@ public abstract class AbstractRandomBankTransferTest extends BaseBankTest {
         }
       }
       progressMonitorThread.terminate().joinSilently();
-      
+
       wait.until(() -> {
         assertEquals(runs, commits.get() + aborts.get() + timeouts.get());
         final long expectedBalance = numBranches * initialBalance;
         assertEquals(expectedBalance, getTotalBalance(branches));
-        assertTrue("branches=" + Arrays.asList(branches), allZeroEscrow(branches));
-        assertTrue("branches=" + Arrays.asList(branches), nonZeroBalances(branches));
+        assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
+        assertTrue("branches=" + List.of(branches), nonZeroBalances(branches));
       });
     });
     final double rate = (double) runs / tookMillis * 1000;
     zlg.i("%,d took %,d ms, %,.0f txns/sec (%,d commits | %,d aborts | %,d timeouts)", 
           z -> z.arg(runs).arg(tookMillis).arg(rate).arg(commits::get).arg(aborts::get).arg(timeouts::get));
   }
-  
+
   private long getMinOutcomes(BankBranch[] branches) {
     long minOutcomes = Long.MAX_VALUE;
     for (BankBranch branch : branches) {

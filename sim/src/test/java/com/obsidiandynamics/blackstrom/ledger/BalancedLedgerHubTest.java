@@ -25,51 +25,51 @@ public final class BalancedLedgerHubTest {
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-  
+
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
-  
+
   private final Timesert wait = Wait.SHORT;
-  
+
   private BalancedLedgerHub hub;
-  
+
   @After
   public void after() {
     if (hub != null) hub.dispose();
   }
-  
+
   private static class TestView {
     final int viewId;
     final BalancedLedgerView view;
     final List<TestHandler> handlers = new ArrayList<>();
-    
+
     private TestView(int viewId, BalancedLedgerView view) {
       this.viewId = viewId;
       this.view = view;
     }
-    
+
     static TestView connectTo(int viewId, BalancedLedgerHub hub) {
       return new TestView(viewId, hub.connectDetached());
     }
-    
+
     TestHandler attach(String groupId) {
       final TestHandler handler = new TestHandler(groupId);
       handlers.add(handler);
       view.attach(handler);
       return handler;
     }
-    
+
     void confirmFirst() {
       handlers.forEach(handler -> handler.confirmFirst());
     }
-    
+
     void confirmLast() {
       handlers.forEach(handler -> handler.confirmLast());
     }
-    
+
     void clear() {
       handlers.forEach(handler -> handler.clear());
     }
-    
+
     class TestHandler implements MessageHandler {
       final List<List<Long>> receivedByShard;
       final List<AtomicReference<Message>> firstMessageByShard;
@@ -77,7 +77,7 @@ public final class BalancedLedgerHubTest {
       final String groupId;
       private volatile MessageContext context;
       private long pause;
-      
+
       private TestHandler(String groupId) {
         this.groupId = groupId;
         receivedByShard = IntStream.range(0, view.getHub().getShards())
@@ -87,7 +87,7 @@ public final class BalancedLedgerHubTest {
         lastMessageByShard = IntStream.range(0, view.getHub().getShards())
             .boxed().map(shard -> new AtomicReference<Message>()).collect(Collectors.toList());
       }
-      
+
       TestHandler withPause(long pauseMillis) {
         this.pause = pauseMillis;
         return this;
@@ -107,22 +107,22 @@ public final class BalancedLedgerHubTest {
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);
         lastMessageByShard.get(message.getShard()).set(message);
       }
-      
+
       private void confirm(List<AtomicReference<Message>> messageRefs) {
         messageRefs.forEach(messageRef -> {
           Optional.ofNullable(messageRef.get())
           .ifPresent(m -> context.getLedger().confirm(context.getHandlerId(), m.getMessageId()));
         });
       }
-      
+
       void confirmFirst() {
         confirm(firstMessageByShard);
       }
-      
+
       void confirmLast() {
         confirm(lastMessageByShard);
       }
-      
+
       void clear() {
         context = null;
         receivedByShard.forEach(received -> received.clear());
@@ -131,29 +131,29 @@ public final class BalancedLedgerHubTest {
       }
     }
   }
-  
+
   @Test
   public void testAttachedDispose() {
     hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
     final BalancedLedgerView v0 = hub.connect();
     final BalancedLedgerView v1 = hub.connect();
-    assertEquals(new HashSet<>(Arrays.asList(v0, v1)), hub.getViews());
-    
+    assertEquals(Set.of(v0, v1), hub.getViews());
+
     v0.dispose(); // this should also have the effect of disposing both the hub and v1
-    assertEquals(Collections.emptySet(), hub.getViews());
+    assertEquals(Set.of(), hub.getViews());
   }
-  
+
   @Test
   public void testDetachedDispose() {
     hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
     final BalancedLedgerView v0 = hub.connectDetached();
     final BalancedLedgerView v1 = hub.connectDetached();
-    assertEquals(new HashSet<>(Arrays.asList(v0, v1)), hub.getViews());
-    
+    assertEquals(Set.of(v0, v1), hub.getViews());
+
     v0.dispose(); // this should have no effect on the hub or v1
-    assertEquals(Collections.singleton(v1), hub.getViews());
+    assertEquals(Set.of(v1), hub.getViews());
   }
-  
+
   @Test
   public void testConfirmAfterDispose() {
     hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
@@ -164,7 +164,7 @@ public final class BalancedLedgerHubTest {
       public String getGroupId() {
         return null;
       }
-    
+
       @Override
       public void onMessage(MessageContext context, Message message) {
         view.dispose();
@@ -173,7 +173,7 @@ public final class BalancedLedgerHubTest {
       }
     });
     view.append(new UnknownMessage("0", 0).withShard(0));
-    
+
     wait.untilTrue(() -> received.get());
   }
 
@@ -196,12 +196,12 @@ public final class BalancedLedgerHubTest {
           return view;
         })
         .collect(Collectors.toList());
-    
+
     final List<Long> expected = LongList.generate(0, messages);
     expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    
+
     wait.until(() -> {
       views.forEach(view -> view.handlers.forEach(handler -> handler.receivedByShard.forEach(received -> {
         assertEquals(expected, received);
@@ -223,23 +223,23 @@ public final class BalancedLedgerHubTest {
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> TestView.connectTo(v, hub))
         .collect(Collectors.toList());
-    
+
     LongList.generate(0, messages).forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    
+
     // attach after publishing — shouldn't see any messages
     views.forEach(view -> IntStream.range(0, handlers).forEach(h -> {
       view.attach(null);
     }));
-    
+
     Threads.sleep(10);
-    
+
     views.forEach(view -> view.handlers.forEach(handler -> handler.receivedByShard.forEach(received -> {
       assertEquals(LongList.empty(), received);
     })));
   }
-  
+
   /**
    *  Messages are published to a small buffer at a rate that is much higher than the consumer's 
    *  throughput, resulting in a buffer overflow condition.
@@ -247,27 +247,27 @@ public final class BalancedLedgerHubTest {
   @Test
   public void testBufferOverflow() {
     hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
-    
+
     final TestView view = TestView.connectTo(0, hub);
     view.attach(null).withPause(5); // simulate slow consumer
-    
+
     final MockLogTarget logTarget = new MockLogTarget();
     view.view.withZlg(logTarget.logger());
-    
+
     // first publish 5 messages and assert receipt
     LongList.generate(0, 5).forEach(xid -> {
       view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
-    
+
     wait.until(() -> {
       assertEquals(5, view.handlers.get(0).receivedByShard.get(0).size());
     });
-    
+
     // publish more messages — some will be missed due to constrained buffer capacity
     LongList.generate(0, 100).forEach(xid -> {
       view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
-    
+
     wait.until(() -> {
       logTarget.entries().forLevel(LogLevel.WARN).containing("overflow").assertCountAtLeast(1);
     });
@@ -292,15 +292,15 @@ public final class BalancedLedgerHubTest {
           return view;
         })
         .collect(Collectors.toList());
-    
+
     final LongList expected = LongList.generate(0, messages);
     expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    
+
     // verify that we have exactly one receipt for each shard
     wait.until(assertAtLeastOneForEachShard(shards, views, expected));
-    
+
     // one by one, dispose and remove each view and verify that the shards have rebalanced (i.e. there is still exactly
     // one receipt per shard), for as long as there is at least one remaining view
     IntStream.range(0, numViews).forEach(v -> {
@@ -330,18 +330,18 @@ public final class BalancedLedgerHubTest {
           return view;
         })
         .collect(Collectors.toList());
-    
+
     final LongList expected = LongList.generate(0, messages);
     expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    
+
     // verify that we have exactly one receipt for each shard
     wait.until(assertAtLeastOneForEachShard(shards, views, expected));
-    
+
     // confirm at the head offset — after rebalancing all messages will be redelivered
     views.forEach(view -> view.confirmFirst());
-    
+
     // one by one, dispose and remove each view and verify that the shards have rebalanced (i.e. there is still exactly
     // one receipt per shard), for as long as there is at least one remaining view
     IntStream.range(0, numViews).forEach(v -> {
@@ -350,7 +350,7 @@ public final class BalancedLedgerHubTest {
       wait.until(assertAtLeastOneForEachShard(shards, views, expected));
     });
   }
-  
+
   /**
    *  Messages are consumed from one of a set of contending views, confirming the last message. 
    *  Contending views are disposed one by one and in each case only the tail message is consumed
@@ -370,18 +370,18 @@ public final class BalancedLedgerHubTest {
           return view;
         })
         .collect(Collectors.toList());
-    
+
     LongList.generate(0, messages).forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       views.get(0).view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    
+
     // verify that we have exactly one full receipt for each shard
     final LongList expectedFull = LongList.generate(0, messages);
     wait.until(assertAtLeastOneForEachShard(shards, views, expectedFull));
-    
+
     // confirm at the tail offset — after rebalancing only the tail message will be redelivered
     views.forEach(view -> view.confirmLast());
-    
+
     // remove views that have had complete receipts and clear the remaining views
     final List<TestView> completed = viewsWithAtLeastOne(views, expectedFull);
     views.forEach(view -> view.clear());
@@ -389,7 +389,7 @@ public final class BalancedLedgerHubTest {
       view.view.dispose();
       views.remove(view);
     });
-    
+
     // one by one, dispose each view and verify that the shards have rebalanced, so 
     // that there is at least one tail message received (since we confirmed at the tail offset)
     final LongList expectedTail = LongList.generate(messages - 1, messages);
@@ -399,7 +399,7 @@ public final class BalancedLedgerHubTest {
       wait.until(assertAtLeastOneForEachShard(shards, views, expectedTail));
     });
   }
-  
+
   /**
    *  Tests handover using {@link RandomShardAssignment} with no confirmations.
    */
@@ -409,7 +409,7 @@ public final class BalancedLedgerHubTest {
     final int messages = 20;
     final int handlers = 2;
     hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
-    
+
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expected = LongList.generate(0, messages);
@@ -417,13 +417,13 @@ public final class BalancedLedgerHubTest {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v0), expected));
-    
+
     v0.view.dispose();
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v1), expected));
   }
-  
+
   /**
    *  Tests handover using {@link StickyShardAssignment} with no confirmations.
    */
@@ -433,7 +433,7 @@ public final class BalancedLedgerHubTest {
     final int messages = 20;
     final int handlers = 2;
     hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
-    
+
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expected = LongList.generate(0, messages);
@@ -441,16 +441,16 @@ public final class BalancedLedgerHubTest {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
-    
+
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     Threads.sleep(10);
     assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
-    
+
     v0.view.dispose();
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
   }
-  
+
   /**
    *  Tests handover using {@link StickyShardAssignment} with confirmation of the first
    *  message.
@@ -461,7 +461,7 @@ public final class BalancedLedgerHubTest {
     final int messages = 20;
     final int handlers = 2;
     hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
-    
+
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expected = LongList.generate(0, messages);
@@ -469,17 +469,17 @@ public final class BalancedLedgerHubTest {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
-    
+
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     Threads.sleep(10);
     assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
-    
+
     v0.confirmFirst();
     v0.view.dispose();
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
   }
-  
+
   /**
    *  Tests handover using {@link StickyShardAssignment} with confirmation of the last
    *  message.
@@ -490,7 +490,7 @@ public final class BalancedLedgerHubTest {
     final int messages = 20;
     final int handlers = 2;
     hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
-    
+
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group"));
     final LongList expectedFull = LongList.generate(0, messages);
@@ -498,18 +498,18 @@ public final class BalancedLedgerHubTest {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
-    
+
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     Threads.sleep(10);
     assertNoneForEachShard(1, Collections.singletonList(v1), expectedFull).run();
-    
+
     v0.confirmLast();
     v0.view.dispose();
     final LongList expectedTail = LongList.generate(messages - 1, messages);
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedTail));
   }
-  
+
   /**
    *  Tests consumption from two independent groups. Both will receive the same messages.
    */
@@ -519,7 +519,7 @@ public final class BalancedLedgerHubTest {
     final int messages = 20;
     final int handlers = 2;
     hub = new BalancedLedgerHub(shards, StickyShardAssignment::new, ArrayListAccumulator.factory(10, 2));
-    
+
     final TestView v0 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v0.attach("group-0"));
     final LongList expectedFull = LongList.generate(0, messages);
@@ -527,12 +527,12 @@ public final class BalancedLedgerHubTest {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
-    
+
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group-1"));
     wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedFull));
   }
-  
+
   private static List<TestView> viewsWithAtLeastOne(List<TestView> views, LongList expected) {
     return views.stream().filter(view -> {
       final long receiptsInView = view.handlers.stream().map(handler -> {
@@ -542,11 +542,11 @@ public final class BalancedLedgerHubTest {
       return receiptsInView > 0;
     }).collect(Collectors.toList());
   }
-  
+
   private static Runnable assertNoneForEachShard(int shards, List<TestView> views, LongList expected) {
     return assertForEachShard(shards, views, expected, 0, 0);
   }
-  
+
   private static Runnable assertAtLeastOneForEachShard(int shards, List<TestView> views, LongList expected) {
     return assertForEachShard(shards, views, expected, 1, Integer.MAX_VALUE);
   }
@@ -554,7 +554,7 @@ public final class BalancedLedgerHubTest {
   private static Runnable assertExactlyOneForEachShard(int shards, List<TestView> views, LongList expected) {
     return assertForEachShard(shards, views, expected, 1, 1);
   }
-  
+
   /**
    *  Verifies that each shard's message content has been received by some bounded number of handlers (across all
    *  views), for as long at least one view remains.
@@ -569,7 +569,7 @@ public final class BalancedLedgerHubTest {
   private static Runnable assertForEachShard(int shards, List<TestView> views, LongList expected, int minCount, int maxCount) {
     return () -> {
       if (views.isEmpty()) return;
-      
+
       IntStream.range(0, shards).forEach(shard -> {
         // count the number of handlers across all views that have received something for this shard
         final long numPartialReceipts = views.stream().map(view -> {
@@ -578,7 +578,7 @@ public final class BalancedLedgerHubTest {
         }).collect(Collectors.summingLong(i -> i));
         assertTrue("numPartialReceipts=" + numPartialReceipts, numPartialReceipts >= minCount);
         assertTrue("numPartialReceipts=" + numPartialReceipts, numPartialReceipts <= maxCount);
-        
+
         // count the number of handlers across all view that have received the full list of expected 
         // messages for this shard
         final long numFullReceipts = views.stream().map(view -> {
