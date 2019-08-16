@@ -430,11 +430,10 @@ public final class KafkaLedger implements Ledger {
                            BooleanSupplier isDisposingCheck, Zlg zlg) {
     final var drainUntilTime = System.currentTimeMillis() + drainTimeoutMillis;
     while (! isDisposingCheck.getAsBoolean()) {
-      final boolean allPendingOffsetsConfirmed;
       final Map<TopicPartition, OffsetAndMetadata> offsetsConfirmedSnapshot;
       synchronized (consumerState.lock) {
         if (consumerState.queuedRecords == 0) {
-          allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
+          final var allPendingOffsetsConfirmed = consumerState.offsetsPending.isEmpty();
           if (allPendingOffsetsConfirmed) {
             offsetsConfirmedSnapshot = consumerState.offsetsConfirmed;
             consumerState.offsetsConfirmed = new HashMap<>(consumerState.offsetsConfirmed.size());
@@ -444,12 +443,11 @@ public final class KafkaLedger implements Ledger {
           }
         } else {
           zlg.d("Pipeline backlogged: %,d record(s) queued", z -> z.arg(consumerState.queuedRecords));
-          allPendingOffsetsConfirmed = false;
           offsetsConfirmedSnapshot = null;
         }
       }
 
-      if (allPendingOffsetsConfirmed) {
+      if (offsetsConfirmedSnapshot != null) {
         zlg.d("All offsets confirmed: %s", z -> z.arg(map(ref(offsetsConfirmedSnapshot), KafkaLedger::getOriginalOffsets)));
         if (! offsetsConfirmedSnapshot.isEmpty()) {
           new Retry()
