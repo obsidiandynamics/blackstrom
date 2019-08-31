@@ -166,15 +166,14 @@ public final class MonitorEngine implements Disposable {
   
   public void onProposal(MessageContext context, Proposal proposal) {
     synchronized (messageLock) {
-      final PendingBallot newBallot = new PendingBallot(proposal);
-      final PendingBallot existingBallot = pending.put(proposal.getXid(), newBallot);
-      if (existingBallot != null) {
-        zlg.t("Skipping redundant %s (ballot already pending)", z -> z.arg(proposal));
-        pending.put(proposal.getXid(), existingBallot);
-        return;
-      } else {
-        newBallot.setConfirmation(context.begin(proposal));
-      }
+      pending.compute(proposal.getXid(), (__, existingBallot) -> {
+        if (existingBallot != null) {
+          zlg.t("Skipping redundant %s (ballot already pending)", z -> z.arg(proposal));
+          return existingBallot;
+        } else {
+          return new PendingBallot(proposal, context.begin(proposal));
+        }
+      });
     }
     
     zlg.t("Initiating ballot for %s", z -> z.arg(proposal));
