@@ -28,8 +28,6 @@ public final class MeteorLedger implements Ledger {
   
   private final Map<Integer, Subscriber> groupSubscribers = new ConcurrentHashMap<>();
   
-  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
-
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
   public MeteorLedger(HazelcastInstance instance, MeteorLedgerConfig config) {
@@ -58,9 +56,8 @@ public final class MeteorLedger implements Ledger {
     if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
       groupSubscribers.put(handlerId, subscriber);
-      final ShardedFlow flow = new ShardedFlow(groupId);
+      final ShardedFlow flow = new ShardedFlow();
       retention = flow;
-      flows.add(flow);
     } else {
       handlerId = null;
       retention = NopRetention.getInstance();
@@ -123,7 +120,6 @@ public final class MeteorLedger implements Ledger {
     Terminator.blank()
     .add(publisher)
     .add(allSubscribers)
-    .add(flows)
     .terminate()
     .joinSilently();
   }

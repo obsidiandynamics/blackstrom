@@ -208,7 +208,7 @@ public final class MonitorEngine implements Disposable {
     }
     action.appendOutcome(outcome, (id, x) -> {
       if (x == null) {
-        ballot.getConfirmation().confirm();
+        ballot.confirm();
       } else {
         zlg.w("Error appending to ledger [message: %s]", z -> z.arg(outcome).threw(x));
       }

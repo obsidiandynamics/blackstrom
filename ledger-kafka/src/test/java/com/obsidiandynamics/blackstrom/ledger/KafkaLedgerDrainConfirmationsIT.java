@@ -10,7 +10,6 @@ import java.util.stream.*;
 
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.*;
-import org.assertj.core.api.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -19,7 +18,6 @@ import com.obsidiandynamics.await.*;
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
-import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.jackdaw.*;
 import com.obsidiandynamics.junit.*;
@@ -38,12 +36,12 @@ public final class KafkaLedgerDrainConfirmationsIT {
   }
 
   private static final Zlg zlg = Zlg.forDeclaringClass().get();
-  
+
   @BeforeClass
   public static void beforeClass() throws Exception {
     TestKafka.start();
   }
-  
+
   private final KafkaClusterConfig config = new KafkaClusterConfig()
       .withBootstrapServers(TestKafka.bootstrapServers())
       .withProducerProps(new PropsBuilder()
@@ -54,11 +52,11 @@ public final class KafkaLedgerDrainConfirmationsIT {
                          .with("max.poll.interval.ms", 1_200_000)
                          .with("partition.assignment.strategy", RoundRobinAssignor.class.getName())
                          .build());
-  
+
   private ExecutorService executor;
-  
+
   private KafkaLedger ledger;
-  
+
   private final String timestamp = new SimpleDateFormat(KafkaDefaults.TOPIC_DATE_FORMAT).format(new Date());
 
   @After
@@ -66,24 +64,24 @@ public final class KafkaLedgerDrainConfirmationsIT {
     if (executor != null) {
       executor.shutdown();
     }
-    
+
     if (ledger != null) {
       ledger.dispose();
     }
   }
-  
+
   private static String getUniquePrefix(String label) {
     return KafkaLedgerDrainConfirmationsIT.class.getSimpleName() + "-" + label;
   }
-  
+
   private String getUniqueName(String label) {
     return getUniquePrefix(label) + "-" + timestamp;
   }
-  
+
   private String createTopic(String label, int partitions) throws Exception {
     try (var admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
-      
+
       final var uniquePrefix = getUniquePrefix(label);
       final var allTopics = admin.listTopics(KafkaDefaults.TOPIC_OPERATION);
       final var testTopics = allTopics.stream().filter(topic -> topic.startsWith(uniquePrefix)).collect(Collectors.toList());
@@ -99,7 +97,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
       final var allGroups = admin.listConsumerGroups(KafkaDefaults.CONSUMER_GROUP_OPERATION);
       final var testGroups = allGroups.stream().filter(group -> group.startsWith(uniquePrefix)).collect(Collectors.toList());
       zlg.d("Deleting groups %s", z -> z.arg(testGroups));
-      
+
       new Retry()
       .withAttempts(50)
       .withBackoff(10_000)
@@ -107,23 +105,23 @@ public final class KafkaLedgerDrainConfirmationsIT {
       .withErrorHandler(zlg::e)
       .withExceptionMatcher(Retry.isA(TimeoutException.class))
       .run(() -> admin.deleteConsumerGroups(testGroups, KafkaDefaults.CONSUMER_GROUP_OPERATION));
-      
+
       final var topicName = getUniqueName(label);
       TestTopic.createTopics(admin, TestTopic.newOf(topicName, partitions));
       return topicName;
     }
   }
-  
+
   @Test
   public void testMultipleConsumersWithMultiplePartitions_enforceMonotonicity() {
     test("MultiConsMultiPart_mono", 16, 400, 10, 4, 1_000, 100, true);
   }
-  
+
   @Test
   public void testMultipleConsumersWithMultiplePartitions_nonMonotonic() {
     test("MultiConsMultiPart_nonMono", 16, 400, 10, 4, 1_000, 100, false);
   }
-  
+
   /**
    *  Verifies that messages can be processed exactly once in the presence of multiple consumers
    *  contending for a single group ID. Message flow should transition from one consumer to the
@@ -148,9 +146,9 @@ public final class KafkaLedgerDrainConfirmationsIT {
                     int commitDelayMillis,
                     boolean enforceMonotonicity) {
     zlg.i("Starting test %s", z -> z.arg(testLabel));
-    
+
     final var topicName = Exceptions.wrap(() -> createTopic(testLabel, partitions), RuntimeException::new);
-    
+
     ledger = new KafkaLedger(new KafkaLedgerConfig()
                              .withKafka(new KafkaCluster<>(config))
                              .withTopic(topicName)
@@ -162,7 +160,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
                              .withZlg(zlg)
                              .withCodec(new KryoMessageCodec(true)));
     ledger.init();
-    
+
     final var receiveCountsPerPartition = new AtomicIntegerArray[partitions];
     for (var p = 0; p < partitions; p++) {
       receiveCountsPerPartition[p] = new AtomicIntegerArray(messages);
@@ -171,16 +169,16 @@ public final class KafkaLedgerDrainConfirmationsIT {
     final var totalConfirmed = new AtomicInteger();
     final var receivedPerConsumer = new AtomicIntegerArray(consumers);
     executor = Executors.newFixedThreadPool(8);
-    
+
     // The time to wait for the previous consumer to have received at least one message before
     // spawning the next consumer. Ensures that one consumer (and its peers) have rebalanced before
     // adding another consumer into the mix.
     final var maxPreviousConsumerReceiveWaitMillis = 30_000;
-    
+
     // The minimum a received offset must move by before adding a new consumer.
     final var minOffsetMove = 10;
     final var maxOffsetMoveWaitMillis = 30_000;
-    
+
     final var groupId = getUniqueName(testLabel);
     new Thread(() -> {
       var latestOffsetsFromLastRebalance = getLatestOffsets(receiveCountsPerPartition);
@@ -203,7 +201,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
               }
             }
           }
-          
+
           final var offsetMoveWaitUntilTime = System.currentTimeMillis() + maxOffsetMoveWaitMillis;
           for (;;) {
             final var latestOffsets = getLatestOffsets(receiveCountsPerPartition);
@@ -229,23 +227,23 @@ public final class KafkaLedgerDrainConfirmationsIT {
           public String getGroupId() {
             return groupId;
           }
-    
+
           @Override
           public void onMessage(MessageContext context, Message message) {
             final var confirmation = context.begin(message);
             final var partition = ((DefaultMessageId) message.getMessageId()).getShard();
             final var offset = ((DefaultMessageId) message.getMessageId()).getOffset();
-            
+
             if (offset == messages - 1) {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
-            
+
             final boolean accepted;
             if (accepted = offset < messages) {
               receivedPerConsumer.incrementAndGet(consumerIndex);
               final var receiveCounts = receiveCountsPerPartition[partition];
               final var count = receiveCounts.incrementAndGet((int) offset);
-              
+
               // log any message that has been processed more than once or if a preceding message has been skipped
               final var lastCount = offset == 0 ? 1 : receiveCounts.get((int) offset - 1);
               if (lastCount == 0) {
@@ -261,7 +259,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
               // error during publishing and re-attempted to publish, although the initial publish had succeeded
               zlg.d("Received extraneous messsage %s", z -> z.arg(message::getMessageId));
             }
-            
+
             // delay offset commits for a more pronounced effect (increases likelihood of repeated messages
             // after rebalancing if drainage is not working correctly)
             final var confirmNoSoonerThan = System.currentTimeMillis() + commitDelayMillis;
@@ -279,7 +277,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
             }
           }
         });
-        
+
         // wait for at least one message to be received before adding more consumers into the mix
         // (prevents adding contending consumers before at least one has been assigned a partition)
         WAIT.untilTrue(() -> totalReceived.get() >= 1);
@@ -297,7 +295,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
       // (prevents over-publishing before a consumer has been assigned a partition)
       WAIT.untilTrue(() -> totalReceived.get() >= 1);
     }
-    
+
     // await receival of all messages
     zlg.i("Awaiting message receival");
     final var expectedMessages = messages * partitions;
@@ -316,7 +314,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
               }
             }
           }
-          
+
           fail(String.format("Expected %,d messages; got %,d", expectedMessages, receivedMessages));
         }
       });
@@ -329,14 +327,14 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
 
     ledger.dispose();
-    
+
     zlg.i("Awaiting final confirmations");
     WAIT.until(() -> {
       assertEquals(totalReceived.get(), totalConfirmed.get());
     });
     zlg.i("Test passed: %s", z -> z.arg(testLabel));
   }
-  
+
   private static int[][] copy(AtomicIntegerArray[] receiveCountsPerPartition) {
     final var copy = new int[receiveCountsPerPartition.length][];
     for (var partition = 0; partition < copy.length; partition++) {
@@ -349,7 +347,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
     return copy;
   }
-  
+
   private static int countAll(int[][] receiveCountsPerPartition) {
     var receivedCount = 0;
     for (var partition = 0; partition < receiveCountsPerPartition.length; partition++) {
@@ -359,7 +357,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
     return receivedCount;
   }
-  
+
   private static int[] getLatestOffsets(AtomicIntegerArray[] receiveCountsPerPartition) {
     final var latestOffsets = new int[receiveCountsPerPartition.length];
     for (var partition = 0; partition < receiveCountsPerPartition.length; partition++) {
@@ -367,7 +365,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
     return latestOffsets;
   }
-  
+
   private static int getLatestOffset(AtomicIntegerArray receiveCounts) {
     for (var offset = receiveCounts.length(); --offset >= 0;) {
       if (receiveCounts.get(offset) != 0) {
@@ -376,7 +374,7 @@ public final class KafkaLedgerDrainConfirmationsIT {
     }
     return -1;
   }
-  
+
   private static boolean offsetsMoved(int[] offsetsBefore, int[] offsetsAfter, int minMagnitude) {
     for (var partition = 0; partition < offsetsBefore.length; partition++) {
       if (offsetsAfter[partition] - offsetsBefore[partition] < minMagnitude) {

@@ -21,26 +21,26 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
   public static List<Object[]> data() {
     return TestCycle.timesQuietly(1);
   }
-  
+
   @BeforeClass
   public static void beforeClass() throws Exception {
     TestKafka.start();
   }
-  
+
   private final KafkaClusterConfig config = new KafkaClusterConfig().withBootstrapServers(TestKafka.bootstrapServers());
-  
+
   private static String getTopic(Guidance guidance) {
     return TestTopic.of(KafkaBankTransferFailureIT.class, "json", JacksonMessageCodec.ENCODING_VERSION, guidance);
   }
-  
+
   @Before
   public void before() throws Exception {
-    try (KafkaAdmin admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
+    try (var admin = KafkaAdmin.forConfig(config, AdminClient::create)) {
       admin.describeCluster(KafkaDefaults.CLUSTER_AWAIT);
       TestTopic.createTopics(admin, TestTopic.newOf(getTopic(Guidance.AUTONOMOUS)), TestTopic.newOf(getTopic(Guidance.COORDINATED)));
     }
   }
-  
+
   @Override
   protected Ledger createLedger(Guidance guidance) {
     return new KafkaLedger(new KafkaLedgerConfig()

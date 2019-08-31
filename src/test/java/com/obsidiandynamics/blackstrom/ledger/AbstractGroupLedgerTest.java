@@ -115,7 +115,7 @@ public abstract class AbstractGroupLedgerTest {
     }
     
     // wait for all handlers to join before proceeding with further assertions
-    Threads.runUninterruptedly(addMoreHandlersThread::join);
+    Threads.deferInterrupt(addMoreHandlersThread::join);
     assertTrue(awaitedInitialHandler.get());
     
     boolean successCountingMessages = false;
