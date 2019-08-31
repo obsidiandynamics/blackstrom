@@ -11,6 +11,7 @@ import org.junit.runner.*;
 import org.junit.runners.*;
 
 import com.obsidiandynamics.await.*;
+import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.factor.*;
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.*;
@@ -55,27 +56,32 @@ public final class InlineMonitorTest {
     }
   }
   
-  private interface AllFactor extends NullGroupFactor, ProposalProcessor, VoteProcessor, OutcomeProcessor {}
+  private interface AllFactor extends Factor, Groupable.ClassGroup, Initable.Nop, Disposable.Nop, ProposalProcessor, VoteProcessor, OutcomeProcessor {}
   
   private void configure(MonitorEngineConfig config) {
     final AllFactor downstreamFactor = new AllFactor() {
-      @Override public void init(InitContext context) {
+      @Override 
+      public void init(InitContext context) {
         downstreamInitCalled.set(true);
       }
       
-      @Override public void dispose() {
+      @Override 
+      public void dispose() {
         downstreamDisposeCalled.set(true);
       }
       
-      @Override public void onProposal(MessageContext context, Proposal proposal) {
+      @Override 
+      public void onProposal(MessageContext context, Proposal proposal) {
         proposals.add(proposal);
       }
 
-      @Override public void onVote(MessageContext context, Vote vote) {
+      @Override 
+      public void onVote(MessageContext context, Vote vote) {
         votes.add(vote);
       }
 
-      @Override public void onOutcome(MessageContext context, Outcome outcome) {
+      @Override 
+      public void onOutcome(MessageContext context, Outcome outcome) {
         outcomes.add(outcome);
       }
     };

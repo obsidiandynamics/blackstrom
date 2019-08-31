@@ -11,6 +11,7 @@ import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
+import com.obsidiandynamics.zerolog.util.*;
 
 public final class BalancedLedgerView implements Ledger {
   private Zlg zlg = Zlg.forDeclaringClass().get();
@@ -47,6 +48,7 @@ public final class BalancedLedgerView implements Ledger {
       
       thread = WorkerThread.builder()
           .withOptions(new WorkerOptions().daemon().withName(BalancedLedgerView.class, handlerId))
+          .onUncaughtException(new ZlgWorkerExceptionHandler(zlg))
           .onCycle(this::cycle)
           .build();
     }

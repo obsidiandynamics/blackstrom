@@ -33,6 +33,7 @@ import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.yconf.util.*;
 import com.obsidiandynamics.zerolog.*;
+import com.obsidiandynamics.zerolog.util.*;
 
 public final class KafkaLedger implements Ledger {
   private static final int PIPELINE_BACKOFF_MILLIS = 1;
@@ -175,6 +176,7 @@ public final class KafkaLedger implements Ledger {
     retryThread = WorkerThread.builder()
         .withOptions(new WorkerOptions().daemon().withName(KafkaLedger.class, "retry-" + randomThreadId + "-[" + topic + "]"))
         .onCycle(this::onRetry)
+        .onUncaughtException(new ZlgWorkerExceptionHandler(zlg))
         .buildAndStart();
 
     // may be user-specified in config

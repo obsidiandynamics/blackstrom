@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -56,7 +58,9 @@ public final class BalancedLedgerHub implements Disposable {
   private final Object lock = new Object();
   
   public BalancedLedgerHub(int shards, ShardAssignment.Factory shardAssignmentFactory, Accumulator.Factory accumulatorFactory) {
-    this.shardAssignmentFactory = shardAssignmentFactory;
+    mustBeGreaterOrEqual(shards, 0, illegalArgument("Number of shards must be greater or equal to 1"));
+    mustExist(accumulatorFactory, "Accumulator factory cannot be null");
+    this.shardAssignmentFactory = mustExist(shardAssignmentFactory, "Shard assignment factory cannot be null");
     accumulators = new Accumulator[shards];
     Arrays.setAll(accumulators, accumulatorFactory::create);
   }

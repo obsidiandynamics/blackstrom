@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -31,7 +33,8 @@ public final class MeteorLedger implements Ledger {
   private final AtomicInteger nextHandlerId = new AtomicInteger();
   
   public MeteorLedger(HazelcastInstance instance, MeteorLedgerConfig config) {
-    this.instance = instance;
+    mustExist(config, "Config cannot be null").validate();
+    this.instance = mustExist(instance, "Hazelcast instance cannot be null");
     this.config = config;
     codec = config.getCodec();
     final PublisherConfig pubConfig = new PublisherConfig()
