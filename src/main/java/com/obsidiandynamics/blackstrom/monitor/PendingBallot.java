@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -12,7 +14,7 @@ final class PendingBallot {
   
   private final Map<String, Response> responses;
   
-  private Confirmation confirmation;
+  private final Confirmation confirmation;
   
   private final AtomicBoolean confirmed = new AtomicBoolean();
   
@@ -22,8 +24,9 @@ final class PendingBallot {
   
   private Set<String> explicitTimeoutsSent;
   
-  PendingBallot(Proposal proposal) {
-    this.proposal = proposal;
+  PendingBallot(Proposal proposal, Confirmation confirmation) {
+    this.proposal = mustExist(proposal);
+    this.confirmation = mustExist(confirmation);
     responses = new HashMap<>(proposal.getCohorts().length, 1f);
   }
   
@@ -43,10 +46,6 @@ final class PendingBallot {
     final Collection<Response> responses = this.responses.values();
     final Response[] array = responses.toArray(new Response[responses.size()]);
     return array;
-  }
-  
-  void setConfirmation(Confirmation confirmation) {
-    this.confirmation = confirmation;
   }
   
   void confirm() {
