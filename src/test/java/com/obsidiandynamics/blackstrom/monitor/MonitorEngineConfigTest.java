@@ -17,6 +17,7 @@ public final class MonitorEngineConfigTest {
         .withParser(new SnakeyamlParser())
         .fromStream(MonitorEngineConfig.class.getClassLoader().getResourceAsStream("monitorengine.conf"))
         .map(MonitorEngineConfig.class);
+    config.validate();
     assertEquals(1, config.getGCInterval());
     assertEquals(2, config.getOutcomeLifetime());
     assertEquals(3, config.getTimeoutInterval());
@@ -29,6 +30,11 @@ public final class MonitorEngineConfigTest {
     final var zlg = new MockLogTarget().logger();
     final var config = new MonitorEngineConfig().withZlg(zlg);
     assertSame(zlg, config.getZlg());
+  }
+  
+  @Test
+  public void testValidate_default() {
+    new MonitorEngineConfig().validate();
   }
   
   @Test

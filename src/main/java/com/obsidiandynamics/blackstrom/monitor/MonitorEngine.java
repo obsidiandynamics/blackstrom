@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import java.util.*;
 
 import com.obsidiandynamics.blackstrom.*;
@@ -10,6 +12,7 @@ import com.obsidiandynamics.nodequeue.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
+import com.obsidiandynamics.zerolog.util.*;
 
 public final class MonitorEngine implements Disposable {
   private final Zlg zlg;
@@ -46,6 +49,8 @@ public final class MonitorEngine implements Disposable {
   private final MonitorAction action;
   
   public MonitorEngine(MonitorAction action, String groupId, MonitorEngineConfig config) {
+    mustExist(action, "Action cannot be null");
+    mustExist(config, "Config cannot be null").validate();
     this.groupId = groupId;
     zlg = config.getZlg();
     trackingEnabled = config.isTrackingEnabled();
@@ -61,6 +66,7 @@ public final class MonitorEngine implements Disposable {
                        .daemon()
                        .withName(MonitorEngine.class, groupId, "gc", Integer.toHexString(System.identityHashCode(this))))
           .onCycle(this::gcCycle)
+          .onUncaughtException(new ZlgWorkerExceptionHandler(zlg))
           .buildAndStart();
     } else {
       gcThread = null;
@@ -71,6 +77,7 @@ public final class MonitorEngine implements Disposable {
                      .daemon()
                      .withName(MonitorEngine.class, groupId, "timeout", Integer.toHexString(System.identityHashCode(this))))
         .onCycle(this::timeoutCycle)
+        .onUncaughtException(new ZlgWorkerExceptionHandler(zlg))
         .buildAndStart();
   }
   
@@ -205,7 +212,7 @@ public final class MonitorEngine implements Disposable {
     if (trackingEnabled) {
       additions.add(outcome);
     }
-    action.appendOutcome(outcome, (id, x) -> {
+    action.appendOutcome(outcome, (__, x) -> {
       if (x == null) {
         ballot.confirm();
       } else {

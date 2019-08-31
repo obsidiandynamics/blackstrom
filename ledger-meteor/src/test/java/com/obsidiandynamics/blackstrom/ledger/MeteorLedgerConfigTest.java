@@ -12,12 +12,12 @@ import com.obsidiandynamics.zerolog.*;
 public final class MeteorLedgerConfigTest {
   @Test
   public void testConfig() {
-    final MessageCodec codec = new KryoMessageCodec(false);
-    final ElectionConfig electionConfig = new ElectionConfig();
-    final Zlg zlg = Zlg.forDeclaringClass().get();
-    final int pollIntervalMillis = 500;
-    final StreamConfig streamConfig = new StreamConfig();
-    final MeteorLedgerConfig config = new MeteorLedgerConfig()
+    final var codec = new KryoMessageCodec(false);
+    final var electionConfig = new ElectionConfig();
+    final var zlg = Zlg.forDeclaringClass().get();
+    final var pollIntervalMillis = 500;
+    final var streamConfig = new StreamConfig();
+    final var config = new MeteorLedgerConfig()
         .withCodec(codec)
         .withElectionConfig(electionConfig)
         .withZlg(zlg)
@@ -28,6 +28,7 @@ public final class MeteorLedgerConfigTest {
     assertEquals(zlg, config.getZlg());
     assertEquals(pollIntervalMillis, config.getPollInterval());
     assertEquals(streamConfig, config.getStreamConfig());
+    config.validate();
   }
 
   @Test

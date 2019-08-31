@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import com.obsidiandynamics.yconf.*;
 import com.obsidiandynamics.zerolog.*;
 
@@ -22,6 +24,13 @@ public final class MonitorEngineConfig {
   
   @YInject
   private Zlg zlg = Zlg.forClass(MonitorEngine.class).get();
+
+  public void validate() {
+    mustBeGreaterOrEqual(gcIntervalMillis, 1, illegalArgument("GC interval must be greater or equal to 1"));
+    mustBeGreaterOrEqual(outcomeLifetimeMillis, 1, illegalArgument("Outcome lifetime must be greater or equal to 1"));
+    mustBeGreaterOrEqual(timeoutIntervalMillis, 1, illegalArgument("Timeout interval must be greater or equal to 1"));
+    mustExist(zlg, "Zlg cannot be null");
+  }
   
   boolean isTrackingEnabled() {
     return trackingEnabled;

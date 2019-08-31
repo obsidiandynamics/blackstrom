@@ -17,11 +17,13 @@ public final class InlineMonitor implements Factor, ProposalProcessor, VoteProce
   
   public InlineMonitor(MonitorEngineConfig engineConfig, Factor downstreamFactor) {
     engine = new MonitorEngine(new MonitorAction() {
-      @Override public void appendVote(Vote vote, AppendCallback callback) {
+      @Override 
+      public void appendVote(Vote vote, AppendCallback callback) {
         defaultContext.getLedger().append(vote, callback);
       }
 
-      @Override public void appendOutcome(Outcome outcome, AppendCallback callback) {
+      @Override 
+      public void appendOutcome(Outcome outcome, AppendCallback callback) {
         callback.onAppend(null, null);
         downstreamHandler.onMessage(defaultContext, outcome);
       }

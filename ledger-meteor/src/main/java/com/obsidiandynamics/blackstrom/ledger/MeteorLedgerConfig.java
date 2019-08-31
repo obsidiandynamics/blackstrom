@@ -1,5 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
+import static com.obsidiandynamics.func.Functions.*;
+
 import com.obsidiandynamics.blackstrom.codec.*;
 import com.obsidiandynamics.meteor.*;
 import com.obsidiandynamics.yconf.*;
@@ -21,6 +23,14 @@ public final class MeteorLedgerConfig {
   
   @YInject
   private int pollIntervalMillis = 100;
+
+  public void validate() {
+    mustExist(codec, "Codec cannot be null");
+    mustExist(zlg, "Zlg cannot be null");
+    mustExist(streamConfig, "Stream config cannot be null");
+    mustExist(electionConfig, "Election config cannot be null");
+    mustBeGreaterOrEqual(pollIntervalMillis, 1, illegalArgument("Poll interval must be greater or equal to 1"));
+  }
 
   MessageCodec getCodec() {
     return codec;

@@ -44,6 +44,12 @@ public final class MultiNodeQueueLedger implements Ledger {
       this.logLine = logLine;
       return this;
     }
+
+    public void validate() {
+      mustBeGreaterOrEqual(maxYields, 0, illegalArgument("Max yields must be greater or equal to 0"));
+      mustBeGreaterOrEqual(debugMessageCounts, 0, illegalArgument("Debug message counts must be greater or equal to 0"));
+      mustExist(logLine, "Log line cannot be null");
+    }
   }
   
   /** Tracks presence of group members. */
@@ -107,6 +113,7 @@ public final class MultiNodeQueueLedger implements Ledger {
   }
   
   public MultiNodeQueueLedger(Config config) {
+    mustExist(config, "Config cannot be null").validate();
     maxYields = config.maxYields;
     debugMessageCounts = config.debugMessageCounts;
     logLine = config.logLine;

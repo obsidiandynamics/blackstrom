@@ -28,6 +28,10 @@ public final class SingleNodeQueueLedger implements Ledger {
       this.maxYields = maxYields;
       return this;
     }
+
+    public void validate() {
+      mustBeGreaterOrEqual(maxYields, 0, illegalArgument("Max yields must be greater or equal to 0"));
+    }
   }
   
   /** Tracks presence of group members. */
@@ -64,6 +68,7 @@ public final class SingleNodeQueueLedger implements Ledger {
   }
   
   public SingleNodeQueueLedger(Config config) {
+    mustExist(config, "Config cannot be null").validate();
     maxYields = config.maxYields;
     thread = WorkerThread.builder()
         .withOptions(new WorkerOptions()
