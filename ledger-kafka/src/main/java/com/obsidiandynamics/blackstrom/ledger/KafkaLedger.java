@@ -67,8 +67,6 @@ public final class KafkaLedger implements Ledger {
 
   private final List<ConsumerPipe<String, Message>> consumerPipes = new CopyOnWriteArrayList<>();
 
-  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>();
-
   private final boolean printConfig;
 
   private final int ioAttempts;
@@ -342,9 +340,8 @@ public final class KafkaLedger implements Ledger {
     if (groupId != null) {
       handlerId = nextHandlerId.getAndIncrement();
       consumerStates.put(handlerId, consumerState);
-      final var flow = new ShardedFlow(groupId);
+      final var flow = new ShardedFlow();
       retention = flow;
-      flows.add(flow);
     } else {
       handlerId = null;
       retention = NopRetention.getInstance();
@@ -647,7 +644,6 @@ public final class KafkaLedger implements Ledger {
     .add(receivers)
     .add(consumerPipes)
     .add(producerPipe)
-    .add(flows)
     .terminate()
     .joinSilently();
     codecLock.writeLock().lock();

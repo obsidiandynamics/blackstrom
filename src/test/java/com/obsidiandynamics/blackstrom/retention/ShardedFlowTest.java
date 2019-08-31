@@ -1,8 +1,6 @@
 package com.obsidiandynamics.blackstrom.retention;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -18,7 +16,6 @@ import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
 import com.obsidiandynamics.flow.*;
 import com.obsidiandynamics.junit.*;
-import com.obsidiandynamics.threads.*;
 
 @RunWith(Parameterized.class)
 public class ShardedFlowTest {
@@ -33,14 +30,7 @@ public class ShardedFlowTest {
 
   @Before
   public void before() {
-    flow = new ShardedFlow("testGroup");
-  }
-
-  @After
-  public void after() {
-    if (flow != null) {
-      flow.terminate().joinSilently();
-    }
+    flow = new ShardedFlow();
   }
 
   /**
@@ -112,21 +102,6 @@ public class ShardedFlowTest {
     wait.until(() -> {
       assertEquals(List.of(3L, 1L), confirmed);
     });
-  }
-
-  /**
-   *  Tests the condition where a new flow is created after the termination of the
-   *  ShardedFlow container. In this case flows should be stillborn (pre-terminated).
-   */
-  @Test
-  public void testTerminateThenCreate() {
-    flow.terminate();
-    final Ledger ledger = mock(Ledger.class);
-    final MessageContext context = new DefaultMessageContext(ledger, null, flow);
-    final Confirmation c = flow.begin(context, message(0, 0));
-    c.confirm();
-    Threads.sleep(10);
-    verify(ledger, never()).confirm(any(), any());
   }
 
   private static Message message(long xid, int shard) {

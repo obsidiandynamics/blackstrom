@@ -1,6 +1,7 @@
 package com.obsidiandynamics.blackstrom.monitor;
 
 import java.util.*;
+import java.util.concurrent.atomic.*;
 
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.flow.*;
@@ -11,11 +12,13 @@ final class PendingBallot {
   
   private final Map<String, Response> responses;
   
+  private Confirmation confirmation;
+  
+  private final AtomicBoolean confirmed = new AtomicBoolean();
+  
   private Resolution resolution = Resolution.COMMIT;
   
   private AbortReason abortReason;
-  
-  private Confirmation confirmation;
   
   private Set<String> explicitTimeoutsSent;
   
@@ -42,12 +45,14 @@ final class PendingBallot {
     return array;
   }
   
-  Confirmation getConfirmation() {
-    return confirmation;
-  }
-
   void setConfirmation(Confirmation confirmation) {
     this.confirmation = confirmation;
+  }
+  
+  void confirm() {
+    if (confirmed.compareAndSet(false, true)) {
+      confirmation.confirm();
+    }
   }
 
   boolean castVote(Zlg zlg, Vote vote) {

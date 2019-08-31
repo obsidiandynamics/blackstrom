@@ -3,7 +3,6 @@ package com.obsidiandynamics.blackstrom.ledger;
 import static com.obsidiandynamics.func.Functions.*;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
@@ -17,8 +16,6 @@ public final class BalancedLedgerView implements Ledger {
   private Zlg zlg = Zlg.forDeclaringClass().get();
   
   private final BalancedLedgerHub hub;
-  
-  private final List<ShardedFlow> flows = new CopyOnWriteArrayList<>(); 
   
   private final Accumulator[] accumulators;
   
@@ -40,8 +37,7 @@ public final class BalancedLedgerView implements Ledger {
       final Retention retention;
       if (group != null) {
         group.join(handlerId);
-        final ShardedFlow flow = new ShardedFlow(group.getGroupId());
-        flows.add(flow);
+        final ShardedFlow flow = new ShardedFlow();
         retention = flow;
       } else {
         Arrays.setAll(nextReadOffsets, shard -> accumulators[shard].getNextOffset());
@@ -167,7 +163,6 @@ public final class BalancedLedgerView implements Ledger {
     
     Terminator.blank()
     .add(consumers)
-    .add(flows)
     .terminate()
     .joinSilently();
 
