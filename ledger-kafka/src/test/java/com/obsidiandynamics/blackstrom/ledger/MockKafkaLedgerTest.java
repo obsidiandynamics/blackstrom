@@ -19,7 +19,7 @@ public final class MockKafkaLedgerTest extends AbstractLedgerTest {
   
   @Override
   protected Timesert getWait() {
-    return Wait.SHORT;
+    return Wait.MEDIUM;
   }
   
   @Override
