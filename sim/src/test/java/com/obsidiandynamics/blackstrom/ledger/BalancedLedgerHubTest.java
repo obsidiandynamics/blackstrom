@@ -59,15 +59,15 @@ public final class BalancedLedgerHubTest {
     }
 
     void confirmFirst() {
-      handlers.forEach(handler -> handler.confirmFirst());
+      handlers.forEach(TestHandler::confirmFirst);
     }
 
     void confirmLast() {
-      handlers.forEach(handler -> handler.confirmLast());
+      handlers.forEach(TestHandler::confirmLast);
     }
 
     void clear() {
-      handlers.forEach(handler -> handler.clear());
+      handlers.forEach(TestHandler::clear);
     }
 
     class TestHandler implements MessageHandler {
