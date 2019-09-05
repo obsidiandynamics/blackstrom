@@ -299,7 +299,7 @@ public final class BalancedLedgerHubTest {
     }));
 
     // verify that we have exactly one receipt for each shard
-    wait.until(assertAtLeastOneForEachShard(shards, views, expected));
+    wait.until(assertExactlyOneForEachShard(shards, views, expected));
 
     // one by one, dispose and remove each view and verify that the shards have rebalanced (i.e. there is still exactly
     // one receipt per shard), for as long as there is at least one remaining view
@@ -337,10 +337,10 @@ public final class BalancedLedgerHubTest {
     }));
 
     // verify that we have exactly one receipt for each shard
-    wait.until(assertAtLeastOneForEachShard(shards, views, expected));
+    wait.until(assertExactlyOneForEachShard(shards, views, expected));
 
     // confirm at the head offset — after rebalancing all messages will be redelivered
-    views.forEach(view -> view.confirmFirst());
+    views.forEach(TestView::confirmFirst);
 
     // one by one, dispose and remove each view and verify that the shards have rebalanced (i.e. there is still exactly
     // one receipt per shard), for as long as there is at least one remaining view
@@ -377,14 +377,14 @@ public final class BalancedLedgerHubTest {
 
     // verify that we have exactly one full receipt for each shard
     final LongList expectedFull = LongList.generate(0, messages);
-    wait.until(assertAtLeastOneForEachShard(shards, views, expectedFull));
+    wait.until(assertExactlyOneForEachShard(shards, views, expectedFull));
 
     // confirm at the tail offset — after rebalancing only the tail message will be redelivered
-    views.forEach(view -> view.confirmLast());
+    views.forEach(TestView::confirmLast);
 
     // remove views that have had complete receipts and clear the remaining views
     final List<TestView> completed = viewsWithAtLeastOne(views, expectedFull);
-    views.forEach(view -> view.clear());
+    views.forEach(TestView::clear);
     completed.forEach(view -> {
       view.view.dispose();
       views.remove(view);
