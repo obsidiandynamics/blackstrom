@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.*;
 import com.obsidiandynamics.blackstrom.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.util.*;
+import com.obsidiandynamics.func.*;
 
 public final class BalancedLedgerHub implements Disposable {
   private final ShardAssignment.Factory shardAssignmentFactory;
@@ -19,11 +20,13 @@ public final class BalancedLedgerHub implements Disposable {
     private final String groupId;
     private final AtomicLong[] offsets = new AtomicLong[accumulators.length];
     private final ShardAssignment[] assignments = new ShardAssignment[accumulators.length];
+    private final Object[] shardLocks = new Object[accumulators.length];
 
     ConsumerGroup(String groupId) {
       this.groupId = groupId;
       Arrays.setAll(offsets, i -> new AtomicLong());
       Arrays.setAll(assignments, i -> shardAssignmentFactory.create());
+      Arrays.setAll(shardLocks, i -> new Object());
     }
     
     String getGroupId() {
@@ -31,11 +34,19 @@ public final class BalancedLedgerHub implements Disposable {
     }
 
     void join(Object handlerId) {
-      Arrays.stream(assignments).forEach(a -> a.add(handlerId));
+      for (var shard = 0; shard < assignments.length; shard++) {
+        synchronized (shardLocks[shard]) {
+          assignments[shard].add(handlerId);
+        }
+      }
     }
 
     void leave(Object handlerId) {
-      Arrays.stream(assignments).forEach(a -> a.remove(handlerId));
+      for (var shard = 0; shard < assignments.length; shard++) {
+        synchronized (shardLocks[shard]) {
+          assignments[shard].remove(handlerId);
+        }
+      }
     }
     
     long getReadOffset(int shard) {
@@ -44,6 +55,14 @@ public final class BalancedLedgerHub implements Disposable {
 
     boolean isAssignee(int shard, Object handlerId) {
       return assignments[shard].isAssignee(handlerId);
+    }
+    
+    void runLockedIfAssignee(int shard, Object handlerId, CheckedRunnable<InterruptedException> runnable) throws InterruptedException {
+      synchronized (shardLocks[shard]) {
+        if (isAssignee(shard, handlerId)) {
+          runnable.run();
+        }
+      }
     }
 
     void confirm(int shard, long offset) {

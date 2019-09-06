@@ -551,7 +551,7 @@ public final class BalancedLedgerHubTest {
       if (views.isEmpty()) return;
 
       IntStream.range(0, shards).forEach(shard -> {
-        // count the number of handlers across all view that have received the full list of expected 
+        // count the number of handlers across all views that have received the full list of expected 
         // messages for this shard
         final long numFullReceipts = views.stream().map(view -> {
           return view.handlers.stream()

@@ -8,6 +8,7 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.ledger.BalancedLedgerHub.*;
 import com.obsidiandynamics.blackstrom.model.*;
 import com.obsidiandynamics.blackstrom.retention.*;
+import com.obsidiandynamics.func.*;
 import com.obsidiandynamics.worker.*;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
@@ -57,44 +58,59 @@ public final class BalancedLedgerView implements Ledger {
       thread.start();
     }
     
+    private void runLocked(ConsumerGroup group, int shard, Object handlerId, CheckedRunnable<InterruptedException> runnable) throws InterruptedException {
+      if (group == null) {
+        runnable.run();
+      } else {
+        group.runLockedIfAssignee(shard, handlerId, runnable);
+      }
+    }
+    
+    private boolean fetchedAtLeastOne;
+    
     private void cycle(WorkerThread t) throws InterruptedException {
-      for (int shard = 0; shard < accumulators.length; shard++) {
-        if (group == null || group.isAssignee(shard, handlerId)) {
-          final Accumulator accumulator = accumulators[shard];
+      fetchedAtLeastOne = false;
+      for (var shard = 0; shard < accumulators.length; shard++) {
+        final var _shard = shard;
+        runLocked(group, shard, handlerId, () -> {
+          final var accumulator = accumulators[_shard];
           final long nextReadOffset;
           if (group != null) {
-            final long localNextReadOffset = nextReadOffsets[shard];
-            final long groupNextReadOffset = group.getReadOffset(shard);
+            final var localNextReadOffset = nextReadOffsets[_shard];
+            final var groupNextReadOffset = group.getReadOffset(_shard);
             if (localNextReadOffset < groupNextReadOffset) {
               zlg.d("Read offset advanced for group %s: local: %,d, group: %,d", 
                     z -> z.arg(group.getGroupId()).arg(localNextReadOffset).arg(groupNextReadOffset));
             }
             nextReadOffset = Math.max(localNextReadOffset, groupNextReadOffset);
           } else {
-            nextReadOffset = nextReadOffsets[shard];
+            nextReadOffset = nextReadOffsets[_shard];
           }
           
-          final int retrieved = accumulator.retrieve(nextReadOffset, sink);
+          final var retrieved = accumulator.retrieve(nextReadOffset, sink);
           if (retrieved != 0) {
-            final long offsetOfLastItem = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset();
-            final long newReadOffset = offsetOfLastItem + 1;
+            final var offsetOfLastItem = ((DefaultMessageId) sink.get(sink.size() - 1).getMessageId()).getOffset();
+            final var newReadOffset = offsetOfLastItem + 1;
             if (newReadOffset - nextReadOffset != retrieved) {
               // detect buffer discontinuities, which can occur if the reader can't keep up with the writer
-              final long offsetOfFirstItem = ((DefaultMessageId) sink.get(sink.size() - retrieved).getMessageId()).getOffset();
+              final var offsetOfFirstItem = ((DefaultMessageId) sink.get(sink.size() - retrieved).getMessageId()).getOffset();
               zlg.w("Buffer overflow: next expected read: %,d, but read %,d item(s) between offsets %,d and %,d", 
                     z -> z.arg(nextReadOffset).arg(retrieved).arg(offsetOfFirstItem).arg(offsetOfLastItem));
             }
-            nextReadOffsets[shard] = newReadOffset;
+            nextReadOffsets[_shard] = newReadOffset;
           }
-        }
+          
+          if (! sink.isEmpty()) {
+            for (var message : sink) {
+              handler.onMessage(context, message);
+            }
+            sink.clear();
+            fetchedAtLeastOne = true;
+          }
+        });
       }
       
-      if (! sink.isEmpty()) {
-        for (Message message : sink) {
-          handler.onMessage(context, message);
-        }
-        sink.clear();
-      } else {
+      if (! fetchedAtLeastOne) {
         Thread.sleep(CONSUME_WAIT_MILLIS);
       }
     }
