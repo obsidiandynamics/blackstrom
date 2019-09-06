@@ -66,7 +66,7 @@ public final class BalancedLedgerView implements Ledger {
             final long localNextReadOffset = nextReadOffsets[shard];
             final long groupNextReadOffset = group.getReadOffset(shard);
             if (localNextReadOffset < groupNextReadOffset) {
-              zlg.i("Read offset advanced for group %s: local: %,d, group: %,d", 
+              zlg.d("Read offset advanced for group %s: local: %,d, group: %,d", 
                     z -> z.arg(group.getGroupId()).arg(localNextReadOffset).arg(groupNextReadOffset));
             }
             nextReadOffset = Math.max(localNextReadOffset, groupNextReadOffset);
@@ -148,7 +148,7 @@ public final class BalancedLedgerView implements Ledger {
     final ConsumerGroup group = consumer.group;
     mustExist(group, illegalState("Cannot confirm in an ungrouped context"));
     final DefaultMessageId defaultMessageId = (DefaultMessageId) messageId;
-    group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset());
+    group.confirm(defaultMessageId.getShard(), defaultMessageId.getOffset() + 1);
   }
 
   @Override
