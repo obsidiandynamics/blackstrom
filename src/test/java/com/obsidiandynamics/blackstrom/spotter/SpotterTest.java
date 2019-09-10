@@ -3,13 +3,25 @@ package com.obsidiandynamics.blackstrom.spotter;
 import static com.obsidiandynamics.zerolog.LogLevel.*;
 import static org.junit.Assert.*;
 
+import java.util.*;
+
 import org.assertj.core.api.*;
 import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
+import org.junit.runners.Parameterized.*;
 
+import com.obsidiandynamics.junit.*;
 import com.obsidiandynamics.threads.*;
 import com.obsidiandynamics.zerolog.*;
 
+@RunWith(Parameterized.class)
 public final class SpotterTest {
+  @Parameters
+  public static List<Object[]> data() {
+    return TestCycle.timesQuietly(1);
+  }
+  
   @Test
   public void testGetLots_empty() {
     final var spotter = new Spotter(new SpotterConfig());
@@ -106,8 +118,6 @@ public final class SpotterTest {
     logTarget.reset();
     spotter.printParkedLots();
     logTarget.entries().assertCount(0);
-    
-    // expire
   }
   
   @Test

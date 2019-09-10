@@ -57,7 +57,7 @@ public final class Spotter {
   }
 
   private List<Lot> getLapsedLots(long lastAdvancedThreshold) {
-    var lapsedLots = (List<Lot>) null;
+    List<Lot> lapsedLots = null;
 
     for (var lot : lots) {
       if (lot != null && lot.getLastAdvancedTime() < lastAdvancedThreshold) {
@@ -75,7 +75,7 @@ public final class Spotter {
       final var lapsedLots = getLapsedLots(timeoutThreshold);
 
       if (! lapsedLots.isEmpty()) {
-        var parkedLots = (List<String>) null;
+        List<String> parkedLots = null;
         var existing = 0;
 
         final var graceThreshold = timeoutThreshold - gracePeriod;
