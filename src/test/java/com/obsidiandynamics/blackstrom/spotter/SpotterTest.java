@@ -111,8 +111,7 @@ public final class SpotterTest {
     Threads.sleep(5);
     spotter.printParkedLots();
     logTarget.entries().assertCount(1);
-    logTarget.entries().forLevel(INFO).containing("Parked: 1#?").assertCount(1);
-    logTarget.entries().forLevel(INFO).containing("3#?").assertCount(0);
+    logTarget.entries().forLevel(INFO).containing("Parked: 1#?, 3#?").assertCount(1);
     
     // second print should show nothing
     logTarget.reset();

@@ -68,7 +68,16 @@ public final class Spotter {
 
     return lapsedLots != null ? lapsedLots : List.of();
   }
-
+  
+  private static boolean atLeastOnePastGraceThreshold(List<Lot> lapsedLots, long graceThreshold) {
+    for (var lapsedLot : lapsedLots) {
+      if (! lapsedLot.isLogPrinted() && lapsedLot.getLastAdvancedTime() < graceThreshold) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public void printParkedLots() {
     if (zlg.isEnabled(LogLevel.INFO)) {
       final var timeoutThreshold = System.currentTimeMillis() - timeout;
@@ -79,25 +88,27 @@ public final class Spotter {
         var existing = 0;
 
         final var graceThreshold = timeoutThreshold - gracePeriod;
+        final var atLeastOnePastGraceThreshold = atLeastOnePastGraceThreshold(lapsedLots, graceThreshold);
+        
         for (var lapsedLot : lapsedLots) {
-          if (! lapsedLot.isLogPrinted() && lapsedLot.getLastAdvancedTime() < graceThreshold) {
+          if (lapsedLot.isLogPrinted()) {
+            existing++;
+          } else if (atLeastOnePastGraceThreshold) {
             final var offset = lapsedLot.getOffset();
             if (parkedLots == null) parkedLots = new ArrayList<>();
             parkedLots.add(lapsedLot.getShard() + "#" + (offset == -1 ? "?" : String.valueOf(offset + 1)));
             lapsedLot.setLogPrinted();
-          } else {
-            existing++;
           }
         }
 
-        final var _parkedLots = parkedLots;
-        if (existing > 0) {
-          if (parkedLots != null) {
+        if (parkedLots != null) {
+          final var _parkedLots = parkedLots;
+          if (existing > 0) {
             final var _existing = existing;
-            zlg.i("Parked: %s + %d existing", z -> z.arg(String.join(", ", _parkedLots)).arg(_existing));
+            zlg.i("Parked: %s + %,d existing", z -> z.arg(String.join(", ", _parkedLots)).arg(_existing));
+          } else {
+            zlg.i("Parked: %s", z -> z.arg(String.join(", ", _parkedLots)));
           }
-        } else {
-          zlg.i("Parked: %s", z -> z.arg(String.join(", ", _parkedLots)));
         }
       }
     }
