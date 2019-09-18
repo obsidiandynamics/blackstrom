@@ -1,9 +1,7 @@
 package com.obsidiandynamics.blackstrom.ledger;
 
-import static java.util.Collections.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -606,6 +604,6 @@ public final class KafkaLedgerTest {
     final var key = "key";
     final var value = (Message) null;
     return new ConsumerRecords<>(Map.of(new TopicPartition("topic", 0), 
-                                        singletonList(new ConsumerRecord<>("topic", 0, 0L, key, value))));
+                                        List.of(new ConsumerRecord<>("topic", 0, 0L, key, value))));
   }
 }

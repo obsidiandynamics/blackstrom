@@ -320,7 +320,7 @@ public final class KafkaLedger implements Ledger {
             }
           }
         };
-        consumer.subscribe(Collections.singletonList(topic), rebalanceListener);
+        consumer.subscribe(List.of(topic), rebalanceListener);
         zlg.d("Subscribed to topic %s", z -> z.arg(topic));
       } else {
         final var infos = consumer.partitionsFor(topic);
