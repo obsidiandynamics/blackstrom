@@ -22,31 +22,32 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
 
   @Test
   public final void testFactorFailures() {
-    final RxTxFailureModes[] presetFailureModesArray = new RxTxFailureModes[] {
-                                                                               new RxTxFailureModes() {},
-                                                                               new RxTxFailureModes() {{
-                                                                                 rxFailureMode = new DuplicateDelivery(1);
-                                                                               }},
-                                                                               new RxTxFailureModes() {{
-                                                                                 rxFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
-                                                                               }},
-                                                                               new RxTxFailureModes() {{
-                                                                                 rxFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
-                                                                               }},
-                                                                               new RxTxFailureModes() {{
-                                                                                 txFailureMode = new DuplicateDelivery(1);
-                                                                               }},
-                                                                               new RxTxFailureModes() {{
-                                                                                 txFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
-                                                                               }},
-                                                                               new RxTxFailureModes() {{
-                                                                                 txFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
-                                                                               }}
+    final var presetFailureModesArray = new RxTxFailureModes[] {
+                                                                new RxTxFailureModes() {},
+                                                                new RxTxFailureModes() {{
+                                                                  rxFailureMode = new DuplicateDelivery(1);
+                                                                }},
+                                                                new RxTxFailureModes() {{
+                                                                  rxFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                }},
+                                                                new RxTxFailureModes() {{
+                                                                  rxFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                }},
+                                                                new RxTxFailureModes() {{
+                                                                  txFailureMode = new DuplicateDelivery(1);
+                                                                }},
+                                                                new RxTxFailureModes() {{
+                                                                  txFailureMode = new DelayedDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                }},
+                                                                new RxTxFailureModes() {{
+                                                                  txFailureMode = new DelayedDuplicateDelivery(1, DELIVERY_DELAY_MILLIS);
+                                                                }}
     };
 
-    for (TargetFactor target : TargetFactor.values()) {
-      for (RxTxFailureModes failureModes : presetFailureModesArray) {
-        boolean success = false;
+    for (var target : TargetFactor.values()) {
+      for (var failureModes : presetFailureModesArray) {
+        zlg.i("Scenario: target: %s, failureModes: %s", z -> z.arg(target).arg(failureModes));
+        var success = false;
         try {
           testFactorFailure(new FailureModes().set(target, failureModes));
           success = true;
@@ -82,7 +83,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
 
     FailureModes() {
       super(TargetFactor.class);
-      for (TargetFactor target : TargetFactor.values()) {
+      for (var target : TargetFactor.values()) {
         set(target, new RxTxFailureModes() {});
       }
     }
@@ -94,11 +95,11 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
   }
 
   private void testFactorFailure(Map<TargetFactor, RxTxFailureModes> failureModes) throws InterruptedException, ExecutionException, Exception {
-    final int initialBalance = 1_000;
-    final AsyncInitiator initiator = new AsyncInitiator().withZlg(zlg);
-    final DefaultMonitor monitor = new DefaultMonitor(new MonitorEngineConfig().withZlg(zlg));
-    final Sandbox sandbox = Sandbox.forInstance(this);
-    final BankBranch[] branches = BankBranch.create(2, initialBalance, true, sandbox);
+    final var initialBalance = 1_000;
+    final var initiator = new AsyncInitiator().withZlg(zlg);
+    final var monitor = new DefaultMonitor(new MonitorEngineConfig().withZlg(zlg));
+    final var sandbox = Sandbox.forInstance(this);
+    final var branches = BankBranch.create(2, initialBalance, true, sandbox);
     for (var branch : branches) branch.withZlg(zlg).withSendMetadata(true);
 
     ledger = createLedger(Guidance.COORDINATED);
@@ -129,14 +130,14 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
   private void testSingleTransfer(int transferAmount, Resolution expectedVerdict, AbortReason expectedAbortReason,
                                   AsyncInitiator initiator, Sandbox sandbox) throws InterruptedException, ExecutionException, Exception {
     assert expectedVerdict == Resolution.COMMIT ^ expectedAbortReason != null;
-    final String xid = UUID.randomUUID().toString();
+    final var xid = UUID.randomUUID().toString();
     zlg.t("Initiating %s", z -> z.arg(xid));
     boolean success = false;
     try {
-      final Outcome o = initiator.initiate(new Proposal(xid, 
-                                                        TWO_BRANCH_IDS, 
-                                                        BankSettlement.forTwo(transferAmount),
-                                                        PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
+      final var o = initiator.initiate(new Proposal(xid, 
+                                                    TWO_BRANCH_IDS, 
+                                                    BankSettlement.forTwo(transferAmount),
+                                                    PROPOSAL_TIMEOUT_MILLIS).withShardKey(sandbox.key()))
           .get(FUTURE_GET_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       assertEquals(expectedVerdict, o.getResolution());
       assertEquals(expectedAbortReason, o.getAbortReason());

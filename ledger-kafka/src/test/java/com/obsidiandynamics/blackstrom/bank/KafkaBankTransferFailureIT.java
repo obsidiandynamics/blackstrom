@@ -47,6 +47,8 @@ public final class KafkaBankTransferFailureIT extends AbstractBankTransferFailur
                            .withKafka(new KafkaCluster<>(config))
                            .withDrainConfirmationsTimeout(5_000)
                            .withTopic(getTopic(guidance))
+                           .withConsumerPipeConfig(new ConsumerPipeConfig().withAsync(false))
+                           .withProducerPipeConfig(new ProducerPipeConfig().withAsync(false))
                            .withCodec(new JacksonMessageCodec(true, new JacksonBankExpansion())));
   }
 

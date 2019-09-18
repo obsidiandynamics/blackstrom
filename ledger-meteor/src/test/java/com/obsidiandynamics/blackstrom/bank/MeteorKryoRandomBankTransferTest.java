@@ -26,7 +26,7 @@ public final class MeteorKryoRandomBankTransferTest extends AbstractRandomBankTr
   
   @Override
   protected Timesert getWait() {
-    return Wait.SHORT;
+    return Wait.MEDIUM;
   }
   
   private HazelcastInstance instance;
