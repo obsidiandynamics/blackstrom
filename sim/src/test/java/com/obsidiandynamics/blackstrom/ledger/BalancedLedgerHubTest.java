@@ -385,12 +385,12 @@ public final class BalancedLedgerHubTest {
     expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v0), expected));
+    wait.until(assertAtLeastOneForEachShard(1, List.of(v0), expected));
 
     v0.view.dispose();
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
-    wait.until(assertAtLeastOneForEachShard(1, Collections.singletonList(v1), expected));
+    wait.until(assertAtLeastOneForEachShard(1, List.of(v1), expected));
   }
 
   /**
@@ -409,15 +409,15 @@ public final class BalancedLedgerHubTest {
     expected.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expected));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v0), expected));
 
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     Threads.sleep(10);
-    assertNoneForEachShard(1, Collections.singletonList(v1), expected).run();
+    assertNoneForEachShard(1, List.of(v1), expected).run();
 
     v0.view.dispose();
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expected));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v1), expected));
   }
 
   /**
@@ -437,17 +437,17 @@ public final class BalancedLedgerHubTest {
     expectedFor0.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFor0));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v0), expectedFor0));
 
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     Threads.sleep(10);
-    assertNoneForEachShard(1, Collections.singletonList(v1), expectedFor0).run();
+    assertNoneForEachShard(1, List.of(v1), expectedFor0).run();
 
     v0.confirmFirst();
     v0.view.dispose();
     final LongList expectedFor1 = LongList.generate(1, messages);
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedFor1));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v1), expectedFor1));
   }
 
   /**
@@ -467,12 +467,12 @@ public final class BalancedLedgerHubTest {
     expectedFull.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v0), expectedFull));
 
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group"));
     Threads.sleep(10);
-    assertNoneForEachShard(1, Collections.singletonList(v1), expectedFull).run();
+    assertNoneForEachShard(1, List.of(v1), expectedFull).run();
 
     v0.confirmLast();
     v0.view.dispose();
@@ -496,11 +496,11 @@ public final class BalancedLedgerHubTest {
     expectedFull.forEach(xid -> IntStream.range(0, shards).forEach(shard -> {
       v0.view.append(new UnknownMessage(String.valueOf(xid), 0).withShard(shard));
     }));
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v0), expectedFull));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v0), expectedFull));
 
     final TestView v1 = TestView.connectTo(0, hub);
     IntStream.range(0, handlers).forEach(h -> v1.attach("group-1"));
-    wait.until(assertExactlyOneForEachShard(1, Collections.singletonList(v1), expectedFull));
+    wait.until(assertExactlyOneForEachShard(1, List.of(v1), expectedFull));
   }
 
   private static List<TestView> viewsWithAtLeastOne(List<TestView> views, LongList expected) {
