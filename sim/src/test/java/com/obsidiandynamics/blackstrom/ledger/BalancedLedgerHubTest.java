@@ -277,13 +277,22 @@ public final class BalancedLedgerHubTest {
     });
 
     // publish more messages — some will be missed due to constrained buffer capacity
-    LongList.generate(0, 100).forEach(xid -> {
+    LongList.generate(5, 100).forEach(xid -> {
       view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
 
-    wait.until(() -> {
-      logTarget.entries().forLevel(LogLevel.WARN).containing("overflow").assertCountAtLeast(1);
-    });
+    boolean success = false;
+    try {
+      wait.until(() -> {
+        logTarget.entries().forLevel(LogLevel.WARN).containing("overflow").assertCountAtLeast(1);
+      });
+      success = true;
+    } finally {
+      if (! success) {
+        System.out.println("lastMessage " + view.handlers.get(0).lastMessageByShard.get(0));
+        System.out.println("messages " + view.handlers.get(0).receivedByShard.get(0));
+      }
+    }
   }
 
   /**
