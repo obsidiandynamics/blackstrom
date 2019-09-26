@@ -78,7 +78,7 @@ public final class BalancedLedgerHubTest {
       final List<AtomicReference<Message>> lastMessageByShard;
       final String groupId;
       private volatile MessageContext context;
-      private long pause;
+      private MessageTarget chainedHandler = (__context, __message) -> {};
 
       private TestHandler(String groupId) {
         this.groupId = groupId;
@@ -89,9 +89,9 @@ public final class BalancedLedgerHubTest {
         lastMessageByShard = IntStream.range(0, view.getHub().getShards())
             .boxed().map(shard -> new AtomicReference<Message>()).collect(Collectors.toList());
       }
-
-      TestHandler withPause(long pauseMillis) {
-        this.pause = pauseMillis;
+      
+      TestHandler then(MessageTarget chainedHandler) {
+        this.chainedHandler = chainedHandler;
         return this;
       }
 
@@ -103,11 +103,11 @@ public final class BalancedLedgerHubTest {
       @Override
       public void onMessage(MessageContext context, Message message) {
         zlg.t("%d-%x got %s", z -> z.arg(viewId).arg(System.identityHashCode(this)).arg(message));
-        Threads.sleep(pause);
         this.context = context;
         receivedByShard.get(message.getShard()).add(Long.parseLong(message.getXid()));
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);
         lastMessageByShard.get(message.getShard()).set(message);
+        chainedHandler.onMessage(context, message);
       }
 
       private void confirm(List<AtomicReference<Message>> messageRefs) {
@@ -256,30 +256,47 @@ public final class BalancedLedgerHubTest {
   /**
    *  Messages are published to a small buffer at a rate that is much higher than the consumer's 
    *  throughput, resulting in a buffer overflow condition.
+   *  
+   *  @throws TimeoutException 
+   *  @throws BrokenBarrierException 
+   *  @throws InterruptedException 
    */
   @Test
-  public void testBufferOverflow() {
+  public void testBufferOverflow() throws InterruptedException, BrokenBarrierException, TimeoutException {
     hub = new BalancedLedgerHub(1, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 1));
 
+    final int receiveAllTimeout = 10_000;
+    final AtomicInteger received = new AtomicInteger();
+    final CyclicBarrier allMessagesSentBarrier = new CyclicBarrier(2);
     final TestView view = TestView.connectTo(0, hub);
-    view.attach(null).withPause(5); // simulate slow consumer
+    view.attach(null).then((__context, __message) -> {
+      if (received.getAndIncrement() == 0) {
+        try {
+          allMessagesSentBarrier.await(receiveAllTimeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
 
     final MockLogTarget logTarget = new MockLogTarget();
     view.view.withZlg(logTarget.logger());
 
-    // first publish 5 messages and assert receipt
-    LongList.generate(0, 5).forEach(xid -> {
+    // first publish one messages and assert receipt
+    LongList.generate(0, 1).forEach(xid -> {
       view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
 
     wait.until(() -> {
-      assertEquals(5, view.handlers.get(0).receivedByShard.get(0).size());
+      assertEquals(1, received.get());
     });
 
-    // publish more messages — some will be missed due to constrained buffer capacity
-    LongList.generate(5, 100).forEach(xid -> {
+    // publish more messages, in excess of retention
+    LongList.generate(1, 11).forEach(xid -> {
       view.view.append(new UnknownMessage(String.valueOf(xid), 0));
     });
+    
+    allMessagesSentBarrier.await(receiveAllTimeout, TimeUnit.MILLISECONDS);
 
     boolean success = false;
     try {
@@ -292,7 +309,11 @@ public final class BalancedLedgerHubTest {
         System.out.println("lastMessage " + view.handlers.get(0).lastMessageByShard.get(0));
         System.out.println("messages " + view.handlers.get(0).receivedByShard.get(0));
       }
-    }
+    }    
+    
+    wait.until(() -> {
+      assertEquals(2, received.get());
+    });
   }
 
   /**
