@@ -104,9 +104,9 @@ public final class BalancedLedgerHubTest {
       public void onMessage(MessageContext context, Message message) {
         zlg.t("%d-%x got %s", z -> z.arg(viewId).arg(System.identityHashCode(this)).arg(message));
         this.context = context;
-        receivedByShard.get(message.getShard()).add(Long.parseLong(message.getXid()));
         firstMessageByShard.get(message.getShard()).compareAndSet(null, message);
         lastMessageByShard.get(message.getShard()).set(message);
+        receivedByShard.get(message.getShard()).add(Long.parseLong(message.getXid()));
         chainedHandler.onMessage(context, message);
       }
 
@@ -363,12 +363,12 @@ public final class BalancedLedgerHubTest {
     final int shards = 2;
     final int numViews = shards + 2;
     final int handlers = 2;
-    final int messages = 20;
+    final int messages = 10;
     hub = new BalancedLedgerHub(shards, RandomShardAssignment::new, ArrayListAccumulator.factory(10, 2));
     final List<TestView> views = IntStream.range(0, numViews).boxed()
         .map(v -> {
           final TestView view = TestView.connectTo(v, hub);
-          IntStream.range(0, handlers).forEach(h -> view.attach("group"));
+          IntStream.range(0, handlers).forEach(__ -> view.attach("group"));
           return view;
         })
         .collect(Collectors.toList());
@@ -381,7 +381,7 @@ public final class BalancedLedgerHubTest {
     final LongList expectedFull = LongList.generate(0, messages);
     wait.until(assertExactlyOneForEachShard(shards, views, expectedFull));
 
-    // confirm at the tail offset — after rebalancing only the tail message will be redelivered
+    // confirm at the tail offset
     views.forEach(TestView::confirmLast);
 
     // remove views that have had complete receipts and clear the remaining views
@@ -390,13 +390,25 @@ public final class BalancedLedgerHubTest {
       view.view.dispose();
       views.remove(view);
     });
+    assertNoMessages(views);
     views.forEach(TestView::clear);
-
-    // one by one, dispose each view and verify that no further messages have been received
-    for (var view : views) {
-      view.view.dispose();
-      assertNoMessages(views);
-    }
+   
+    boolean success = false;
+    try {
+      // one by one, dispose each view and verify that no further messages have been received
+      for (var view : views) {
+        view.view.dispose();
+        assertNoMessages(views);
+      }
+      success = true;
+    } finally {
+      if (! success) {
+        for (var view : views) {
+          System.out.println("lastMessage " + view.handlers.get(0).lastMessageByShard.get(0));
+          System.out.println("messages " + view.handlers.get(0).receivedByShard.get(0));
+        }
+      }
+    }  
   }
 
   /**
