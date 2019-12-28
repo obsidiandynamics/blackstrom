@@ -197,7 +197,6 @@ public final class KafkaLedger implements Ledger {
         .with(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaMessageSerializer.class.getName())
         .with(CodecRegistry.CONFIG_CODEC_LOCATOR, codecLocator)
         .with(ProducerConfig.ACKS_CONFIG, "all")
-        .with(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
         .with(ProducerConfig.MAX_BLOCK_MS_CONFIG, 3600 * 1000)
         .build();
 

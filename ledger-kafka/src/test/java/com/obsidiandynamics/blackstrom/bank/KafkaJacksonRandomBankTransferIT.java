@@ -51,7 +51,7 @@ public final class KafkaJacksonRandomBankTransferIT extends AbstractRandomBankTr
                            .withKafka(new KafkaCluster<>(config))
                            .withDrainConfirmationsTimeout(5_000)
                            .withTopic(getTopic(guidance))
-                           .withCodec( new JacksonMessageCodec(true, new JacksonBankExpansion())));
+                           .withCodec(new JacksonMessageCodec(true, new JacksonBankExpansion())));
   }
 
   @Override
