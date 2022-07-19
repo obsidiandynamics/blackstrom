@@ -1,23 +1,16 @@
 plugins {
-  id "com.jfrog.bintray" version "1.8.4"
   id "com.github.johnrengelman.shadow" version "5.0.0"
-  id "com.github.ben-manes.versions" version "0.21.0"
+  id "com.github.ben-manes.versions" version "0.22.0"
+  id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 }
-apply plugin: "maven-publish"
-apply plugin: "com.jfrog.bintray"
 
-group = "com.obsidiandynamics.blackstrom"
-version = "0.58.0-SNAPSHOT"
-  
-def envUser = "BINTRAY_USER"
-def envKey = "BINTRAY_KEY"
-task bintrayCredentialsCheck {
-  doLast {
-    if (System.getenv(envUser) == null) {
-      throw new GradleException("No Bintray username specified; set with 'export ${envUser}=<username>'")
-    }
-    if (System.getenv(envKey) == null) {
-      throw new GradleException("No Bintray key specified; set with 'export ${envKey}=<key>'")
+nexusPublishing {
+  repositories {
+    sonatype {
+      nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+      snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+      username = findProperty('sonatype.username')
+      password = findProperty('sonatype.password')
     }
   }
 }
@@ -46,80 +39,79 @@ def getBlackstromSystemProperties() {
 }
 
 allprojects {
-  apply plugin: "java"
+  apply plugin: "java-library"
   apply plugin: "jacoco"
-  apply plugin: "maven-publish"
-  apply plugin: "com.jfrog.bintray"
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
   apply plugin: "com.github.johnrengelman.shadow"
+
+  group = "com.obsidiandynamics.blackstrom"
+  version = "0.58.0-SNAPSHOT"
 
   sourceCompatibility = 11
   targetCompatibility = 11
 
+  //TODO remove when Javadoc errors have been resolved
+  javadoc.options.addStringOption('Xdoclint:none', '-quiet')
+
   repositories {
-    jcenter()
+    mavenCentral()
     maven {
       url "https://oss.sonatype.org/content/repositories/snapshots"
     }
   }
-  
+
+  java {
+    withJavadocJar()
+    withSourcesJar()
+  }
+
+  signing {
+    sign publishing.publications
+  }
+
   ext {
     assertjVersion = "3.12.2"
     commonsLangVersion = "3.9"
-    equalsverifierVersion = "3.1.9"
-    fulcrumVersion = "0.36.0"
+    equalsverifierVersion = "3.10"
+    fulcrumVersion = "0.37.0"
     hazelcastVersion = "3.12"
     hdrHistogramVersion = "2.1.11"
-    jackdawVersion = "1.33.0"
+    jackdawVersion = "1.35.0"
     jacksonVersion = "2.9.9"
     jgroupsVersion = "4.1.0.Final"
     junitVersion = "4.12"
     log4jVersion = "1.2.17"
     kafkaVersion = "2.4.0"
     kryoVersion = "5.0.0-RC4"
-    meteorVersion = "0.24.0"
+    meteorVersion = "0.25.0"
     mockitoVersion = "2.28.2"
     pojotesterVersion = "0.9.0"
     slf4jVersion = "1.7.25"
-    yconfVersion = "0.20.0"
-    zerologVersion = "0.30.0"
+    yconfVersion = "0.21.0"
+    zerologVersion = "0.31.0"
   }
   
   dependencies {
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-assert:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-await:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-junit:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-mockito:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-testmark:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-threads:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.fulcrum:fulcrum-verifier:${fulcrumVersion}"
-    testCompile "com.obsidiandynamics.yconf:yconf-snakeyaml:${yconfVersion}"
-    testCompile "junit:junit:${junitVersion}"
-    testCompile "org.mockito:mockito-core:${mockitoVersion}"
-    testCompile "org.hdrhistogram:HdrHistogram:${hdrHistogramVersion}"
-    testCompile "nl.jqno.equalsverifier:equalsverifier:${equalsverifierVersion}"
-    testCompile "com.obsidiandynamics.pojotester:pojotester:${pojotesterVersion}"
-    testCompile "org.assertj:assertj-core:${assertjVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-assert:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-await:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-junit:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-mockito:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-testmark:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-threads:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.fulcrum:fulcrum-verifier:${fulcrumVersion}"
+    testImplementation "com.obsidiandynamics.yconf:yconf-snakeyaml:${yconfVersion}"
+    testImplementation "junit:junit:${junitVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "org.hdrhistogram:HdrHistogram:${hdrHistogramVersion}"
+    testImplementation "nl.jqno.equalsverifier:equalsverifier:${equalsverifierVersion}"
+    testImplementation "com.obsidiandynamics.pojotester:core:${pojotesterVersion}"
+    testImplementation "org.assertj:assertj-core:${assertjVersion}"
 
-    testRuntime "org.slf4j:slf4j-log4j12:${slf4jVersion}"
-    testRuntime "log4j:log4j:${log4jVersion}"
+    testImplementation "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+    testImplementation "log4j:log4j:${log4jVersion}"
   }
     
-  compileJava {
-    options.compilerArgs += "-proc:none"
-    options.compilerArgs += "-Xlint:unchecked"
-  }
-
-  compileTestJava {
-    options.compilerArgs += "-proc:none"
-    options.compilerArgs += "-Xlint:unchecked"
-    options.compilerArgs += "-Xlint:deprecation"
-  }
-  
-  tasks.withType(JavaCompile) {
-    options.fork = true
-    options.incremental = true
-  }
-  
   test {
     exclude "**/*IT.class"
     jvmArgs += baseJvmArgs
@@ -133,7 +125,7 @@ allprojects {
   }
 
   jacoco {
-    toolVersion = "0.8.4"
+    toolVersion = "0.8.8"
   }
   
   task verify {  
@@ -152,20 +144,11 @@ allprojects {
       csv.enabled false
     }
   }
-
-  // invoke this task when ready to publish to Bintray
-  bintrayUpload {
-    dependsOn ":bintrayCredentialsCheck"
-    dependsOn "jar"
-    dependsOn "sourcesJar"
-    dependsOn "javadocJar"
-    dependsOn "generatePomFileForMavenJavaPublication"
-  }
 }
 
 subprojects {
   dependencies {
-    testCompile project(":").sourceSets.test.output
+    testImplementation project(":").sourceSets.test.output
   }
 }
 
@@ -200,25 +183,26 @@ task jacocoRootReport(type: JacocoReport) {
 }
 
 def packageName = "blackstrom-core"
+def packageDescription = "Transactional event fabric for the JVM"
 
 dependencies {
-  compile "com.obsidiandynamics.fulcrum:fulcrum-concat:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-flow:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-format:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-func:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-nanoclock:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-nodequeue:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-props:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-random:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-scheduler:${fulcrumVersion}"
-  compile "com.obsidiandynamics.fulcrum:fulcrum-worker:${fulcrumVersion}"
-  compile "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
-  compile "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
-  compile "org.apache.commons:commons-lang3:${commonsLangVersion}"
-  runtime "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
-  runtime "org.slf4j:slf4j-api:${slf4jVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-concat:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-flow:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-format:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-func:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-nanoclock:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-nodequeue:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-props:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-random:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-scheduler:${fulcrumVersion}"
+  api "com.obsidiandynamics.fulcrum:fulcrum-worker:${fulcrumVersion}"
+  api "com.obsidiandynamics.yconf:yconf-core:${yconfVersion}"
+  api "com.obsidiandynamics.zerolog:zerolog-core:${zerologVersion}"
+  api "org.apache.commons:commons-lang3:${commonsLangVersion}"
+  api "com.obsidiandynamics.zerolog:zerolog-slf4j17:${zerologVersion}"
+  api "org.slf4j:slf4j-api:${slf4jVersion}"
   
-  testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
 
 task launch(dependsOn: testClasses) {
@@ -241,72 +225,34 @@ task launch(dependsOn: testClasses) {
   }
 }
 
-jar {
-  baseName packageName
-  finalizedBy jacocoRootReport
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  baseName packageName
-  classifier = "javadoc"
-  from "$buildDir/docs/javadoc"
-}
- 
-task sourcesJar(type: Jar) {
-  baseName packageName
-  from sourceSets.main.allSource
-  classifier = "sources"
-}
- 
-artifacts {
-  archives jar
-}
-
 publishing {
   publications {
-	mavenJava(MavenPublication) {
+    mavenJava(MavenPublication) {
+      artifactId = packageName
       from components.java
-      afterEvaluate {
-        groupId project(":").group
-        artifactId packageName
-        version project(":").version
-        artifact jar
-        artifact sourcesJar
-        artifact javadocJar
+      pom {
+        name = packageName
+        description = packageDescription
+        url = 'https://github.com/obsidiandynamics/blackstrom'
+        licenses {
+          license {
+            name = 'BSD 3-Clause License'
+            url = 'https://opensource.org/licenses/BSD-3-Clause'
+          }
+        }
+        developers {
+          developer {
+            id = 'ekoutanov'
+            name = 'Emil Koutanov'
+            email = 'ekoutanov@gmail.com'
+          }
+        }
+        scm {
+          connection = 'scm:git:git://github.com/obsidiandynamics/blackstrom.git'
+          developerConnection = 'scm:git:ssh://github.com/obsidiandynamics/blackstrom.git'
+          url = 'https://github.com/obsidiandynamics/blackstrom'
+        }
       }
-    }
-  }
-  repositories {
-    maven {
-      url "${project(':').projectDir}/../repo"
-    }
-  }
-}
-
-def packageDesc = "Transactional event fabric for the JVM"
-def repoName = "blackstrom"
-bintray {
-  user = System.getenv(envUser)
-  key = System.getenv(envKey)
-  publications = ["mavenJava"]
-  pkg {
-    repo = "${repoName}"
-    name = packageName
-    userOrg = "obsidiandynamics"
-    desc = packageDesc
-    websiteUrl = "https://github.com/obsidiandynamics/${repoName}"
-    licenses = ["BSD New"]
-    vcsUrl = "https://github.com/obsidiandynamics/${repoName}"
-    issueTrackerUrl = "https://github.com/obsidiandynamics/${repoName}/issues"
-    publicDownloadNumbers = true
-    githubRepo = "obsidiandynamics/${repoName}"
-    override = true
-    publish = true
-    version {
-      name = project(":").version
-      desc = packageDesc
-      released  = new Date()
-      vcsTag = project(":").version
     }
   }
 }

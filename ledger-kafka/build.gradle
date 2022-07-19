@@ -1,27 +1,27 @@
 def packageName = "blackstrom-ledger-kafka"
-version = project(":").version
+def packageDescription = "Kafka-based ledger implementation"
 
 dependencies {
-  compile project(":")
-  compile "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
-  compile "com.obsidiandynamics.jackdaw:jackdaw-core:${jackdawVersion}"
+  api project(":")
+  api "com.obsidiandynamics.fulcrum:fulcrum-retry:${fulcrumVersion}"
+  api "com.obsidiandynamics.jackdaw:jackdaw-core:${jackdawVersion}"
   compileOnly "org.apache.kafka:kafka-clients:${kafkaVersion}"
   
-  testCompile project(":blackstrom-codec-jackson")
-  testCompile project(":blackstrom-codec-jackson").sourceSets.test.output
-  testCompile project(":blackstrom-codec-kryo")
-  testCompile project(":blackstrom-codec-kryo").sourceSets.test.output
-  testCompile project(":blackstrom-sim")
-  testCompile project(":blackstrom-sim").sourceSets.test.output
-  testCompile "com.obsidiandynamics.fulcrum:fulcrum-docker-compose:${fulcrumVersion}"
-  testCompile "com.obsidiandynamics.fulcrum:fulcrum-fslock:${fulcrumVersion}"
-  testCompile "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
-  testCompile "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
-  testCompile "com.obsidiandynamics.jackdaw:jackdaw-assurance:${jackdawVersion}"
-  testCompile "org.jgroups:jgroups:${jgroupsVersion}"
-  testCompile "org.apache.kafka:kafka-clients:${kafkaVersion}"
-  
-  testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
+  testImplementation project(":blackstrom-codec-jackson")
+  testImplementation project(":blackstrom-codec-jackson").sourceSets.test.output
+  testImplementation project(":blackstrom-codec-kryo")
+  testImplementation project(":blackstrom-codec-kryo").sourceSets.test.output
+  testImplementation project(":blackstrom-sim")
+  testImplementation project(":blackstrom-sim").sourceSets.test.output
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-docker-compose:${fulcrumVersion}"
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-fslock:${fulcrumVersion}"
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-jgroups:${fulcrumVersion}"
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-select:${fulcrumVersion}"
+  testImplementation "com.obsidiandynamics.jackdaw:jackdaw-assurance:${jackdawVersion}"
+  testImplementation "org.jgroups:jgroups:${jgroupsVersion}"
+  testImplementation "org.apache.kafka:kafka-clients:${kafkaVersion}"
+
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
 
 task launch(dependsOn: testClasses) {
@@ -47,71 +47,34 @@ task launch(dependsOn: testClasses) {
   }
 }
 
-jar {
-  baseName packageName
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  baseName packageName
-  classifier = "javadoc"
-  from "$buildDir/docs/javadoc"
-}
- 
-task sourcesJar(type: Jar) {
-  baseName packageName
-  from sourceSets.main.allSource
-  classifier = "sources"
-}
- 
-artifacts {
-  archives jar
-}
-
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId project(":").group
-      artifactId packageName
-      version project(":").version
+      artifactId = packageName
       from components.java
-      artifact jar
-      artifact sourcesJar
-      artifact javadocJar
-    }
-  }
-  repositories {
-    maven {
-      url "${project(':').projectDir}/../repo"
-    }
-  }
-}
-
-def envUser = "BINTRAY_USER"
-def envKey = "BINTRAY_KEY"
-def packageDesc = "Kafka-based ledger implementation"
-def repoName = "blackstrom"
-bintray {
-  user = System.getenv(envUser)
-  key = System.getenv(envKey)
-  publications = ["mavenJava"]
-  pkg {
-    repo = "${repoName}"
-    name = packageName
-    userOrg = "obsidiandynamics"
-    desc = packageDesc
-    websiteUrl = "https://github.com/obsidiandynamics/${repoName}"
-    licenses = ["BSD New"]
-    vcsUrl = "https://github.com/obsidiandynamics/${repoName}"
-    issueTrackerUrl = "https://github.com/obsidiandynamics/${repoName}/issues"
-    publicDownloadNumbers = true
-    githubRepo = "obsidiandynamics/${repoName}"
-    override = true
-    publish = true
-    version {
-      name = project(":").version
-      desc = packageDesc
-      released  = new Date()
-      vcsTag = project(":").version
+      pom {
+        name = packageName
+        description = packageDescription
+        url = 'https://github.com/obsidiandynamics/blackstrom'
+        licenses {
+          license {
+            name = 'BSD 3-Clause License'
+            url = 'https://opensource.org/licenses/BSD-3-Clause'
+          }
+        }
+        developers {
+          developer {
+            id = 'ekoutanov'
+            name = 'Emil Koutanov'
+            email = 'ekoutanov@gmail.com'
+          }
+        }
+        scm {
+          connection = 'scm:git:git://github.com/obsidiandynamics/blackstrom.git'
+          developerConnection = 'scm:git:ssh://github.com/obsidiandynamics/blackstrom.git'
+          url = 'https://github.com/obsidiandynamics/blackstrom'
+        }
+      }
     }
   }
 }
@@ -121,6 +84,5 @@ task testJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
   classifier = 'tests'
   from sourceSets.main.output
   from sourceSets.test.output
-  configurations = [project.configurations.compile, project.configurations.runtime,
-                    project.configurations.testCompile, project.configurations.testRuntime]
+  configurations = [project.configurations.api, project.configurations.testImplementation]
 }

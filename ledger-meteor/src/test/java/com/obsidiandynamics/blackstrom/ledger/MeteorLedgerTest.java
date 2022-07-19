@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.obsidiandynamics.meteor.Record;
 import org.junit.*;
 
 import com.obsidiandynamics.blackstrom.codec.*;

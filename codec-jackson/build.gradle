@@ -1,12 +1,12 @@
 def packageName = "blackstrom-codec-jackson"
-version = project(":").version
+def packageDescription = "Jackson (JSON) serialization support"
 
 dependencies {
-  compile project(":")
-  compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
-  compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+  api project(":")
+  api "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+  api "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
   
-  testRuntime "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
+  testImplementation "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
 
 task launch(dependsOn: testClasses) {
@@ -29,71 +29,34 @@ task launch(dependsOn: testClasses) {
   }
 }
 
-jar {
-  baseName packageName
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  baseName packageName
-  classifier = "javadoc"
-  from "$buildDir/docs/javadoc"
-}
- 
-task sourcesJar(type: Jar) {
-  baseName packageName
-  from sourceSets.main.allSource
-  classifier = "sources"
-}
- 
-artifacts {
-  archives jar
-}
-
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId project(":").group
-      artifactId packageName
-      version project(":").version
+      artifactId = packageName
       from components.java
-      artifact jar
-      artifact sourcesJar
-      artifact javadocJar
-    }
-  }
-  repositories {
-    maven {
-      url "${project(':').projectDir}/../repo"
-    }
-  }
-}
-
-def envUser = "BINTRAY_USER"
-def envKey = "BINTRAY_KEY"
-def packageDesc = "Jackson (JSON) serialization support"
-def repoName = "blackstrom"
-bintray {
-  user = System.getenv(envUser)
-  key = System.getenv(envKey)
-  publications = ["mavenJava"]
-  pkg {
-    repo = "${repoName}"
-    name = packageName
-    userOrg = "obsidiandynamics"
-    desc = packageDesc
-    websiteUrl = "https://github.com/obsidiandynamics/${repoName}"
-    licenses = ["BSD New"]
-    vcsUrl = "https://github.com/obsidiandynamics/${repoName}"
-    issueTrackerUrl = "https://github.com/obsidiandynamics/${repoName}/issues"
-    publicDownloadNumbers = true
-    githubRepo = "obsidiandynamics/${repoName}"
-    override = true
-    publish = true
-    version {
-      name = project(":").version
-      desc = packageDesc
-      released  = new Date()
-      vcsTag = project(":").version
+      pom {
+        name = packageName
+        description = packageDescription
+        url = 'https://github.com/obsidiandynamics/blackstrom'
+        licenses {
+          license {
+            name = 'BSD 3-Clause License'
+            url = 'https://opensource.org/licenses/BSD-3-Clause'
+          }
+        }
+        developers {
+          developer {
+            id = 'ekoutanov'
+            name = 'Emil Koutanov'
+            email = 'ekoutanov@gmail.com'
+          }
+        }
+        scm {
+          connection = 'scm:git:git://github.com/obsidiandynamics/blackstrom.git'
+          developerConnection = 'scm:git:ssh://github.com/obsidiandynamics/blackstrom.git'
+          url = 'https://github.com/obsidiandynamics/blackstrom'
+        }
+      }
     }
   }
 }

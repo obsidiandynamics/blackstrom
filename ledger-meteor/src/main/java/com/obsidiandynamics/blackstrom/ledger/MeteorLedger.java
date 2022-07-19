@@ -14,6 +14,7 @@ import com.obsidiandynamics.blackstrom.model.Message;
 import com.obsidiandynamics.blackstrom.retention.*;
 import com.obsidiandynamics.format.*;
 import com.obsidiandynamics.meteor.*;
+import com.obsidiandynamics.meteor.Record;
 import com.obsidiandynamics.worker.Terminator;
 import com.obsidiandynamics.zerolog.*;
 
