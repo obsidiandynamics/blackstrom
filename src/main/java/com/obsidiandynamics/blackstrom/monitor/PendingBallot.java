@@ -44,8 +44,7 @@ final class PendingBallot {
   
   Response[] getResponses() {
     final Collection<Response> responses = this.responses.values();
-    final Response[] array = responses.toArray(new Response[responses.size()]);
-    return array;
+    return responses.toArray(new Response[0]);
   }
   
   void confirm() {

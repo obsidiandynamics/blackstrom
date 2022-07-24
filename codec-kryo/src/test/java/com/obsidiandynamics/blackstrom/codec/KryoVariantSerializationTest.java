@@ -248,7 +248,7 @@ public final class KryoVariantSerializationTest {
     final var obj1 = new TestClass("someOtherString", 83);
     final var p0 = capture("test/obj-0", 1, obj0);
     final var p1 = capture("test/obj-1", 1, obj1);
-    final var pp = new PolyVariant(new MonoVariant[] {p0, p1});
+    final var pp = new PolyVariant(p0, p1);
     
     final var encoded = writeBytes(pp);
     logEncoded(encoded);

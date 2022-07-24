@@ -547,7 +547,7 @@ public final class BalancedLedgerHubTest {
       final long receiptsInView = view.handlers.stream().map(handler -> {
         return handler.receivedByShard.stream()
             .filter(received -> received.equals(expected)).count();
-      }).collect(Collectors.summingLong(i -> i));
+      }).mapToLong(i -> i).sum();
       return receiptsInView > 0;
     }).collect(Collectors.toList());
   }
@@ -589,7 +589,7 @@ public final class BalancedLedgerHubTest {
         final long numFullReceipts = views.stream().map(view -> {
           return view.handlers.stream()
               .filter(handler -> handler.receivedByShard.get(shard).equals(expected)).count();
-        }).collect(Collectors.summingLong(i -> i));
+        }).mapToLong(i -> i).sum();
         assertTrue("numFullReceipts=" + numFullReceipts, numFullReceipts >= minCount);
         assertTrue("numFullReceipts=" + numFullReceipts, numFullReceipts <= maxCount);
       });

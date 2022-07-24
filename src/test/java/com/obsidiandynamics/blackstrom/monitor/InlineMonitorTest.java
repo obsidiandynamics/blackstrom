@@ -32,7 +32,7 @@ public final class InlineMonitorTest {
   private Manifold manifold;
   
   private InlineMonitor monitor;
-  
+
   private final List<Proposal> proposals = new CopyOnWriteArrayList<>();
   
   private final List<Vote> votes = new CopyOnWriteArrayList<>();
@@ -375,7 +375,7 @@ public final class InlineMonitorTest {
   }
 
   private void propose(String xid, int ttl, String... cohorts) {
-    manifold.getLedger().append(new Proposal(xid.toString(), cohorts, null, ttl));
+    manifold.getLedger().append(new Proposal(xid, cohorts, null, ttl));
   }
 
   private void vote(String xid, String cohort, Intent intent) {
@@ -383,6 +383,6 @@ public final class InlineMonitorTest {
   }
 
   private void vote(String xid, long timestamp, String cohort, Intent intent) {
-    manifold.getLedger().append(new Vote(xid.toString(), timestamp, new Response(cohort, intent, intent.name())));
+    manifold.getLedger().append(new Vote(xid, timestamp, new Response(cohort, intent, intent.name())));
   }
 }

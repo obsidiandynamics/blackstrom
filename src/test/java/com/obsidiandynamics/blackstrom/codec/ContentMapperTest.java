@@ -264,7 +264,7 @@ public final class ContentMapperTest {
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
-    final var mp = mapper.strict().capture(new Object[] { new CreateFoo_v1(), new CreateFoo_v0() });
+    final var mp = mapper.strict().capture(new CreateFoo_v1(), new CreateFoo_v0());
     assertEquals(2, mp.getVariants().length);
     assertEquals(new ContentHandle("test:foo/create", 1), mp.getVariants()[0].getHandle());
     assertEquals(new ContentHandle("test:foo/create", 0), mp.getVariants()[1].getHandle());
@@ -278,7 +278,7 @@ public final class ContentMapperTest {
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
-      mapper.strict().capture(new Object[] { new CreateFoo_v0(), new CreateFoo_v1() });
+      mapper.strict().capture(new CreateFoo_v0(), new CreateFoo_v1());
     })
     .isInstanceOf(NonDecreasingContentVersionsException.class)
     .hasMessage("Content items should be arranged in decreasing order of version; v1 at index 1 is later than v0 at index 0");
@@ -292,7 +292,7 @@ public final class ContentMapperTest {
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
-      mapper.strict().capture(new Object[] { new CreateFoo_v1(), new CreateBar_v0() });
+      mapper.strict().capture(new CreateFoo_v1(), new CreateBar_v0());
     })
     .isInstanceOf(MixedContentTypesException.class)
     .hasMessage("Mixed content types unsupported; expected: test:foo/create at index 1, got: test:bar/create");
@@ -351,7 +351,7 @@ public final class ContentMapperTest {
         .withVersion("test:foo/create", 1, CreateFoo_v1.class)
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
-    final var mp = mustBeSubtype(mapper.compactStrict().capture(new Object[] { new CreateFoo_v1(), new CreateFoo_v0() }), PolyVariant.class, AssertionError::new);
+    final var mp = mustBeSubtype(mapper.compactStrict().capture(new CreateFoo_v1(), new CreateFoo_v0()), PolyVariant.class, AssertionError::new);
     assertEquals(2, mp.getVariants().length);
     assertEquals(new ContentHandle("test:foo/create", 1), mp.getVariants()[0].getHandle());
     assertEquals(new ContentHandle("test:foo/create", 0), mp.getVariants()[1].getHandle());
@@ -365,7 +365,7 @@ public final class ContentMapperTest {
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
-      mapper.compactStrict().capture(new Object[] { new CreateFoo_v0(), new CreateFoo_v1() });
+      mapper.compactStrict().capture(new CreateFoo_v0(), new CreateFoo_v1());
     })
     .isInstanceOf(NonDecreasingContentVersionsException.class)
     .hasMessage("Content items should be arranged in decreasing order of version; v1 at index 1 is later than v0 at index 0");
@@ -379,7 +379,7 @@ public final class ContentMapperTest {
         .withVersion("test:bar/create", 0, CreateBar_v0.class);
 
     Assertions.assertThatThrownBy(() -> {
-      mapper.compactStrict().capture(new Object[] { new CreateFoo_v1(), new CreateBar_v0() });
+      mapper.compactStrict().capture(new CreateFoo_v1(), new CreateBar_v0());
     })
     .isInstanceOf(MixedContentTypesException.class)
     .hasMessage("Mixed content types unsupported; expected: test:foo/create at index 1, got: test:bar/create");

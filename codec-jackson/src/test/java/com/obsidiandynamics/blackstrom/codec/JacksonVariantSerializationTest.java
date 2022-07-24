@@ -58,7 +58,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   private static MonoVariant emulatePacked(ObjectMapper mapper, String contentType, int contentVersion, Object content) {
-    final var packed = mapper.<JsonNode>valueToTree(content);
+    final var packed = mapper.valueToTree(content);
     final var parser = new TreeTraversingParser(packed);
     return new MonoVariant(new ContentHandle(contentType, contentVersion), new JacksonPackedForm(parser, packed), null);
   }
@@ -274,7 +274,7 @@ public final class JacksonVariantSerializationTest {
     final var obj1 = new TestClass("someOtherString", 83);
     final var p0 = capture("test/obj-0", 1, obj0);
     final var p1 = capture("test/obj-1", 1, obj1);
-    final var pp = new PolyVariant(new MonoVariant[] {p0, p1});
+    final var pp = new PolyVariant(p0, p1);
 
     final var encoded = mapper.writeValueAsString(pp);
     logEncoded(encoded);
@@ -295,7 +295,7 @@ public final class JacksonVariantSerializationTest {
   public void testPolyVariant_serializeObject_readInterfaceType() throws IOException {
     final var obj0 = new TestClass("someString", 42);
     final var p0 = capture("test/obj-0", 1, obj0);
-    final var pp = new PolyVariant(new MonoVariant[] {p0});
+    final var pp = new PolyVariant(p0);
 
     final var encoded = mapper.writeValueAsString(pp);
     logEncoded(encoded);

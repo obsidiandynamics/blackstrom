@@ -374,7 +374,7 @@ public final class KafkaLedger implements Ledger {
     return handlerId;
   }
 
-  static void queueRecords(Consumer<String, Message> consumer, 
+  static void queueRecords(Consumer<String, Message> consumer,
                            ConsumerState consumerState,
                            ConsumerPipe<String, Message> consumerPipe,
                            ConsumerRecords<String, Message> records,
@@ -409,6 +409,7 @@ public final class KafkaLedger implements Ledger {
           yields++;
           Thread.yield();
         } else {
+          //noinspection BusyWait
           Thread.sleep(PIPELINE_BACKOFF_MILLIS);
         }
       }
@@ -484,11 +485,7 @@ public final class KafkaLedger implements Ledger {
   }
 
   private static SortedMap<Integer, Long> sortedCopy(Map<Integer, Long> original) {
-    final var sorted = new TreeMap<Integer, Long>();
-    for (var entry : original.entrySet()) {
-      sorted.put(entry.getKey(), entry.getValue());
-    }
-    return sorted;
+    return new TreeMap<>(original);
   }
 
   static void commitOffsets(Consumer<String, Message> consumer, ConsumerState consumerState, Zlg zlg) {

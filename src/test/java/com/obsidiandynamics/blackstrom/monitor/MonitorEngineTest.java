@@ -483,7 +483,7 @@ public final class MonitorEngineTest {
   }
 
   private void propose(String xid, int ttl, String... cohorts) {
-    monitor.onProposal(context, new Proposal(xid.toString(), cohorts, null, ttl));
+    monitor.onProposal(context, new Proposal(xid, cohorts, null, ttl));
   }
 
   private void vote(String xid, String cohort, Intent intent) {
@@ -491,6 +491,6 @@ public final class MonitorEngineTest {
   }
 
   private void vote(String xid, long timestamp, String cohort, Intent intent) {
-    monitor.onVote(context, new Vote(xid.toString(), timestamp, new Response(cohort, intent, intent.name())));
+    monitor.onVote(context, new Vote(xid, timestamp, new Response(cohort, intent, intent.name())));
   }
 }
