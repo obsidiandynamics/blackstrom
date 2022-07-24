@@ -27,7 +27,7 @@ public final class BankBranchTest {
 
   private MessageContext context;
 
-  private List<Message> received = new CopyOnWriteArrayList<>();
+  private final List<Message> received = new CopyOnWriteArrayList<>();
 
   private final Timesert wait = Wait.SHORT;
 

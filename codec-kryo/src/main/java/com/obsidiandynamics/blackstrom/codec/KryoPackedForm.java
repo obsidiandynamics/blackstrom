@@ -11,7 +11,7 @@ public final class KryoPackedForm implements PackedForm {
     this.bytes = mustExist(bytes, "Bytes array cannot be null");
   }
 
-  public final byte[] getBytes() {
+  public byte[] getBytes() {
     return bytes;
   }
 

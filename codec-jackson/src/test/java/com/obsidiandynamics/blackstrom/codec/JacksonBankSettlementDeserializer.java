@@ -16,7 +16,7 @@ public final class JacksonBankSettlementDeserializer extends StdDeserializer<Ban
   }
   
   @Override
-  public BankSettlement deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public BankSettlement deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final JsonNode root = p.getCodec().readTree(p);
     final JsonNode transfersNode = root.get("transfers");
     final int transfersLength = transfersNode.size();

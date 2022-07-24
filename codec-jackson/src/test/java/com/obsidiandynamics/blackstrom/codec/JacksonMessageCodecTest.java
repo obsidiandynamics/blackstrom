@@ -74,7 +74,7 @@ public final class JacksonMessageCodecTest {
   }
   
   @Test
-  public void testCycleBenchmark() throws Exception {
+  public void testCycleBenchmark() {
     Testmark.ifEnabled(() -> testCycle(10_000_000));
   }
   

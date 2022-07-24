@@ -10,7 +10,7 @@ import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessagePackerTest {
   @Test
-  public void testConformance() throws Exception {
+  public void testConformance() {
     Assertions.assertUtilityClassWellDefined(MessagePacker.class);
   }
 

@@ -81,15 +81,12 @@ public final class KafkaLedgerTest {
     final var barrierA = new CyclicBarrier(2);
     final var barrierB = new CyclicBarrier(2);
     final var received = new AtomicInteger();
-    ledger.attach(new NullGroupMessageHandler() {
-      @Override 
-      public void onMessage(MessageContext context, Message message) {
-        if (received.get() == 0) {
-          Threads.await(barrierA);
-          Threads.await(barrierB);
-        }
-        received.incrementAndGet();
+    ledger.attach((NullGroupMessageHandler) (context, message) -> {
+      if (received.get() == 0) {
+        Threads.await(barrierA);
+        Threads.await(barrierB);
       }
+      received.incrementAndGet();
     });
 
     ledger.append(new Proposal("B100", new String[0], null, 0));
@@ -236,18 +233,15 @@ public final class KafkaLedgerTest {
     ledger = createLedger(kafka, baseConfig, false, false, 10, logTarget.logger());
 
     final var received = new AtomicInteger();
-    ledger.attach(new NullGroupMessageHandler() {
-      @Override
-      public void onMessage(MessageContext context, Message message) {
-        assertTrue(context.isAssigned(message));
-        try {
-          context.beginAndConfirm(message);
-        } catch (Throwable e) {
-          e.printStackTrace();
-          fail("Unexpected exception: " + e);
-        }
-        received.incrementAndGet();
+    ledger.attach((NullGroupMessageHandler) (context, message) -> {
+      assertTrue(context.isAssigned(message));
+      try {
+        context.beginAndConfirm(message);
+      } catch (Throwable e) {
+        e.printStackTrace();
+        fail("Unexpected exception: " + e);
       }
+      received.incrementAndGet();
     });
 
     ledger.append(new Proposal("B100", new String[0], null, 0));

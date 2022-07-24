@@ -63,12 +63,7 @@ public final class FallibleFactor implements Factor, ProposalProcessor, VoteProc
   @Override
   public void init(InitContext context) {
     backingLedger = context.getLedger();
-    backingFactor.init(new InitContext() {
-      @Override 
-      public Ledger getLedger() {
-        return interceptedLedger;
-      }
-    });
+    backingFactor.init(() -> interceptedLedger);
     scheduler.start();
   }
  

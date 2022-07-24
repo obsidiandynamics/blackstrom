@@ -43,7 +43,7 @@ final class JacksonPayloadDeserializer extends StdDeserializer<Payload> {
   }
 
   @Override
-  public Payload deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public Payload deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final var thisNode = p.getCodec().<ObjectNode>readTree(p);
     final var payloadClassName = thisNode.get("@payloadClass").asText();
     final var payloadNode = thisNode.get("@payload");

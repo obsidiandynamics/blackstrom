@@ -15,7 +15,7 @@ final class JacksonMonoVariantDeserializer extends StdDeserializer<MonoVariant> 
   }
   
   @Override
-  public MonoVariant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public MonoVariant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final var thisNode = p.getCodec().<ObjectNode>readTree(p);
     final var contentType = thisNode.get("@contentType").asText();
     final var contentVersion = thisNode.get("@contentVersion").asInt();

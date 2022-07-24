@@ -99,7 +99,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testQuery_withResponseCallback() throws Exception {
+  public void testQuery_withResponseCallback() {
     final var initiator = new AsyncInitiator();
     final var called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -151,7 +151,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testCommand_withResponseCallback() throws Exception {
+  public void testCommand_withResponseCallback() {
     final var initiator = new AsyncInitiator();
     final var called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -210,7 +210,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testProposal_withResponseCallback() throws Exception {
+  public void testProposal_withResponseCallback() {
     final var initiator = new AsyncInitiator();
     final var called = new AtomicInteger();
     manifold = Manifold.builder()
@@ -241,7 +241,7 @@ public final class AsyncInitiatorTest {
   }
 
   @Test
-  public void testProposal_withResponseAndAppendCallbacks() throws Exception {
+  public void testProposal_withResponseAndAppendCallbacks() {
     final var initiator = new AsyncInitiator();
     final var called = new AtomicInteger();
     manifold = Manifold.builder()

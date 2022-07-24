@@ -382,10 +382,8 @@ public final class ContentMapper {
           return null;
         }
       }
-      return null;
-    } else {
-      return null;
     }
+    return null;
   }
 
   private VersionMappings getOrCreateVersionMappings(String contentType) {

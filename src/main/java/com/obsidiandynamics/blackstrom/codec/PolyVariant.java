@@ -19,7 +19,7 @@ public final class PolyVariant implements Variant {
     mustBeGreater(variants.length, 0, illegalArgument("Variants cannot be empty"));
   }
 
-  public final MonoVariant[] getVariants() {
+  public MonoVariant[] getVariants() {
     return variants;
   }
   

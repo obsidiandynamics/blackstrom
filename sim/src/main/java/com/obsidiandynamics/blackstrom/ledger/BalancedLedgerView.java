@@ -29,7 +29,7 @@ public final class BalancedLedgerView implements Ledger {
     private final Object handlerId = UUID.randomUUID();
     private final WorkerThread thread;
     private final MessageContext context;
-    private long[] nextReadOffsets = new long[accumulators.length];
+    private final long[] nextReadOffsets = new long[accumulators.length];
     
     private final List<Message> sink = new ArrayList<>();
 

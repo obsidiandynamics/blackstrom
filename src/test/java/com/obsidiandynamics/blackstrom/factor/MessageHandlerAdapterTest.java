@@ -11,22 +11,22 @@ import com.obsidiandynamics.blackstrom.handler.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public final class MessageHandlerAdapterTest {
-  interface ProposalFactor extends Factor, ProposalProcessor, Groupable.NullGroup {};
-  
-  interface VoteFactor extends Factor, VoteProcessor, Groupable.NullGroup {};
-  
-  interface OutcomeFactor extends Factor, OutcomeProcessor, Groupable.NullGroup {};
-  
-  interface QueryFactor extends Factor, QueryProcessor, Groupable.NullGroup {};
-  
-  interface QueryResponseFactor extends Factor, QueryResponseProcessor, Groupable.NullGroup {};
-  
-  interface CommandFactor extends Factor, CommandProcessor, Groupable.NullGroup {};
-  
-  interface CommandResponseFactor extends Factor, CommandResponseProcessor, Groupable.NullGroup {};
-  
-  interface NoticeFactor extends Factor, NoticeProcessor, Groupable.NullGroup {};
-  
+  interface ProposalFactor extends Factor, ProposalProcessor, Groupable.NullGroup {}
+
+  interface VoteFactor extends Factor, VoteProcessor, Groupable.NullGroup {}
+
+  interface OutcomeFactor extends Factor, OutcomeProcessor, Groupable.NullGroup {}
+
+  interface QueryFactor extends Factor, QueryProcessor, Groupable.NullGroup {}
+
+  interface QueryResponseFactor extends Factor, QueryResponseProcessor, Groupable.NullGroup {}
+
+  interface CommandFactor extends Factor, CommandProcessor, Groupable.NullGroup {}
+
+  interface CommandResponseFactor extends Factor, CommandResponseProcessor, Groupable.NullGroup {}
+
+  interface NoticeFactor extends Factor, NoticeProcessor, Groupable.NullGroup {}
+
   @Test
   public void testProposalAndGroup() {
     final ProposalFactor factor = mock(ProposalFactor.class, Answers.CALLS_REAL_METHODS);

@@ -123,7 +123,7 @@ public final class KryoVariantSerializationTest {
   }
   
   @Test
-  public void testMonoVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
+  public void testMonoVariant_prepackedScalar_failWithUnsupportedPackedForm() {
     final var p = new MonoVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
     
     Assertions.assertThatThrownBy(() -> {
@@ -134,7 +134,7 @@ public final class KryoVariantSerializationTest {
   }
   
   @Test
-  public void testMonoVariant_prepackedScalar() throws IOException {
+  public void testMonoVariant_prepackedScalar() {
     final var p = emulatePacked(kryoPool, "test/scalar", 1, "scalar");
     
     final var encoded = writeBytes(p);
@@ -145,7 +145,7 @@ public final class KryoVariantSerializationTest {
   }
   
   @Test
-  public void testMonoVariant_serializeScalar() throws IOException {
+  public void testMonoVariant_serializeScalar() {
     final var p = capture("test/scalar", 1, "scalar");
     
     final var encoded = writeBytes(p);
@@ -156,7 +156,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_prepackedArray() throws IOException {
+  public void testMonoVariant_prepackedArray() {
     final var array = new int[] {0, 1, 2};
     final var p = emulatePacked(kryoPool, "test/array", 1, array);
     
@@ -168,7 +168,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_serializeArray() throws IOException {
+  public void testMonoVariant_serializeArray() {
     final var array = new int[] {0, 1, 2};
     final var p = capture("test/array", 1, array);
     
@@ -180,7 +180,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_prepackedMap() throws IOException {
+  public void testMonoVariant_prepackedMap() {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -194,7 +194,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_serializeMap() throws IOException {
+  public void testMonoVariant_serializeMap() {
     final var map = new TreeMap<String, List<String>>();
     map.put("a", Arrays.asList("w", "x"));
     map.put("b", Arrays.asList("y", "z"));
@@ -208,7 +208,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_prepackedObject() throws IOException {
+  public void testMonoVariant_prepackedObject() {
     final var obj = new TestClass("someString", 42);
     final var p = emulatePacked(kryoPool, "test/obj", 1, obj);
     
@@ -220,7 +220,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_serializeObject() throws IOException {
+  public void testMonoVariant_serializeObject() {
     final var obj = new TestClass("someString", 42);
     final var p = capture("test/obj", 1, obj);
     
@@ -232,7 +232,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_serializeNil() throws IOException {
+  public void testMonoVariant_serializeNil() {
     final var p = capture("std:nil", 1, Nil.getInstance());
     
     final var encoded = writeBytes(p);
@@ -243,7 +243,7 @@ public final class KryoVariantSerializationTest {
   }
 
   @Test
-  public void testPolyVariant_serializeObject() throws IOException {
+  public void testPolyVariant_serializeObject() {
     final var obj0 = new TestClass("someString", 42);
     final var obj1 = new TestClass("someOtherString", 83);
     final var p0 = capture("test/obj-0", 1, obj0);

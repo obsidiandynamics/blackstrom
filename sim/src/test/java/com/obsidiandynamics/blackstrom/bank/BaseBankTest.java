@@ -55,15 +55,15 @@ public abstract class BaseBankTest {
         .build();
   }
 
-  protected static final long getTotalBalance(BankBranch[] branches) {
-    return Arrays.stream(branches).collect(Collectors.summarizingLong(b -> b.getBalance())).getSum();
+  protected static long getTotalBalance(BankBranch[] branches) {
+    return Arrays.stream(branches).collect(Collectors.summarizingLong(BankBranch::getBalance)).getSum();
   }
 
-  protected static final boolean allZeroEscrow(BankBranch[] branches) {
+  protected static boolean allZeroEscrow(BankBranch[] branches) {
     return Arrays.stream(branches).allMatch(b -> b.getEscrow() == 0);
   }
 
-  protected static final boolean nonZeroBalances(BankBranch[] branches) {
+  protected static boolean nonZeroBalances(BankBranch[] branches) {
     return Arrays.stream(branches).allMatch(b -> b.getBalance() >= 0);
   }
 }

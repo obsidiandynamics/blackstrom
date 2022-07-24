@@ -13,9 +13,7 @@ final class LongList extends ArrayList<Long> {
   }
   
   LongList plus(long amount) {
-    for (int i = 0; i < size(); i++) {
-      set(i, get(i) + amount);
-    }
+    this.replaceAll(existing -> existing + amount);
     return this;
   }
   

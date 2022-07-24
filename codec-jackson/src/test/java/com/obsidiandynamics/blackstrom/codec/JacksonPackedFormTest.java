@@ -20,32 +20,32 @@ public final class JacksonPackedFormTest {
     }
 
     @Override
-    protected void _closeInput() throws IOException {
+    protected void _closeInput() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public JsonToken nextToken() throws IOException {
+    public JsonToken nextToken() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getText() throws IOException {
+    public String getText() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public char[] getTextCharacters() throws IOException {
+    public char[] getTextCharacters() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public int getTextLength() throws IOException {
+    public int getTextLength() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public int getTextOffset() throws IOException {
+    public int getTextOffset() {
       throw new UnsupportedOperationException();
     }
 

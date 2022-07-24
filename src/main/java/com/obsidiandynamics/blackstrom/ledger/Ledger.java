@@ -6,7 +6,7 @@ import com.obsidiandynamics.blackstrom.manifold.*;
 import com.obsidiandynamics.blackstrom.model.*;
 
 public interface Ledger extends Disposable.Nop {
-  static AppendCallback SYS_ERR_APPEND_CALLBACK = AppendCallback.errorLoggingAppendCallback(System.err);
+  AppendCallback SYS_ERR_APPEND_CALLBACK = AppendCallback.errorLoggingAppendCallback(System.err);
   
   static AppendCallback getDefaultAppendCallback() {
     return SYS_ERR_APPEND_CALLBACK;

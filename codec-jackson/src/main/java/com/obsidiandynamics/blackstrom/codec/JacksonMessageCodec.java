@@ -69,7 +69,7 @@ public class JacksonMessageCodec implements MessageCodec {
   }
 
   @Override
-  public Message decode(byte[] bytes) throws JsonParseException, JsonMappingException, IOException {
+  public Message decode(byte[] bytes) throws IOException {
     return mapper.readValue(bytes, Message.class);
   }
 }

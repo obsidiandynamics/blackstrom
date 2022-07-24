@@ -16,7 +16,7 @@ public final class IdentityMessageCodec implements MessageCodec {
   private int nextSerialId;
 
   @Override
-  public byte[] encode(Message message) throws Exception {
+  public byte[] encode(Message message) {
     final int serialId = nextSerialId++;
     messages.put(serialId, cloneMessage(message));
     final ByteBuffer buf = ByteBuffer.allocate(4);
@@ -69,7 +69,7 @@ public final class IdentityMessageCodec implements MessageCodec {
   }
 
   @Override
-  public Message decode(byte[] bytes) throws Exception {
+  public Message decode(byte[] bytes) {
     final ByteBuffer buf = ByteBuffer.wrap(bytes);
     final int serialId = buf.getInt();
     return messages.get(serialId);

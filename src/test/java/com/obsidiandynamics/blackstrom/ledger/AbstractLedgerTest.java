@@ -147,7 +147,7 @@ public abstract class AbstractLedgerTest {
     });
   }
   
-  private final void testOneWay(int producers, int consumers, int messagesPerProducer) {
+  private void testOneWay(int producers, int consumers, int messagesPerProducer) {
     useLedger(createLedger());
     
     final int backlogTarget = 10_000;
@@ -218,7 +218,7 @@ public abstract class AbstractLedgerTest {
     Testmark.ifEnabled(() -> testTwoWay(2_000_000 * scale));
   }
   
-  private final void testTwoWay(int numMessages) {
+  private void testTwoWay(int numMessages) {
     useLedger(createLedger());
 
     final AtomicLong totalSent = new AtomicLong();

@@ -39,7 +39,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   } 
@@ -67,7 +67,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance - transferAmount, branches[0].getBalance());
       assertEquals(initialBalance + transferAmount, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }
@@ -98,7 +98,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }
@@ -129,7 +129,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }
@@ -159,7 +159,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }
@@ -189,7 +189,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }
@@ -219,7 +219,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }
@@ -249,7 +249,7 @@ public abstract class AbstractBankTransferTest extends BaseBankTest {
     wait.until(() -> {
       assertEquals(initialBalance, branches[0].getBalance());
       assertEquals(initialBalance, branches[1].getBalance());
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
     });
   }

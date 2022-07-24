@@ -223,16 +223,16 @@ public final class BankBranch implements Cohort.Base {
     return BankBranch.class.getSimpleName() + " [branchId=" + branchId + ", balance=" + balance + ", escrow=" + escrow + "]";
   }
 
-  public static final String getId(int branchIdx) {
+  public static String getId(int branchIdx) {
     return "branch-" + branchIdx;
   }
 
-  public static final String[] generateIds(int numBranches) {
+  public static String[] generateIds(int numBranches) {
     return IntStream.range(0, numBranches).boxed()
         .map(BankBranch::getId).collect(Collectors.toList()).toArray(new String[numBranches]);
   }
 
-  public static final BankBranch[] create(int numBranches, long initialBalance, boolean idempotencyEnabled, Sandbox sandbox) {
+  public static BankBranch[] create(int numBranches, long initialBalance, boolean idempotencyEnabled, Sandbox sandbox) {
     return IntStream.range(0, numBranches).boxed()
         .map(i -> new BankBranch(BankBranch.getId(i), initialBalance, idempotencyEnabled, sandbox::contains))
         .collect(Collectors.toList()).toArray(new BankBranch[numBranches]);

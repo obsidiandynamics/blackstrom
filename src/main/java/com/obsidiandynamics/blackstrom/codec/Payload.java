@@ -53,6 +53,6 @@ public final class Payload {
   
   @Override
   public String toString() {
-    return Payload.class.getSimpleName() + " [" + String.valueOf(value) + "]";
+    return Payload.class.getSimpleName() + " [" + value + "]";
   }
 }

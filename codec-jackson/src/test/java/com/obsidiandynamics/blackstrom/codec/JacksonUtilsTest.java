@@ -15,7 +15,7 @@ import com.obsidiandynamics.assertion.*;
 
 public final class JacksonUtilsTest {
   @Test
-  public void testConformance() throws Exception {
+  public void testConformance() {
     Assertions.assertUtilityClassWellDefined(JacksonUtils.class);
   }
   

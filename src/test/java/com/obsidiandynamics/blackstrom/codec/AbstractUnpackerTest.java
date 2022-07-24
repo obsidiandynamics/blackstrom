@@ -19,7 +19,7 @@ public abstract class AbstractUnpackerTest {
       this.value = mustExist(value, "Value cannot be null");
     }
 
-    static final String validateType(String expected, String given) {
+    static String validateType(String expected, String given) {
       mustBeEqual(expected, given, 
                   withMessage(() -> "Wrong type; expected: " + expected + ", got: " + given, IllegalArgumentException::new));
       return given;

@@ -126,7 +126,7 @@ public final class JacksonVariantSerializationTest {
   }
 
   @Test
-  public void testMonoVariant_prepackedScalar_failWithUnsupportedPackedForm() throws IOException {
+  public void testMonoVariant_prepackedScalar_failWithUnsupportedPackedForm() {
     final var p = new MonoVariant(new ContentHandle("test/scalar", 1), new IdentityPackedForm("scalar"), null);
 
     Assertions.assertThatThrownBy(() -> {

@@ -31,7 +31,7 @@ public final class MultiNodeQueueRigTest {
   
   @After
   public void after() {
-    cleanup.forEach(d -> d.dispose());
+    cleanup.forEach(Disposable::dispose);
     cleanup.clear();
   }
   
@@ -41,14 +41,14 @@ public final class MultiNodeQueueRigTest {
   }
   
   @Test
-  public void testBenchmarkLatency() throws Exception {
+  public void testBenchmarkLatency() {
     Testmark.ifEnabled("latency", () -> {
-      test(1_000 * scale, 2, true);
+      test(1_000L * scale, 2, true);
     });
   }
   
   @Test
-  public void testBenchmarkThroughput() throws Exception {
+  public void testBenchmarkThroughput() {
     Testmark.ifEnabled("throughput", () -> {
       test(4_000_000L * scale, 2, false);
     });

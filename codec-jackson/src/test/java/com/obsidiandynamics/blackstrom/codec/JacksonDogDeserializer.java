@@ -14,7 +14,7 @@ final class JacksonDogDeserializer extends StdDeserializer<JacksonDog> {
   }
   
   @Override
-  public JacksonDog deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public JacksonDog deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final JsonNode root = p.getCodec().readTree(p);
     final String name = root.get("name").asText();
     

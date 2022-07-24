@@ -63,11 +63,11 @@ public final class BankSettlement {
     }
 
     public BankSettlement build() {
-      return new BankSettlement(transfers.stream().collect(Collectors.toMap(t -> t.getBranchId(), Function.identity())));
+      return new BankSettlement(transfers.stream().collect(Collectors.toMap(BalanceTransfer::getBranchId, Function.identity())));
     }
   }
 
-  public static final BankSettlement randomise(String[] branchIds, long maxAbsoluteAmount) {
+  public static BankSettlement randomise(String[] branchIds, long maxAbsoluteAmount) {
     final Map<String, BalanceTransfer> transfers = new HashMap<>(branchIds.length, 1f);
     long sum = 0;
     for (int i = 0; i < branchIds.length - 1; i++) {

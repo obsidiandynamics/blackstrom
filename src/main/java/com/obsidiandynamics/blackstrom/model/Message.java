@@ -124,7 +124,7 @@ public abstract class Message {
   
   public abstract Message shallowCopy();
   
-  protected static final <M extends Message> M copyMutableFields(M original, M clone) {
+  protected static <M extends Message> M copyMutableFields(M original, M clone) {
     final Message originalMessage = original;
     final Message cloneMessage = clone;
     cloneMessage.messageId = originalMessage.messageId;

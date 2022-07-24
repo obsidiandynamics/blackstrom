@@ -46,7 +46,7 @@ public final class JacksonUnpackerTest extends AbstractUnpackerTest {
     }
 
     @Override
-    public S deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public S deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
       final var thisNode = p.getCodec().<ObjectNode>readTree(p);
       final var type = thisNode.get("type").asText();
       final var value = thisNode.get("value").asText();

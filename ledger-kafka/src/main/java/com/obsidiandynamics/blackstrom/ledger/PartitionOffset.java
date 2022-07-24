@@ -56,10 +56,8 @@ final class PartitionOffset {
   
   static List<PartitionOffset> summarise(Map<TopicPartition, OffsetAndMetadata> partitionOffsets) {
     mustExist(partitionOffsets, "Partition offsets must be specified");
-    final var list = partitionOffsets.entrySet().stream()
+    return partitionOffsets.entrySet().stream()
         .map(partitionOffset -> new PartitionOffset(partitionOffset.getKey().partition(), partitionOffset.getValue().offset()))
-        .collect(Collectors.toList());
-    Collections.sort(list, byField(PartitionOffset::getPartition, Integer::compare));
-    return list;
+        .sorted(byField(PartitionOffset::getPartition, Integer::compare)).collect(Collectors.toList());
   }
 }

@@ -14,7 +14,7 @@ public final class AppendCallbackTest {
   }
   
   @Test
-  public void testErrorLoggingAppendCallback() throws IOException {
+  public void testErrorLoggingAppendCallback() {
     final PrintStream stream = mock(PrintStream.class);
     final AppendCallback c = AppendCallback.errorLoggingAppendCallback(stream);
     c.onAppend(null, null);

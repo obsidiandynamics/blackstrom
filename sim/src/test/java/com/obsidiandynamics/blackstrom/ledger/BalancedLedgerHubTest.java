@@ -187,7 +187,7 @@ public final class BalancedLedgerHubTest {
     });
     view.append(new UnknownMessage("0", 0).withShard(0));
 
-    wait.untilTrue(() -> received.get());
+    wait.untilTrue(received::get);
   }
 
   /**
@@ -256,10 +256,7 @@ public final class BalancedLedgerHubTest {
   /**
    *  Messages are published to a small buffer at a rate that is much higher than the consumer's 
    *  throughput, resulting in a buffer overflow condition.
-   *  
-   *  @throws TimeoutException 
-   *  @throws BrokenBarrierException 
-   *  @throws InterruptedException 
+   *
    */
   @Test
   public void testBufferOverflow() throws InterruptedException, BrokenBarrierException, TimeoutException {
@@ -580,13 +577,7 @@ public final class BalancedLedgerHubTest {
   /**
    *  Verifies that each shard's message content has been received by some bounded number of handlers (across all
    *  views), for as long at least one view remains.
-   *  
-   *  @param shards
-   *  @param views
-   *  @param expected
-   *  @param minCount
-   *  @param maxCount
-   *  @return
+   *
    */
   private static Runnable assertForEachShard(int shards, List<TestView> views, LongList expected, int minCount, int maxCount) {
     return () -> {

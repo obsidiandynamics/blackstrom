@@ -31,7 +31,7 @@ final class JacksonMessageDeserializer extends StdDeserializer<Message> {
   }
   
   @Override
-  public Message deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public Message deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final JsonNode root = p.getCodec().readTree(p);
     final MessageType messageType = MessageType.valueOf(root.get("messageType").asText());
     final JsonNode xidNode = root.get("xid");

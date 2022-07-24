@@ -9,7 +9,7 @@ public interface Disposable {
   }
   
   default FailsafeAutoCloseable closeable() {
-    return () -> dispose();
+    return this::dispose;
   }
   
   interface Nop extends Disposable {

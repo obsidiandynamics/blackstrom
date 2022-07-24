@@ -239,8 +239,8 @@ public final class KafkaLedgerDrainConfirmationsIT {
               zlg.d("Received last message at offset %d (partition %d)", z -> z.arg(offset).arg(partition));
             }
 
-            final boolean accepted;
-            if (accepted = offset < messages) {
+            final boolean accepted = offset < messages;
+            if (accepted) {
               receivedPerConsumer.incrementAndGet(consumerIndex);
               final var receiveCounts = receiveCountsPerPartition[partition];
               final var count = receiveCounts.incrementAndGet((int) offset);

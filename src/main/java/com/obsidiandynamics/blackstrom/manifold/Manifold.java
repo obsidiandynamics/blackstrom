@@ -34,7 +34,7 @@ public final class Manifold implements Disposable {
   @Override
   public void dispose() {
     ledger.dispose();
-    factors.forEach(p -> p.dispose());
+    factors.forEach(Disposable::dispose);
   }
   
   public static ManifoldBuilder builder() {

@@ -68,7 +68,7 @@ public final class KryoMessageCodecTest {
   }
   
   @Test
-  public void testCycleBenchmark() throws Exception {
+  public void testCycleBenchmark() {
     Testmark.ifEnabled(() -> testCycle(20_000_000));
   }
   

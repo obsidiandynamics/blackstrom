@@ -15,7 +15,7 @@ final class JacksonPolyVariantDeserializer extends StdDeserializer<PolyVariant> 
   }
   
   @Override
-  public PolyVariant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public PolyVariant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final var thisNode = p.getCodec().<ArrayNode>readTree(p);
     final var codec = p.getCodec();
     final var variants = codec.treeToValue(thisNode, MonoVariant[].class);

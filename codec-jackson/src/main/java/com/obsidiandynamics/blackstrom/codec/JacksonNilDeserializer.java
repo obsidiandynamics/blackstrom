@@ -14,7 +14,7 @@ final class JacksonNilDeserializer extends StdDeserializer<Nil> {
   }
   
   @Override
-  public Nil deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public Nil deserialize(JsonParser p, DeserializationContext ctxt) {
     return Nil.getInstance();
   }
 }

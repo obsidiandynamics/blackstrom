@@ -71,7 +71,7 @@ public final class MessageTest {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof TrivialSubclass ? baseEquals((TrivialSubclass) obj) : false;
+      return obj instanceof TrivialSubclass && baseEquals((TrivialSubclass) obj);
     }
 
     @Override

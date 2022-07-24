@@ -134,8 +134,8 @@ public final class BalancedLedgerHub implements Disposable {
 
   @Override
   public void dispose() {
-    Arrays.stream(accumulators).forEach(a -> a.dispose());
-    views.forEach(v -> v.dispose());
+    Arrays.stream(accumulators).forEach(Nop::dispose);
+    views.forEach(BalancedLedgerView::dispose);
     views.clear();
   }
 }

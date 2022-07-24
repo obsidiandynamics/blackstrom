@@ -94,7 +94,7 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     }
   }
 
-  private void testFactorFailure(Map<TargetFactor, RxTxFailureModes> failureModes) throws InterruptedException, ExecutionException, Exception {
+  private void testFactorFailure(Map<TargetFactor, RxTxFailureModes> failureModes) throws Exception {
     final var initialBalance = 1_000;
     final var initiator = new AsyncInitiator().withZlg(zlg);
     final var monitor = new DefaultMonitor(new MonitorEngineConfig().withZlg(zlg));
@@ -121,14 +121,14 @@ public abstract class AbstractBankTransferFailureTest extends BaseBankTest {
     testSingleTransfer(10, Resolution.COMMIT, null, initiator, sandbox);
 
     wait.until(() -> {
-      assertEquals(initialBalance * branches.length, getTotalBalance(branches));
+      assertEquals((long) initialBalance * branches.length, getTotalBalance(branches));
       assertTrue("branches=" + List.of(branches), allZeroEscrow(branches));
       assertTrue("branches=" + List.of(branches), nonZeroBalances(branches));
     });
   }
 
   private void testSingleTransfer(int transferAmount, Resolution expectedVerdict, AbortReason expectedAbortReason,
-                                  AsyncInitiator initiator, Sandbox sandbox) throws InterruptedException, ExecutionException, Exception {
+                                  AsyncInitiator initiator, Sandbox sandbox) throws Exception {
     assert expectedVerdict == Resolution.COMMIT ^ expectedAbortReason != null;
     final var xid = UUID.randomUUID().toString();
     zlg.t("Initiating %s", z -> z.arg(xid));

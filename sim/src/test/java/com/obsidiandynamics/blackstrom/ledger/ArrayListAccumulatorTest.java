@@ -216,7 +216,7 @@ public final class ArrayListAccumulatorTest {
         final List<Message> sink = new ArrayList<>();
         a.retrieve(0, sink);
         System.out.println("accumulator:");
-        sink.stream().map(m -> m.getXid()).forEach(id -> System.out.println("  " + id));
+        sink.stream().map(Message::getXid).forEach(id -> System.out.println("  " + id));
         
         for (BallotReceiver receiver : receivers) {
           System.out.println("receiver:");
@@ -225,7 +225,7 @@ public final class ArrayListAccumulatorTest {
           }
         }
       }
-      consumers.forEach(consumer -> consumer.dispose());
+      consumers.forEach(AccumulatorConsumer::dispose);
     }
   }
 
@@ -267,7 +267,7 @@ public final class ArrayListAccumulatorTest {
         final List<Message> sink = new ArrayList<>();
         a.retrieve(0, sink);
         System.out.println("accumulator:");
-        sink.stream().map(m -> m.getXid()).forEach(id -> System.out.println("  " + id));
+        sink.stream().map(Message::getXid).forEach(id -> System.out.println("  " + id));
         
         for (BallotReceiver receiver : receivers) {
           System.out.println("receiver:");
@@ -276,7 +276,7 @@ public final class ArrayListAccumulatorTest {
           }
         }
       }
-      consumers.forEach(consumer -> consumer.dispose());
+      consumers.forEach(AccumulatorConsumer::dispose);
     }
   }
   
@@ -289,7 +289,7 @@ public final class ArrayListAccumulatorTest {
   private static List<Long> getOffsets(Accumulator a, long fromOffset) {
     return retrieve(a, fromOffset).stream()
         .map(m -> (DefaultMessageId) m.getMessageId())
-        .map(id -> id.getOffset())
+        .map(DefaultMessageId::getOffset)
         .collect(Collectors.toList());
   }
   

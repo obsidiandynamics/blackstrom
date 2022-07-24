@@ -81,7 +81,7 @@ publishing {
 
 task testJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
   mergeServiceFiles()
-  archiveClassifier.set('tests');
+  archiveClassifier.set('tests')
   from sourceSets.main.output
   from sourceSets.test.output
   configurations = [project.configurations.api, project.configurations.testImplementation]

@@ -15,7 +15,7 @@ public final class JacksonDefaultOutcomeMetadataDeserializer extends StdDeserial
   }
   
   @Override
-  public OutcomeMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public OutcomeMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final JsonNode root = p.getCodec().readTree(p);
     final long proposalTimestamp = root.get("proposalTimestamp").asLong();
     return new OutcomeMetadata(proposalTimestamp);

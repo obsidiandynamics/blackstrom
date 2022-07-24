@@ -14,7 +14,7 @@ final class JacksonCatDeserializer extends StdDeserializer<JacksonCat> {
   }
   
   @Override
-  public JacksonCat deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public JacksonCat deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     final JsonNode root = p.getCodec().readTree(p);
     final String name = root.get("name").asText();
     
