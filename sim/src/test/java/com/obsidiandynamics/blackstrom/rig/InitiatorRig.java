@@ -167,7 +167,7 @@ public final class InitiatorRig {
         if (run % 1000 < abortsPerMille) {
           settlement = settlementAbort;
         } else {
-          settlement = run % 1 == 0 ? settlement0 : settlement1;
+          settlement = run % 2 == 0 ? settlement0 : settlement1;
         }
         ledger.append(new Proposal(Long.toHexString(run), NanoClock.now(), branchIds, settlement, 
                                    PROPOSAL_TIMEOUT_MILLIS)
