@@ -12,7 +12,7 @@ dependencies {
   testImplementation "com.obsidiandynamics.fulcrum:fulcrum-launcher:${fulcrumVersion}"
 }
 
-task launch(dependsOn: testClasses) {
+task launch(dependsOn: [classes, testClasses]) {
   doLast {
     def launcherClasses = new ArrayList()
     launcherClasses += "com.obsidiandynamics.blackstrom.bank.BalancedRandomBankTransferTest"
