@@ -46,7 +46,7 @@ allprojects {
   apply plugin: "com.github.johnrengelman.shadow"
 
   group = "com.obsidiandynamics.blackstrom"
-  version = "0.59.0-SNAPSHOT"
+  version = "0.59.0"
 
   sourceCompatibility = 11
   targetCompatibility = 11
